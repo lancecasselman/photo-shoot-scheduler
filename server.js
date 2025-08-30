@@ -14626,26 +14626,51 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
         }
         
         // Update database if onboarding is now complete
-        if (statusResult.isOnboardingComplete && !userResult.rows[0].stripe_onboarding_complete) {
+        if (statusResult.onboardingComplete && !userResult.rows[0].stripe_onboarding_complete) {
             await pool.query(
                 'UPDATE users SET stripe_onboarding_complete = true WHERE id = $1',
                 [userId]
             );
         }
         
+        // Check for specific requirements
+        const account = statusResult.account;
+        const requirements = account?.requirements || {};
+        const hasExternalAccount = account?.external_accounts?.data?.length > 0;
+        const hasRepresentative = !requirements.currently_due?.includes('individual.verification.document') &&
+                                 !requirements.currently_due?.includes('individual.first_name') &&
+                                 !requirements.currently_due?.includes('individual.last_name');
+        const tosAccepted = account?.tos_acceptance?.date != null;
+        
+        // Check if using test mode
+        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
+        
         res.json({
             hasAccount: true,
+            accountId: accountId,
+            testMode: isTestMode,
+            onboardingComplete: statusResult.onboardingComplete,
+            canReceivePayments: statusResult.canReceivePayments,
+            canReceivePayouts: statusResult.canReceivePayouts,
+            requiresInfo: statusResult.requiresInfo,
+            hasExternalAccount: hasExternalAccount,
+            hasRepresentative: hasRepresentative,
+            tosAccepted: tosAccepted,
+            createdAt: account?.created ? new Date(account.created * 1000).toISOString() : null,
             account: {
                 id: accountId,
-                email: statusResult.account?.email || req.session.user.email,
-                country: statusResult.account?.country || 'US'
+                email: account?.email || req.session.user.email,
+                country: account?.country || 'US',
+                business_type: account?.business_type,
+                charges_enabled: account?.charges_enabled,
+                payouts_enabled: account?.payouts_enabled,
+                details_submitted: account?.details_submitted
             },
-            status: {
-                isOnboardingComplete: statusResult.isOnboardingComplete,
-                chargesEnabled: statusResult.chargesEnabled,
-                payoutsEnabled: statusResult.payoutsEnabled,
-                detailsSubmitted: statusResult.detailsSubmitted,
-                requiresInfo: statusResult.requiresInfo || []
+            requirements: {
+                currently_due: requirements.currently_due || [],
+                eventually_due: requirements.eventually_due || [],
+                past_due: requirements.past_due || [],
+                pending_verification: requirements.pending_verification || []
             }
         });
         

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Setup - Photography Management System</title>
+    <link rel="stylesheet" href="secure-styles.css">
+    <style>
+        .payment-setup-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .setup-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #8B7355 0%, #A0896E 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .setup-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        
+        .setup-header p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 1.1em;
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .status-badge.complete {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        
+        .status-badge.incomplete {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+        
+        .status-badge.error {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+        
+        .requirements-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .requirement-card {
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #ccc;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-card.complete {
+            border-left-color: #4CAF50;
+            background: #F1F8F4;
+        }
+        
+        .requirement-card.pending {
+            border-left-color: #FF9800;
+            background: #FFF9F3;
+        }
+        
+        .requirement-card.error {
+            border-left-color: #F44336;
+            background: #FFF5F5;
+        }
+        
+        .requirement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .requirement-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .requirement-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .requirement-status.complete {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .requirement-status.pending {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .requirement-status.required {
+            background: #F44336;
+            color: white;
+        }
+        
+        .requirement-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .requirement-action {
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            background: #8B7355;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: #7A6248;
+        }
+        
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .info-box {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .info-box h4 {
+            margin: 0 0 8px 0;
+            color: #1976D2;
+        }
+        
+        .info-box p {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .test-mode-banner {
+            background: #FFF3E0;
+            border: 2px solid #FFB300;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .test-mode-banner strong {
+            color: #E65100;
+        }
+        
+        .account-details {
+            background: #F5F5F5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-family: monospace;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #8B7355;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #8B7355;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: opacity 0.3s;
+        }
+        
+        .back-link:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-setup-container">
+        <a href="/secure-app.html" class="back-link">
+            ← Back to Dashboard
+        </a>
+        
+        <div class="setup-header">
+            <h1>💳 Payment Setup</h1>
+            <p>Complete your Stripe Connect setup to receive payments directly from clients</p>
+        </div>
+        
+        <div id="testModeBanner" class="test-mode-banner" style="display: none;">
+            <strong>🧪 TEST MODE</strong>
+            <p>You're in test mode. Use test bank details: Routing 110000000, Account 000123456789</p>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-header">
+                <h2>Setup Status</h2>
+                <div id="overallStatus" class="status-badge incomplete">
+                    <span class="loading-spinner"></span>
+                    <span>Checking Status...</span>
+                </div>
+            </div>
+            
+            <div id="statusMessage" style="color: #666; margin-bottom: 20px;">
+                Loading your payment setup status...
+            </div>
+            
+            <div class="requirements-grid" id="requirementsGrid">
+                <!-- Requirements will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h4>ℹ️ About Stripe Express</h4>
+            <p>Stripe Express allows you to accept payments while Stripe handles security, compliance, and regulatory requirements. Payments go directly to your bank account.</p>
+        </div>
+        
+        <div id="accountDetails" class="account-details" style="display: none;">
+            <h3>Account Information</h3>
+            <div class="detail-row">
+                <span class="detail-label">Account ID:</span>
+                <span class="detail-value" id="accountId">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Payout Schedule:</span>
+                <span class="detail-value" id="payoutSchedule">Daily (2-day rolling)</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Default Currency:</span>
+                <span class="detail-value" id="currency">USD</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Created:</span>
+                <span class="detail-value" id="createdDate">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let stripeAccountId = null;
+        let isTestMode = false;
+        
+        async function loadPaymentStatus() {
+            try {
+                // Check authentication
+                const authResponse = await fetch('/api/auth/user');
+                if (!authResponse.ok) {
+                    window.location.href = '/auth.html';
+                    return;
+                }
+                
+                // Load Stripe Connect status
+                const response = await fetch('/api/stripe-connect/status');
+                if (!response.ok) {
+                    throw new Error('Failed to load payment status');
+                }
+                
+                const data = await response.json();
+                console.log('Payment status:', data);
+                
+                // Check if in test mode
+                if (data.testMode) {
+                    document.getElementById('testModeBanner').style.display = 'block';
+                    isTestMode = true;
+                }
+                
+                if (data.hasAccount) {
+                    stripeAccountId = data.accountId;
+                    displayAccountStatus(data);
+                } else {
+                    displayNoAccount();
+                }
+                
+            } catch (error) {
+                console.error('Error loading payment status:', error);
+                displayError();
+            }
+        }
+        
+        function displayAccountStatus(data) {
+            const overallStatus = document.getElementById('overallStatus');
+            const statusMessage = document.getElementById('statusMessage');
+            const requirementsGrid = document.getElementById('requirementsGrid');
+            const accountDetails = document.getElementById('accountDetails');
+            
+            // Update overall status
+            if (data.onboardingComplete) {
+                overallStatus.className = 'status-badge complete';
+                overallStatus.innerHTML = '✅ Setup Complete';
+                statusMessage.textContent = 'Your payment processing is fully set up and ready to receive payments.';
+            } else {
+                overallStatus.className = 'status-badge incomplete';
+                overallStatus.innerHTML = '⚠️ Setup Incomplete';
+                statusMessage.textContent = 'Please complete the requirements below to activate payment processing.';
+            }
+            
+            // Display requirements
+            const requirements = [
+                {
+                    id: 'external_account',
+                    title: 'Bank Account',
+                    description: 'Add a bank account or debit card to receive payouts',
+                    status: data.hasExternalAccount ? 'complete' : 'required',
+                    action: !data.hasExternalAccount ? 'Add Bank Account' : null,
+                    testInfo: isTestMode ? 'Use test routing: 110000000, account: 000123456789' : null
+                },
+                {
+                    id: 'representative',
+                    title: 'Business Representative',
+                    description: 'Provide information about the business owner or representative',
+                    status: data.hasRepresentative ? 'complete' : 'required',
+                    action: !data.hasRepresentative ? 'Add Representative' : null,
+                    testInfo: isTestMode ? 'Use test SSN: 000-00-0000' : null
+                },
+                {
+                    id: 'tos',
+                    title: 'Terms of Service',
+                    description: 'Accept Stripe\'s terms of service for payment processing',
+                    status: data.tosAccepted ? 'complete' : 'required',
+                    action: !data.tosAccepted ? 'Accept Terms' : null
+                },
+                {
+                    id: 'charges',
+                    title: 'Payment Acceptance',
+                    description: 'Ability to accept payments from customers',
+                    status: data.canReceivePayments ? 'complete' : 'pending'
+                },
+                {
+                    id: 'payouts',
+                    title: 'Payout Capability',
+                    description: 'Ability to receive payouts to your bank account',
+                    status: data.canReceivePayouts ? 'complete' : 'pending'
+                }
+            ];
+            
+            requirementsGrid.innerHTML = requirements.map(req => `
+                <div class="requirement-card ${req.status}">
+                    <div class="requirement-header">
+                        <span class="requirement-title">${req.title}</span>
+                        <span class="requirement-status ${req.status}">
+                            ${req.status === 'complete' ? '✓ Complete' : 
+                              req.status === 'pending' ? '⏳ Pending' : 
+                              '❗ Required'}
+                        </span>
+                    </div>
+                    <div class="requirement-description">${req.description}</div>
+                    ${req.testInfo ? `<div style="color: #E65100; font-size: 14px; margin-top: 8px;">Test Mode: ${req.testInfo}</div>` : ''}
+                    ${req.action ? `
+                        <div class="requirement-action">
+                            <button class="action-btn" onclick="completeRequirement('${req.id}')">
+                                ${req.action}
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            // Show account details
+            if (data.accountId) {
+                accountDetails.style.display = 'block';
+                document.getElementById('accountId').textContent = data.accountId;
+                if (data.createdAt) {
+                    document.getElementById('createdDate').textContent = new Date(data.createdAt).toLocaleDateString();
+                }
+            }
+        }
+        
+        function displayNoAccount() {
+            const overallStatus = document.getElementById('overallStatus');
+            const statusMessage = document.getElementById('statusMessage');
+            const requirementsGrid = document.getElementById('requirementsGrid');
+            
+            overallStatus.className = 'status-badge incomplete';
+            overallStatus.innerHTML = '❌ No Account';
+            statusMessage.textContent = 'You haven\'t set up payment processing yet.';
+            
+            requirementsGrid.innerHTML = `
+                <div class="requirement-card pending">
+                    <div class="requirement-header">
+                        <span class="requirement-title">Create Stripe Express Account</span>
+                        <span class="requirement-status required">Required</span>
+                    </div>
+                    <div class="requirement-description">
+                        Set up your Stripe Express account to start accepting payments from clients.
+                    </div>
+                    <div class="requirement-action">
+                        <button class="action-btn" onclick="createStripeAccount()">
+                            Set Up Payment Processing
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayError() {
+            const overallStatus = document.getElementById('overallStatus');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            overallStatus.className = 'status-badge error';
+            overallStatus.innerHTML = '❌ Error';
+            statusMessage.textContent = 'Unable to load payment status. Please try again later.';
+        }
+        
+        async function createStripeAccount() {
+            try {
+                const response = await fetch('/api/stripe-connect/create-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        country: 'US'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to create Stripe account');
+                }
+                
+                const data = await response.json();
+                
+                if (data.accountLinkUrl) {
+                    // Open Stripe onboarding
+                    window.open(data.accountLinkUrl, '_blank');
+                    
+                    // Show message to refresh
+                    alert('Complete the setup in the new window, then refresh this page to see your updated status.');
+                }
+                
+            } catch (error) {
+                console.error('Error creating Stripe account:', error);
+                alert('Error creating payment account. Please try again.');
+            }
+        }
+        
+        async function completeRequirement(requirementId) {
+            if (!stripeAccountId) {
+                alert('No payment account found. Please create one first.');
+                return;
+            }
+            
+            try {
+                // Continue onboarding
+                const response = await fetch('/api/stripe-connect/continue-onboarding', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to continue onboarding');
+                }
+                
+                const data = await response.json();
+                
+                if (data.accountLinkUrl) {
+                    // Open Stripe onboarding
+                    window.open(data.accountLinkUrl, '_blank');
+                    
+                    // Show message to refresh
+                    alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
+                }
+                
+            } catch (error) {
+                console.error('Error continuing onboarding:', error);
+                alert('Error accessing payment setup. Please try again.');
+            }
+        }
+        
+        // Load status on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPaymentStatus();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadPaymentStatus, 30000);
+        });
+    </script>
+</body>
+</html>
