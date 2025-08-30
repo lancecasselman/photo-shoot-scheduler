@@ -10749,9 +10749,9 @@ app.get('/setup', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'subscriber-setup.html'));
 });
 
-// REDIRECT OLD ONBOARDING TO NEW SETUP
+// Serve the onboarding wizard
 app.get('/onboarding', (req, res) => {
-    res.redirect('/setup');
+    res.sendFile(path.resolve(__dirname, 'onboarding.html'));
 });
 
 // BUSINESS PROFILE SETUP ROUTE
