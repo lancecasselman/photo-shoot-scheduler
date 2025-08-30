@@ -9386,13 +9386,28 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
         // Create tip URL for this invoice using payment record ID
         const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${paymentRecordId}`;
         
+        // Get photographer's Stripe Connect account ID
+        const userId = req.user?.uid || req.user?.id || '3Tc0PNSL9ePct34MXNiTUjfCo5s1';
+        const photographerResult = await pool.query(
+            'SELECT stripe_connect_account_id, business_name, email FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        const photographer = photographerResult.rows[0];
+        const photographerAccountId = photographer?.stripe_connect_account_id;
+        
+        if (!photographerAccountId) {
+            console.warn('⚠️ No Stripe Connect account found for photographer, invoice will go to platform account');
+        }
+        
         // Create invoice with proper collection method for manual sending
-        const invoice = await stripe.invoices.create({
+        // IMPORTANT: Use stripeAccount parameter to route payments to photographer's connected account
+        const invoiceParams = {
             customer: customer.id,
-            description: `Lance - The Legacy Photography: ${invoiceDescription}`,
+            description: `${photographer?.business_name || 'Photography Services'}: ${invoiceDescription}`,
             collection_method: 'send_invoice',
             days_until_due: isDeposit ? 14 : 30, // Shorter due date for deposits
-            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: lance@thelegacyphotography.com`,
+            footer: `Thank you for choosing ${photographer?.business_name || 'our photography services'}!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${photographer?.email || 'support@example.com'}`,
             custom_fields: customFields,
             metadata: {
                 sessionId: sessionId,
@@ -9400,38 +9415,54 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
                 sessionType: session.sessionType,
                 location: session.location,
                 dateTime: session.dateTime,
-                photographer: 'Lance - The Legacy Photography',
-                businessName: 'The Legacy Photography',
-                businessEmail: 'lance@thelegacyphotography.com',
+                photographer: photographer?.business_name || 'Photography Services',
+                businessName: photographer?.business_name || 'Photography Services',
+                businessEmail: photographer?.email || 'support@example.com',
                 isDeposit: isDeposit ? 'true' : 'false',
                 totalSessionPrice: session.price.toString(),
                 paymentRecordId: paymentRecordId,
-                customInvoiceUrl: invoiceCustomUrl
+                customInvoiceUrl: invoiceCustomUrl,
+                photographerAccountId: photographerAccountId || 'platform'
             }
-        });
+        };
+        
+        // Create invoice on the photographer's connected account if available
+        const invoice = photographerAccountId 
+            ? await stripe.invoices.create(invoiceParams, { stripeAccount: photographerAccountId })
+            : await stripe.invoices.create(invoiceParams);
 
-        // Add invoice item
-        await stripe.invoiceItems.create({
+        // Add invoice item (must be created on the same connected account)
+        const invoiceItemParams = {
             customer: customer.id,
             invoice: invoice.id,
             amount: Math.round(invoiceAmount * 100), // Convert to cents
             currency: 'usd',
-            description: `${invoiceDescription} by Lance - The Legacy Photography`,
+            description: `${invoiceDescription} by ${photographer?.business_name || 'Photography Services'}`,
             metadata: {
                 sessionId: sessionId,
                 location: session.location,
                 dateTime: session.dateTime,
                 duration: `${session.duration} minutes`,
-                photographer: 'Lance - The Legacy Photography',
-                businessEmail: 'lance@thelegacyphotography.com',
+                photographer: photographer?.business_name || 'Photography Services',
+                businessEmail: photographer?.email || 'support@example.com',
                 isDeposit: isDeposit ? 'true' : 'false',
                 depositAmount: depositAmount ? depositAmount.toString() : '0'
             }
-        });
+        };
+        
+        // Create invoice item on the photographer's connected account if available
+        photographerAccountId
+            ? await stripe.invoiceItems.create(invoiceItemParams, { stripeAccount: photographerAccountId })
+            : await stripe.invoiceItems.create(invoiceItemParams);
 
-        // Finalize and send invoice
-        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(finalizedInvoice.id);
+        // Finalize and send invoice (on the same connected account)
+        const finalizedInvoice = photographerAccountId
+            ? await stripe.invoices.finalizeInvoice(invoice.id, {}, { stripeAccount: photographerAccountId })
+            : await stripe.invoices.finalizeInvoice(invoice.id);
+            
+        photographerAccountId
+            ? await stripe.invoices.sendInvoice(finalizedInvoice.id, {}, { stripeAccount: photographerAccountId })
+            : await stripe.invoices.sendInvoice(finalizedInvoice.id);
 
         // If this is a deposit, update the session's deposit amount
         if (isDeposit && depositAmount) {
