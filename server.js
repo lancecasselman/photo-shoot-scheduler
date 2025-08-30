@@ -3531,8 +3531,7 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
 
         // Create Stripe Connect account for the photographer
         try {
-            const stripeConnect = require('./server/stripe-connect');
-            const connectManager = new stripeConnect.StripeConnectManager();
+            const connectManager = new StripeConnectManager();
             
             // Create Express account with the business information
             const accountResult = await connectManager.createExpressAccount(

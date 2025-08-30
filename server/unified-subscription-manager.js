@@ -1033,14 +1033,17 @@ class UnifiedSubscriptionManager {
                 // Update subscription status in database
                 const client = await this.pool.connect();
                 try {
-                    // Update user subscription status
+                    // Update user subscription status and plan
                     await client.query(`
                         UPDATE users SET
                             subscription_status = 'active',
-                            stripe_customer_id = $2,
+                            subscription_plan = $2,
+                            stripe_customer_id = $3,
+                            stripe_subscription_id = $4,
+                            subscription_expires_at = NOW() + INTERVAL '1 month',
                             updated_at = NOW()
                         WHERE id = $1
-                    `, [userId, customerId]);
+                    `, [userId, planType || 'professional', customerId, fullSession.subscription?.id || fullSession.subscription]);
                     
                     // Record the subscription details
                     if (fullSession.subscription) {
@@ -1097,13 +1100,17 @@ class UnifiedSubscriptionManager {
                         await client.query(`
                             INSERT INTO users (
                                 id, email, username, display_name, 
-                                subscription_status, stripe_customer_id, 
-                                created_at, onboarding_complete
+                                subscription_status, subscription_plan, stripe_customer_id, 
+                                stripe_subscription_id, subscription_expires_at,
+                                created_at, onboarding_completed
                             )
-                            VALUES ($1, $2, $3, $4, $5, $6, NOW(), false)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() + INTERVAL '1 month', NOW(), false)
                             ON CONFLICT (id) DO UPDATE SET
                                 subscription_status = EXCLUDED.subscription_status,
+                                subscription_plan = EXCLUDED.subscription_plan,
                                 stripe_customer_id = EXCLUDED.stripe_customer_id,
+                                stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+                                subscription_expires_at = EXCLUDED.subscription_expires_at,
                                 updated_at = NOW()
                         `, [
                             userRecord.uid,
@@ -1111,7 +1118,9 @@ class UnifiedSubscriptionManager {
                             customerEmail.split('@')[0],
                             fullSession.customer_details?.name || customerEmail.split('@')[0],
                             'active',
-                            customerId
+                            'professional',
+                            customerId,
+                            fullSession.subscription?.id || fullSession.subscription
                         ]);
                         
                         // Record subscription
