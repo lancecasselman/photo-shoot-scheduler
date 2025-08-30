@@ -16511,15 +16511,15 @@ END:VCALENDAR`;
             const completeCard = document.getElementById('stripeConnectComplete');
             
             try {
-                const response = await fetch('/api/stripe/connect-status', {
-                    headers: {
-                        'Authorization': 'Bearer ' + await firebase.auth().currentUser.getIdToken()
-                    }
-                });
+                const response = await fetch('/api/stripe-connect/account-status');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch status');
+                }
                 
                 const data = await response.json();
                 
-                if (data.connected) {
+                if (data.onboardingComplete && data.canReceivePayments) {
                     // Show connected state
                     statusText.textContent = 'Payment processing is active';
                     statusDetails.textContent = 'Your Stripe Express account is connected and ready to receive payments.';
@@ -16559,7 +16559,6 @@ END:VCALENDAR`;
             const btn = document.getElementById('setupStripeBtn');
             const btnText = btn.querySelector('.btn-text');
             const btnLoading = btn.querySelector('.btn-loading');
-            const country = document.getElementById('businessCountry').value;
             
             // Show loading state
             btnText.style.display = 'none';
@@ -16567,20 +16566,22 @@ END:VCALENDAR`;
             btn.disabled = true;
             
             try {
-                const response = await fetch('/api/stripe/connect-onboarding', {
+                const response = await fetch('/api/stripe-connect/start-onboarding', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + await firebase.auth().currentUser.getIdToken()
-                    },
-                    body: JSON.stringify({ country })
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to start onboarding');
+                }
                 
                 const data = await response.json();
                 
-                if (data.url) {
+                if (data.onboardingUrl) {
                     // Redirect to Stripe onboarding
-                    window.location.href = data.url;
+                    window.location.href = data.onboardingUrl;
                 } else {
                     throw new Error('Failed to generate onboarding link');
                 }
