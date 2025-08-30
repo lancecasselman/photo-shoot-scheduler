@@ -1343,8 +1343,14 @@ app.post('/api/auth/firebase-login', async (req, res) => {
             // Create or update user in database with proper error handling
             client = await pool.connect();
             await client.query(`
-                INSERT INTO users (id, email, display_name, updated_at)
-                VALUES ($1, $2, $3, NOW())
+                INSERT INTO users (
+                    id, email, display_name, 
+                    subscription_status, subscription_plan,
+                    onboarding_completed, stripe_onboarding_complete,
+                    ai_credits, platform_fee_percentage,
+                    created_at, updated_at
+                )
+                VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
                 ON CONFLICT (email) DO UPDATE SET
                     id = EXCLUDED.id,
                     display_name = EXCLUDED.display_name,
@@ -9767,18 +9773,49 @@ app.post('/api/stripe-webhook', express.raw({type: 'application/json'}), async (
             case 'customer.subscription.created':
             case 'customer.subscription.updated':
                 const subscription = event.data.object;
+                // Determine plan type from price ID or metadata
+                let planType = 'basic';
+                if (subscription.metadata && subscription.metadata.plan_type) {
+                    planType = subscription.metadata.plan_type;
+                } else if (subscription.items && subscription.items.data.length > 0) {
+                    // Check price amount to determine plan
+                    const priceAmount = subscription.items.data[0].price.unit_amount;
+                    if (priceAmount >= 2000) { // $20 or more suggests professional
+                        planType = 'professional';
+                    }
+                }
+                
                 await pool.query(
-                    'UPDATE users SET subscription_status = $1, subscription_expires_at = $2 WHERE stripe_customer_id = $3',
-                    [subscription.status, new Date(subscription.current_period_end * 1000), subscription.customer]
+                    `UPDATE users 
+                     SET subscription_status = $1, 
+                         subscription_expires_at = $2,
+                         subscription_plan = $3,
+                         stripe_subscription_id = $4,
+                         updated_at = NOW()
+                     WHERE stripe_customer_id = $5`,
+                    [
+                        subscription.status, 
+                        new Date(subscription.current_period_end * 1000),
+                        planType,
+                        subscription.id,
+                        subscription.customer
+                    ]
                 );
+                console.log(`✅ Updated subscription for customer ${subscription.customer}: ${subscription.status}, plan: ${planType}`);
                 break;
 
             case 'customer.subscription.deleted':
                 const deletedSub = event.data.object;
                 await pool.query(
-                    'UPDATE users SET subscription_status = $1 WHERE stripe_customer_id = $2',
+                    `UPDATE users 
+                     SET subscription_status = $1,
+                         subscription_plan = 'basic',
+                         stripe_subscription_id = NULL,
+                         updated_at = NOW()
+                     WHERE stripe_customer_id = $2`,
                     ['canceled', deletedSub.customer]
                 );
+                console.log(`❌ Subscription canceled for customer ${deletedSub.customer}`);
                 break;
         }
 
