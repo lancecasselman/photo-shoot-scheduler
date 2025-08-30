@@ -762,11 +762,12 @@ class OnboardingWizard {
     }
     
     async nextStep() {
+        // Collect data BEFORE validation so we have the current values
+        this.collectCurrentStepData();
+        
         if (!await this.validateCurrentStep()) {
             return;
         }
-        
-        this.collectCurrentStepData();
         
         if (this.currentStep < this.totalSteps) {
             this.renderStep(this.currentStep + 1);
@@ -840,10 +841,15 @@ class OnboardingWizard {
         const inputs = formContainer.querySelectorAll('input, select, textarea');
         
         inputs.forEach(input => {
-            if (input.name && input.value) {
+            if (input.name) {
+                // Always collect the value, even if empty
                 this.formData[input.name] = input.value;
+                console.log(`Collecting ${input.name}: ${input.value}`);
             }
         });
+        
+        // Log the collected data to debug
+        console.log('Form data after collection:', this.formData);
     }
     
     async completeOnboarding() {
