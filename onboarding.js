@@ -940,7 +940,17 @@ window.onboardingSetupStripeConnect = async function() {
         }
         
         if (data.onboardingUrl) {
-            window.location.href = data.onboardingUrl;
+            // Open Stripe onboarding in a new window to avoid iframe restrictions
+            console.log('Opening Stripe onboarding in new window...');
+            window.open(data.onboardingUrl, '_blank', 'width=900,height=700');
+            
+            // Show a message to the user
+            alert('Stripe payment setup opened in a new window. Please complete the setup there, then return here and click "Skip Payment Setup for Now" to continue.');
+            
+            // Reset the button
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+            btn.disabled = false;
         } else {
             throw new Error('No onboarding URL received');
         }
@@ -969,7 +979,10 @@ window.continueOnboardingStripeSetup = async function() {
         const data = await response.json();
         
         if (data.onboardingUrl) {
-            window.location.href = data.onboardingUrl;
+            // Open in new window to avoid iframe restrictions
+            console.log('Opening Stripe onboarding continuation in new window...');
+            window.open(data.onboardingUrl, '_blank', 'width=900,height=700');
+            alert('Stripe payment setup opened in a new window. Please complete the setup there, then refresh this page to see your updated status.');
         } else {
             throw new Error('No onboarding URL received');
         }
