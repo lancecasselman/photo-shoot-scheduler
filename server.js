@@ -11830,6 +11830,24 @@ app.get('/secure-app.html', async (req, res) => {
     res.sendFile(path.join(__dirname, 'secure-app.html'));
 });
 
+// Payment Setup page - requires authentication
+app.get('/payment-setup.html', isAuthenticated, (req, res) => {
+    console.log('💳 PAYMENT SETUP: Serving payment configuration page');
+    res.sendFile(path.join(__dirname, 'public', 'payment-setup.html'));
+});
+
+// Subscription Settings page - requires authentication  
+app.get('/subscription-settings.html', isAuthenticated, (req, res) => {
+    console.log('💰 SUBSCRIPTION: Serving subscription settings page');
+    res.sendFile(path.join(__dirname, 'public', 'subscription-settings.html'));
+});
+
+// Storage Dashboard page - requires authentication
+app.get('/storage-dashboard.html', isAuthenticated, (req, res) => {
+    console.log('💾 STORAGE: Serving storage dashboard page');
+    res.sendFile(path.join(__dirname, 'public', 'storage-dashboard.html'));
+});
+
 // LEGACY REDIRECTS - Redirect old routes to secure system
 app.get('/landing.html', (req, res) => {
     console.log('🔄 REDIRECT: /landing.html → /secure-landing.html');
