@@ -159,17 +159,34 @@ class PaymentNotificationManager {
      */
     async sendPhotographerNotification(session, paymentDetails) {
         try {
+            // Get the photographer's email from the database using their user_id
+            const photographerResult = await this.pool.query(
+                'SELECT email, display_name, business_name FROM users WHERE id = $1',
+                [session.user_id]
+            );
+            
+            if (photographerResult.rows.length === 0) {
+                console.log('⚠️ Photographer not found for session, using default email');
+            }
+            
+            const photographer = photographerResult.rows[0];
+            const photographerEmail = photographer?.email || process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
+            const photographerName = photographer?.display_name || photographer?.business_name || 'Photographer';
+            
             const isDeposit = paymentDetails.type === 'deposit';
             const paymentTypeText = isDeposit ? 'Deposit' : 'Final Payment';
             
             const subject = ` ${paymentTypeText} Received - ${session.client_name}`;
             
             const message = `
-Payment Notification - ${session.client_name}
+Hi ${photographerName},
+
+Great news! You've received a ${paymentTypeText.toLowerCase()} for your photography session.
 
 ${paymentTypeText} Details:
 • Amount: $${paymentDetails.amount.toFixed(2)}
 • Payment ID: ${paymentDetails.paymentId}
+• Client: ${session.client_name}
 • Client Email: ${paymentDetails.clientEmail}
 
 Session Information:
@@ -189,8 +206,6 @@ You can view the session details in your photography management dashboard.
             // Send email notification using the email service directly
             const { sendEmailWithSender } = require('./notifications');
             
-            const photographerEmail = process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
-            
             await sendEmailWithSender(
                 photographerEmail,
                 subject,
@@ -200,7 +215,7 @@ You can view the session details in your photography management dashboard.
                 'Photography Management System'
             );
 
-            console.log(' Photographer notification sent for payment:', paymentDetails.paymentId);
+            console.log(` Photographer notification sent to ${photographerEmail} for payment:`, paymentDetails.paymentId);
 
         } catch (error) {
             console.error('❌ Error sending photographer notification:', error);
@@ -229,20 +244,33 @@ You can view the session details in your photography management dashboard.
                 if (sessionResult.rows.length > 0) {
                     const session = sessionResult.rows[0];
                     
+                    // Get the photographer's email
+                    const photographerResult = await client.query(
+                        'SELECT email, display_name, business_name FROM users WHERE id = $1',
+                        [session.user_id]
+                    );
+                    
+                    const photographer = photographerResult.rows[0];
+                    const photographerEmail = photographer?.email || process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
+                    const photographerName = photographer?.display_name || photographer?.business_name || 'Photographer';
+                    
                     // Notify photographer of payment failure
                     const subject = ` Payment Failed - ${session.client_name}`;
                     const message = `
-Payment failure notification for ${session.client_name}
+Hi ${photographerName},
 
-Session: ${session.session_type} on ${new Date(session.date_time).toLocaleDateString()}
-Amount: $${(paymentIntent.amount / 100).toFixed(2)}
-Payment ID: ${paymentIntent.id}
+We encountered an issue processing a payment for one of your sessions.
+
+Payment failure details:
+• Client: ${session.client_name}
+• Session: ${session.session_type} on ${new Date(session.date_time).toLocaleDateString()}
+• Amount: $${(paymentIntent.amount / 100).toFixed(2)}
+• Payment ID: ${paymentIntent.id}
 
 You may want to follow up with the client about the payment issue.
                     `.trim();
 
                     const { sendEmailWithSender } = require('./notifications');
-                    const photographerEmail = process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
                     
                     await sendEmailWithSender(
                         photographerEmail,
@@ -252,6 +280,8 @@ You may want to follow up with the client about the payment issue.
                         'noreply@photomanagementsystem.com',
                         'Photography Management System'
                     );
+                    
+                    console.log(`⚠️ Payment failure notification sent to ${photographerEmail}`);
                 }
             } finally {
                 client.release();
