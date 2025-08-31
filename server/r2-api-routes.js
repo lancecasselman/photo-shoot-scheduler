@@ -246,17 +246,31 @@ function createR2Routes() {
 
       console.log(`📤 Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
 
-      // Check total upload size against storage limit
+      // Check total upload size against storage limit with admin bypass
+      const userEmail = req.user?.email;
       const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
       
-      if (!limitCheck.allowed) {
-        return res.status(413).json({ 
-          error: 'Storage limit exceeded',
-          message: limitCheck.message,
-          usage: limitCheck.usage,
-          upgradeRequired: true
-        });
+      // Admin bypass check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com',
+        'm_casselman@icloud.com'
+      ];
+      
+      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+        console.log(`✅ Admin bypass for uploads: ${userEmail} has unlimited storage`);
+      } else {
+        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        
+        if (!limitCheck.allowed) {
+          return res.status(413).json({ 
+            error: 'Storage limit exceeded',
+            message: limitCheck.message,
+            usage: limitCheck.usage,
+            upgradeRequired: true
+          });
+        }
       }
 
       // Upload files in parallel for better performance
@@ -357,16 +371,30 @@ function createR2Routes() {
 
       console.log(`📱 RAW BACKUP: Processing ${req.files.length} RAW files for user ${userId}, session ${sessionId}`);
 
-      // Check total upload size against storage limit
+      // Check total upload size against storage limit with admin bypass
+      const userEmail = req.user?.email;
       const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
       
-      if (!limitCheck.allowed) {
-        return res.status(413).json({ 
-          error: 'Storage limit exceeded',
-          message: limitCheck.message,
-          upgradeRequired: true
-        });
+      // Admin bypass check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com',
+        'm_casselman@icloud.com'
+      ];
+      
+      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+        console.log(`✅ Admin bypass for RAW uploads: ${userEmail} has unlimited storage`);
+      } else {
+        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        
+        if (!limitCheck.allowed) {
+          return res.status(413).json({ 
+            error: 'Storage limit exceeded',
+            message: limitCheck.message,
+            upgradeRequired: true
+          });
+        }
       }
 
       // Upload files as RAW backup files (NOT gallery files)
@@ -462,16 +490,30 @@ function createR2Routes() {
 
       console.log(` Gallery Upload: Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
 
-      // Check total upload size against storage limit
+      // Check total upload size against storage limit with admin bypass
+      const userEmail = req.user?.email;
       const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
       
-      if (!limitCheck.allowed) {
-        return res.status(413).json({ 
-          error: 'Storage limit exceeded',
-          message: limitCheck.message,
-          upgradeRequired: true
-        });
+      // Admin bypass check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com',
+        'm_casselman@icloud.com'
+      ];
+      
+      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+        console.log(`✅ Admin bypass for gallery uploads: ${userEmail} has unlimited storage`);
+      } else {
+        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        
+        if (!limitCheck.allowed) {
+          return res.status(413).json({ 
+            error: 'Storage limit exceeded',
+            message: limitCheck.message,
+            upgradeRequired: true
+          });
+        }
       }
 
       // Upload files as GALLERY files (not RAW backup)

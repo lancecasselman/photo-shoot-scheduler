@@ -195,8 +195,29 @@ class StorageSystem {
     /**
      * Check if user can upload a file of given size
      */
-    async canUpload(userId, fileSizeBytes) {
+    async canUpload(userId, fileSizeBytes, userEmail = null) {
         try {
+            // Admin bypass for specific email addresses
+            const adminEmails = [
+                'lancecasselman@icloud.com',
+                'lancecasselman2011@gmail.com', 
+                'lance@thelegacyphotography.com',
+                'm_casselman@icloud.com'
+            ];
+
+            if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+                console.log(`✅ Admin bypass: ${userEmail} has unlimited storage`);
+                return {
+                    canUpload: true,
+                    currentUsageGB: 0,
+                    newTotalGB: 0,
+                    quotaGB: Number.MAX_SAFE_INTEGER,
+                    remainingGB: Number.MAX_SAFE_INTEGER,
+                    isNearLimit: false,
+                    isAdmin: true
+                };
+            }
+
             const quota = await this.getUserQuota(userId);
             const usage = await this.calculateStorageUsage(userId);
             
