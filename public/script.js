@@ -449,34 +449,48 @@ async function loadSessions() {
         }
 
         // Transform the data to match frontend format
-        const transformedSessions = data.map(session => ({
-            id: session.id,
-            sessionType: session.session_type || session.sessionType,
-            clientName: session.client_name || session.clientName,
-            dateTime: session.date_time || session.dateTime,
-            location: session.location,
-            phoneNumber: session.phone_number || session.phoneNumber,
-            email: session.email,
-            price: parseFloat(session.price) || 0,
-            depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
-            depositPaid: session.deposit_paid || session.depositPaid || false,
-            depositSent: session.deposit_sent || session.depositSent || false,
-            invoiceSent: session.invoice_sent || session.invoiceSent || false,
-            depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
-            invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
-            duration: parseInt(session.duration) || 60,
-            notes: session.notes || '',
-            contractSigned: session.contract_signed || session.contractSigned || false,
-            paid: session.paid || false,
-            edited: session.edited || false,
-            delivered: session.delivered || false,
-            reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
-            galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
-            reminderSent: session.reminder_sent || session.reminderSent || false,
-            createdBy: session.created_by || session.createdBy,
-            createdAt: session.created_at || session.createdAt,
-            updatedAt: session.updated_at || session.updatedAt
-        }));
+        const transformedSessions = data.map(session => {
+            // Debug: Check what payment fields we're getting
+            if (session.client_name === 'Amanda casselman' || session.clientName === 'Amanda casselman') {
+                console.log('🔍 DEBUG Amanda session payment fields:', {
+                    depositPaid: session.depositPaid,
+                    deposit_paid: session.deposit_paid,
+                    depositSent: session.depositSent,
+                    deposit_sent: session.deposit_sent,
+                    invoiceSent: session.invoiceSent,
+                    invoice_sent: session.invoice_sent
+                });
+            }
+            
+            return {
+                id: session.id,
+                sessionType: session.session_type || session.sessionType,
+                clientName: session.client_name || session.clientName,
+                dateTime: session.date_time || session.dateTime,
+                location: session.location,
+                phoneNumber: session.phone_number || session.phoneNumber,
+                email: session.email,
+                price: parseFloat(session.price) || 0,
+                depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
+                depositPaid: session.depositPaid || session.deposit_paid || false,
+                depositSent: session.depositSent || session.deposit_sent || false,
+                invoiceSent: session.invoiceSent || session.invoice_sent || false,
+                depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
+                invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
+                duration: parseInt(session.duration) || 60,
+                notes: session.notes || '',
+                contractSigned: session.contract_signed || session.contractSigned || false,
+                paid: session.paid || false,
+                edited: session.edited || false,
+                delivered: session.delivered || false,
+                reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
+                galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
+                reminderSent: session.reminder_sent || session.reminderSent || false,
+                createdBy: session.created_by || session.createdBy,
+                createdAt: session.created_at || session.createdAt,
+                updatedAt: session.updated_at || session.updatedAt
+            };
+        });
 
         console.log('Transformed sessions:', transformedSessions);
 
