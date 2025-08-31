@@ -917,8 +917,258 @@ if (process.env.NODE_ENV === 'production') {
     app.use(logger.requestLogger.bind(logger));
 }
 
-// IMPORTANT: Set up Stripe webhook route BEFORE body parsers
-// This webhook needs the raw body for signature verification
+// IMPORTANT: Set up ALL Stripe webhook routes BEFORE body parsers
+// These webhooks need the raw body for signature verification
+
+// Main Stripe webhook for payments and subscriptions
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log('🔔 Webhook received:', event.type, 'Event ID:', event.id);
+    } catch (err) {
+        console.log(`❌ Webhook signature verification failed.`, err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+        // Handle AI credits and photography session payments via checkout sessions
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            console.log('🔔 Checkout session completed event received:', session.id);
+            console.log('💳 Session metadata:', JSON.stringify(session.metadata));
+            
+            // Check if this is an AI credits purchase
+            if (session.metadata && session.metadata.type === 'ai_credits') {
+                const userId = session.metadata.userId;
+                const creditsAmount = parseInt(session.metadata.credits);
+                const priceUsd = parseFloat(session.metadata.priceUsd);
+
+                // Add credits to user account using storage layer
+                await pool.query('UPDATE users SET ai_credits = ai_credits + $1, last_ai_credit_purchase = NOW() WHERE id = $2', [creditsAmount, userId]);
+                
+                // Log the purchase
+                await pool.query(`
+                    INSERT INTO ai_credit_purchases (id, user_id, credits_amount, price_usd, stripe_payment_intent_id, status, purchased_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                `, [
+                    require('crypto').randomUUID(),
+                    userId, 
+                    creditsAmount, 
+                    priceUsd.toString(),
+                    session.payment_intent,
+                    'completed'
+                ]);
+
+                console.log(` Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
+            }
+            
+            // Check if this is a subscription creation (Professional Plan or Storage Add-on)
+            if (session.metadata && session.metadata.type === 'subscription') {
+                const userId = session.metadata.userId;
+                const planType = session.metadata.planType; // 'professional' or 'storage'
+                
+                console.log(`🔔 Processing subscription creation for user ${userId}, plan: ${planType}`);
+                
+                if (planType === 'professional') {
+                    // Update user with Professional Plan
+                    const expires = new Date();
+                    expires.setMonth(expires.getMonth() + 1); // Monthly subscription
+                    
+                    await pool.query(`
+                        UPDATE users 
+                        SET subscription_status = 'active',
+                            subscription_plan = 'professional',
+                            subscription_expires_at = $1,
+                            stripe_subscription_id = $2,
+                            updated_at = NOW()
+                        WHERE id = $3
+                    `, [expires, session.subscription, userId]);
+                    
+                    // Add to subscription summary
+                    await pool.query(`
+                        INSERT INTO user_subscription_summary (user_id, has_professional_plan, professional_platform, professional_status, base_storage_gb, total_storage_gb, updated_at)
+                        VALUES ($1, true, 'stripe', 'active', 100, 100, NOW())
+                        ON CONFLICT (user_id) 
+                        DO UPDATE SET 
+                            has_professional_plan = true,
+                            professional_platform = 'stripe',
+                            professional_status = 'active',
+                            base_storage_gb = 100,
+                            total_storage_gb = GREATEST(user_subscription_summary.total_storage_gb, 100),
+                            updated_at = NOW()
+                    `, [userId]);
+                    
+                    console.log(`✅ Professional Plan activated for user ${userId}`);
+                } else if (planType === 'storage') {
+                    const tbCount = parseInt(session.metadata.tbCount || '1');
+                    const storageGb = tbCount * 1024; // Convert TB to GB
+                    
+                    // Add storage add-on
+                    await pool.query(`
+                        INSERT INTO user_subscription_summary (user_id, total_storage_tb, total_storage_gb, updated_at)
+                        VALUES ($1, $2, $3, NOW())
+                        ON CONFLICT (user_id) 
+                        DO UPDATE SET 
+                            total_storage_tb = user_subscription_summary.total_storage_tb + $2,
+                            total_storage_gb = user_subscription_summary.total_storage_gb + $3,
+                            updated_at = NOW()
+                    `, [userId, tbCount, storageGb]);
+                    
+                    console.log(`✅ Added ${tbCount}TB storage for user ${userId}`);
+                }
+            }
+            
+            // Check if this is a photography session payment (deposits use checkout sessions)
+            if (session.metadata && session.metadata.paymentId) {
+                console.log(' Processing photography session checkout session payment');
+                console.log('💳 Payment routed to:', session.metadata.photographerAccountId || 'platform');
+                
+                try {
+                    // Extract session ID from paymentId (format: payment-sessionId-timestamp)
+                    const paymentId = session.metadata.paymentId;
+                    const sessionIdMatch = paymentId.match(/payment-([a-f0-9-]+)-\d+/);
+                    
+                    if (sessionIdMatch) {
+                        const sessionId = sessionIdMatch[1];
+                        const isConnectedAccount = session.metadata.photographerAccountId && session.metadata.photographerAccountId !== 'platform';
+                        
+                        // Create a payment intent-like object for notification processing
+                        const mockPaymentIntent = {
+                            id: session.payment_intent,
+                            amount_received: session.amount_total,
+                            metadata: {
+                                sessionId: sessionId,
+                                type: session.metadata.type || (paymentId.includes('deposit') ? 'deposit' : 'invoice'),
+                                photographerAccountId: session.metadata.photographerAccountId,
+                                baseAmount: session.metadata.baseAmount,
+                                tipAmount: session.metadata.tipAmount
+                            },
+                            receipt_email: session.customer_details?.email
+                        };
+                        
+                        // Process the payment notification
+                        const PaymentNotificationManager = require('./server/payment-notifications');
+                        const notificationManager = new PaymentNotificationManager();
+                        await notificationManager.handlePaymentSuccess(mockPaymentIntent);
+                        
+                        // Update database based on payment type
+                        if (session.metadata.type === 'deposit') {
+                            // Update deposit_paid and deposit_paid_date
+                            await pool.query(
+                                `UPDATE photography_sessions 
+                                 SET deposit_paid = true,
+                                     deposit_paid_date = NOW(),
+                                     deposit_sent = true,
+                                     updated_at = NOW()
+                                 WHERE id = $1`,
+                                [sessionId]
+                            );
+                            console.log('✅ Updated session deposit status for:', sessionId);
+                        } else {
+                            // Update full payment status
+                            await pool.query(
+                                `UPDATE photography_sessions 
+                                 SET paid = true,
+                                     payment_date = NOW(),
+                                     invoice_sent = true,
+                                     updated_at = NOW()
+                                 WHERE id = $1`,
+                                [sessionId]
+                            );
+                            console.log('✅ Updated session payment status for:', sessionId);
+                        }
+                        
+                        console.log(' Photography checkout session payment processed:', sessionId);
+                        console.log(isConnectedAccount ? 
+                            '💰 Payment went DIRECTLY to photographer account' : 
+                            '⚠️ Payment went to platform account (needs manual transfer)');
+                    } else {
+                        console.log(' Could not extract session ID from payment ID:', paymentId);
+                    }
+                } catch (error) {
+                    console.error('❌ Error processing photography checkout session payment:', error);
+                }
+            }
+        }
+
+        // Handle invoice payment success
+        if (event.type === 'invoice.payment_succeeded') {
+            const invoice = event.data.object;
+            console.log('📧 Invoice payment succeeded:', invoice.id, 'Amount:', invoice.amount_paid / 100);
+            console.log('📋 Invoice metadata:', JSON.stringify(invoice.metadata));
+            
+            // Check if this is a photography session invoice by looking for session metadata
+            if (invoice.metadata && invoice.metadata.sessionId) {
+                console.log(' Processing photography session invoice payment');
+                
+                // Create a payment intent-like object from invoice data for notification manager
+                const paymentIntentData = {
+                    id: invoice.payment_intent,
+                    amount_received: invoice.amount_paid,
+                    metadata: {
+                        sessionId: invoice.metadata.sessionId,
+                        type: invoice.metadata.isDeposit === 'true' ? 'deposit' : 'invoice',
+                        clientName: invoice.metadata.clientName,
+                        businessName: invoice.metadata.businessName,
+                        photographerId: invoice.metadata.photographerId
+                    },
+                    receipt_email: invoice.customer_email
+                };
+                
+                try {
+                    // Initialize payment notification manager and process the payment
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    await notificationManager.handlePaymentSuccess(paymentIntentData);
+                    
+                    console.log(' Photography invoice payment notification processed successfully');
+                } catch (error) {
+                    console.error('❌ Error processing invoice payment notification:', error);
+                    // Don't throw here to avoid breaking other webhook processing
+                }
+            } else {
+                console.log('📧 Standard invoice payment processed (no session metadata)');
+            }
+        }
+
+        // Handle payment success for photography sessions and deposits
+        if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object;
+            console.log(' Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+            console.log('💳 Payment metadata:', JSON.stringify(paymentIntent.metadata));
+            
+            // Check if this is a photography session payment by looking for session metadata
+            if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
+                console.log(' Processing photography session payment notification');
+                
+                try {
+                    // Initialize payment notification manager and process the payment
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    await notificationManager.handlePaymentSuccess(paymentIntent);
+                    
+                    console.log(' Photography payment notification processed successfully');
+                } catch (error) {
+                    console.error('❌ Error processing photography payment notification:', error);
+                    // Don't throw here to avoid breaking other webhook processing
+                }
+            } else {
+                console.log('💳 Standard payment processed (no session metadata)');
+            }
+        }
+
+        res.json({received: true});
+    } catch (error) {
+        console.error('Webhook processing error:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Subscription webhook endpoint
 app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
     console.log('🔔 Stripe webhook received at /api/subscriptions/webhook/stripe');
     
@@ -952,7 +1202,7 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
     }
 });
 
-// Body parsing middleware (must be before other routes but AFTER webhook)
+// Body parsing middleware (must be AFTER webhook routes)
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
@@ -6199,253 +6449,7 @@ app.post('/api/payment-plans/:planId/send-invoice', isAuthenticated, async (req,
     }
 });
 
-// Stripe Webhook for AI Credits and Subscriptions
-app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
-
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        console.log('🔔 Webhook received:', event.type, 'Event ID:', event.id);
-    } catch (err) {
-        console.log(`❌ Webhook signature verification failed.`, err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    try {
-        // Handle AI credits and photography session payments via checkout sessions
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            console.log('🔔 Checkout session completed event received:', session.id);
-            console.log('💳 Session metadata:', JSON.stringify(session.metadata));
-            
-            // Check if this is an AI credits purchase
-            if (session.metadata && session.metadata.type === 'ai_credits') {
-                const userId = session.metadata.userId;
-                const creditsAmount = parseInt(session.metadata.credits);
-                const priceUsd = parseFloat(session.metadata.priceUsd);
-
-                // Add credits to user account using storage layer
-                await pool.query('UPDATE users SET ai_credits = ai_credits + $1, last_ai_credit_purchase = NOW() WHERE id = $2', [creditsAmount, userId]);
-                
-                // Log the purchase
-                await pool.query(`
-                    INSERT INTO ai_credit_purchases (id, user_id, credits_amount, price_usd, stripe_payment_intent_id, status, purchased_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, NOW())
-                `, [
-                    require('crypto').randomUUID(),
-                    userId, 
-                    creditsAmount, 
-                    priceUsd.toString(),
-                    session.payment_intent,
-                    'completed'
-                ]);
-
-                console.log(` Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
-            }
-            
-            // Check if this is a subscription creation (Professional Plan or Storage Add-on)
-            if (session.metadata && session.metadata.type === 'subscription') {
-                const userId = session.metadata.userId;
-                const planType = session.metadata.planType; // 'professional' or 'storage'
-                
-                console.log(`🔔 Processing subscription creation for user ${userId}, plan: ${planType}`);
-                
-                if (planType === 'professional') {
-                    // Update user with Professional Plan
-                    const expires = new Date();
-                    expires.setMonth(expires.getMonth() + 1); // Monthly subscription
-                    
-                    await pool.query(`
-                        UPDATE users 
-                        SET subscription_status = 'active',
-                            subscription_plan = 'professional',
-                            subscription_expires_at = $1,
-                            stripe_subscription_id = $2,
-                            updated_at = NOW()
-                        WHERE id = $3
-                    `, [expires, session.subscription, userId]);
-                    
-                    // Add to subscription summary
-                    await pool.query(`
-                        INSERT INTO user_subscription_summary (user_id, has_professional_plan, professional_platform, professional_status, base_storage_gb, total_storage_gb, updated_at)
-                        VALUES ($1, true, 'stripe', 'active', 100, 100, NOW())
-                        ON CONFLICT (user_id) 
-                        DO UPDATE SET 
-                            has_professional_plan = true,
-                            professional_platform = 'stripe',
-                            professional_status = 'active',
-                            base_storage_gb = 100,
-                            total_storage_gb = GREATEST(user_subscription_summary.total_storage_gb, 100),
-                            updated_at = NOW()
-                    `, [userId]);
-                    
-                    console.log(`✅ Professional Plan activated for user ${userId}`);
-                } else if (planType === 'storage') {
-                    const tbCount = parseInt(session.metadata.tbCount || '1');
-                    const storageGb = tbCount * 1024; // Convert TB to GB
-                    
-                    // Add storage add-on
-                    await pool.query(`
-                        INSERT INTO user_subscription_summary (user_id, total_storage_tb, total_storage_gb, updated_at)
-                        VALUES ($1, $2, $3, NOW())
-                        ON CONFLICT (user_id) 
-                        DO UPDATE SET 
-                            total_storage_tb = user_subscription_summary.total_storage_tb + $2,
-                            total_storage_gb = user_subscription_summary.total_storage_gb + $3,
-                            updated_at = NOW()
-                    `, [userId, tbCount, storageGb]);
-                    
-                    console.log(`✅ Added ${tbCount}TB storage for user ${userId}`);
-                }
-            }
-            
-            // Check if this is a photography session payment (deposits use checkout sessions)
-            if (session.metadata && session.metadata.paymentId) {
-                console.log(' Processing photography session checkout session payment');
-                console.log('💳 Payment routed to:', session.metadata.photographerAccountId || 'platform');
-                
-                try {
-                    // Extract session ID from paymentId (format: payment-sessionId-timestamp)
-                    const paymentId = session.metadata.paymentId;
-                    const sessionIdMatch = paymentId.match(/payment-([a-f0-9-]+)-\d+/);
-                    
-                    if (sessionIdMatch) {
-                        const sessionId = sessionIdMatch[1];
-                        const isConnectedAccount = session.metadata.photographerAccountId && session.metadata.photographerAccountId !== 'platform';
-                        
-                        // Create a payment intent-like object for notification processing
-                        const mockPaymentIntent = {
-                            id: session.payment_intent,
-                            amount_received: session.amount_total,
-                            metadata: {
-                                sessionId: sessionId,
-                                type: session.metadata.type || (paymentId.includes('deposit') ? 'deposit' : 'invoice'),
-                                photographerAccountId: session.metadata.photographerAccountId,
-                                baseAmount: session.metadata.baseAmount,
-                                tipAmount: session.metadata.tipAmount
-                            },
-                            receipt_email: session.customer_details?.email
-                        };
-                        
-                        // Process the payment notification
-                        const PaymentNotificationManager = require('./server/payment-notifications');
-                        const notificationManager = new PaymentNotificationManager();
-                        await notificationManager.handlePaymentSuccess(mockPaymentIntent);
-                        
-                        // Update database based on payment type
-                        if (session.metadata.type === 'deposit') {
-                            // Update deposit_paid and deposit_paid_date
-                            await pool.query(
-                                `UPDATE photography_sessions 
-                                 SET deposit_paid = true,
-                                     deposit_paid_date = NOW(),
-                                     deposit_sent = true,
-                                     updated_at = NOW()
-                                 WHERE id = $1`,
-                                [sessionId]
-                            );
-                            console.log('✅ Updated session deposit status for:', sessionId);
-                        } else {
-                            // Update full payment status
-                            await pool.query(
-                                `UPDATE photography_sessions 
-                                 SET paid = true,
-                                     payment_date = NOW(),
-                                     invoice_sent = true,
-                                     updated_at = NOW()
-                                 WHERE id = $1`,
-                                [sessionId]
-                            );
-                            console.log('✅ Updated session payment status for:', sessionId);
-                        }
-                        
-                        console.log(' Photography checkout session payment processed:', sessionId);
-                        console.log(isConnectedAccount ? 
-                            '💰 Payment went DIRECTLY to photographer account' : 
-                            '⚠️ Payment went to platform account (needs manual transfer)');
-                    } else {
-                        console.log(' Could not extract session ID from payment ID:', paymentId);
-                    }
-                } catch (error) {
-                    console.error('❌ Error processing photography checkout session payment:', error);
-                }
-            }
-        }
-
-        // Handle invoice payment success
-        if (event.type === 'invoice.payment_succeeded') {
-            const invoice = event.data.object;
-            console.log('📧 Invoice payment succeeded:', invoice.id, 'Amount:', invoice.amount_paid / 100);
-            console.log('📋 Invoice metadata:', JSON.stringify(invoice.metadata));
-            
-            // Check if this is a photography session invoice by looking for session metadata
-            if (invoice.metadata && invoice.metadata.sessionId) {
-                console.log(' Processing photography session invoice payment');
-                
-                // Create a payment intent-like object from invoice data for notification manager
-                const paymentIntentData = {
-                    id: invoice.payment_intent,
-                    amount_received: invoice.amount_paid,
-                    metadata: {
-                        sessionId: invoice.metadata.sessionId,
-                        type: invoice.metadata.isDeposit === 'true' ? 'deposit' : 'invoice',
-                        clientName: invoice.metadata.clientName,
-                        businessName: invoice.metadata.businessName,
-                        photographerId: invoice.metadata.photographerId
-                    },
-                    receipt_email: invoice.customer_email
-                };
-                
-                try {
-                    // Initialize payment notification manager and process the payment
-                    const PaymentNotificationManager = require('./server/payment-notifications');
-                    const notificationManager = new PaymentNotificationManager();
-                    await notificationManager.handlePaymentSuccess(paymentIntentData);
-                    
-                    console.log(' Photography invoice payment notification processed successfully');
-                } catch (error) {
-                    console.error('❌ Error processing invoice payment notification:', error);
-                    // Don't throw here to avoid breaking other webhook processing
-                }
-            } else {
-                console.log('📧 Standard invoice payment processed (no session metadata)');
-            }
-        }
-
-        // Handle payment success for photography sessions and deposits
-        if (event.type === 'payment_intent.succeeded') {
-            const paymentIntent = event.data.object;
-            console.log(' Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
-            console.log('💳 Payment metadata:', JSON.stringify(paymentIntent.metadata));
-            
-            // Check if this is a photography session payment by looking for session metadata
-            if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
-                console.log(' Processing photography session payment notification');
-                
-                try {
-                    // Initialize payment notification manager and process the payment
-                    const PaymentNotificationManager = require('./server/payment-notifications');
-                    const notificationManager = new PaymentNotificationManager();
-                    await notificationManager.handlePaymentSuccess(paymentIntent);
-                    
-                    console.log(' Photography payment notification processed successfully');
-                } catch (error) {
-                    console.error('❌ Error processing photography payment notification:', error);
-                    // Don't throw here to avoid breaking other webhook processing
-                }
-            } else {
-                console.log('💳 Standard payment processed (no session metadata)');
-            }
-        }
-
-        res.json({received: true});
-    } catch (error) {
-        console.error('Webhook processing error:', error);
-        res.status(500).json({ error: 'Webhook processing failed' });
-    }
-});
-
+// 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
 // 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
 app.post('/api/ai/generate-website-copy', async (req, res) => {
     try {
