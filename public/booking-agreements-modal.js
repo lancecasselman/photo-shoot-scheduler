@@ -202,7 +202,8 @@ async function loadExistingAgreement(sessionId, session) {
 
             if (agreement) {
                 currentAgreement = agreement;
-                displayAgreement(agreement, session);
+                // Show BOTH the existing agreement AND the create new section
+                showBothViewAndCreate(agreement, session);
             } else {
                 // No agreement exists, show template selector
                 showCreateMode(session);
@@ -306,6 +307,54 @@ function showViewMode(agreement, session) {
     } else {
         document.getElementById('signatureInfo').style.display = 'none';
     }
+}
+
+// Show both view and create mode for existing contracts
+function showBothViewAndCreate(agreement, session) {
+    // Show ALL sections
+    document.getElementById('templateSelector').style.display = 'block';
+    document.getElementById('agreementEditor').style.display = 'block';
+    document.getElementById('agreementViewer').style.display = 'block';
+
+    // Clear the editor for new contract creation
+    document.getElementById('agreementContent').innerHTML = '';
+    document.getElementById('agreementTemplate').value = '';
+
+    // Populate template dropdown
+    const select = document.getElementById('agreementTemplate');
+    if (select && select.options.length <= 1) {
+        select.innerHTML = '<option value="">Choose a template...</option>';
+        if (agreementTemplates && agreementTemplates.length > 0) {
+            agreementTemplates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                option.dataset.category = template.category;
+                select.appendChild(option);
+            });
+        }
+    }
+
+    // Display the existing contract in viewer section
+    document.getElementById('agreementViewContent').innerHTML = agreement.content;
+
+    // Show status badge
+    const badge = document.getElementById('agreementStatusBadge');
+    badge.className = `status-badge status-${agreement.status}`;
+    badge.textContent = getStatusText(agreement.status);
+
+    // Show signature info if signed
+    if (agreement.status === 'signed' && agreement.signature_data) {
+        document.getElementById('signatureInfo').style.display = 'block';
+        document.getElementById('signerName').textContent = agreement.signer_name || 'Client';
+        document.getElementById('signedDate').textContent = 
+            new Date(agreement.signature_date).toLocaleDateString();
+    } else {
+        document.getElementById('signatureInfo').style.display = 'none';
+    }
+
+    // Update buttons to show all options
+    updateModalButtons(agreement.status);
 }
 
 // Load selected template
