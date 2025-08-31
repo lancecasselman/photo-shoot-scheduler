@@ -162,11 +162,22 @@ function createBookingAgreementRoutes(pool) {
     router.post('/agreements/:id/send', async (req, res) => {
         try {
             const { id } = req.params;
-            const { clientEmail, clientName } = req.body;
+            const { clientEmail, clientName, sessionType, sessionDate } = req.body;
             const userId = req.session?.user?.uid || '44735007';
 
             const client = await pool.connect();
             try {
+                // Get photographer details for the email
+                const photographerResult = await client.query(
+                    `SELECT business_name, email FROM users WHERE id = $1`,
+                    [userId]
+                );
+                
+                const photographer = photographerResult.rows[0] || {
+                    business_name: 'Photography Studio',
+                    email: 'noreply@photomanagementsystem.com'
+                };
+
                 // Update agreement status
                 const result = await client.query(
                     `UPDATE booking_agreements 
@@ -181,14 +192,44 @@ function createBookingAgreementRoutes(pool) {
                 }
 
                 const agreement = result.rows[0];
+                
+                // Generate the full signing URL
+                const baseUrl = process.env.NODE_ENV === 'production' 
+                    ? 'https://photomanagementsystem.com' 
+                    : 'http://localhost:5000';
+                const signingUrl = `${baseUrl}/sign/${agreement.access_token}`;
 
-                // TODO: Send actual email with signing link
-                // For now, just return success
-                res.json({ 
-                    success: true, 
-                    message: 'Agreement sent for signature',
-                    signingUrl: `/sign/${agreement.access_token}`
-                });
+                // Send email with contract link using the notifications module
+                const { sendContractForSignature } = require('./notifications');
+                const emailResult = await sendContractForSignature(
+                    clientEmail,
+                    clientName,
+                    sessionType || 'Photography',
+                    sessionDate || 'TBD',
+                    photographer.business_name,
+                    photographer.email,
+                    signingUrl
+                );
+
+                if (emailResult.success) {
+                    console.log(`✅ Contract sent successfully to ${clientEmail}`);
+                    res.json({ 
+                        success: true, 
+                        message: 'Contract sent successfully for signature',
+                        signingUrl: signingUrl,
+                        emailSent: true
+                    });
+                } else {
+                    console.error('❌ Failed to send contract email:', emailResult.error);
+                    // Still return success but indicate email failed
+                    res.json({ 
+                        success: true, 
+                        message: 'Agreement ready but email sending failed. Share the link manually.',
+                        signingUrl: signingUrl,
+                        emailSent: false,
+                        emailError: emailResult.error
+                    });
+                }
             } finally {
                 client.release();
             }

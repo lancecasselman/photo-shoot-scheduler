@@ -206,6 +206,57 @@ const emailTemplates = {
                 </div>
             </div>
         `
+    }),
+
+    contractForSignature: (clientName, sessionType, sessionDate, businessName, businessEmail, signingUrl) => ({
+        subject: `Contract Ready for Signature - ${sessionType} Session with ${businessName}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 28px;">📝 Contract Ready for Signature</h1>
+                    <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">${businessName}</p>
+                </div>
+                
+                <div style="padding: 30px; background: #f8f9fa; border-radius: 10px; margin: 20px 0;">
+                    <h2 style="color: #333; margin-top: 0;">Hi ${clientName},</h2>
+                    <p style="color: #666; line-height: 1.6;">Your photography service agreement is ready for your review and signature.</p>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ddd;">
+                        <h3 style="color: #333; margin-top: 0;">Session Details:</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Session Type:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">${sessionType}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 0;"><strong>Session Date:</strong></td>
+                                <td style="padding: 10px 0; text-align: right;">${sessionDate}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffc107;">
+                        <p style="margin: 0; color: #856404;">
+                            <strong>📋 Important:</strong> Please review all terms and conditions carefully before signing.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${signingUrl}" style="background: #28a745; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Review & Sign Contract</a>
+                    </div>
+                    
+                    <p style="color: #666; text-align: center; margin-top: 20px;">
+                        This contract will be electronically signed and legally binding.
+                    </p>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 14px; border-top: 1px solid #eee;">
+                    <p style="margin: 5px 0;"><strong>${businessName}</strong></p>
+                    <p style="margin: 5px 0;">Contact: ${businessEmail}</p>
+                    <p style="margin: 15px 0 5px; font-size: 12px;">Powered by Photography Management System</p>
+                </div>
+            </div>
+        `
     })
 };
 
@@ -316,6 +367,48 @@ async function sendUrgentSMS(phoneNumber, message) {
     return await sendSMS(phoneNumber, `🚨 URGENT: ${message} - The Client Management Area`);
 }
 
+// Send contract for signature via email
+async function sendContractForSignature(clientEmail, clientName, sessionType, sessionDate, businessName, businessEmail, signingUrl) {
+    console.log('📧 Sending contract for signature to:', clientEmail);
+    
+    if (!sendGridConfigured) {
+        console.log('❌ Email not sent - SendGrid not configured');
+        return { success: false, error: 'SendGrid not configured' };
+    }
+
+    try {
+        const emailContent = emailTemplates.contractForSignature(
+            clientName, 
+            sessionType, 
+            sessionDate, 
+            businessName, 
+            businessEmail, 
+            signingUrl
+        );
+        
+        const msg = {
+            to: clientEmail,
+            from: {
+                email: 'noreply@photomanagementsystem.com', // Always use verified sender
+                name: businessName || 'Photography Management System'
+            },
+            replyTo: {
+                email: businessEmail || 'noreply@photomanagementsystem.com',
+                name: businessName || 'Photography Management System'
+            },
+            subject: emailContent.subject,
+            html: emailContent.html
+        };
+
+        const response = await sgMail.send(msg);
+        console.log(`✅ Contract email sent successfully to ${clientEmail}: ${emailContent.subject}`);
+        return { success: true, response };
+    } catch (error) {
+        console.error('❌ Contract email send error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Broadcast functions for all subscribers
 async function broadcastFeatureUpdate(subscribers, title, features) {
     const results = [];
@@ -344,6 +437,7 @@ module.exports = {
     sendFeatureUpdate,
     sendReminder,
     sendUrgentSMS,
+    sendContractForSignature,
     broadcastFeatureUpdate,
     broadcastReminder
 };
