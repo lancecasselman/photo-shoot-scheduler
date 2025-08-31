@@ -10347,8 +10347,11 @@ app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// Generate ICS calendar file for session
-app.get('/api/generate-ics/:sessionId', async (req, res) => {
+// Generate ICS calendar file for session (multiple routes for compatibility)
+app.get('/api/generate-ics/:sessionId', generateICSHandler);
+app.get('/api/sessions/:sessionId/calendar.ics', generateICSHandler);
+
+async function generateICSHandler(req, res) {
     try {
         const { sessionId } = req.params;
         
@@ -10436,7 +10439,7 @@ app.get('/api/generate-ics/:sessionId', async (req, res) => {
             message: 'Failed to generate calendar file'
         });
     }
-});
+}
 
 // Payment Plan API Endpoints
 
