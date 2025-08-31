@@ -6682,12 +6682,20 @@ ${contract.contract_content}
                         updatedSessions.forEach(updatedSession => {
                             const currentSession = window.sessions?.find(s => s.id === updatedSession.id);
                             if (currentSession) {
-                                // Check for payment status changes
-                                if (currentSession.depositPaid !== updatedSession.depositPaid ||
-                                    currentSession.paid !== updatedSession.paid ||
-                                    currentSession.depositAmount !== updatedSession.depositAmount) {
+                                // Check for payment status changes (handle both snake_case from API and camelCase)
+                                const depositPaid = updatedSession.deposit_paid || updatedSession.depositPaid || false;
+                                const paid = updatedSession.paid || false;
+                                const depositAmount = parseFloat(updatedSession.deposit_amount || updatedSession.depositAmount || 0);
+                                const depositSent = updatedSession.deposit_sent || updatedSession.depositSent || false;
+                                const invoiceSent = updatedSession.invoice_sent || updatedSession.invoiceSent || false;
+                                
+                                if (currentSession.depositPaid !== depositPaid ||
+                                    currentSession.paid !== paid ||
+                                    currentSession.depositAmount !== depositAmount ||
+                                    currentSession.depositSent !== depositSent ||
+                                    currentSession.invoiceSent !== invoiceSent) {
                                     hasChanges = true;
-                                    console.log('💰 Payment status updated for session:', updatedSession.clientName);
+                                    console.log('💰 Payment status updated for session:', updatedSession.client_name || updatedSession.clientName);
                                 }
                             }
                         });
@@ -6696,13 +6704,29 @@ ${contract.contract_content}
                         if (hasChanges) {
                             console.log('🔄 Refreshing session cards with updated payment status...');
                             window.sessions = updatedSessions.map(session => ({
-                                ...session,
-                                depositAmount: session.depositAmount || session.deposit_amount || 0,
-                                depositPaid: session.depositPaid || session.deposit_paid || false,
-                                depositSent: session.depositSent || session.deposit_sent || false,
-                                invoiceSent: session.invoiceSent || session.invoice_sent || false,
-                                reminderEnabled: session.sendReminder || false,
-                                reminderSent: session.reminderSent || false
+                                id: session.id,
+                                sessionType: session.session_type || session.sessionType,
+                                clientName: session.client_name || session.clientName,
+                                dateTime: session.date_time || session.dateTime,
+                                location: session.location,
+                                phoneNumber: session.phone_number || session.phoneNumber,
+                                email: session.email,
+                                price: parseFloat(session.price) || 0,
+                                depositAmount: parseFloat(session.deposit_amount || session.depositAmount || 0),
+                                depositPaid: session.deposit_paid || session.depositPaid || false,
+                                depositSent: session.deposit_sent || session.depositSent || false,
+                                invoiceSent: session.invoice_sent || session.invoiceSent || false,
+                                depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
+                                invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
+                                duration: parseInt(session.duration) || 60,
+                                notes: session.notes || '',
+                                contractSigned: session.contract_signed || session.contractSigned || false,
+                                paid: session.paid || false,
+                                edited: session.edited || false,
+                                delivered: session.delivered || false,
+                                reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
+                                galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
+                                reminderSent: session.reminder_sent || session.reminderSent || false
                             }));
                             
                             // Re-render sessions with updated data

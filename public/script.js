@@ -459,6 +459,11 @@ async function loadSessions() {
             email: session.email,
             price: parseFloat(session.price) || 0,
             depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
+            depositPaid: session.deposit_paid || session.depositPaid || false,
+            depositSent: session.deposit_sent || session.depositSent || false,
+            invoiceSent: session.invoice_sent || session.invoiceSent || false,
+            depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
+            invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
             duration: parseInt(session.duration) || 60,
             notes: session.notes || '',
             contractSigned: session.contract_signed || session.contractSigned || false,
@@ -805,12 +810,33 @@ function createSessionCard(session) {
         <div class="detail-value"><a href="mailto:${session.email}">${session.email}</a></div>
     `;
 
-    // Price and duration
+    // Price, payment status, and duration
     const priceDiv = document.createElement('div');
     priceDiv.className = 'detail-item';
+    
+    // Calculate remaining balance if deposit is paid
+    let priceDisplay = `$${session.price}`;
+    let paymentBadges = '';
+    
+    // Check deposit status
+    if (session.depositPaid) {
+        const remaining = session.price - session.depositAmount;
+        priceDisplay = `$${session.price} (Remaining: $${remaining.toFixed(2)})`;
+        paymentBadges += '<span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">✓ Deposit Paid</span>';
+    } else if (session.depositSent) {
+        paymentBadges += '<span style="background: #fb923c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">⏳ Deposit Pending</span>';
+    }
+    
+    // Check invoice status
+    if (session.paid) {
+        paymentBadges += '<span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">✓ Fully Paid</span>';
+    } else if (session.invoiceSent) {
+        paymentBadges += '<span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">⏳ Invoice Sent</span>';
+    }
+    
     priceDiv.innerHTML = `
         <div class="detail-label">Price & Duration</div>
-        <div class="detail-value">$${session.price} for ${session.duration} minutes</div>
+        <div class="detail-value">${priceDisplay} for ${session.duration} minutes${paymentBadges}</div>
     `;
 
     // Notes
