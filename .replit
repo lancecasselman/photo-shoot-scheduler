@@ -2,7 +2,7 @@ modules = ["nodejs-20", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["firebase-tools", "git-lfs", "openssh", "postgresql", "openjdk17", "android-tools", "wget", "unzip"]
+packages = ["android-tools", "firebase-tools", "git-lfs", "openjdk17", "openssh", "postgresql", "unzip", "wget"]
 
 [workflows]
 runButton = "Project"
@@ -54,3 +54,4 @@ defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"
 
 [agent]
 expertMode = true
+integrations = ["twilio_send_message==1.0.0"]
