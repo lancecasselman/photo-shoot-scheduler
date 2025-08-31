@@ -7137,6 +7137,9 @@ ${contract.contract_content}
                                 <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
+                                <button onclick="viewPendingContractsForSession('${sessionId}'); event.stopPropagation();" class="btn" style="background: #ff6b6b; color: white; border: none;">
+                                    📋 View Pending Contracts
+                                </button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -17430,6 +17433,27 @@ END:VCALENDAR`;
             }
         }
         
+        // View pending contracts for a specific session
+        async function viewPendingContractsForSession(sessionId) {
+            try {
+                const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+                if (response.ok) {
+                    const agreement = await response.json();
+                    if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'draft')) {
+                        // Open the contract in a new window
+                        window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
+                    } else {
+                        showMessage('No pending contract found for this session', 'info');
+                    }
+                } else {
+                    showMessage('No pending contract found for this session', 'info');
+                }
+            } catch (error) {
+                console.error('Error viewing pending contract:', error);
+                showMessage('Error loading pending contract', 'error');
+            }
+        }
+
         // Update count when page loads
         document.addEventListener('DOMContentLoaded', updatePendingContractsCount);
     </script>
