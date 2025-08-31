@@ -4,6 +4,7 @@ const R2FileManager = require('./r2-file-manager');
 // REMOVED: Old stripe storage billing - using new storage system
 const R2SyncService = require('./r2-sync-service');
 const UnifiedFileDeletionService = require('./unified-file-deletion');
+const StorageSystem = require('./storage-system');
 const { Pool } = require('pg');
 
 // Configure multer for file uploads (memory storage for direct R2 upload)
@@ -71,6 +72,7 @@ function createR2Routes() {
   });
   
   const r2Manager = new R2FileManager(null, pool);
+  const storageSystem = new StorageSystem(pool, r2Manager);
   // REMOVED: Old storage billing - using new storage system
   const syncService = new R2SyncService(r2Manager);
   const unifiedDeletion = new UnifiedFileDeletionService();
@@ -260,16 +262,25 @@ function createR2Routes() {
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
         console.log(`✅ Admin bypass for uploads: ${userEmail} has unlimited storage`);
       } else {
-        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        // Use proper StorageSystem for quota checking
+        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
         
-        if (!limitCheck.allowed) {
+        if (!canUploadResult.canUpload) {
+          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
           return res.status(413).json({ 
             error: 'Storage limit exceeded',
-            message: limitCheck.message,
-            usage: limitCheck.usage,
+            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
+            usage: {
+              currentGB: canUploadResult.currentUsageGB,
+              quotaGB: canUploadResult.quotaGB,
+              remainingGB: canUploadResult.remainingGB,
+              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
+            },
             upgradeRequired: true
           });
         }
+        
+        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
       }
 
       // Upload files in parallel for better performance
@@ -384,15 +395,25 @@ function createR2Routes() {
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
         console.log(`✅ Admin bypass for RAW uploads: ${userEmail} has unlimited storage`);
       } else {
-        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        // Use proper StorageSystem for quota checking
+        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
         
-        if (!limitCheck.allowed) {
+        if (!canUploadResult.canUpload) {
+          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
           return res.status(413).json({ 
             error: 'Storage limit exceeded',
-            message: limitCheck.message,
+            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
+            usage: {
+              currentGB: canUploadResult.currentUsageGB,
+              quotaGB: canUploadResult.quotaGB,
+              remainingGB: canUploadResult.remainingGB,
+              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
+            },
             upgradeRequired: true
           });
         }
+        
+        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
       }
 
       // Upload files as RAW backup files (NOT gallery files)
@@ -502,15 +523,25 @@ function createR2Routes() {
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
         console.log(`✅ Admin bypass for gallery uploads: ${userEmail} has unlimited storage`);
       } else {
-        const limitCheck = await r2Manager.checkStorageLimit(userId, totalUploadSize);
+        // Use proper StorageSystem for quota checking
+        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
         
-        if (!limitCheck.allowed) {
+        if (!canUploadResult.canUpload) {
+          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
           return res.status(413).json({ 
             error: 'Storage limit exceeded',
-            message: limitCheck.message,
+            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
+            usage: {
+              currentGB: canUploadResult.currentUsageGB,
+              quotaGB: canUploadResult.quotaGB,
+              remainingGB: canUploadResult.remainingGB,
+              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
+            },
             upgradeRequired: true
           });
         }
+        
+        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
       }
 
       // Upload files as GALLERY files (not RAW backup)
