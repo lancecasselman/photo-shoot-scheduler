@@ -1,6 +1,6 @@
 // Test webhook signature verification
 const crypto = require('crypto');
-const https = require('https');
+const http = require('http');
 
 // Simulated webhook payload (checkout.session.completed)
 const payload = JSON.stringify({
@@ -48,7 +48,7 @@ console.log('Testing webhook endpoint...');
 console.log('Payload:', JSON.parse(payload));
 console.log('Signature:', signature);
 
-// Make request to local server
+// Make request to local server  
 const options = {
   hostname: 'localhost',
   port: 5000,
@@ -61,7 +61,7 @@ const options = {
   }
 };
 
-const req = https.request(options, (res) => {
+const req = http.request(options, (res) => {
   console.log(`Status: ${res.statusCode}`);
   
   let data = '';

@@ -882,43 +882,10 @@ process.on('uncaughtException', (error) => {
     setTimeout(() => process.exit(1), 1000);
 });
 
-// Production Security Middleware
-if (process.env.NODE_ENV === 'production') {
-    // Trust proxy for Replit/production deployment
-    app.set('trust proxy', 1);
-    
-    // Security headers with Helmet
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://fonts.googleapis.com"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-                fontSrc: ["'self'", "https://fonts.gstatic.com"],
-                imgSrc: ["'self'", "data:", "https:", "blob:"],
-                connectSrc: ["'self'", "https://api.stripe.com"],
-                frameSrc: ["'self'", "https://js.stripe.com"]
-            }
-        },
-        crossOriginEmbedderPolicy: false
-    }));
-    
-    // CORS for production
-    app.use(cors(PRODUCTION_CONFIG.cors));
-    
-    // Rate limiting
-    const limiter = rateLimit(PRODUCTION_CONFIG.rateLimit);
-    app.use('/api/', limiter);
-    
-    // Compression for all responses
-    app.use(compression());
-    
-    // Request logging middleware
-    app.use(logger.requestLogger.bind(logger));
-}
-
-// IMPORTANT: Set up ALL Stripe webhook routes BEFORE body parsers
-// These webhooks need the raw body for signature verification
+// ============================================================================
+// CRITICAL: Webhook routes MUST be defined BEFORE any body-parsing middleware
+// This includes compression, body parsers, and any middleware that reads the body
+// ============================================================================
 
 // Main Stripe webhook for payments and subscriptions
 app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
@@ -1168,6 +1135,97 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     }
 });
 
+// Stripe Connect webhook for connected account events
+app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+    
+    // Debug logging to help identify the issue
+    console.log('🔍 Connect webhook debug:', {
+        hasSignature: !!sig,
+        signaturePrefix: sig ? sig.substring(0, 20) + '...' : 'none',
+        hasConnectSecret: !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+        secretPrefix: connectWebhookSecret ? connectWebhookSecret.substring(0, 10) + '...' : 'none',
+        usingFallback: !process.env.STRIPE_CONNECT_WEBHOOK_SECRET && !!process.env.STRIPE_WEBHOOK_SECRET
+    });
+    
+    let event;
+    try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        event = stripe.webhooks.constructEvent(req.body, sig, connectWebhookSecret);
+        console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
+        console.log('🔔 Connect account:', event.account);
+    } catch (err) {
+        console.log(`❌ Connect webhook signature verification failed.`, err.message);
+        console.log('❌ Full error:', err);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+        // Handle payment events from connected accounts
+        if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
+            const data = event.data.object;
+            console.log('💳 Connected account payment event:', {
+                type: event.type,
+                account: event.account,
+                metadata: data.metadata
+            });
+            
+            // Process payment updates if session metadata exists
+            if (data.metadata && data.metadata.sessionId) {
+                const sessionId = data.metadata.sessionId;
+                const paymentType = data.metadata.type || 'invoice';
+                const amount = data.amount ? data.amount / 100 : data.amount_total / 100;
+                
+                console.log(`💰 Updating payment status for session ${sessionId}, type: ${paymentType}`);
+                
+                // Update database based on payment type
+                if (paymentType === 'deposit') {
+                    await pool.query(
+                        `UPDATE photography_sessions 
+                         SET deposit_paid = true,
+                             deposit_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Deposit marked as paid for session ${sessionId}`);
+                } else if (paymentType === 'invoice' || paymentType === 'final') {
+                    await pool.query(
+                        `UPDATE photography_sessions 
+                         SET paid = true,
+                             invoice_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Invoice marked as paid for session ${sessionId}`);
+                }
+                
+                // Send notification if configured
+                try {
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    const mockPaymentIntent = {
+                        id: data.payment_intent || data.id,
+                        amount: data.amount || data.amount_total,
+                        metadata: data.metadata,
+                        receipt_email: data.customer_details?.email || data.receipt_email
+                    };
+                    await notificationManager.handlePaymentSuccess(mockPaymentIntent);
+                } catch (notifyError) {
+                    console.error('⚠️ Notification failed but payment was processed:', notifyError);
+                }
+            }
+        }
+        
+        res.json({ received: true });
+    } catch (error) {
+        console.error('❌ Error processing connect webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
 // Subscription webhook endpoint
 app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
     console.log('🔔 Stripe webhook received at /api/subscriptions/webhook/stripe');
@@ -1205,6 +1263,66 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
 // Body parsing middleware (must be AFTER webhook routes)
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
+
+// Production Security Middleware (AFTER webhooks to preserve raw body)
+if (process.env.NODE_ENV === 'production') {
+    // Trust proxy for Replit/production deployment
+    app.set('trust proxy', 1);
+    
+    // Security headers with Helmet
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://fonts.googleapis.com"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                imgSrc: ["'self'", "data:", "https:", "blob:"],
+                connectSrc: ["'self'", "https://api.stripe.com"],
+                frameSrc: ["'self'", "https://js.stripe.com"]
+            }
+        },
+        crossOriginEmbedderPolicy: false
+    }));
+    
+    // CORS for production
+    app.use(cors(PRODUCTION_CONFIG.cors));
+    
+    // Rate limiting - EXCLUDE webhooks
+    const limiter = rateLimit(PRODUCTION_CONFIG.rateLimit);
+    app.use((req, res, next) => {
+        // Skip rate limiting for webhook endpoints
+        if (req.path.includes('/webhook') || 
+            req.path === '/api/stripe/webhook' ||
+            req.path === '/api/stripe/connect-webhook' ||
+            req.path === '/api/stripe-webhook' ||
+            req.path === '/api/subscriptions/webhook/stripe') {
+            return next();
+        }
+        // Apply rate limiting to other /api/ routes
+        if (req.path.startsWith('/api/')) {
+            return limiter(req, res, next);
+        }
+        next();
+    });
+    
+    // Compression for all responses - EXCLUDE webhooks
+    app.use((req, res, next) => {
+        // Skip compression for webhook endpoints
+        if (req.path.includes('/webhook') || 
+            req.path === '/api/stripe/webhook' ||
+            req.path === '/api/stripe/connect-webhook' ||
+            req.path === '/api/stripe-webhook' ||
+            req.path === '/api/subscriptions/webhook/stripe') {
+            return next();
+        }
+        // Apply compression to other routes
+        return compression()(req, res, next);
+    });
+    
+    // Request logging middleware
+    app.use(logger.requestLogger.bind(logger));
+}
 
 // Session configuration with fallback mechanism
 const pgSession = connectPg(session);
@@ -9920,96 +10038,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 // Webhook endpoint for Stripe Connect account events
-// This handles events from connected photographer accounts
-app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
-    
-    // Debug logging to help identify the issue
-    console.log('🔍 Connect webhook debug:', {
-        hasSignature: !!sig,
-        signaturePrefix: sig ? sig.substring(0, 20) + '...' : 'none',
-        hasConnectSecret: !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
-        secretPrefix: connectWebhookSecret ? connectWebhookSecret.substring(0, 10) + '...' : 'none',
-        usingFallback: !process.env.STRIPE_CONNECT_WEBHOOK_SECRET && !!process.env.STRIPE_WEBHOOK_SECRET
-    });
-    
-    let event;
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, connectWebhookSecret);
-        console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
-        console.log('🔔 Connect account:', event.account);
-    } catch (err) {
-        console.log(`❌ Connect webhook signature verification failed.`, err.message);
-        console.log('❌ Full error:', err);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    try {
-        // Handle payment events from connected accounts
-        if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
-            const data = event.data.object;
-            console.log('💳 Connected account payment event:', {
-                type: event.type,
-                account: event.account,
-                metadata: data.metadata
-            });
-            
-            // Process payment updates if session metadata exists
-            if (data.metadata && data.metadata.sessionId) {
-                const sessionId = data.metadata.sessionId;
-                const paymentType = data.metadata.type || 'invoice';
-                const amount = data.amount ? data.amount / 100 : data.amount_total / 100;
-                
-                console.log(`💰 Updating payment status for session ${sessionId}, type: ${paymentType}`);
-                
-                // Update database based on payment type
-                if (paymentType === 'deposit') {
-                    await pool.query(
-                        `UPDATE photography_sessions 
-                         SET deposit_paid = true,
-                             deposit_paid_at = NOW(),
-                             updated_at = NOW()
-                         WHERE id = $1`,
-                        [sessionId]
-                    );
-                    console.log(`✅ Deposit marked as paid for session ${sessionId}`);
-                } else if (paymentType === 'invoice' || paymentType === 'final') {
-                    await pool.query(
-                        `UPDATE photography_sessions 
-                         SET paid = true,
-                             invoice_paid_at = NOW(),
-                             updated_at = NOW()
-                         WHERE id = $1`,
-                        [sessionId]
-                    );
-                    console.log(`✅ Invoice marked as paid for session ${sessionId}`);
-                }
-                
-                // Send notification if configured
-                try {
-                    const PaymentNotificationManager = require('./server/payment-notifications');
-                    const notificationManager = new PaymentNotificationManager();
-                    const mockPaymentIntent = {
-                        id: data.payment_intent || data.id,
-                        amount: data.amount || data.amount_total,
-                        metadata: data.metadata,
-                        receipt_email: data.customer_details?.email || data.receipt_email
-                    };
-                    await notificationManager.handlePaymentSuccess(mockPaymentIntent);
-                } catch (notifyError) {
-                    console.error('⚠️ Notification failed but payment was processed:', notifyError);
-                }
-            }
-        }
-        
-        res.json({ received: true });
-    } catch (error) {
-        console.error('❌ Error processing connect webhook:', error);
-        res.status(500).json({ error: 'Webhook processing failed' });
-    }
-});
-
 // Mark invoice as sent when SMS is used
 app.post('/api/mark-invoice-sent', isAuthenticated, async (req, res) => {
     try {
@@ -10274,101 +10302,40 @@ app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// Stripe webhook for subscription updates
-app.post('/api/stripe-webhook', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
+// Generate ICS calendar file for session
+app.get('/api/generate-ics/:sessionId', async (req, res) => {
     try {
-        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-
-        switch (event.type) {
-            case 'customer.subscription.created':
-            case 'customer.subscription.updated':
-                const subscription = event.data.object;
-                // Determine plan type from price ID or metadata
-                let planType = 'basic';
-                if (subscription.metadata && subscription.metadata.plan_type) {
-                    planType = subscription.metadata.plan_type;
-                } else if (subscription.items && subscription.items.data.length > 0) {
-                    // Check price amount to determine plan
-                    const priceAmount = subscription.items.data[0].price.unit_amount;
-                    if (priceAmount >= 2000) { // $20 or more suggests professional
-                        planType = 'professional';
-                    }
-                }
-                
-                await pool.query(
-                    `UPDATE users 
-                     SET subscription_status = $1, 
-                         subscription_expires_at = $2,
-                         subscription_plan = $3,
-                         stripe_subscription_id = $4,
-                         updated_at = NOW()
-                     WHERE stripe_customer_id = $5`,
-                    [
-                        subscription.status, 
-                        new Date(subscription.current_period_end * 1000),
-                        planType,
-                        subscription.id,
-                        subscription.customer
-                    ]
-                );
-                console.log(`✅ Updated subscription for customer ${subscription.customer}: ${subscription.status}, plan: ${planType}`);
-                break;
-
-            case 'customer.subscription.deleted':
-                const deletedSub = event.data.object;
-                await pool.query(
-                    `UPDATE users 
-                     SET subscription_status = $1,
-                         subscription_plan = 'basic',
-                         stripe_subscription_id = NULL,
-                         updated_at = NOW()
-                     WHERE stripe_customer_id = $2`,
-                    ['canceled', deletedSub.customer]
-                );
-                console.log(`❌ Subscription canceled for customer ${deletedSub.customer}`);
-                break;
-        }
-
-        res.json({ received: true });
-    } catch (error) {
-        console.error('Webhook error:', error);
-        res.status(400).send(`Webhook Error: ${error.message}`);
-    }
-});
-
-// Generate .ics calendar file for iPhone/iOS Calendar
-app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
-    const sessionId = req.params.id;
-
-    try {
+        const { sessionId } = req.params;
+        
+        // Get session from database
         const session = await getSessionById(sessionId);
-
         if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Session not found'
+            });
         }
-
+        
+        // Generate ICS event
         const startDate = new Date(session.dateTime);
-        const endDate = new Date(startDate.getTime() + session.duration * 60000);
-
-        // Format date for .ics file (YYYYMMDDTHHMMSSZ)
+        const endDate = new Date(startDate.getTime() + (session.duration || 60) * 60000);
+        
+        // ICS format helper
         const formatICSDate = (date) => {
-            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
         };
-
-        // Generate unique ID for the event
-        const eventUID = `photo-session-${sessionId}@thelegacyphotography.com`;
+        
+        // Generate unique event ID
+        const eventUID = `${sessionId}@photomanagementsystem.com`;
         const timestamp = formatICSDate(new Date());
-
-        // Create .ics file content with proper iPhone Calendar compatibility
+        
+        // Build ICS content
         const icsContent = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Lance - The Legacy Photography//Photography Session Scheduler//EN',
+            'PRODID:-//Photography Management System//EN',
             'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
+            'METHOD:REQUEST',
             'BEGIN:VEVENT',
             `UID:${eventUID}`,
             `DTSTAMP:${timestamp}`,
@@ -10416,10 +10383,13 @@ app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
 
         console.log(`Generated .ics calendar file for session: ${session.clientName} (${sessionId})`);
         res.send(icsContent);
-
+        
     } catch (error) {
-        console.error('Error generating calendar file:', error);
-        res.status(500).json({ error: 'Failed to generate calendar file' });
+        console.error('Error generating ICS file:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate calendar file'
+        });
     }
 });
 
