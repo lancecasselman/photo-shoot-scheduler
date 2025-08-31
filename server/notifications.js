@@ -238,10 +238,14 @@ async function sendEmail(to, template, ...args) {
     }
 }
 
-// Send email with custom sender information (for invoices)
-async function sendEmailWithSender(to, subject, html, fromEmail, fromName) {
+// Send email with custom sender information (for invoices and payment notifications)
+async function sendEmailWithSender(to, subject, text, html, fromEmail, fromName) {
+    console.log('📧 sendEmailWithSender called with:', { to, subject, fromEmail, fromName });
+    console.log('📧 SendGrid configured:', sendGridConfigured);
+    console.log('📧 SendGrid API key exists:', !!process.env.SENDGRID_API_KEY);
+    
     if (!sendGridConfigured) {
-        console.log(' Email not sent - SendGrid not configured');
+        console.log('❌ Email not sent - SendGrid not configured');
         return { success: false, error: 'SendGrid not configured' };
     }
 
@@ -253,14 +257,18 @@ async function sendEmailWithSender(to, subject, html, fromEmail, fromName) {
                 name: fromName || 'The Legacy Photography'
             },
             subject: subject,
+            text: text || html.replace(/<[^>]*>/g, ''), // Fallback to HTML stripped
             html: html
         };
 
-        await sgMail.send(msg);
-        console.log(` Email sent successfully to ${to} from ${fromName}: ${subject}`);
-        return { success: true };
+        console.log('📧 Sending email via SendGrid...');
+        const response = await sgMail.send(msg);
+        console.log(`✅ Email sent successfully to ${to} from ${fromName}: ${subject}`);
+        console.log('📧 SendGrid response status:', response[0].statusCode);
+        return { success: true, response };
     } catch (error) {
-        console.error(' Email send error:', error);
+        console.error('❌ Email send error:', error);
+        console.error('❌ Error details:', error.response?.body || error.message);
         return { success: false, error: error.message };
     }
 }

@@ -122,10 +122,10 @@ class PaymentNotificationManager {
                 UPDATE photography_sessions 
                 SET deposit_amount = COALESCE(deposit_amount, 0) + $1,
                     deposit_paid = true,
-                    deposit_paid_at = $2,
-                    updated_at = $2
-                WHERE id = $3
-            `, [amount, new Date(), sessionId]);
+                    deposit_paid_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = $2
+            `, [amount, sessionId]);
 
             console.log(' Deposit status updated for session:', sessionId, 'Amount:', amount, '- Marked as PAID');
         } catch (error) {
@@ -142,10 +142,10 @@ class PaymentNotificationManager {
             await client.query(`
                 UPDATE photography_sessions 
                 SET paid = true,
-                    invoice_paid_at = $1,
-                    updated_at = $1
-                WHERE id = $2
-            `, [new Date(), sessionId]);
+                    invoice_paid_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = $1
+            `, [sessionId]);
 
             console.log(' Invoice payment status updated for session:', sessionId, '- Marked as FULLY PAID');
         } catch (error) {
@@ -158,6 +158,13 @@ class PaymentNotificationManager {
      * Send notification to photographer about successful payment
      */
     async sendPhotographerNotification(session, paymentDetails) {
+        console.log('📧 START: Sending photographer notification for payment:', paymentDetails.paymentId);
+        console.log('📧 Session details:', { 
+            sessionId: session.id, 
+            userId: session.user_id, 
+            clientName: session.client_name 
+        });
+        
         try {
             // Get the photographer's email from the database using their user_id
             const photographerResult = await this.pool.query(
@@ -165,12 +172,18 @@ class PaymentNotificationManager {
                 [session.user_id]
             );
             
+            console.log('📧 Photographer query result:', {
+                found: photographerResult.rows.length > 0,
+                email: photographerResult.rows[0]?.email
+            });
+            
             if (photographerResult.rows.length === 0) {
                 console.log('⚠️ Photographer not found for session, using default email');
             }
             
             const photographer = photographerResult.rows[0];
             const photographerEmail = photographer?.email || process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
+            console.log('📧 Sending to email:', photographerEmail);
             const photographerName = photographer?.display_name || photographer?.business_name || 'Photographer';
             
             const isDeposit = paymentDetails.type === 'deposit';
@@ -206,7 +219,10 @@ You can view the session details in your photography management dashboard.
             // Send email notification using the email service directly
             const { sendEmailWithSender } = require('./notifications');
             
-            await sendEmailWithSender(
+            console.log('📧 Attempting to send email with subject:', subject);
+            console.log('📧 Email service function loaded:', typeof sendEmailWithSender);
+            
+            const emailResult = await sendEmailWithSender(
                 photographerEmail,
                 subject,
                 message,
@@ -214,8 +230,9 @@ You can view the session details in your photography management dashboard.
                 'noreply@photomanagementsystem.com',
                 'Photography Management System'
             );
-
-            console.log(` Photographer notification sent to ${photographerEmail} for payment:`, paymentDetails.paymentId);
+            
+            console.log('📧 Email send result:', emailResult);
+            console.log(`✅ Photographer notification sent to ${photographerEmail} for payment:`, paymentDetails.paymentId);
 
         } catch (error) {
             console.error('❌ Error sending photographer notification:', error);
