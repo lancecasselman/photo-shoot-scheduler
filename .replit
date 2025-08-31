@@ -54,4 +54,4 @@ defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"
 
 [agent]
 expertMode = true
-integrations = ["twilio_send_message==1.0.0"]
+integrations = ["twilio_send_message==1.0.0", "twilio_send_message==1.0.0==1.0.0"]
