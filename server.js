@@ -1804,6 +1804,82 @@ app.get('/api/stripe-public-key', (req, res) => {
     res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || '' });
 });
 
+// DEBUG: Create test subscription for current user (temporary endpoint)
+app.post('/api/debug/create-test-subscription', async (req, res) => {
+    try {
+        // Check authentication
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        console.log(`🧪 DEBUG: Creating test subscription for user ${userId} (${userEmail})`);
+        
+        // Create subscription record directly in database
+        const client = await pool.connect();
+        try {
+            // Create subscription record
+            const subscriptionId = 'sub_test_' + Date.now();
+            await client.query(`
+                INSERT INTO subscriptions (
+                    user_id, subscription_type, platform, 
+                    external_subscription_id, external_customer_id, 
+                    status, price_amount, current_period_start, 
+                    current_period_end, created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + INTERVAL '30 days', NOW())
+                ON CONFLICT (external_subscription_id) DO UPDATE SET
+                    status = 'active',
+                    current_period_end = NOW() + INTERVAL '30 days'
+            `, [userId, 'professional', 'stripe', subscriptionId, 'cus_test_' + userId, 'active', 39.00]);
+            
+            // Update or create user subscription summary
+            await client.query(`
+                INSERT INTO user_subscription_summary (
+                    user_id, has_professional_plan, professional_platform,
+                    professional_status, total_storage_tb, base_storage_gb,
+                    total_storage_gb, active_subscriptions, monthly_total,
+                    next_billing_date, updated_at
+                )
+                VALUES ($1, true, 'stripe', 'active', 0, 100, 100, 1, 39.00, NOW() + INTERVAL '30 days', NOW())
+                ON CONFLICT (user_id) DO UPDATE SET
+                    has_professional_plan = true,
+                    professional_platform = 'stripe',
+                    professional_status = 'active',
+                    base_storage_gb = 100,
+                    total_storage_gb = 100,
+                    active_subscriptions = 1,
+                    monthly_total = 39.00,
+                    next_billing_date = NOW() + INTERVAL '30 days',
+                    updated_at = NOW()
+            `, [userId]);
+            
+            console.log(`✅ DEBUG: Test subscription created successfully for ${userEmail}`);
+            
+            res.json({
+                success: true,
+                message: 'Test subscription created successfully',
+                subscription: {
+                    userId: userId,
+                    email: userEmail,
+                    subscriptionId: subscriptionId,
+                    status: 'active',
+                    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }
+            });
+            
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ DEBUG: Error creating test subscription:', error);
+        res.status(500).json({ error: 'Failed to create test subscription: ' + error.message });
+    }
+});
+
 // Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {

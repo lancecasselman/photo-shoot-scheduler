@@ -447,15 +447,28 @@ class UnifiedSubscriptionManager {
     async getUserSubscriptionStatus(userId) {
         const client = await this.pool.connect();
         try {
+            console.log(`🔍 Getting subscription status for user: ${userId}`);
+            
             const summaryResult = await client.query(
                 'SELECT * FROM user_subscription_summary WHERE user_id = $1',
                 [userId]
             );
+            
+            console.log(`📊 User subscription summary found: ${summaryResult.rows.length > 0}`);
+            if (summaryResult.rows.length > 0) {
+                console.log(`📊 Summary details:`, {
+                    hasProfessionalPlan: summaryResult.rows[0].has_professional_plan,
+                    professionalStatus: summaryResult.rows[0].professional_status,
+                    totalStorageGb: summaryResult.rows[0].total_storage_gb
+                });
+            }
 
             const subscriptionsResult = await client.query(
                 'SELECT * FROM subscriptions WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC',
                 [userId, 'active']
             );
+            
+            console.log(`📋 Active subscriptions found: ${subscriptionsResult.rows.length}`);
 
             return {
                 summary: summaryResult.rows[0] || null,
@@ -464,7 +477,8 @@ class UnifiedSubscriptionManager {
                 hasActivePlan: summaryResult.rows[0]?.has_professional_plan || false,
                 // Add properties expected by subscription middleware
                 hasProfessionalPlan: summaryResult.rows[0]?.has_professional_plan || false,
-                professionalStatus: summaryResult.rows[0]?.professional_status || 'inactive'
+                professionalStatus: summaryResult.rows[0]?.professional_status || 'inactive',
+                totalStorageGb: summaryResult.rows[0]?.total_storage_gb || 0
             };
 
         } catch (error) {
