@@ -320,8 +320,7 @@
                 // If we have a session ID, try to get more details from Stripe
                 if (sessionId) {
                     try {
-                        // Pass paymentId to help identify connected account
-                        const response = await fetch(`/api/payment/session/${sessionId}/details?paymentId=${paymentId}`);
+                        const response = await fetch(`/api/payment/session/${sessionId}/details`);
                         if (response.ok) {
                             const data = await response.json();
                             if (data.amount) {
