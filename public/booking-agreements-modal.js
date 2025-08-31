@@ -311,35 +311,58 @@ function showViewMode(agreement, session) {
 
 // Show both view and create mode for existing contracts
 function showBothViewAndCreate(agreement, session) {
-    // If there's a pending/signed contract, just show create mode
-    // The pending contract will be shown in a separate area
-    if (agreement.status !== 'draft') {
-        // Just show the create new contract interface
-        showCreateMode(session);
-        
-        // Add a notice about existing contract
-        const notice = document.createElement('div');
-        notice.className = 'existing-contract-notice';
-        notice.innerHTML = `
-            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; padding: 10px; margin-bottom: 15px;">
-                <strong>⚠️ Existing Contract:</strong> 
-                ${agreement.status === 'sent' ? 'A contract has been sent to the client.' : 
-                  agreement.status === 'signed' ? 'The client has signed a contract.' : 
-                  'A contract exists for this session.'}
-                ${agreement.status === 'sent' ? 
-                  '<button onclick="viewPendingContract(\'' + currentAgreementSessionId + '\')" style="margin-left: 10px; padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">View/Resend</button>' : ''}
+    // ALWAYS show the create interface, never just the viewer
+    document.getElementById('templateSelector').style.display = 'block';
+    document.getElementById('agreementEditor').style.display = 'block';
+    document.getElementById('agreementViewer').style.display = 'none'; // Hide viewer
+    
+    // Clear editor for new contract
+    document.getElementById('agreementContent').innerHTML = '';
+    document.getElementById('agreementTemplate').value = '';
+    
+    // Populate template dropdown
+    const select = document.getElementById('agreementTemplate');
+    if (select && select.options.length <= 1) {
+        select.innerHTML = '<option value="">Choose a template...</option>';
+        if (agreementTemplates && agreementTemplates.length > 0) {
+            agreementTemplates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                option.dataset.category = template.category;
+                select.appendChild(option);
+            });
+        }
+    }
+    
+    // Add buttons for existing contract at the top
+    if (agreement.status === 'sent' || agreement.status === 'viewed') {
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'existing-contract-actions';
+        buttonsDiv.style.cssText = 'background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; padding: 15px; margin-bottom: 20px;';
+        buttonsDiv.innerHTML = `
+            <p style="margin: 0 0 10px 0; font-weight: 600;">📋 Existing Contract Status: ${getStatusText(agreement.status)}</p>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="viewExistingInNewModal('${currentAgreementSessionId}')" class="btn btn-info" style="padding: 8px 16px;">
+                    <i class="fas fa-eye"></i> View Contract
+                </button>
+                <button onclick="resendExistingContract('${currentAgreementSessionId}')" class="btn btn-primary" style="padding: 8px 16px;">
+                    <i class="fas fa-redo"></i> Resend
+                </button>
+                <button onclick="cancelExistingContract('${currentAgreementSessionId}')" class="btn btn-danger" style="padding: 8px 16px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
             </div>
         `;
-        const templateSection = document.getElementById('templateSelector');
-        if (templateSection && !templateSection.querySelector('.existing-contract-notice')) {
-            templateSection.insertBefore(notice, templateSection.firstChild);
+        
+        const container = document.getElementById('templateSelector');
+        if (container && !container.querySelector('.existing-contract-actions')) {
+            container.insertBefore(buttonsDiv, container.firstChild);
         }
-    } else {
-        // It's a draft, show edit mode
-        showEditMode(agreement, session);
     }
-
-    updateModalButtons('new'); // Always show create buttons
+    
+    // Update buttons for creating new contracts
+    updateModalButtons('new');
 }
 
 // Load selected template
@@ -1187,6 +1210,25 @@ async function cancelPendingContract(sessionId) {
     if (modal) modal.remove();
 }
 
+// Helper functions for existing contract actions
+async function viewExistingInNewModal(sessionId) {
+    await viewPendingContract(sessionId);
+}
+
+async function resendExistingContract(sessionId) {
+    // Get the session
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    // Show send options modal directly
+    showSendOptionsModal(session);
+}
+
+async function cancelExistingContract(sessionId) {
+    currentAgreementSessionId = sessionId;
+    await cancelContract();
+}
+
 // Expose functions globally
 window.openBookingAgreementModal = openBookingAgreementModal;
 window.closeBookingAgreementModal = closeBookingAgreementModal;
@@ -1200,6 +1242,9 @@ window.cancelContract = cancelContract;
 window.viewPendingContract = viewPendingContract;
 window.resendPendingContract = resendPendingContract;
 window.cancelPendingContract = cancelPendingContract;
+window.viewExistingInNewModal = viewExistingInNewModal;
+window.resendExistingContract = resendExistingContract;
+window.cancelExistingContract = cancelExistingContract;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
