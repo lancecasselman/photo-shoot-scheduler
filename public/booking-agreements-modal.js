@@ -595,7 +595,7 @@ function closeSendOptionsModal() {
     }
 }
 
-// Send via Email
+// Send via Email using mailto link
 async function sendViaEmail(sessionId) {
     const session = sessions.find(s => s.id === sessionId);
     if (!session || !session.email) {
@@ -606,6 +606,7 @@ async function sendViaEmail(sessionId) {
     closeSendOptionsModal();
     
     try {
+        // Save the contract and get signing link
         const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -620,24 +621,33 @@ async function sendViaEmail(sessionId) {
 
         if (response.ok) {
             const result = await response.json();
-            if (result.emailSent) {
-                showMessage(`Contract sent via email to ${session.email}!`, 'success');
-            } else {
-                showMessage('Contract ready but email failed. You can share the link manually.', 'warning');
-            }
+            const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+            
+            // Create mailto link
+            const subject = `Photography Contract - ${session.sessionType} Session`;
+            const body = `Hello ${session.clientName},\n\nPlease review and sign your photography contract for your session on ${new Date(session.dateTime).toLocaleDateString()}.\n\nClick here to sign: ${signingLink}\n\nThank you!`;
+            
+            // Open default email client
+            window.location.href = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            showMessage('Opening email client...', 'success');
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
-            displayAgreement(currentAgreement, session);
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                closeBookingAgreementModal();
+            }, 1500);
         } else {
-            showMessage('Failed to send agreement', 'error');
+            showMessage('Failed to prepare contract', 'error');
         }
     } catch (error) {
-        console.error('Error sending agreement:', error);
-        showMessage('Error sending agreement', 'error');
+        console.error('Error:', error);
+        showMessage('Error sending contract', 'error');
     }
 }
 
-// Send via SMS
+// Send via SMS using sms: link
 async function sendViaSMS(sessionId) {
     const session = sessions.find(s => s.id === sessionId);
     if (!session || !session.phoneNumber) {
@@ -648,6 +658,7 @@ async function sendViaSMS(sessionId) {
     closeSendOptionsModal();
     
     try {
+        // Save the contract and get signing link
         const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -662,37 +673,34 @@ async function sendViaSMS(sessionId) {
 
         if (response.ok) {
             const result = await response.json();
-            if (result.smsSent && result.requiresUserAction && result.smsUrl) {
-                // Open the default SMS app with pre-filled message
-                showMessage('Opening your SMS app with the contract link...', 'info');
-                
-                // Create a temporary link to open SMS app
-                const smsLink = document.createElement('a');
-                smsLink.href = result.smsUrl;
-                smsLink.style.display = 'none';
-                document.body.appendChild(smsLink);
-                smsLink.click();
-                document.body.removeChild(smsLink);
-                
-                showMessage(`SMS app opened. Send the message to ${session.phoneNumber} to share the contract.`, 'success');
-                
-                // Also show the signing URL for manual copying if needed
-                showSigningLinkModal(result.signingUrl, session.phoneNumber);
-            } else if (result.smsSent) {
-                showMessage(`Contract link prepared for SMS to ${session.phoneNumber}!`, 'success');
-            } else {
-                showMessage('Contract ready. Copy the link to share manually.', 'warning');
-                showSigningLinkModal(result.signingUrl, session.phoneNumber);
-            }
+            const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+            
+            // Format phone number (remove non-digits)
+            const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+            
+            // Create SMS message
+            const message = `Hi ${session.clientName}, please sign your photography contract: ${signingLink}`;
+            
+            // Create sms: link
+            const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
+            
+            // Open default SMS app
+            window.location.href = smsLink;
+            
+            showMessage('Opening SMS app...', 'success');
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
-            displayAgreement(currentAgreement, session);
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                closeBookingAgreementModal();
+            }, 1500);
         } else {
-            showMessage('Failed to send agreement', 'error');
+            showMessage('Failed to prepare contract', 'error');
         }
     } catch (error) {
-        console.error('Error sending agreement:', error);
-        showMessage('Error sending agreement', 'error');
+        console.error('Error:', error);
+        showMessage('Error sending contract', 'error');
     }
 }
 
@@ -1029,6 +1037,156 @@ async function resendAgreement() {
     await sendForSignature();
 }
 
+// View pending contract in separate modal
+async function viewPendingContract(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    try {
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+        if (!response.ok) return;
+        
+        const agreement = await response.json();
+        if (!agreement) return;
+        
+        // Create a simple modal to view pending contract
+        const modal = document.createElement('div');
+        modal.className = 'pending-contract-modal';
+        modal.innerHTML = `
+            <div class="pending-contract-overlay" onclick="this.parentElement.remove()">
+                <div class="pending-contract-content" onclick="event.stopPropagation()">
+                    <div class="pending-contract-header">
+                        <h3>Pending Contract - ${session.clientName}</h3>
+                        <button onclick="this.closest('.pending-contract-modal').remove()" class="close-btn">&times;</button>
+                    </div>
+                    
+                    <div class="pending-contract-body">
+                        <div class="status-badge status-${agreement.status}">
+                            ${getStatusText(agreement.status)}
+                        </div>
+                        <div class="contract-preview">
+                            ${agreement.content}
+                        </div>
+                    </div>
+                    
+                    <div class="pending-contract-footer">
+                        <button class="btn btn-primary" onclick="resendPendingContract('${sessionId}')">
+                            <i class="fas fa-redo"></i> Resend
+                        </button>
+                        <button class="btn btn-danger" onclick="cancelPendingContract('${sessionId}')">
+                            <i class="fas fa-times"></i> Cancel Contract
+                        </button>
+                        <button class="btn btn-secondary" onclick="this.closest('.pending-contract-modal').remove()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        const styles = `
+            <style>
+                .pending-contract-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 10001;
+                }
+                
+                .pending-contract-overlay {
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .pending-contract-content {
+                    background: white;
+                    border-radius: 10px;
+                    width: 90%;
+                    max-width: 700px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                .pending-contract-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .pending-contract-body {
+                    padding: 20px;
+                    overflow-y: auto;
+                    flex: 1;
+                }
+                
+                .pending-contract-footer {
+                    padding: 20px;
+                    border-top: 1px solid #e5e7eb;
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                }
+                
+                .contract-preview {
+                    margin-top: 20px;
+                    padding: 20px;
+                    background: #f9fafb;
+                    border-radius: 6px;
+                    border: 1px solid #e5e7eb;
+                }
+            </style>
+        `;
+        
+        if (!document.querySelector('.pending-contract-styles')) {
+            const styleEl = document.createElement('div');
+            styleEl.className = 'pending-contract-styles';
+            styleEl.innerHTML = styles;
+            document.head.appendChild(styleEl);
+        }
+        
+        document.body.appendChild(modal);
+        
+        // Store for resend
+        window.pendingContractAgreement = agreement;
+        window.pendingContractSession = session;
+        
+    } catch (error) {
+        console.error('Error viewing pending contract:', error);
+    }
+}
+
+// Resend pending contract
+async function resendPendingContract(sessionId) {
+    const modal = document.querySelector('.pending-contract-modal');
+    if (modal) modal.remove();
+    
+    // Open booking modal to resend
+    currentAgreementSessionId = sessionId;
+    currentAgreement = window.pendingContractAgreement;
+    await openBookingAgreementModal(sessionId);
+}
+
+// Cancel pending contract
+async function cancelPendingContract(sessionId) {
+    if (!confirm('Are you sure you want to cancel this contract?')) return;
+    
+    currentAgreementSessionId = sessionId;
+    await cancelContract();
+    
+    const modal = document.querySelector('.pending-contract-modal');
+    if (modal) modal.remove();
+}
+
 // Expose functions globally
 window.openBookingAgreementModal = openBookingAgreementModal;
 window.closeBookingAgreementModal = closeBookingAgreementModal;
@@ -1039,6 +1197,9 @@ window.previewAgreement = previewAgreement;
 window.downloadAgreementPDF = downloadAgreementPDF;
 window.resendAgreement = resendAgreement;
 window.cancelContract = cancelContract;
+window.viewPendingContract = viewPendingContract;
+window.resendPendingContract = resendPendingContract;
+window.cancelPendingContract = cancelPendingContract;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
