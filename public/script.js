@@ -481,11 +481,13 @@ async function loadSessions() {
             };
             
             // Debug: Log payment fields for sessions with deposits/invoices sent
-            if (session.depositSent || session.invoiceSent) {
+            if (session.depositSent || session.invoiceSent || session.deposit_sent || session.invoice_sent) {
                 console.log(`💳 Payment fields for ${transformed.clientName}:`, {
-                    depositSent: transformed.depositSent,
-                    invoiceSent: transformed.invoiceSent,
-                    depositPaid: transformed.depositPaid,
+                    raw_depositSent: session.depositSent,
+                    raw_deposit_sent: session.deposit_sent,
+                    transformed_depositSent: transformed.depositSent,
+                    transformed_invoiceSent: transformed.invoiceSent,
+                    transformed_depositPaid: transformed.depositPaid,
                     depositAmount: transformed.depositAmount
                 });
             }
@@ -833,32 +835,31 @@ function createSessionCard(session) {
     let priceDisplay = `$${session.price}`;
     let paymentBadges = '';
     
-    // Debug payment status fields
-    if (session.clientName === 'Amanda casselman') {
-        console.log('🎯 Amanda session payment status in card creation:', {
-            depositPaid: session.depositPaid,
-            depositSent: session.depositSent,
-            invoiceSent: session.invoiceSent,
-            paid: session.paid,
-            depositAmount: session.depositAmount,
-            price: session.price
-        });
-    }
-    
-    // Check deposit status
-    if (session.depositPaid) {
-        const remaining = session.price - session.depositAmount;
+    // Check deposit status - ensure we're reading the fields correctly
+    if (session.depositPaid === true) {
+        const remaining = session.price - (session.depositAmount || 0);
         priceDisplay = `$${session.price} (Remaining: $${remaining.toFixed(2)})`;
-        paymentBadges += '<span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">✓ Deposit Paid</span>';
-    } else if (session.depositSent) {
-        paymentBadges += '<span style="background: #fb923c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">⏳ Deposit Pending</span>';
+        paymentBadges += '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px; display: inline-block; font-weight: 500;">✓ Deposit Paid</span>';
+    } else if (session.depositSent === true) {
+        paymentBadges += '<span style="background: #fb923c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px; display: inline-block; font-weight: 500;">⏳ Deposit Pending</span>';
     }
     
     // Check invoice status
-    if (session.paid) {
-        paymentBadges += '<span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">✓ Fully Paid</span>';
-    } else if (session.invoiceSent) {
-        paymentBadges += '<span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">⏳ Invoice Sent</span>';
+    if (session.paid === true) {
+        paymentBadges += '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px; display: inline-block; font-weight: 500;">✓ Fully Paid</span>';
+    } else if (session.invoiceSent === true) {
+        paymentBadges += '<span style="background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px; display: inline-block; font-weight: 500;">⏳ Invoice Sent</span>';
+    }
+    
+    // Debug: Log what badges we're showing
+    if (paymentBadges) {
+        console.log(`💰 Badges for ${session.clientName}:`, {
+            depositSent: session.depositSent,
+            depositPaid: session.depositPaid,
+            invoiceSent: session.invoiceSent,
+            paid: session.paid,
+            badges: paymentBadges.replace(/<[^>]*>/g, ' ').trim()
+        });
     }
     
     priceDiv.innerHTML = `
