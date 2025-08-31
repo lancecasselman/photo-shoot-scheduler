@@ -6373,6 +6373,46 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
             }
         }
 
+        // Handle invoice payment success
+        if (event.type === 'invoice.payment_succeeded') {
+            const invoice = event.data.object;
+            console.log('📧 Invoice payment succeeded:', invoice.id, 'Amount:', invoice.amount_paid / 100);
+            console.log('📋 Invoice metadata:', JSON.stringify(invoice.metadata));
+            
+            // Check if this is a photography session invoice by looking for session metadata
+            if (invoice.metadata && invoice.metadata.sessionId) {
+                console.log(' Processing photography session invoice payment');
+                
+                // Create a payment intent-like object from invoice data for notification manager
+                const paymentIntentData = {
+                    id: invoice.payment_intent,
+                    amount_received: invoice.amount_paid,
+                    metadata: {
+                        sessionId: invoice.metadata.sessionId,
+                        type: invoice.metadata.isDeposit === 'true' ? 'deposit' : 'invoice',
+                        clientName: invoice.metadata.clientName,
+                        businessName: invoice.metadata.businessName,
+                        photographerId: invoice.metadata.photographerId
+                    },
+                    receipt_email: invoice.customer_email
+                };
+                
+                try {
+                    // Initialize payment notification manager and process the payment
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    await notificationManager.handlePaymentSuccess(paymentIntentData);
+                    
+                    console.log(' Photography invoice payment notification processed successfully');
+                } catch (error) {
+                    console.error('❌ Error processing invoice payment notification:', error);
+                    // Don't throw here to avoid breaking other webhook processing
+                }
+            } else {
+                console.log('📧 Standard invoice payment processed (no session metadata)');
+            }
+        }
+
         // Handle payment success for photography sessions and deposits
         if (event.type === 'payment_intent.succeeded') {
             const paymentIntent = event.data.object;

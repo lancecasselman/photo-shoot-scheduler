@@ -358,7 +358,7 @@ class StripeConnectManager {
         try {
             console.log('📋 STRIPE CONNECT: Creating invoice on photographer account:', photographerAccountId);
             
-            // Create invoice
+            // Create invoice with payment intent metadata
             const invoice = await stripe.invoices.create({
                 customer: customerId,
                 collection_method: 'send_invoice',
@@ -370,6 +370,11 @@ class StripeConnectManager {
                     ...metadata,
                     photographer_account: photographerAccountId,
                     platform: 'photography_management_system'
+                },
+                // CRITICAL: Pass metadata to the payment intent that will be created when invoice is paid
+                payment_settings: {
+                    payment_method_types: ['card'],
+                    default_mandate: null
                 }
             }, {
                 stripeAccount: photographerAccountId
@@ -389,8 +394,21 @@ class StripeConnectManager {
                 });
             }
 
+            // Update invoice with payment intent data before finalizing
+            // This ensures metadata is passed to payment intent when invoice is paid
+            const updatedInvoice = await stripe.invoices.update(invoice.id, {
+                payment_settings: {
+                    payment_method_types: ['card'],
+                    default_mandate: null
+                },
+                // Set automatic tax to false to avoid issues
+                automatic_tax: { enabled: false }
+            }, {
+                stripeAccount: photographerAccountId
+            });
+
             // Finalize and send invoice
-            const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id, {}, {
+            const finalizedInvoice = await stripe.invoices.finalizeInvoice(updatedInvoice.id, {}, {
                 stripeAccount: photographerAccountId
             });
 

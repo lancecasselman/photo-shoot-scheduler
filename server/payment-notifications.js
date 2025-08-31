@@ -186,13 +186,19 @@ ${isDeposit ?
 You can view the session details in your photography management dashboard.
             `.trim();
 
-            // Send email notification using existing notification system
-            await sendBillingNotification({
-                to: process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com', // Default to your email
-                subject: subject,
-                text: message,
-                html: message.replace(/\n/g, '<br>')
-            });
+            // Send email notification using the email service directly
+            const { sendEmailWithSender } = require('./notifications');
+            
+            const photographerEmail = process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
+            
+            await sendEmailWithSender(
+                photographerEmail,
+                subject,
+                message,
+                message.replace(/\n/g, '<br>'),
+                'noreply@photomanagementsystem.com',
+                'Photography Management System'
+            );
 
             console.log(' Photographer notification sent for payment:', paymentDetails.paymentId);
 
@@ -235,12 +241,17 @@ Payment ID: ${paymentIntent.id}
 You may want to follow up with the client about the payment issue.
                     `.trim();
 
-                    await sendBillingNotification({
-                        to: process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com',
-                        subject: subject,
-                        text: message,
-                        html: message.replace(/\n/g, '<br>')
-                    });
+                    const { sendEmailWithSender } = require('./notifications');
+                    const photographerEmail = process.env.PHOTOGRAPHER_EMAIL || 'lancecasselman@icloud.com';
+                    
+                    await sendEmailWithSender(
+                        photographerEmail,
+                        subject,
+                        message,
+                        message.replace(/\n/g, '<br>'),
+                        'noreply@photomanagementsystem.com',
+                        'Photography Management System'
+                    );
                 }
             } finally {
                 client.release();
