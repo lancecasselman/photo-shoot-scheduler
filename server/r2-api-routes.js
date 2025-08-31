@@ -254,8 +254,7 @@ function createR2Routes() {
       const adminEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com',
-        'm_casselman@icloud.com'
+        'lance@thelegacyphotography.com'
       ];
       
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
@@ -379,8 +378,7 @@ function createR2Routes() {
       const adminEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com',
-        'm_casselman@icloud.com'
+        'lance@thelegacyphotography.com'
       ];
       
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
@@ -498,8 +496,7 @@ function createR2Routes() {
       const adminEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com',
-        'm_casselman@icloud.com'
+        'lance@thelegacyphotography.com'
       ];
       
       if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
