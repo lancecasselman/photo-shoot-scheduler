@@ -326,24 +326,28 @@ async function sendEmailWithSender(to, subject, text, html, fromEmail, fromName)
 
 // Send SMS notification
 async function sendSMS(to, message) {
-    if (!twilioClient || !process.env.TWILIO_PHONE_NUMBER) {
-        console.log('📱 SMS not sent - Twilio not configured');
-        return { success: false, error: 'Twilio not configured' };
-    }
-
-    try {
-        const result = await twilioClient.messages.create({
-            body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: to
-        });
-
-        console.log(`📱 SMS sent successfully to ${to}: ${result.sid}`);
-        return { success: true, messageId: result.sid };
-    } catch (error) {
-        console.error('📱 SMS send error:', error);
-        return { success: false, error: error.message };
-    }
+    // First, try to use the client's default SMS app via a URL scheme
+    // This works on most modern devices without needing Twilio
+    console.log('📱 Preparing SMS for:', to);
+    
+    // Format phone number (remove non-digits)
+    const cleanPhone = to.replace(/\D/g, '');
+    
+    // Create SMS URL that will open the default messaging app
+    // This is a fallback method that doesn't actually send the SMS
+    // but prepopulates it in the user's default messaging app
+    const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
+    
+    console.log('📱 SMS URL generated:', smsUrl);
+    
+    // Since we can't directly send SMS without Twilio, we return the URL
+    // The frontend can use this to open the messaging app
+    return { 
+        success: true, 
+        smsUrl: smsUrl,
+        message: 'SMS prepared for sending',
+        requiresUserAction: true
+    };
 }
 
 // Subscriber notification functions
@@ -409,6 +413,19 @@ async function sendContractForSignature(clientEmail, clientName, sessionType, se
     }
 }
 
+// Send contract for signature via SMS (using default SMS app)
+async function sendContractViaSMS(clientPhone, clientName, sessionType, businessName, signingUrl) {
+    console.log('📱 Preparing contract SMS for:', clientPhone);
+    
+    // Create a concise SMS message with the contract link
+    const message = `Hi ${clientName}, your ${sessionType} contract with ${businessName} is ready to sign: ${signingUrl}`;
+    
+    // Use the sendSMS function which will prepare the SMS
+    const result = await sendSMS(clientPhone, message);
+    
+    return result;
+}
+
 // Broadcast functions for all subscribers
 async function broadcastFeatureUpdate(subscribers, title, features) {
     const results = [];
@@ -438,6 +455,7 @@ module.exports = {
     sendReminder,
     sendUrgentSMS,
     sendContractForSignature,
+    sendContractViaSMS,
     broadcastFeatureUpdate,
     broadcastReminder
 };

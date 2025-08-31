@@ -402,19 +402,177 @@ async function sendForSignature() {
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) return;
 
+    // Show send options modal
+    showSendOptionsModal(session);
+}
+
+// Show modal for choosing send method
+function showSendOptionsModal(session) {
+    const modal = document.createElement('div');
+    modal.className = 'send-options-modal';
+    modal.innerHTML = `
+        <div class="send-options-content">
+            <h3>Send Contract for Signature</h3>
+            <p>How would you like to send the contract to ${session.clientName}?</p>
+            
+            <div class="send-options">
+                <div class="send-option" onclick="sendViaEmail('${session.id}')">
+                    <i class="fas fa-envelope"></i>
+                    <h4>Email</h4>
+                    <p class="send-option-detail">${session.email || 'No email provided'}</p>
+                    ${!session.email ? '<p class="text-danger">Email address required</p>' : ''}
+                </div>
+                
+                <div class="send-option" onclick="sendViaSMS('${session.id}')">
+                    <i class="fas fa-sms"></i>
+                    <h4>Text Message (SMS)</h4>
+                    <p class="send-option-detail">${session.phoneNumber || 'No phone number provided'}</p>
+                    ${!session.phoneNumber ? '<p class="text-danger">Phone number required</p>' : ''}
+                </div>
+            </div>
+            
+            <div class="send-options-footer">
+                <button class="btn btn-secondary" onclick="closeSendOptionsModal()">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .send-options-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .send-options-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .send-options-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .send-options-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .send-options {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .send-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .send-option:hover:not(.disabled) {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .send-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .send-option i {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .send-option h4 {
+            margin: 10px 0 5px 0;
+            color: #333;
+        }
+        
+        .send-option-detail {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .send-options-footer {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+        
+        .text-danger {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+}
+
+// Close send options modal
+function closeSendOptionsModal() {
+    const modal = document.querySelector('.send-options-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Send via Email
+async function sendViaEmail(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session || !session.email) {
+        showMessage('Email address is required', 'error');
+        return;
+    }
+    
+    closeSendOptionsModal();
+    
     try {
         const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 clientEmail: session.email,
-                clientName: session.clientName
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: new Date(session.dateTime).toLocaleDateString(),
+                sendMethod: 'email'
             })
         });
 
         if (response.ok) {
             const result = await response.json();
-            showMessage('Agreement sent for signature!', 'success');
+            if (result.emailSent) {
+                showMessage(`Contract sent via email to ${session.email}!`, 'success');
+            } else {
+                showMessage('Contract ready but email failed. You can share the link manually.', 'warning');
+            }
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             displayAgreement(currentAgreement, session);
@@ -424,6 +582,175 @@ async function sendForSignature() {
     } catch (error) {
         console.error('Error sending agreement:', error);
         showMessage('Error sending agreement', 'error');
+    }
+}
+
+// Send via SMS
+async function sendViaSMS(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session || !session.phoneNumber) {
+        showMessage('Phone number is required', 'error');
+        return;
+    }
+    
+    closeSendOptionsModal();
+    
+    try {
+        const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientPhone: session.phoneNumber,
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: new Date(session.dateTime).toLocaleDateString(),
+                sendMethod: 'sms'
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.smsSent && result.requiresUserAction && result.smsUrl) {
+                // Open the default SMS app with pre-filled message
+                showMessage('Opening your SMS app with the contract link...', 'info');
+                
+                // Create a temporary link to open SMS app
+                const smsLink = document.createElement('a');
+                smsLink.href = result.smsUrl;
+                smsLink.style.display = 'none';
+                document.body.appendChild(smsLink);
+                smsLink.click();
+                document.body.removeChild(smsLink);
+                
+                showMessage(`SMS app opened. Send the message to ${session.phoneNumber} to share the contract.`, 'success');
+                
+                // Also show the signing URL for manual copying if needed
+                showSigningLinkModal(result.signingUrl, session.phoneNumber);
+            } else if (result.smsSent) {
+                showMessage(`Contract link prepared for SMS to ${session.phoneNumber}!`, 'success');
+            } else {
+                showMessage('Contract ready. Copy the link to share manually.', 'warning');
+                showSigningLinkModal(result.signingUrl, session.phoneNumber);
+            }
+            updateAgreementStatus(currentAgreementSessionId, 'sent');
+            currentAgreement.status = 'sent';
+            displayAgreement(currentAgreement, session);
+        } else {
+            showMessage('Failed to send agreement', 'error');
+        }
+    } catch (error) {
+        console.error('Error sending agreement:', error);
+        showMessage('Error sending agreement', 'error');
+    }
+}
+
+// Show modal with signing link for manual copying
+function showSigningLinkModal(signingUrl, phoneNumber) {
+    const modal = document.createElement('div');
+    modal.className = 'signing-link-modal';
+    modal.innerHTML = `
+        <div class="signing-link-content">
+            <h3>Contract Signing Link</h3>
+            <p>Copy this link to share with your client:</p>
+            
+            <div class="link-container">
+                <input type="text" id="signingLinkInput" value="${signingUrl}" readonly />
+                <button onclick="copySigningLink()" class="btn btn-primary">
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+            </div>
+            
+            ${phoneNumber ? `
+            <div class="sms-instructions">
+                <p><i class="fas fa-info-circle"></i> To send via SMS:</p>
+                <ol>
+                    <li>Copy the link above</li>
+                    <li>Open your messaging app</li>
+                    <li>Paste the link in a message to ${phoneNumber}</li>
+                </ol>
+            </div>
+            ` : ''}
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSigningLinkModal()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .signing-link-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        .signing-link-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .link-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .link-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .sms-instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .sms-instructions ol {
+            margin: 10px 0 0 20px;
+            padding: 0;
+        }
+        
+        .sms-instructions li {
+            margin: 5px 0;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+}
+
+// Copy signing link to clipboard
+function copySigningLink() {
+    const input = document.getElementById('signingLinkInput');
+    input.select();
+    document.execCommand('copy');
+    showMessage('Link copied to clipboard!', 'success');
+}
+
+// Close signing link modal
+function closeSigningLinkModal() {
+    const modal = document.querySelector('.signing-link-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 

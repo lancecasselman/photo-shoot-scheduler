@@ -162,7 +162,7 @@ function createBookingAgreementRoutes(pool) {
     router.post('/agreements/:id/send', async (req, res) => {
         try {
             const { id } = req.params;
-            const { clientEmail, clientName, sessionType, sessionDate } = req.body;
+            const { clientEmail, clientPhone, clientName, sessionType, sessionDate, sendMethod } = req.body;
             const userId = req.session?.user?.uid || '44735007';
 
             const client = await pool.connect();
@@ -199,36 +199,69 @@ function createBookingAgreementRoutes(pool) {
                     : 'http://localhost:5000';
                 const signingUrl = `${baseUrl}/sign/${agreement.access_token}`;
 
-                // Send email with contract link using the notifications module
-                const { sendContractForSignature } = require('./notifications');
-                const emailResult = await sendContractForSignature(
-                    clientEmail,
-                    clientName,
-                    sessionType || 'Photography',
-                    sessionDate || 'TBD',
-                    photographer.business_name,
-                    photographer.email,
-                    signingUrl
-                );
+                // Send based on method
+                const { sendContractForSignature, sendContractViaSMS } = require('./notifications');
+                
+                if (sendMethod === 'sms' && clientPhone) {
+                    // Send via SMS
+                    const smsResult = await sendContractViaSMS(
+                        clientPhone,
+                        clientName,
+                        sessionType || 'Photography',
+                        photographer.business_name,
+                        signingUrl
+                    );
 
-                if (emailResult.success) {
-                    console.log(`✅ Contract sent successfully to ${clientEmail}`);
-                    res.json({ 
-                        success: true, 
-                        message: 'Contract sent successfully for signature',
-                        signingUrl: signingUrl,
-                        emailSent: true
-                    });
+                    if (smsResult.success) {
+                        console.log(`📱 Contract SMS prepared for ${clientPhone}`);
+                        res.json({ 
+                            success: true, 
+                            message: 'Contract link prepared for SMS',
+                            signingUrl: signingUrl,
+                            smsSent: true,
+                            smsUrl: smsResult.smsUrl,
+                            requiresUserAction: smsResult.requiresUserAction
+                        });
+                    } else {
+                        console.error('❌ Failed to prepare SMS:', smsResult.error);
+                        res.json({ 
+                            success: true, 
+                            message: 'Agreement ready but SMS failed. Share the link manually.',
+                            signingUrl: signingUrl,
+                            smsSent: false,
+                            smsError: smsResult.error
+                        });
+                    }
                 } else {
-                    console.error('❌ Failed to send contract email:', emailResult.error);
-                    // Still return success but indicate email failed
-                    res.json({ 
-                        success: true, 
-                        message: 'Agreement ready but email sending failed. Share the link manually.',
-                        signingUrl: signingUrl,
-                        emailSent: false,
-                        emailError: emailResult.error
-                    });
+                    // Send via email (default)
+                    const emailResult = await sendContractForSignature(
+                        clientEmail,
+                        clientName,
+                        sessionType || 'Photography',
+                        sessionDate || 'TBD',
+                        photographer.business_name,
+                        photographer.email,
+                        signingUrl
+                    );
+
+                    if (emailResult.success) {
+                        console.log(`✅ Contract sent successfully to ${clientEmail}`);
+                        res.json({ 
+                            success: true, 
+                            message: 'Contract sent successfully for signature',
+                            signingUrl: signingUrl,
+                            emailSent: true
+                        });
+                    } else {
+                        console.error('❌ Failed to send contract email:', emailResult.error);
+                        res.json({ 
+                            success: true, 
+                            message: 'Agreement ready but email sending failed. Share the link manually.',
+                            signingUrl: signingUrl,
+                            emailSent: false,
+                            emailError: emailResult.error
+                        });
+                    }
                 }
             } finally {
                 client.release();
