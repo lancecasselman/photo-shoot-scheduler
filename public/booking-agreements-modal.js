@@ -410,10 +410,20 @@ async function sendForSignature() {
 function showSendOptionsModal(session) {
     const modal = document.createElement('div');
     modal.className = 'send-options-modal';
+    const isResend = currentAgreement?.status === 'sent' || currentAgreement?.status === 'viewed';
+    const isSigned = currentAgreement?.status === 'signed';
+    
+    const title = isSigned ? 'Send to Another Recipient' : (isResend ? 'Resend Contract' : 'Send Contract for Signature');
+    const subtitle = isSigned ? 
+        `This contract has already been signed. You can send it to another recipient if needed.` :
+        (isResend ? 
+            `The contract was previously sent. Choose how to resend it to ${session.clientName}:` :
+            `How would you like to send the contract to ${session.clientName}?`);
+    
     modal.innerHTML = `
         <div class="send-options-content">
-            <h3>Send Contract for Signature</h3>
-            <p>How would you like to send the contract to ${session.clientName}?</p>
+            <h3>${title}</h3>
+            <p>${subtitle}</p>
             
             <div class="send-options">
                 <div class="send-option" onclick="sendViaEmail('${session.id}')">
@@ -767,6 +777,11 @@ function updateModalButtons(status) {
         if (btn) btn.style.display = 'none';
     });
 
+    // Reset send button text to default
+    if (sendBtn) {
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send for Signature';
+    }
+
     switch(status) {
         case 'new':
         case 'draft':
@@ -777,10 +792,19 @@ function updateModalButtons(status) {
         case 'sent':
         case 'viewed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
-            if (resendBtn) resendBtn.style.display = 'inline-block';
+            // Always show send button for resending
+            if (sendBtn) {
+                sendBtn.style.display = 'inline-block';
+                sendBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Contract';
+            }
             break;
         case 'signed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
+            // Even after signing, allow sending to additional recipients
+            if (sendBtn) {
+                sendBtn.style.display = 'inline-block';
+                sendBtn.innerHTML = '<i class="fas fa-share"></i> Send to Another Recipient';
+            }
             break;
     }
 }
@@ -917,14 +941,8 @@ async function downloadAgreementPDF() {
 
 // Resend agreement
 async function resendAgreement() {
-    if (!currentAgreement) return;
-
-    const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) return;
-
-    if (confirm('Resend agreement to ' + session.email + '?')) {
-        await sendForSignature();
-    }
+    // Just call sendForSignature which will show the send options modal
+    await sendForSignature();
 }
 
 // Expose functions globally
