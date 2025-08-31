@@ -225,11 +225,11 @@ function displayAgreement(agreement, session) {
         // Show editor mode
         showEditMode(agreement, session);
     } else {
-        // Show viewer mode
-        showViewMode(agreement, session);
+        // ALWAYS show create mode, not viewer
+        showBothViewAndCreate(agreement, session);
     }
 
-    updateModalButtons(status);
+    updateModalButtons('new'); // Always show create buttons
 }
 
 // Show create mode
@@ -279,34 +279,10 @@ function showEditMode(agreement, session) {
     }
 }
 
-// Show view mode
+// Show view mode - DEPRECATED, redirects to showBothViewAndCreate
 function showViewMode(agreement, session) {
-    // ALWAYS show template selector to allow sending new contracts
-    document.getElementById('templateSelector').style.display = 'block';
-    document.getElementById('agreementEditor').style.display = 'block';
-    document.getElementById('agreementViewer').style.display = 'block';
-
-    // Clear the editor for new contract creation
-    document.getElementById('agreementContent').innerHTML = '';
-    document.getElementById('agreementTemplate').value = '';
-
-    // Display the existing contract in viewer section
-    document.getElementById('agreementViewContent').innerHTML = agreement.content;
-
-    // Show status badge
-    const badge = document.getElementById('agreementStatusBadge');
-    badge.className = `status-badge status-${agreement.status}`;
-    badge.textContent = getStatusText(agreement.status);
-
-    // Show signature info if signed
-    if (agreement.status === 'signed' && agreement.signature_data) {
-        document.getElementById('signatureInfo').style.display = 'block';
-        document.getElementById('signerName').textContent = agreement.signer_name || 'Client';
-        document.getElementById('signedDate').textContent = 
-            new Date(agreement.signature_date).toLocaleDateString();
-    } else {
-        document.getElementById('signatureInfo').style.display = 'none';
-    }
+    // Don't show viewer anymore, always show create mode
+    showBothViewAndCreate(agreement, session);
 }
 
 // Show both view and create mode for existing contracts
