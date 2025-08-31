@@ -1395,10 +1395,17 @@ async function createInvoice(session) {
         
         showMessage('Invoice with tip options created successfully!', 'success');
         
-        // Open the custom invoice URL
-        window.open(customInvoiceUrl, '_blank');
+        // Show invoice send dialog with SMS and email options
+        showInvoiceSendDialog({
+            amount: remainingBalance,
+            clientName: session.clientName,
+            clientPhone: session.phoneNumber || session.phone_number,  // Handle both field names
+            clientEmail: session.email,
+            invoiceUrl: customInvoiceUrl
+        });
 
         console.log(' TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
+        console.log(' Phone number for SMS:', session.phoneNumber || session.phone_number);
 
     } catch (error) {
         console.error('Error creating invoice with tipping:', error);
@@ -1479,15 +1486,19 @@ function sendViaSMS(phone, clientName, amount, invoiceUrl) {
         return;
     }
     
+    // Clean phone number - remove spaces and formatting but keep country code
+    const cleanPhone = phone.replace(/[\s()-]/g, '');
+    console.log('📱 SMS: Original phone:', phone, 'Cleaned:', cleanPhone);
+    
     const message = `Hi ${clientName}! Your photography invoice for $${parseFloat(amount).toFixed(2)} is ready. You can add a tip and pay securely here: ${invoiceUrl}`;
     
     // Create SMS URL that opens default SMS app
-    const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
+    const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
     
     // Open SMS app
     window.location.href = smsUrl;
     
-    showMessage('SMS app opened with invoice message!', 'success');
+    showMessage(`SMS app opened with invoice message for ${cleanPhone}!`, 'success');
 }
 
 // Send invoice via email using device default email app
