@@ -832,6 +832,18 @@ function createSessionCard(session) {
     let priceDisplay = `$${session.price}`;
     let paymentBadges = '';
     
+    // Debug payment status fields
+    if (session.clientName === 'Amanda casselman') {
+        console.log('🎯 Amanda session payment status in card creation:', {
+            depositPaid: session.depositPaid,
+            depositSent: session.depositSent,
+            invoiceSent: session.invoiceSent,
+            paid: session.paid,
+            depositAmount: session.depositAmount,
+            price: session.price
+        });
+    }
+    
     // Check deposit status
     if (session.depositPaid) {
         const remaining = session.price - session.depositAmount;
