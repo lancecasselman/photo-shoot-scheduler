@@ -6227,6 +6227,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
             // Check if this is a photography session payment (deposits use checkout sessions)
             if (session.metadata && session.metadata.paymentId) {
                 console.log(' Processing photography session checkout session payment');
+                console.log('💳 Payment routed to:', session.metadata.photographerAccountId || 'platform');
                 
                 try {
                     // Extract session ID from paymentId (format: payment-sessionId-timestamp)
@@ -6235,6 +6236,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                     
                     if (sessionIdMatch) {
                         const sessionId = sessionIdMatch[1];
+                        const isConnectedAccount = session.metadata.photographerAccountId && session.metadata.photographerAccountId !== 'platform';
                         
                         // Create a payment intent-like object for notification processing
                         const mockPaymentIntent = {
@@ -6242,7 +6244,10 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                             amount_received: session.amount_total,
                             metadata: {
                                 sessionId: sessionId,
-                                type: paymentId.includes('deposit') ? 'deposit' : 'invoice'
+                                type: session.metadata.type || (paymentId.includes('deposit') ? 'deposit' : 'invoice'),
+                                photographerAccountId: session.metadata.photographerAccountId,
+                                baseAmount: session.metadata.baseAmount,
+                                tipAmount: session.metadata.tipAmount
                             },
                             receipt_email: session.customer_details?.email
                         };
@@ -6252,7 +6257,37 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                         const notificationManager = new PaymentNotificationManager();
                         await notificationManager.handlePaymentSuccess(mockPaymentIntent);
                         
+                        // Update database based on payment type
+                        if (session.metadata.type === 'deposit') {
+                            // Update deposit_paid and deposit_paid_date
+                            await pool.query(
+                                `UPDATE photography_sessions 
+                                 SET deposit_paid = true,
+                                     deposit_paid_date = NOW(),
+                                     deposit_sent = true,
+                                     updated_at = NOW()
+                                 WHERE id = $1`,
+                                [sessionId]
+                            );
+                            console.log('✅ Updated session deposit status for:', sessionId);
+                        } else {
+                            // Update full payment status
+                            await pool.query(
+                                `UPDATE photography_sessions 
+                                 SET paid = true,
+                                     payment_date = NOW(),
+                                     invoice_sent = true,
+                                     updated_at = NOW()
+                                 WHERE id = $1`,
+                                [sessionId]
+                            );
+                            console.log('✅ Updated session payment status for:', sessionId);
+                        }
+                        
                         console.log(' Photography checkout session payment processed:', sessionId);
+                        console.log(isConnectedAccount ? 
+                            '💰 Payment went DIRECTLY to photographer account' : 
+                            '⚠️ Payment went to platform account (needs manual transfer)');
                     } else {
                         console.log(' Could not extract session ID from payment ID:', paymentId);
                     }
@@ -9564,6 +9599,58 @@ app.post('/api/create-checkout-session', async (req, res) => {
             });
         }
         
+        // Get photographer's Stripe Connect account ID
+        let photographerAccountId = null;
+        try {
+            // Try to get from authenticated user first
+            if (req.user && req.user.uid) {
+                const userResult = await pool.query(
+                    'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
+                    [req.user.uid]
+                );
+                if (userResult.rows.length > 0) {
+                    photographerAccountId = userResult.rows[0].stripe_connect_account_id;
+                    const onboardingComplete = userResult.rows[0].stripe_onboarding_complete;
+                    
+                    console.log('💳 PHOTOGRAPHER STRIPE INFO:', {
+                        hasAccount: !!photographerAccountId,
+                        accountId: photographerAccountId?.substring(0, 10) + '...',
+                        onboardingComplete: onboardingComplete
+                    });
+                    
+                    // Warn if onboarding not complete but still try to process
+                    if (photographerAccountId && !onboardingComplete) {
+                        console.log('⚠️ WARNING: Stripe onboarding not complete, payment may fail');
+                    }
+                }
+            }
+            
+            // If not authenticated or no account, try to get from session metadata
+            if (!photographerAccountId && paymentId) {
+                const sessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
+                if (sessionId) {
+                    const sessionResult = await pool.query(
+                        'SELECT user_id FROM photography_sessions WHERE id = $1',
+                        [sessionId]
+                    );
+                    if (sessionResult.rows.length > 0) {
+                        const userId = sessionResult.rows[0].user_id;
+                        const userResult = await pool.query(
+                            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+                            [userId]
+                        );
+                        if (userResult.rows.length > 0) {
+                            photographerAccountId = userResult.rows[0].stripe_connect_account_id;
+                            console.log('💳 Got photographer account from session:', photographerAccountId?.substring(0, 10) + '...');
+                        }
+                    }
+                }
+            }
+        } catch (dbError) {
+            console.error('❌ Error fetching photographer account:', dbError.message);
+            // Continue without connected account (payment will go to platform)
+        }
+        
         // Determine the base URL for redirect URLs - force HTTPS for Stripe
         const protocol = req.headers['x-forwarded-proto'] || 'https';
         const host = req.headers.host || 'localhost:5000';
@@ -9575,11 +9662,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
             baseUrl, 
             origin: req.headers.origin,
             successUrl: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentId}`,
-            cancelUrl: `${baseUrl}/invoice.html?payment=${paymentId}`
+            cancelUrl: `${baseUrl}/invoice.html?payment=${paymentId}`,
+            usingConnectedAccount: !!photographerAccountId
         });
         
-        // Create Stripe checkout session
-        const session = await stripe.checkout.sessions.create({
+        // Prepare checkout session configuration
+        const checkoutConfig = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -9603,15 +9691,33 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 tipAmount: tipAmount.toString(),
                 totalAmount: totalAmount.toString(),
                 sessionId: paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1] || 'unknown',
-                type: 'deposit' // Most checkout sessions are for deposits
+                type: 'deposit', // Most checkout sessions are for deposits
+                photographerAccountId: photographerAccountId || 'platform' // Track which account received payment
             }
-        });
+        };
+        
+        // Create Stripe checkout session
+        let session;
+        if (photographerAccountId) {
+            // Create checkout session on CONNECTED ACCOUNT - payment goes directly to photographer
+            console.log('✅ Creating checkout on PHOTOGRAPHER account:', photographerAccountId.substring(0, 10) + '...');
+            session = await stripe.checkout.sessions.create(checkoutConfig, {
+                stripeAccount: photographerAccountId // CRITICAL: This routes payment to photographer
+            });
+            console.log('💰 Payment will go DIRECTLY to photographer, not platform');
+        } else {
+            // Fallback: Create on platform account (shouldn't happen in normal flow)
+            console.log('⚠️ Creating checkout on PLATFORM account (no photographer account found)');
+            session = await stripe.checkout.sessions.create(checkoutConfig);
+            console.log('⚠️ Payment will go to platform account - manual transfer needed');
+        }
         
         console.log(' STRIPE SESSION CREATED:', session.id);
         res.json({
             success: true,
             checkout_url: session.url,
-            session_id: session.id
+            session_id: session.id,
+            connected_account: !!photographerAccountId // Let frontend know if using connected account
         });
         
     } catch (error) {

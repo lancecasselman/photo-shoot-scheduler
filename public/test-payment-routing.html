@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Routing Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+        
+        .code-block {
+            background: #263238;
+            color: #aed581;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 Payment Routing Test</h1>
+        <p class="subtitle">Test that payments are routing to photographer's Stripe Connect account</p>
+        
+        <div class="test-section">
+            <h2>1. Check Photographer Account Status</h2>
+            <button onclick="checkAccountStatus()">Check Stripe Connect Status</button>
+            <div id="accountStatus" class="status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Create Test Payment</h2>
+            <div class="input-group">
+                <label>Session Type</label>
+                <input type="text" id="sessionType" value="Test Photography Session" />
+            </div>
+            <div class="input-group">
+                <label>Client Name</label>
+                <input type="text" id="clientName" value="Test Client" />
+            </div>
+            <div class="input-group">
+                <label>Amount ($)</label>
+                <input type="number" id="amount" value="10.00" step="0.01" min="0.50" />
+            </div>
+            <div class="input-group">
+                <label>Payment Type</label>
+                <select id="paymentType">
+                    <option value="deposit">Deposit Payment</option>
+                    <option value="invoice">Full Payment</option>
+                </select>
+            </div>
+            <button onclick="createTestPayment()">Create Test Checkout Session</button>
+            <div id="paymentStatus" class="status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Payment Routing Results</h2>
+            <div id="routingResults" class="status"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Check photographer's Stripe Connect account status
+        async function checkAccountStatus() {
+            const statusDiv = document.getElementById('accountStatus');
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = '<span class="loading"></span> Checking account status...';
+            
+            try {
+                const response = await fetch('/api/stripe-connect/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const account = data.account;
+                    statusDiv.className = account.chargesEnabled ? 'status success' : 'status warning';
+                    statusDiv.innerHTML = `
+                        <strong>Stripe Connect Status:</strong><br>
+                        Account ID: ${account.id}<br>
+                        Charges Enabled: ${account.chargesEnabled ? '✅ Yes' : '❌ No'}<br>
+                        Payouts Enabled: ${account.payoutsEnabled ? '✅ Yes' : '❌ No'}<br>
+                        Onboarding Complete: ${data.onboardingComplete ? '✅ Yes' : '⚠️ No'}<br>
+                        ${!data.onboardingComplete ? '<br><a href="/payment-setup.html" target="_blank">Complete Setup →</a>' : ''}
+                    `;
+                    
+                    // Store account ID for testing
+                    window.photographerAccountId = account.id;
+                    
+                    if (!account.chargesEnabled) {
+                        statusDiv.innerHTML += '<br><br>⚠️ <strong>Warning:</strong> Charges are not enabled. Payments will fail until onboarding is complete.';
+                    }
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `❌ Error: ${data.error || 'Failed to get account status'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        // Create a test payment
+        async function createTestPayment() {
+            const statusDiv = document.getElementById('paymentStatus');
+            const resultsDiv = document.getElementById('routingResults');
+            
+            const sessionType = document.getElementById('sessionType').value;
+            const clientName = document.getElementById('clientName').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const paymentType = document.getElementById('paymentType').value;
+            
+            if (amount < 0.50) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Amount must be at least $0.50';
+                return;
+            }
+            
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = '<span class="loading"></span> Creating checkout session...';
+            
+            try {
+                // Create a test payment ID
+                const paymentId = `payment-test-${Date.now()}`;
+                
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentId: paymentId,
+                        amount: amount,
+                        tipAmount: 0,
+                        totalAmount: amount,
+                        clientName: clientName,
+                        sessionType: sessionType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        ✅ Checkout session created successfully!<br><br>
+                        Session ID: <code>${data.session_id}</code><br>
+                        Using Connected Account: ${data.connected_account ? '✅ Yes' : '❌ No'}<br><br>
+                        <a href="${data.checkout_url}" target="_blank" style="color: #007bff;">Open Checkout →</a>
+                    `;
+                    
+                    // Show routing results
+                    resultsDiv.className = data.connected_account ? 'status success' : 'status warning';
+                    resultsDiv.innerHTML = `
+                        <strong>Payment Routing Analysis:</strong><br><br>
+                        ${data.connected_account ? 
+                            '✅ <strong>SUCCESS:</strong> Payment will go DIRECTLY to photographer\'s Stripe account<br>' +
+                            'The photographer will receive funds directly, no manual transfers needed.<br>' +
+                            '<div class="code-block">stripeAccount: ' + (window.photographerAccountId || 'acct_xxx...') + '</div>' :
+                            '⚠️ <strong>WARNING:</strong> Payment will go to PLATFORM account<br>' +
+                            'Manual transfer to photographer will be required.<br>' +
+                            'This happens when:<br>' +
+                            '• Photographer has not completed Stripe Connect onboarding<br>' +
+                            '• No Stripe Connect account ID found in database<br>' +
+                            '• User is not authenticated'}
+                    `;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `❌ Error: ${data.message || 'Failed to create checkout session'}`;
+                    resultsDiv.className = 'status';
+                    resultsDiv.style.display = 'none';
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultsDiv.className = 'status';
+                resultsDiv.style.display = 'none';
+            }
+        }
+        
+        // Check status on page load
+        window.addEventListener('load', () => {
+            checkAccountStatus();
+        });
+    </script>
+</body>
+</html>
