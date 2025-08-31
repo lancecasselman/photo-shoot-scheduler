@@ -6939,6 +6939,36 @@ app.get('/invoice.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
 });
 
+// Serve payment success page (no authentication required for Stripe redirect)
+app.get('/payment-success', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'payment-success.html'));
+});
+
+// Get payment session details (no auth required for payment confirmation)
+app.get('/api/payment/session/:sessionId/details', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        // Retrieve the checkout session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        res.json({
+            success: true,
+            amount: session.amount_total,
+            currency: session.currency,
+            paymentStatus: session.payment_status,
+            customerEmail: session.customer_details?.email,
+            metadata: session.metadata
+        });
+    } catch (error) {
+        console.error('Error retrieving payment session:', error);
+        res.status(404).json({
+            success: false,
+            error: 'Payment session not found'
+        });
+    }
+});
+
 // Serve storefront preview pages
 app.get('/storefront-preview/:page', async (req, res) => {
     const { page } = req.params;

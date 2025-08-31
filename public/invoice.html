@@ -820,6 +820,11 @@
                 const result = await response.json();
                 
                 if (result.success && result.checkout_url) {
+                    // Store payment info for success page
+                    localStorage.setItem(`payment_${paymentId}_amount`, totalAmount.toString());
+                    localStorage.setItem(`payment_${paymentId}_type`, invoiceData.isDeposit ? 'deposit' : 'invoice');
+                    localStorage.setItem(`payment_${paymentId}_sessionType`, invoiceData.session.sessionType || 'Photography Session');
+                    
                     // Redirect to Stripe Checkout
                     window.location.href = result.checkout_url;
                 } else {
