@@ -519,6 +519,9 @@
         }
         
         async function completeRequirement(requirementId) {
+            console.log('Complete requirement clicked:', requirementId);
+            console.log('Current Stripe Account ID:', stripeAccountId);
+            
             if (!stripeAccountId) {
                 alert('No payment account found. Please create one first.');
                 return;
@@ -527,30 +530,68 @@
             try {
                 // Continue onboarding
                 const response = await fetch('/api/stripe-connect/continue-onboarding', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
                 
                 if (!response.ok) {
+                    const errorData = await response.text();
+                    console.error('API Error:', errorData);
                     throw new Error('Failed to continue onboarding');
                 }
                 
                 const data = await response.json();
+                console.log('Onboarding response:', data);
                 
                 if (data.onboardingUrl) {
-                    // Open Stripe onboarding
-                    window.open(data.onboardingUrl, '_blank');
+                    console.log('Opening Stripe onboarding URL:', data.onboardingUrl);
                     
-                    // Show message to refresh
-                    alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
+                    // Check if on mobile device
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    
+                    if (isMobile) {
+                        // On mobile, open in same window for better experience
+                        if (confirm('You will be redirected to Stripe to complete setup. Click OK to continue.')) {
+                            window.location.href = data.onboardingUrl;
+                        }
+                    } else {
+                        // On desktop, try to open in new window
+                        const onboardingWindow = window.open(data.onboardingUrl, 'stripe_onboarding', 'width=800,height=800');
+                        
+                        if (!onboardingWindow || onboardingWindow.closed || typeof onboardingWindow.closed == 'undefined') {
+                            // Pop-up blocked, open in same window
+                            if (confirm('Pop-up blocked. Click OK to open Stripe setup in this window.')) {
+                                window.location.href = data.onboardingUrl;
+                            }
+                        } else {
+                            // Show success message
+                            alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
+                            
+                            // Check if window was closed every 2 seconds
+                            const checkInterval = setInterval(() => {
+                                if (onboardingWindow.closed) {
+                                    clearInterval(checkInterval);
+                                    // Refresh status after window closes
+                                    setTimeout(loadPaymentStatus, 1000);
+                                }
+                            }, 2000);
+                        }
+                    }
                 } else if (data.accountLinkUrl) {
                     // Fallback for older response format
-                    window.open(data.accountLinkUrl, '_blank');
+                    console.log('Opening Stripe onboarding URL (legacy):', data.accountLinkUrl);
+                    window.open(data.accountLinkUrl, 'stripe_onboarding', 'width=800,height=800');
                     alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
+                } else {
+                    console.error('No onboarding URL in response:', data);
+                    alert('Error: No onboarding URL received. Please try again.');
                 }
                 
             } catch (error) {
                 console.error('Error continuing onboarding:', error);
-                alert('Error accessing payment setup. Please try again.');
+                alert('Error accessing payment setup. Please try again. Check console for details.');
             }
         }
         
