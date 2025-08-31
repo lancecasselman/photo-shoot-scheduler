@@ -9766,6 +9766,15 @@ app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}),
     const sig = req.headers['stripe-signature'];
     const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
     
+    // Debug logging to help identify the issue
+    console.log('🔍 Connect webhook debug:', {
+        hasSignature: !!sig,
+        signaturePrefix: sig ? sig.substring(0, 20) + '...' : 'none',
+        hasConnectSecret: !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+        secretPrefix: connectWebhookSecret ? connectWebhookSecret.substring(0, 10) + '...' : 'none',
+        usingFallback: !process.env.STRIPE_CONNECT_WEBHOOK_SECRET && !!process.env.STRIPE_WEBHOOK_SECRET
+    });
+    
     let event;
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, connectWebhookSecret);
@@ -9773,6 +9782,7 @@ app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}),
         console.log('🔔 Connect account:', event.account);
     } catch (err) {
         console.log(`❌ Connect webhook signature verification failed.`, err.message);
+        console.log('❌ Full error:', err);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
