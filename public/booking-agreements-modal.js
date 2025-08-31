@@ -311,50 +311,35 @@ function showViewMode(agreement, session) {
 
 // Show both view and create mode for existing contracts
 function showBothViewAndCreate(agreement, session) {
-    // Show ALL sections
-    document.getElementById('templateSelector').style.display = 'block';
-    document.getElementById('agreementEditor').style.display = 'block';
-    document.getElementById('agreementViewer').style.display = 'block';
-
-    // Clear the editor for new contract creation
-    document.getElementById('agreementContent').innerHTML = '';
-    document.getElementById('agreementTemplate').value = '';
-
-    // Populate template dropdown
-    const select = document.getElementById('agreementTemplate');
-    if (select && select.options.length <= 1) {
-        select.innerHTML = '<option value="">Choose a template...</option>';
-        if (agreementTemplates && agreementTemplates.length > 0) {
-            agreementTemplates.forEach(template => {
-                const option = document.createElement('option');
-                option.value = template.id;
-                option.textContent = template.name;
-                option.dataset.category = template.category;
-                select.appendChild(option);
-            });
+    // If there's a pending/signed contract, just show create mode
+    // The pending contract will be shown in a separate area
+    if (agreement.status !== 'draft') {
+        // Just show the create new contract interface
+        showCreateMode(session);
+        
+        // Add a notice about existing contract
+        const notice = document.createElement('div');
+        notice.className = 'existing-contract-notice';
+        notice.innerHTML = `
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; padding: 10px; margin-bottom: 15px;">
+                <strong>⚠️ Existing Contract:</strong> 
+                ${agreement.status === 'sent' ? 'A contract has been sent to the client.' : 
+                  agreement.status === 'signed' ? 'The client has signed a contract.' : 
+                  'A contract exists for this session.'}
+                ${agreement.status === 'sent' ? 
+                  '<button onclick="viewPendingContract(\'' + currentAgreementSessionId + '\')" style="margin-left: 10px; padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">View/Resend</button>' : ''}
+            </div>
+        `;
+        const templateSection = document.getElementById('templateSelector');
+        if (templateSection && !templateSection.querySelector('.existing-contract-notice')) {
+            templateSection.insertBefore(notice, templateSection.firstChild);
         }
-    }
-
-    // Display the existing contract in viewer section
-    document.getElementById('agreementViewContent').innerHTML = agreement.content;
-
-    // Show status badge
-    const badge = document.getElementById('agreementStatusBadge');
-    badge.className = `status-badge status-${agreement.status}`;
-    badge.textContent = getStatusText(agreement.status);
-
-    // Show signature info if signed
-    if (agreement.status === 'signed' && agreement.signature_data) {
-        document.getElementById('signatureInfo').style.display = 'block';
-        document.getElementById('signerName').textContent = agreement.signer_name || 'Client';
-        document.getElementById('signedDate').textContent = 
-            new Date(agreement.signature_date).toLocaleDateString();
     } else {
-        document.getElementById('signatureInfo').style.display = 'none';
+        // It's a draft, show edit mode
+        showEditMode(agreement, session);
     }
 
-    // Update buttons to show all options
-    updateModalButtons(agreement.status);
+    updateModalButtons('new'); // Always show create buttons
 }
 
 // Load selected template
