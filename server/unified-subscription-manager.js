@@ -505,6 +505,11 @@ class UnifiedSubscriptionManager {
                 case 'invoice.payment_succeeded':
                     await this.handleStripePaymentSucceeded(event.data.object);
                     break;
+                    
+                case 'payment_intent.succeeded':
+                    console.log('💰 Payment intent succeeded event received');
+                    await this.handlePaymentIntentSucceeded(event.data.object);
+                    break;
             }
 
             // Log event
@@ -1177,6 +1182,70 @@ class UnifiedSubscriptionManager {
     async handleStripePaymentSucceeded(invoice) {
         console.log(`✅ Handling successful payment for invoice: ${invoice.id}`);
         // Implementation here
+    }
+
+    async handlePaymentIntentSucceeded(paymentIntent) {
+        console.log(`💰 Processing payment intent: ${paymentIntent.id}`);
+        console.log('Payment intent metadata:', paymentIntent.metadata);
+        
+        // Check if this is a deposit or invoice payment (not a subscription)
+        if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
+            const sessionId = paymentIntent.metadata.sessionId;
+            const paymentType = paymentIntent.metadata.type || 'invoice';
+            const amount = paymentIntent.amount / 100;
+            
+            console.log(`📸 Photography session payment detected:`, {
+                sessionId,
+                paymentType,
+                amount,
+                status: paymentIntent.status
+            });
+            
+            const client = await this.pool.connect();
+            try {
+                // Update database based on payment type
+                if (paymentType === 'deposit') {
+                    await client.query(
+                        `UPDATE photography_sessions 
+                         SET deposit_paid = true,
+                             deposit_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Deposit marked as paid for session ${sessionId} - Amount: $${amount}`);
+                } else if (paymentType === 'invoice' || paymentType === 'final') {
+                    await client.query(
+                        `UPDATE photography_sessions 
+                         SET paid = true,
+                             invoice_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Invoice marked as paid for session ${sessionId} - Amount: $${amount}`);
+                }
+                
+                // Send notification to photographer if needed
+                try {
+                    const sessionResult = await client.query(
+                        'SELECT * FROM photography_sessions WHERE id = $1',
+                        [sessionId]
+                    );
+                    if (sessionResult.rows.length > 0) {
+                        const session = sessionResult.rows[0];
+                        console.log(`📧 Payment notification would be sent for ${session.client_name}'s ${paymentType}`);
+                    }
+                } catch (notifErr) {
+                    console.error('Error sending notification:', notifErr);
+                }
+                
+            } finally {
+                client.release();
+            }
+        } else {
+            console.log('Payment intent not related to photography sessions, skipping...');
+        }
     }
 
     async logSubscriptionEvent(data) {
