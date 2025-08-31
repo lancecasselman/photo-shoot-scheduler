@@ -14832,6 +14832,111 @@ app.post('/api/stripe-connect/dashboard-link', isAuthenticated, async (req, res)
     }
 });
 
+// Create new Stripe Connect account
+app.post('/api/stripe-connect/create-account', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const { country = 'US' } = req.body;
+        
+        console.log('🆕 STRIPE: Creating new Connect account for user:', userId);
+        
+        // Check if user already has an account
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id, email, business_name FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows[0]?.stripe_connect_account_id) {
+            console.log('⚠️ STRIPE: User already has Connect account:', userResult.rows[0].stripe_connect_account_id);
+            
+            // Return onboarding link for existing account
+            const accountId = userResult.rows[0].stripe_connect_account_id;
+            const stripeConnectManager = new StripeConnectManager();
+            const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+            const refreshUrl = `${baseUrl}/api/stripe-connect/refresh-link?account=${accountId}`;
+            const returnUrl = `${baseUrl}/api/stripe-connect/callback?account_id=${accountId}`;
+            
+            const linkResult = await stripeConnectManager.createAccountLink(
+                accountId,
+                refreshUrl,
+                returnUrl
+            );
+            
+            if (!linkResult.success) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to create onboarding link'
+                });
+            }
+            
+            return res.json({
+                success: true,
+                onboardingUrl: linkResult.onboardingUrl,
+                accountId: accountId,
+                existingAccount: true
+            });
+        }
+        
+        // Create new Express account
+        const stripeConnectManager = new StripeConnectManager();
+        const email = userResult.rows[0]?.email || req.user.email;
+        const businessName = userResult.rows[0]?.business_name || 'Photography Business';
+        
+        const accountResult = await stripeConnectManager.createExpressAccount(
+            email,
+            businessName,
+            country
+        );
+        
+        if (!accountResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create Stripe account: ' + accountResult.error
+            });
+        }
+        
+        // Save account ID to database
+        await pool.query(
+            'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2',
+            [accountResult.accountId, userId]
+        );
+        
+        console.log('✅ STRIPE: Created new account:', accountResult.accountId);
+        
+        // Create onboarding link
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/api/stripe-connect/refresh-link?account=${accountResult.accountId}`;
+        const returnUrl = `${baseUrl}/api/stripe-connect/callback?account_id=${accountResult.accountId}`;
+        
+        const linkResult = await stripeConnectManager.createAccountLink(
+            accountResult.accountId,
+            refreshUrl,
+            returnUrl
+        );
+        
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create onboarding link'
+            });
+        }
+        
+        res.json({
+            success: true,
+            onboardingUrl: linkResult.onboardingUrl,
+            accountId: accountResult.accountId,
+            newAccount: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating Stripe account:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create payment account'
+        });
+    }
+});
+
 // Continue onboarding for existing account
 app.post('/api/stripe-connect/continue-onboarding', isAuthenticated, async (req, res) => {
     try {

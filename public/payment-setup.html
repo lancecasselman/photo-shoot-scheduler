@@ -500,11 +500,15 @@
                 
                 const data = await response.json();
                 
-                if (data.accountLinkUrl) {
+                if (data.onboardingUrl) {
                     // Open Stripe onboarding
-                    window.open(data.accountLinkUrl, '_blank');
+                    window.open(data.onboardingUrl, '_blank');
                     
                     // Show message to refresh
+                    alert('Complete the setup in the new window, then refresh this page to see your updated status.');
+                } else if (data.accountLinkUrl) {
+                    // Fallback for older response format
+                    window.open(data.accountLinkUrl, '_blank');
                     alert('Complete the setup in the new window, then refresh this page to see your updated status.');
                 }
                 
@@ -532,11 +536,15 @@
                 
                 const data = await response.json();
                 
-                if (data.accountLinkUrl) {
+                if (data.onboardingUrl) {
                     // Open Stripe onboarding
-                    window.open(data.accountLinkUrl, '_blank');
+                    window.open(data.onboardingUrl, '_blank');
                     
                     // Show message to refresh
+                    alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
+                } else if (data.accountLinkUrl) {
+                    // Fallback for older response format
+                    window.open(data.accountLinkUrl, '_blank');
                     alert('Complete the requirement in the new window, then refresh this page to see your updated status.');
                 }
                 
