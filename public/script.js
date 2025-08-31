@@ -450,19 +450,7 @@ async function loadSessions() {
 
         // Transform the data to match frontend format
         const transformedSessions = data.map(session => {
-            // Debug: Check what payment fields we're getting
-            if (session.client_name === 'Amanda casselman' || session.clientName === 'Amanda casselman') {
-                console.log('🔍 DEBUG Amanda session payment fields:', {
-                    depositPaid: session.depositPaid,
-                    deposit_paid: session.deposit_paid,
-                    depositSent: session.depositSent,
-                    deposit_sent: session.deposit_sent,
-                    invoiceSent: session.invoiceSent,
-                    invoice_sent: session.invoice_sent
-                });
-            }
-            
-            return {
+            const transformed = {
                 id: session.id,
                 sessionType: session.session_type || session.sessionType,
                 clientName: session.client_name || session.clientName,
@@ -472,9 +460,10 @@ async function loadSessions() {
                 email: session.email,
                 price: parseFloat(session.price) || 0,
                 depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
-                depositPaid: session.depositPaid || session.deposit_paid || false,
-                depositSent: session.depositSent || session.deposit_sent || false,
-                invoiceSent: session.invoiceSent || session.invoice_sent || false,
+                // CRITICAL FIX: Read payment status fields correctly
+                depositPaid: session.depositPaid === true || session.deposit_paid === true,
+                depositSent: session.depositSent === true || session.deposit_sent === true, 
+                invoiceSent: session.invoiceSent === true || session.invoice_sent === true,
                 depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
                 invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
                 duration: parseInt(session.duration) || 60,
@@ -490,6 +479,18 @@ async function loadSessions() {
                 createdAt: session.created_at || session.createdAt,
                 updatedAt: session.updated_at || session.updatedAt
             };
+            
+            // Debug: Log payment fields for sessions with deposits/invoices sent
+            if (session.depositSent || session.invoiceSent) {
+                console.log(`💳 Payment fields for ${transformed.clientName}:`, {
+                    depositSent: transformed.depositSent,
+                    invoiceSent: transformed.invoiceSent,
+                    depositPaid: transformed.depositPaid,
+                    depositAmount: transformed.depositAmount
+                });
+            }
+            
+            return transformed;
         });
 
         console.log('Transformed sessions:', transformedSessions);
