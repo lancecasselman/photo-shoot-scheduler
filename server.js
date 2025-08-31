@@ -9841,6 +9841,43 @@ app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}),
     }
 });
 
+// Mark invoice as sent when SMS is used
+app.post('/api/mark-invoice-sent', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        
+        if (!sessionId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Session ID is required'
+            });
+        }
+        
+        // Update database to mark invoice as sent
+        await pool.query(
+            `UPDATE photography_sessions 
+             SET invoice_sent = true,
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [sessionId]
+        );
+        
+        console.log(`✅ Invoice marked as sent for session ${sessionId}`);
+        
+        res.json({
+            success: true,
+            message: 'Invoice marked as sent'
+        });
+        
+    } catch (error) {
+        console.error('Error marking invoice as sent:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to mark invoice as sent: ' + error.message
+        });
+    }
+});
+
 // Create deposit invoice with tipping system
 app.post('/api/create-deposit-invoice-with-tipping', async (req, res) => {
     try {
@@ -9906,6 +9943,17 @@ app.post('/api/create-deposit-invoice-with-tipping', async (req, res) => {
         });
         
         console.log(` DEPOSIT SUCCESS: Custom deposit invoice URL created:`, invoiceURL);
+        
+        // Update database to mark deposit as sent
+        await pool.query(
+            `UPDATE photography_sessions 
+             SET deposit_sent = true, 
+                 deposit_amount = $1,
+                 updated_at = NOW()
+             WHERE id = $2`,
+            [depositAmount, sessionId]
+        );
+        console.log(`✅ Database updated: deposit_sent = true for session ${sessionId}`);
         
         res.json({
             success: true,

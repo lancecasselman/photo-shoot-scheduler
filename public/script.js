@@ -460,10 +460,10 @@ async function loadSessions() {
                 email: session.email,
                 price: parseFloat(session.price) || 0,
                 depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
-                // CRITICAL FIX: Read payment status fields correctly
-                depositPaid: session.depositPaid === true || session.deposit_paid === true,
-                depositSent: session.depositSent === true || session.deposit_sent === true, 
-                invoiceSent: session.invoiceSent === true || session.invoice_sent === true,
+                // CRITICAL FIX: Read payment status fields correctly from both camelCase and snake_case
+                depositPaid: session.depositPaid || session.deposit_paid || false,
+                depositSent: session.depositSent || session.deposit_sent || false, 
+                invoiceSent: session.invoiceSent || session.invoice_sent || false,
                 depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
                 invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
                 duration: parseInt(session.duration) || 60,
@@ -851,16 +851,14 @@ function createSessionCard(session) {
         paymentBadges += '<span style="background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-left: 8px; display: inline-block; font-weight: 500;">⏳ Invoice Sent</span>';
     }
     
-    // Debug: Log what badges we're showing
-    if (paymentBadges) {
-        console.log(`💰 Badges for ${session.clientName}:`, {
-            depositSent: session.depositSent,
-            depositPaid: session.depositPaid,
-            invoiceSent: session.invoiceSent,
-            paid: session.paid,
-            badges: paymentBadges.replace(/<[^>]*>/g, ' ').trim()
-        });
-    }
+    // Debug: Always log payment status for debugging
+    console.log(`📊 Session ${session.clientName} payment status:`, {
+        depositSent: session.depositSent,
+        depositPaid: session.depositPaid,
+        invoiceSent: session.invoiceSent,
+        paid: session.paid,
+        hasBadges: !!paymentBadges
+    });
     
     priceDiv.innerHTML = `
         <div class="detail-label">Price & Duration</div>
@@ -1480,7 +1478,7 @@ function showInvoiceSendDialog(data) {
 }
 
 // Send invoice via SMS using device default SMS app
-function sendViaSMS(phone, clientName, amount, invoiceUrl) {
+async function sendViaSMS(phone, clientName, amount, invoiceUrl) {
     if (!phone) {
         alert('No phone number found for this client. Please add a phone number to the session.');
         return;
@@ -1495,6 +1493,33 @@ function sendViaSMS(phone, clientName, amount, invoiceUrl) {
     // Create SMS URL that opens default SMS app
     const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
     
+    // Extract session ID from invoice URL to update database
+    const urlParams = new URL(invoiceUrl).searchParams;
+    const sessionId = urlParams.get('sessionId');
+    
+    if (sessionId) {
+        // Mark invoice as sent in database
+        try {
+            const authToken = await getAuthToken();
+            const response = await fetch('/api/mark-invoice-sent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ sessionId })
+            });
+            
+            if (response.ok) {
+                console.log('✅ Invoice marked as sent in database');
+                // Refresh sessions to show updated status
+                setTimeout(() => loadSessions(), 1000);
+            }
+        } catch (error) {
+            console.error('Error marking invoice as sent:', error);
+        }
+    }
+    
     // Open SMS app
     window.location.href = smsUrl;
     
@@ -1502,7 +1527,7 @@ function sendViaSMS(phone, clientName, amount, invoiceUrl) {
 }
 
 // Send invoice via email using device default email app
-function sendViaEmail(email, clientName, amount, invoiceUrl) {
+async function sendViaEmail(email, clientName, amount, invoiceUrl) {
     if (!email) {
         alert('No email address found for this client. Please add an email to the session.');
         return;
@@ -1532,6 +1557,33 @@ The Legacy Photography`;
     
     // Create mailto URL that opens default email app
     const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Extract session ID from invoice URL to update database
+    const urlParams = new URL(invoiceUrl).searchParams;
+    const sessionId = urlParams.get('sessionId');
+    
+    if (sessionId) {
+        // Mark invoice as sent in database
+        try {
+            const authToken = await getAuthToken();
+            const response = await fetch('/api/mark-invoice-sent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ sessionId })
+            });
+            
+            if (response.ok) {
+                console.log('✅ Invoice marked as sent in database');
+                // Refresh sessions to show updated status
+                setTimeout(() => loadSessions(), 1000);
+            }
+        } catch (error) {
+            console.error('Error marking invoice as sent:', error);
+        }
+    }
     
     // Open email app
     window.location.href = mailtoUrl;
