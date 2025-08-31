@@ -121,11 +121,13 @@ class PaymentNotificationManager {
             await client.query(`
                 UPDATE photography_sessions 
                 SET deposit_amount = COALESCE(deposit_amount, 0) + $1,
+                    deposit_paid = true,
+                    deposit_paid_at = $2,
                     updated_at = $2
                 WHERE id = $3
             `, [amount, new Date(), sessionId]);
 
-            console.log(' Deposit status updated for session:', sessionId, 'Amount:', amount);
+            console.log(' Deposit status updated for session:', sessionId, 'Amount:', amount, '- Marked as PAID');
         } catch (error) {
             console.error('❌ Error updating deposit status:', error);
             throw error;
@@ -140,11 +142,12 @@ class PaymentNotificationManager {
             await client.query(`
                 UPDATE photography_sessions 
                 SET paid = true,
+                    invoice_paid_at = $1,
                     updated_at = $1
                 WHERE id = $2
             `, [new Date(), sessionId]);
 
-            console.log(' Invoice payment status updated for session:', sessionId);
+            console.log(' Invoice payment status updated for session:', sessionId, '- Marked as FULLY PAID');
         } catch (error) {
             console.error('❌ Error updating invoice status:', error);
             throw error;

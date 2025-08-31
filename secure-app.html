@@ -6662,6 +6662,62 @@ ${contract.contract_content}
                     console.log('Dashboard initialization deferred - function not yet available');
                 }
             }, 500);
+            
+            // Auto-refresh session payment status every 30 seconds
+            startPaymentStatusRefresh();
+        };
+        
+        // Auto-refresh function for payment status updates
+        window.startPaymentStatusRefresh = function() {
+            // Refresh every 30 seconds to check for payment updates
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/sessions');
+                    if (response.ok) {
+                        const updatedSessions = await response.json();
+                        
+                        // Check if any payment status has changed
+                        let hasChanges = false;
+                        
+                        updatedSessions.forEach(updatedSession => {
+                            const currentSession = window.sessions?.find(s => s.id === updatedSession.id);
+                            if (currentSession) {
+                                // Check for payment status changes
+                                if (currentSession.depositPaid !== updatedSession.depositPaid ||
+                                    currentSession.paid !== updatedSession.paid ||
+                                    currentSession.depositAmount !== updatedSession.depositAmount) {
+                                    hasChanges = true;
+                                    console.log('💰 Payment status updated for session:', updatedSession.clientName);
+                                }
+                            }
+                        });
+                        
+                        // If changes detected, update sessions and re-render
+                        if (hasChanges) {
+                            console.log('🔄 Refreshing session cards with updated payment status...');
+                            window.sessions = updatedSessions.map(session => ({
+                                ...session,
+                                depositAmount: session.depositAmount || session.deposit_amount || 0,
+                                depositPaid: session.depositPaid || session.deposit_paid || false,
+                                depositSent: session.depositSent || session.deposit_sent || false,
+                                invoiceSent: session.invoiceSent || session.invoice_sent || false,
+                                reminderEnabled: session.sendReminder || false,
+                                reminderSent: session.reminderSent || false
+                            }));
+                            
+                            // Re-render sessions with updated data
+                            if (typeof window.renderSessions === 'function') {
+                                window.renderSessions();
+                                showMessage('✅ Payment status updated!', 'success');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking payment status updates:', error);
+                }
+            }, 30000); // Check every 30 seconds
+            
+            console.log('💳 Payment status auto-refresh started (30-second interval)');
         };
 
         window.setupEventListeners = function() {
