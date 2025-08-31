@@ -6949,8 +6949,47 @@ app.get('/api/payment/session/:sessionId/details', async (req, res) => {
     try {
         const { sessionId } = req.params;
         
-        // Retrieve the checkout session from Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        // First try to retrieve from platform account
+        let session;
+        try {
+            session = await stripe.checkout.sessions.retrieve(sessionId);
+            console.log('✅ Retrieved session from platform account');
+        } catch (platformError) {
+            // If not found on platform, it might be on a connected account
+            // Try to get the photographer account ID from the session metadata or database
+            console.log('⚠️ Session not found on platform, checking connected accounts...');
+            
+            // Extract session ID from payment ID pattern if needed
+            const paymentId = req.query.paymentId;
+            if (paymentId) {
+                const photoSessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
+                if (photoSessionId) {
+                    // Look up the photographer's Stripe account from the database
+                    const userResult = await pool.query(
+                        `SELECT u.stripe_connect_account_id 
+                         FROM photography_sessions ps 
+                         JOIN users u ON ps.user_id = u.id 
+                         WHERE ps.id = $1`,
+                        [photoSessionId]
+                    );
+                    
+                    if (userResult.rows.length > 0 && userResult.rows[0].stripe_connect_account_id) {
+                        const connectedAccountId = userResult.rows[0].stripe_connect_account_id;
+                        console.log('🔍 Found connected account:', connectedAccountId.substring(0, 10) + '...');
+                        
+                        // Retrieve from connected account
+                        session = await stripe.checkout.sessions.retrieve(sessionId, {
+                            stripeAccount: connectedAccountId
+                        });
+                        console.log('✅ Retrieved session from connected account');
+                    }
+                }
+            }
+            
+            if (!session) {
+                throw platformError;
+            }
+        }
         
         res.json({
             success: true,
