@@ -9760,6 +9760,87 @@ app.post('/api/create-checkout-session', async (req, res) => {
     }
 });
 
+// Webhook endpoint for Stripe Connect account events
+// This handles events from connected photographer accounts
+app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, connectWebhookSecret);
+        console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
+        console.log('🔔 Connect account:', event.account);
+    } catch (err) {
+        console.log(`❌ Connect webhook signature verification failed.`, err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+        // Handle payment events from connected accounts
+        if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
+            const data = event.data.object;
+            console.log('💳 Connected account payment event:', {
+                type: event.type,
+                account: event.account,
+                metadata: data.metadata
+            });
+            
+            // Process payment updates if session metadata exists
+            if (data.metadata && data.metadata.sessionId) {
+                const sessionId = data.metadata.sessionId;
+                const paymentType = data.metadata.type || 'invoice';
+                const amount = data.amount ? data.amount / 100 : data.amount_total / 100;
+                
+                console.log(`💰 Updating payment status for session ${sessionId}, type: ${paymentType}`);
+                
+                // Update database based on payment type
+                if (paymentType === 'deposit') {
+                    await pool.query(
+                        `UPDATE photography_sessions 
+                         SET deposit_paid = true,
+                             deposit_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Deposit marked as paid for session ${sessionId}`);
+                } else if (paymentType === 'invoice' || paymentType === 'final') {
+                    await pool.query(
+                        `UPDATE photography_sessions 
+                         SET paid = true,
+                             invoice_paid_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = $1`,
+                        [sessionId]
+                    );
+                    console.log(`✅ Invoice marked as paid for session ${sessionId}`);
+                }
+                
+                // Send notification if configured
+                try {
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    const mockPaymentIntent = {
+                        id: data.payment_intent || data.id,
+                        amount: data.amount || data.amount_total,
+                        metadata: data.metadata,
+                        receipt_email: data.customer_details?.email || data.receipt_email
+                    };
+                    await notificationManager.handlePaymentSuccess(mockPaymentIntent);
+                } catch (notifyError) {
+                    console.error('⚠️ Notification failed but payment was processed:', notifyError);
+                }
+            }
+        }
+        
+        res.json({ received: true });
+    } catch (error) {
+        console.error('❌ Error processing connect webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
 // Create deposit invoice with tipping system
 app.post('/api/create-deposit-invoice-with-tipping', async (req, res) => {
     try {
