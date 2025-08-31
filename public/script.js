@@ -614,9 +614,40 @@ function createSessionCard(session) {
     const client = document.createElement('div');
     client.className = 'session-client';
     client.textContent = session.clientName;
+    
+    // Add payment status badges in the header
+    let paymentBadgesHTML = '';
+    
+    // Check deposit status
+    if (session.depositPaid === true) {
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Deposit Paid</span>';
+    } else if (session.depositSent === true) {
+        paymentBadgesHTML += '<span style="background: #fb923c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Deposit Sent</span>';
+    }
+    
+    // Check invoice status
+    if (session.paid === true) {
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Fully Paid</span>';
+    } else if (session.invoiceSent === true) {
+        paymentBadgesHTML += '<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Invoice Sent</span>';
+    }
+    
+    // Add price with payment badges
+    const priceInfo = document.createElement('div');
+    priceInfo.className = 'session-price-header';
+    priceInfo.style.cssText = 'font-size: 14px; color: #4a5568; margin-top: 4px;';
+    
+    let priceText = `$${session.price}`;
+    if (session.depositPaid === true && session.depositAmount > 0) {
+        const remaining = session.price - session.depositAmount;
+        priceText = `$${session.price} (Remaining: $${remaining.toFixed(2)})`;
+    }
+    
+    priceInfo.innerHTML = priceText + paymentBadgesHTML;
 
     headerInfo.appendChild(title);
     headerInfo.appendChild(client);
+    headerInfo.appendChild(priceInfo);
 
     // Create actions section
     const actions = document.createElement('div');
