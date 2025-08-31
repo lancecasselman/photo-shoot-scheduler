@@ -18,13 +18,22 @@ class PaymentNotificationManager {
      * Handle successful payment events from Stripe webhooks
      */
     async handlePaymentSuccess(paymentIntent) {
-        console.log(' Payment successful:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+        // Extract amount from various possible fields (Stripe uses different fields for different event types)
+        const amountInCents = paymentIntent.amount_received || paymentIntent.amount || paymentIntent.amount_total || 0;
+        const amount = amountInCents / 100;
+        
+        console.log(' Payment successful:', paymentIntent.id, 'Amount: $', amount.toFixed(2));
+        console.log(' Payment data fields:', {
+            amount_received: paymentIntent.amount_received,
+            amount: paymentIntent.amount,
+            amount_total: paymentIntent.amount_total
+        });
         
         try {
             // Extract session info from payment metadata
             const sessionId = paymentIntent.metadata?.sessionId;
             const paymentType = paymentIntent.metadata?.type || 'invoice'; // 'deposit' or 'invoice'
-            const clientEmail = paymentIntent.receipt_email;
+            const clientEmail = paymentIntent.receipt_email || paymentIntent.customer_details?.email;
             
             if (!sessionId) {
                 console.log(' No session ID in payment metadata, skipping notification');
@@ -45,7 +54,6 @@ class PaymentNotificationManager {
                 }
 
                 const session = sessionResult.rows[0];
-                const amount = paymentIntent.amount_received / 100;
 
                 // Record payment in database
                 await this.recordPayment(client, {
@@ -70,7 +78,7 @@ class PaymentNotificationManager {
                     amount: amount,
                     type: paymentType,
                     paymentId: paymentIntent.id,
-                    clientEmail: clientEmail
+                    clientEmail: clientEmail || session.email
                 });
 
                 console.log(' Payment notification processing complete for session:', sessionId);

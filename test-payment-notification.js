@@ -15,16 +15,16 @@ async function testPaymentNotification() {
             object: {
                 id: 'cs_test_' + Date.now(),
                 object: 'checkout.session',
-                amount_total: 500,
+                amount_total: 2500,  // $25.00 in cents
                 payment_intent: 'pi_test_' + Date.now(),
                 metadata: {
                     sessionId: '1a1cdf8a-6cbb-4cdc-bd22-94a30af294e3', // Your actual session ID
-                    type: 'invoice',
+                    type: 'deposit',  // Changed to deposit to test deposit notification
                     paymentId: 'payment-test-' + Date.now(),
                     photographerAccountId: 'acct_1S1uyfGqTZZYB7ET',
-                    baseAmount: '5.00',
+                    baseAmount: '25.00',
                     tipAmount: '0',
-                    totalAmount: '5.00'
+                    totalAmount: '25.00'
                 },
                 customer_details: {
                     email: 'testclient@example.com'
