@@ -293,8 +293,20 @@ class PaymentPlanManager {
             stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
           });
 
+          // Determine the correct domain based on environment
+          const domain = process.env.PRODUCTION_DOMAIN || 
+                        process.env.LIVE_DOMAIN || 
+                        'photomanagementsystem.com';
+          
+          // Use production domain if available, otherwise fall back to development
+          const baseUrl = process.env.NODE_ENV === 'production' || process.env.PRODUCTION_DOMAIN
+              ? `https://${domain}`
+              : process.env.REPL_SLUG 
+                  ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` 
+                  : 'http://localhost:5000';
+          
           // Create invoice ON THE CONNECTED ACCOUNT
-          const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${payment.id}`;
+          const invoiceCustomUrl = `${baseUrl}/invoice.html?payment=${payment.id}`;
           
           const invoice = await stripe.invoices.create({
             customer: customer.id,

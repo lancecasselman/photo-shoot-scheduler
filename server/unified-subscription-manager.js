@@ -201,6 +201,16 @@ class UnifiedSubscriptionManager {
                 throw new Error('STRIPE_PRICE_ID environment variable is required');
             }
 
+            // Determine the correct domain based on environment
+            const domain = process.env.PRODUCTION_DOMAIN || 
+                          process.env.LIVE_DOMAIN || 
+                          'photomanagementsystem.com'; // Your production domain
+            
+            // Use production domain if available, otherwise fall back to development
+            const baseUrl = process.env.NODE_ENV === 'production' || process.env.PRODUCTION_DOMAIN
+                ? `https://${domain}`
+                : `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}`;
+
             const session = await stripe.checkout.sessions.create({
                 customer: customer.id,
                 payment_method_types: ['card'],
@@ -215,9 +225,8 @@ class UnifiedSubscriptionManager {
                     planType: 'professional',
                     storageGb: this.BASE_STORAGE_GB.toString()
                 },
-                // Use proper domain from REPLIT_DOMAINS environment variable
-                success_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-checkout.html`,
+                success_url: `${baseUrl}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${baseUrl}/subscription-checkout.html`,
                 allow_promotion_codes: true,
                 billing_address_collection: 'required'
             });
