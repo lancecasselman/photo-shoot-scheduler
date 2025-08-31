@@ -63,20 +63,7 @@ function createBookingAgreementModal() {
                 </div>
 
                 <div class="booking-modal-body">
-                    <!-- Template Selector -->
-                    <div id="templateSelector" class="template-section">
-                        <label for="agreementTemplate">Select Template:</label>
-                        <select id="agreementTemplate" onchange="loadSelectedTemplate()">
-                            <option value="">Choose a template...</option>
-                        </select>
-                    </div>
-
-                    <!-- Agreement Editor -->
-                    <div id="agreementEditor" class="editor-section">
-                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; background-color: white !important; padding: 20px !important; border: 2px solid #ddd !important;"></div>
-                    </div>
-
-                    <!-- Agreement Viewer (for sent/signed) -->
+                    <!-- Agreement Viewer (for sent/signed) - SHOWN FIRST -->
                     <div id="agreementViewer" class="viewer-section" style="display: none;">
                         <div class="agreement-status-badge">
                             <span id="agreementStatusBadge"></span>
@@ -86,6 +73,19 @@ function createBookingAgreementModal() {
                             <p><strong>Signed by:</strong> <span id="signerName"></span></p>
                             <p><strong>Date:</strong> <span id="signedDate"></span></p>
                         </div>
+                    </div>
+
+                    <!-- Template Selector - ALWAYS AVAILABLE -->
+                    <div id="templateSelector" class="template-section">
+                        <label for="agreementTemplate">Select Template:</label>
+                        <select id="agreementTemplate" onchange="loadSelectedTemplate()">
+                            <option value="">Choose a template...</option>
+                        </select>
+                    </div>
+
+                    <!-- Agreement Editor - ALWAYS AVAILABLE -->
+                    <div id="agreementEditor" class="editor-section">
+                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; background-color: white !important; padding: 20px !important; border: 2px solid #ddd !important;"></div>
                     </div>
                 </div>
 
@@ -280,11 +280,16 @@ function showEditMode(agreement, session) {
 
 // Show view mode
 function showViewMode(agreement, session) {
-    document.getElementById('templateSelector').style.display = 'none';
-    document.getElementById('agreementEditor').style.display = 'none';
+    // ALWAYS show template selector to allow sending new contracts
+    document.getElementById('templateSelector').style.display = 'block';
+    document.getElementById('agreementEditor').style.display = 'block';
     document.getElementById('agreementViewer').style.display = 'block';
 
-    // Display content
+    // Clear the editor for new contract creation
+    document.getElementById('agreementContent').innerHTML = '';
+    document.getElementById('agreementTemplate').value = '';
+
+    // Display the existing contract in viewer section
     document.getElementById('agreementViewContent').innerHTML = agreement.content;
 
     // Show status badge
@@ -776,41 +781,26 @@ function updateModalButtons(status) {
     const resendBtn = document.getElementById('resendBtn');
     const cancelContractBtn = document.getElementById('cancelContractBtn');
 
-    // Reset all buttons
-    [previewBtn, saveBtn, sendBtn, downloadBtn, resendBtn, cancelContractBtn].forEach(btn => {
-        if (btn) btn.style.display = 'none';
-    });
+    // Always show buttons for creating/sending new contracts
+    if (previewBtn) previewBtn.style.display = 'inline-block';
+    if (saveBtn) saveBtn.style.display = 'inline-block';
+    if (sendBtn) sendBtn.style.display = 'inline-block';
 
     // Reset send button text to default
     if (sendBtn) {
-        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send for Signature';
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Contract';
     }
 
+    // Show additional buttons based on existing contract status
     switch(status) {
-        case 'new':
-        case 'draft':
-            if (previewBtn) previewBtn.style.display = 'inline-block';
-            if (saveBtn) saveBtn.style.display = 'inline-block';
-            if (sendBtn) sendBtn.style.display = 'inline-block';
-            break;
         case 'sent':
         case 'viewed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
-            // Always show send button for resending
-            if (sendBtn) {
-                sendBtn.style.display = 'inline-block';
-                sendBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Contract';
-            }
             // Show cancel button for pending contracts
             if (cancelContractBtn) cancelContractBtn.style.display = 'inline-block';
             break;
         case 'signed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
-            // Even after signing, allow sending to additional recipients
-            if (sendBtn) {
-                sendBtn.style.display = 'inline-block';
-                sendBtn.innerHTML = '<i class="fas fa-share"></i> Send to Another Recipient';
-            }
             break;
     }
 }

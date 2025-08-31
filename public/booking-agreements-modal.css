@@ -241,6 +241,33 @@
     margin-bottom: 15px;
 }
 
+/* Visual separator when both viewer and editor are shown */
+.viewer-section {
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #e5e7eb;
+}
+
+.viewer-section + .template-section {
+    position: relative;
+    padding-top: 10px;
+}
+
+.viewer-section + .template-section::before {
+    content: "Create New Contract";
+    position: absolute;
+    top: -25px;
+    left: 0;
+    background: #667eea;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .status-badge {
     display: inline-block;
     padding: 6px 12px;
