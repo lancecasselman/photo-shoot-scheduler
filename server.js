@@ -9599,7 +9599,7 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
 // Create Stripe Checkout Session for tip system
 app.post('/api/create-checkout-session', async (req, res) => {
     try {
-        const { paymentId, amount, tipAmount, totalAmount, clientName, sessionType } = req.body;
+        const { paymentId, amount, tipAmount, totalAmount, clientName, sessionType, paymentType } = req.body;
         
         console.log(' CREATE CHECKOUT SESSION REQUEST:', {
             paymentId,
@@ -9721,7 +9721,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 tipAmount: tipAmount.toString(),
                 totalAmount: totalAmount.toString(),
                 sessionId: paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1] || 'unknown',
-                type: 'deposit', // Most checkout sessions are for deposits
+                type: paymentType || (paymentId.includes('deposit') ? 'deposit' : 'invoice'), // Detect payment type
                 photographerAccountId: photographerAccountId || 'platform' // Track which account received payment
             }
         };

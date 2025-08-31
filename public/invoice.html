@@ -605,6 +605,7 @@
                         tipAmount: 0,
                         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         status: 'pending',
+                        isDeposit: type === 'deposit', // Set deposit flag from URL
                         session: {
                             clientName: 'Photography Client',
                             sessionType: 'Photography Session',
@@ -635,6 +636,7 @@
                         tipAmount: 0,
                         dueDate: paymentData.dueDate,
                         status: 'pending',
+                        isDeposit: paymentData.isDeposit || false, // Get deposit flag from stored data
                         session: {
                             clientName: paymentData.clientName,
                             clientEmail: paymentData.clientEmail,
@@ -813,7 +815,8 @@
                         tipAmount: selectedTipAmount,
                         totalAmount: totalAmount,
                         clientName: invoiceData.session.clientName,
-                        sessionType: invoiceData.session.sessionType
+                        sessionType: invoiceData.session.sessionType,
+                        paymentType: invoiceData.isDeposit ? 'deposit' : 'invoice'
                     })
                 });
                 
