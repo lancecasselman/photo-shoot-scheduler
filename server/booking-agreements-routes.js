@@ -413,7 +413,184 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
-    // Cancel contract endpoint
+    // View agreement by ID (for direct viewing)
+    router.get('/agreements/view/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT a.*, s.client_name, s.session_type, s.date_time
+                     FROM booking_agreements a
+                     JOIN sessions s ON a.session_id = s.id
+                     WHERE a.id = $1`,
+                    [id]
+                );
+                
+                if (result.rows.length === 0) {
+                    return res.status(404).send('<h1>Contract not found</h1>');
+                }
+                
+                const agreement = result.rows[0];
+                
+                // Simple HTML view of the contract
+                const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${agreement.client_name} - ${agreement.session_type} Contract</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .content { line-height: 1.6; }
+                        .status { padding: 5px 10px; border-radius: 4px; display: inline-block; }
+                        .status.sent { background: #fbbf24; color: #78350f; }
+                        .status.signed { background: #10b981; color: white; }
+                        .status.viewed { background: #3b82f6; color: white; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Photography Contract</h1>
+                        <p>Client: ${agreement.client_name}</p>
+                        <p>Session: ${agreement.session_type} - ${new Date(agreement.date_time).toLocaleDateString()}</p>
+                        <p>Status: <span class="status ${agreement.status}">${agreement.status.toUpperCase()}</span></p>
+                    </div>
+                    <div class="content">
+                        ${agreement.content}
+                    </div>
+                    ${agreement.status !== 'signed' ? `
+                        <div style="text-align: center; margin-top: 30px;">
+                            <p style="color: #666;">To sign this contract, please access it through the link sent to you.</p>
+                        </div>
+                    ` : ''}
+                </body>
+                </html>
+                `;
+                
+                res.send(html);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error viewing agreement:', error);
+            res.status(500).send('<h1>Error loading contract</h1>');
+        }
+    });
+
+    // Get all pending contracts for the current user
+    router.get('/agreements/pending', async (req, res) => {
+        try {
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            console.log('Fetching pending contracts for user:', userId);
+            
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT 
+                        a.id,
+                        a.session_id,
+                        a.status,
+                        a.created_at,
+                        a.sent_at,
+                        s.client_name,
+                        s.email as client_email,
+                        s.phone_number as client_phone,
+                        s.session_type,
+                        s.date_time as session_date
+                     FROM booking_agreements a
+                     JOIN sessions s ON a.session_id = s.id
+                     WHERE a.user_id = $1 
+                     AND a.status IN ('sent', 'viewed', 'draft')
+                     ORDER BY a.created_at DESC`,
+                    [userId]
+                );
+                
+                console.log(`Found ${result.rows.length} pending contracts`);
+                res.json(result.rows);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching pending contracts:', error);
+            res.status(500).json({ error: 'Failed to fetch pending contracts' });
+        }
+    });
+
+    // Cancel contract by agreement ID
+    router.post('/agreements/:id/cancel', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            
+            console.log('Cancelling contract:', id, 'by user:', userId);
+            
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                
+                // Check if agreement exists and belongs to user
+                const checkResult = await client.query(
+                    'SELECT * FROM booking_agreements WHERE id = $1 AND user_id = $2',
+                    [id, userId]
+                );
+                
+                if (checkResult.rows.length === 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+                
+                const agreement = checkResult.rows[0];
+                
+                // Only allow cancelling pending contracts
+                if (agreement.status === 'signed') {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json({ error: 'Cannot cancel a signed contract' });
+                }
+                
+                // Update agreement status to cancelled
+                await client.query(
+                    `UPDATE booking_agreements 
+                     SET status = 'cancelled', 
+                         updated_at = CURRENT_TIMESTAMP 
+                     WHERE id = $1 AND user_id = $2`,
+                    [id, userId]
+                );
+                
+                // Update session contract_signed to false
+                await client.query(
+                    `UPDATE sessions 
+                     SET contract_signed = false,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $1 AND user_id = $2`,
+                    [agreement.session_id, userId]
+                );
+                
+                await client.query('COMMIT');
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Contract cancelled successfully',
+                    status: 'cancelled'
+                });
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error cancelling contract:', error);
+            res.status(500).json({ error: 'Failed to cancel contract' });
+        }
+    });
+
+    // Cancel contract endpoint (legacy - by session ID)
     router.post('/booking-agreements/:sessionId/cancel', async (req, res) => {
         try {
             const { sessionId } = req.params;
