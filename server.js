@@ -894,10 +894,34 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 
     try {
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        console.log('🔔 Webhook received:', event.type, 'Event ID:', event.id);
+        
+        // First try with platform webhook secret
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+            console.log('✅ Platform webhook verified:', event.type, 'Event ID:', event.id);
+        } catch (platformErr) {
+            // If platform secret fails and we have a Connect secret, try that
+            // This handles cases where Connect webhooks are sent to the wrong endpoint
+            if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+                console.log('⚠️ Platform secret failed, trying Connect secret...');
+                try {
+                    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_CONNECT_WEBHOOK_SECRET);
+                    console.log('✅ Verified with Connect secret - this is a misrouted Connect webhook');
+                    console.log('🔄 Event has account:', event.account);
+                    
+                    // Process it here since we already verified it
+                    // This is a Connect account event
+                } catch (connectErr) {
+                    // Both secrets failed
+                    console.log('❌ Both platform and Connect secrets failed');
+                    throw platformErr; // Throw original error
+                }
+            } else {
+                throw platformErr;
+            }
+        }
     } catch (err) {
-        console.log(`❌ Webhook signature verification failed.`, err.message);
+        console.log(`❌ Webhook signature verification failed:`, err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -1138,27 +1162,48 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 // Stripe Connect webhook for connected account events
 app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+    
+    // For Connect webhooks, we need to handle both platform-level and account-level webhooks
+    // Account-level webhooks come directly from Stripe with the connected account context
+    const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+    const platformWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
     // Debug logging to help identify the issue
     console.log('🔍 Connect webhook debug:', {
         hasSignature: !!sig,
         signaturePrefix: sig ? sig.substring(0, 20) + '...' : 'none',
-        hasConnectSecret: !!process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
-        secretPrefix: connectWebhookSecret ? connectWebhookSecret.substring(0, 10) + '...' : 'none',
-        usingFallback: !process.env.STRIPE_CONNECT_WEBHOOK_SECRET && !!process.env.STRIPE_WEBHOOK_SECRET
+        hasConnectSecret: !!connectWebhookSecret,
+        hasPlatformSecret: !!platformWebhookSecret,
+        bodyLength: req.body ? req.body.length : 0,
+        bodyType: typeof req.body,
+        isBuffer: Buffer.isBuffer(req.body)
     });
     
     let event;
-    try {
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        event = stripe.webhooks.constructEvent(req.body, sig, connectWebhookSecret);
-        console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
-        console.log('🔔 Connect account:', event.account);
-    } catch (err) {
-        console.log(`❌ Connect webhook signature verification failed.`, err.message);
-        console.log('❌ Full error:', err);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Try Connect webhook secret first, then platform secret as fallback
+    const secretsToTry = [connectWebhookSecret, platformWebhookSecret].filter(Boolean);
+    let verificationError = null;
+    
+    for (const secret of secretsToTry) {
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, secret);
+            console.log('✅ Connect webhook verified with:', secret === connectWebhookSecret ? 'CONNECT_SECRET' : 'PLATFORM_SECRET');
+            console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
+            console.log('🔔 Connect account:', event.account);
+            break; // Success, exit loop
+        } catch (err) {
+            verificationError = err;
+            console.log(`⚠️ Failed with ${secret === connectWebhookSecret ? 'CONNECT' : 'PLATFORM'} secret:`, err.message);
+            continue; // Try next secret
+        }
+    }
+    
+    if (!event) {
+        console.log(`❌ Connect webhook signature verification failed with all secrets`);
+        console.log('❌ Last error:', verificationError);
+        return res.status(400).send(`Webhook Error: ${verificationError.message}`);
     }
 
     try {
