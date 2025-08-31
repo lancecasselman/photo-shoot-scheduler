@@ -1477,8 +1477,8 @@ app.post('/api/admin/content', async (req, res) => {
         }
         
         // Check if user is admin
-        const adminEmail = 'lancecasselman@icloud.com';
-        if (req.session.user.email !== adminEmail) {
+        const adminEmails = ['lancecasselman@icloud.com', 'm_casselman@icloud.com'];
+        if (!adminEmails.includes(req.session.user.email)) {
             return res.status(403).json({ error: 'Not authorized' });
         }
         
@@ -1617,7 +1617,8 @@ app.get('/api/subscription-status', async (req, res) => {
         const adminEmails = [
             'lancecasselman2011@gmail.com',
             'lancecasselman@icloud.com',
-            'lance@thelegacyphotography.com'
+            'lance@thelegacyphotography.com',
+            'm_casselman@icloud.com'
         ];
 
         if (adminEmails.includes(user.email)) {
@@ -12270,7 +12271,8 @@ app.get('/app', async (req, res) => {
     const adminEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com',
-        'lance@thelegacyphotography.com'
+        'lance@thelegacyphotography.com',
+        'm_casselman@icloud.com'
     ];
     
     if (!adminEmails.includes(userEmail.toLowerCase())) {
