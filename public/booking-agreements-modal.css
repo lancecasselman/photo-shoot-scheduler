@@ -26,6 +26,7 @@
     animation: slideUp 0.3s ease;
     position: relative;
     z-index: 9999;
+    overflow: visible;
 }
 
 .booking-modal-header {
@@ -69,7 +70,9 @@
     flex: 1;
     padding: 25px;
     overflow-y: auto;
+    overflow-x: visible;
     background: #f9fafb;
+    position: relative;
 }
 
 .template-section {
@@ -162,6 +165,11 @@
     color: #374151;
 }
 
+.template-section {
+    position: relative;
+    z-index: 10002;
+}
+
 .template-section select {
     width: 100%;
     padding: 10px 12px;
@@ -170,6 +178,14 @@
     font-size: 15px;
     background: white;
     cursor: pointer;
+    position: relative;
+    z-index: 10003;
+}
+
+.template-section select:focus {
+    z-index: 10004;
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
 }
 
 .agreement-content-editor,
