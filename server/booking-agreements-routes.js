@@ -413,6 +413,79 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Cancel contract endpoint
+    router.post('/booking-agreements/:sessionId/cancel', async (req, res) => {
+        try {
+            const { sessionId } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            
+            console.log('Cancelling contract for session:', sessionId, 'by user:', userId);
+            
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                
+                // Check if agreement exists and belongs to user
+                const checkResult = await client.query(
+                    'SELECT * FROM booking_agreements WHERE session_id = $1 AND user_id = $2',
+                    [sessionId, userId]
+                );
+                
+                if (checkResult.rows.length === 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+                
+                const agreement = checkResult.rows[0];
+                
+                // Only allow cancelling pending contracts (sent, viewed)
+                if (agreement.status === 'signed') {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json({ error: 'Cannot cancel a signed contract' });
+                }
+                
+                // Update agreement status to cancelled
+                await client.query(
+                    `UPDATE booking_agreements 
+                     SET status = 'cancelled', 
+                         updated_at = CURRENT_TIMESTAMP 
+                     WHERE session_id = $1 AND user_id = $2`,
+                    [sessionId, userId]
+                );
+                
+                // Update session contract_signed to false (if it was set)
+                await client.query(
+                    `UPDATE sessions 
+                     SET contract_signed = false,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $1 AND user_id = $2`,
+                    [sessionId, userId]
+                );
+                
+                await client.query('COMMIT');
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Contract cancelled successfully',
+                    status: 'cancelled'
+                });
+                
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error cancelling contract:', error);
+            res.status(500).json({ error: 'Failed to cancel contract' });
+        }
+    });
+
     return router;
 }
 

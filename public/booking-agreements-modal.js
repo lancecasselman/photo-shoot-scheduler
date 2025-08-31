@@ -106,6 +106,9 @@ function createBookingAgreementModal() {
                         <button id="resendBtn" class="btn btn-warning" onclick="resendAgreement()" style="display: none;">
                             <i class="fas fa-redo"></i> Resend
                         </button>
+                        <button id="cancelContractBtn" class="btn btn-danger" onclick="cancelContract()" style="display: none;">
+                            <i class="fas fa-times-circle"></i> Cancel Contract
+                        </button>
                     </div>
                 </div>
             </div>
@@ -771,9 +774,10 @@ function updateModalButtons(status) {
     const sendBtn = document.getElementById('sendBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const resendBtn = document.getElementById('resendBtn');
+    const cancelContractBtn = document.getElementById('cancelContractBtn');
 
     // Reset all buttons
-    [previewBtn, saveBtn, sendBtn, downloadBtn, resendBtn].forEach(btn => {
+    [previewBtn, saveBtn, sendBtn, downloadBtn, resendBtn, cancelContractBtn].forEach(btn => {
         if (btn) btn.style.display = 'none';
     });
 
@@ -797,6 +801,8 @@ function updateModalButtons(status) {
                 sendBtn.style.display = 'inline-block';
                 sendBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Contract';
             }
+            // Show cancel button for pending contracts
+            if (cancelContractBtn) cancelContractBtn.style.display = 'inline-block';
             break;
         case 'signed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
@@ -939,6 +945,60 @@ async function downloadAgreementPDF() {
     `);
 }
 
+// Cancel contract function
+async function cancelContract() {
+    if (!currentAgreementSessionId) return;
+    
+    // Confirm cancellation
+    if (!confirm('Are you sure you want to cancel this contract? This will mark it as cancelled and remove the pending status.')) {
+        return;
+    }
+    
+    try {
+        const token = await getAuthToken();
+        if (!token) {
+            showMessage('Please log in to cancel contracts', 'error');
+            return;
+        }
+        
+        const response = await fetch(`/api/booking-agreements/${currentAgreementSessionId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to cancel contract');
+        }
+        
+        const result = await response.json();
+        showMessage('Contract cancelled successfully', 'success');
+        
+        // Update the current agreement status
+        if (currentAgreement) {
+            currentAgreement.status = 'cancelled';
+        }
+        
+        // Close the modal
+        closeBookingAgreementModal();
+        
+        // Update the session card to reflect the change
+        updateAgreementStatus(currentAgreementSessionId, 'cancelled');
+        
+        // Reload sessions to refresh the data
+        if (typeof loadSessions === 'function') {
+            await loadSessions();
+        }
+        
+    } catch (error) {
+        console.error('Error cancelling contract:', error);
+        showMessage('Failed to cancel contract: ' + error.message, 'error');
+    }
+}
+
 // Resend agreement
 async function resendAgreement() {
     // Just call sendForSignature which will show the send options modal
@@ -954,6 +1014,7 @@ window.sendForSignature = sendForSignature;
 window.previewAgreement = previewAgreement;
 window.downloadAgreementPDF = downloadAgreementPDF;
 window.resendAgreement = resendAgreement;
+window.cancelContract = cancelContract;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
