@@ -52,8 +52,9 @@
         // Optional: Also filter console.log in production
         console.log = function(...args) {
             const message = args.join(' ');
-            // Only suppress if it's a framework/browser warning, not user logs
-            if (!message.includes('Firebase') && !message.includes('Auth') && !shouldSuppress(message)) {
+            // Don't suppress important authentication and Firebase logs
+            // Only suppress browser warnings and known noise patterns
+            if (!shouldSuppress(message)) {
                 originalLog.apply(console, args);
             }
         };

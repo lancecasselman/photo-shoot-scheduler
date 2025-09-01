@@ -68,6 +68,11 @@ class ObjectStorageService {
 
   // Search for a public object from the search paths.
   async searchPublicObject(filePath) {
+    if (!objectStorageClient) {
+      console.error('Object storage client not initialized');
+      return null;
+    }
+    
     for (const searchPath of this.getPublicObjectSearchPaths()) {
       const fullPath = `${searchPath}/${filePath}`;
 
@@ -147,6 +152,11 @@ class ObjectStorageService {
 
   // Gets session files
   async getSessionFiles(sessionId, folderType) {
+    if (!objectStorageClient) {
+      console.error('Object storage client not initialized');
+      return [];
+    }
+    
     const privateObjectDir = this.getPrivateObjectDir();
     
     // Extract the bucket name and object path separately
@@ -161,6 +171,11 @@ class ObjectStorageService {
 
   // Delete a session file
   async deleteSessionFile(sessionId, folderType, fileName) {
+    if (!objectStorageClient) {
+      console.error('Object storage client not initialized');
+      throw new Error('Object storage not available');
+    }
+    
     const privateObjectDir = this.getPrivateObjectDir();
     
     // Extract the bucket name and object path separately

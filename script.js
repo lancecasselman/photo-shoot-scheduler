@@ -98,7 +98,8 @@ async function checkAuth() {
             return false;
         }
     } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Auth check failed:', error.message || error);
+        console.error('Full error details:', error);
         
         // COMPLETELY disable redirects if coming from auth page
         if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html') && !document.referrer.includes('secure-login.html')) {
@@ -209,7 +210,7 @@ function showMessage(message, type = 'info') {
     } catch (error) {
         // Ultimate fallback to prevent crashes
         console.log(`Message (${type}): ${message}`);
-        console.error('showMessage error:', error);
+        console.error('showMessage error:', error.message || error);
     }
 }
 
@@ -379,7 +380,8 @@ async function createAPISession(sessionData) {
         showMessage('Session created successfully!', 'success');
 
     } catch (error) {
-        console.error('Error creating session:', error);
+        console.error('Error creating session:', error.message || error);
+        console.error('Full error details:', error);
         showMessage('Error creating session: ' + error.message, 'error');
     }
 }
@@ -474,7 +476,8 @@ async function loadSessions() {
         // Storage usage is now handled by loadStorageUsage() in index.html
 
     } catch (error) {
-        console.error('Error loading sessions:', error);
+        console.error('Error loading sessions:', error.message || error);
+        console.error('Full error details:', error);
         showMessage('Error loading sessions: ' + error.message, 'error');
     }
 }
@@ -982,7 +985,8 @@ window.deleteSession = async function(sessionId) {
         showMessage('Session deleted successfully!', 'success');
 
     } catch (error) {
-        console.error('Error deleting session:', error);
+        console.error('Error deleting session:', error.message || error);
+        console.error('Full error details:', error);
         showMessage('Error deleting session: ' + error.message, 'error');
     }
 }
@@ -1826,7 +1830,8 @@ async function updateAPISession(sessionId, sessionData) {
         showMessage('Session updated successfully!', 'success');
 
     } catch (error) {
-        console.error('Error updating session:', error);
+        console.error('Error updating session:', error.message || error);
+        console.error('Full error details:', error);
         showMessage('Error updating session: ' + error.message, 'error');
     }
 }

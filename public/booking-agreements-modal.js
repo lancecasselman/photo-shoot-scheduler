@@ -203,7 +203,8 @@ async function loadAgreementTemplates() {
             console.error('Failed to load templates, status:', response.status);
         }
     } catch (error) {
-        console.error('Error loading templates:', error);
+        console.error('Error loading templates:', error.message || error);
+        console.error('Full error details:', error);
     }
 }
 
@@ -226,7 +227,8 @@ async function loadExistingAgreement(sessionId, session) {
             showCreateMode(session);
         }
     } catch (error) {
-        console.error('Error loading agreement:', error);
+        console.error('Error loading agreement:', error.message || error);
+        console.error('Full error details:', error);
         showCreateMode(session);
     }
 }
@@ -416,8 +418,9 @@ async function saveAgreement() {
             showMessage('Failed to save agreement', 'error');
         }
     } catch (error) {
-        console.error('Error saving agreement:', error);
-        showMessage('Error saving agreement', 'error');
+        console.error('Error saving agreement:', error.message || error);
+        console.error('Full error details:', error);
+        showMessage('Error saving agreement: ' + (error.message || 'Unknown error'), 'error');
     }
 }
 
