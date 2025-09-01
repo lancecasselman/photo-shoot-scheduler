@@ -371,57 +371,43 @@ async function sendUrgentSMS(phoneNumber, message) {
     return await sendSMS(phoneNumber, `🚨 URGENT: ${message} - The Client Management Area`);
 }
 
-// Send contract for signature via email
+// Send contract for signature via email (using default email app)
 async function sendContractForSignature(clientEmail, clientName, sessionType, sessionDate, businessName, businessEmail, signingUrl) {
-    console.log('📧 Sending contract for signature to:', clientEmail);
+    console.log('📧 Preparing contract email for:', clientEmail);
     
-    if (!sendGridConfigured) {
-        console.log('❌ Email not sent - SendGrid not configured');
-        return { success: false, error: 'SendGrid not configured' };
-    }
-
     try {
-        const emailContent = emailTemplates.contractForSignature(
-            clientName, 
-            sessionType, 
-            sessionDate, 
-            businessName, 
-            businessEmail, 
-            signingUrl
-        );
+        // Create email subject and body
+        const subject = `Contract Ready for Signature - ${sessionType} Session`;
         
-        const msg = {
-            to: clientEmail,
-            from: {
-                email: 'noreply@photomanagementsystem.com', // Always use verified sender
-                name: businessName || 'Photography Management System'
-            },
-            replyTo: {
-                email: businessEmail || 'noreply@photomanagementsystem.com',
-                name: businessName || 'Photography Management System'
-            },
-            subject: emailContent.subject,
-            html: emailContent.html,
-            // Disable SendGrid click tracking for contract emails to avoid SSL certificate issues
-            trackingSettings: {
-                clickTracking: {
-                    enable: false,
-                    enableText: false
-                },
-                openTracking: {
-                    enable: false
-                },
-                subscriptionTracking: {
-                    enable: false
-                }
-            }
-        };
+        const body = `Hi ${clientName},
 
-        const response = await sgMail.send(msg);
-        console.log(`✅ Contract email sent successfully to ${clientEmail}: ${emailContent.subject}`);
-        return { success: true, response };
+Your ${sessionType} session contract with ${businessName} is ready for your signature.
+
+Session Date: ${sessionDate}
+
+Please click the link below to review and sign your contract:
+${signingUrl}
+
+If you have any questions, please don't hesitate to contact us at ${businessEmail}.
+
+Best regards,
+${businessName}`;
+
+        // Create mailto URL that will open the default email app
+        const mailtoUrl = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
+        console.log('📧 Mailto URL generated');
+        
+        // Return the URL for the frontend to use
+        return { 
+            success: true, 
+            mailtoUrl: mailtoUrl,
+            message: 'Email prepared for sending',
+            requiresUserAction: true,
+            signingUrl: signingUrl
+        };
     } catch (error) {
-        console.error('❌ Contract email send error:', error);
+        console.error('❌ Email preparation error:', error);
         return { success: false, error: error.message };
     }
 }

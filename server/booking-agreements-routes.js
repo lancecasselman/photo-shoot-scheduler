@@ -203,7 +203,7 @@ function createBookingAgreementRoutes(pool) {
                 const { sendContractForSignature, sendContractViaSMS } = require('./notifications');
                 
                 if (sendMethod === 'sms' && clientPhone) {
-                    // Send via SMS
+                    // Prepare SMS using default SMS app
                     const smsResult = await sendContractViaSMS(
                         clientPhone,
                         clientName,
@@ -216,24 +216,24 @@ function createBookingAgreementRoutes(pool) {
                         console.log(`📱 Contract SMS prepared for ${clientPhone}`);
                         res.json({ 
                             success: true, 
-                            message: 'Contract link prepared for SMS',
+                            message: 'Open your default SMS app to send the contract',
                             signingUrl: signingUrl,
-                            smsSent: true,
+                            sendMethod: 'sms',
                             smsUrl: smsResult.smsUrl,
-                            requiresUserAction: smsResult.requiresUserAction
+                            requiresUserAction: true
                         });
                     } else {
                         console.error('❌ Failed to prepare SMS:', smsResult.error);
                         res.json({ 
                             success: true, 
-                            message: 'Agreement ready but SMS failed. Share the link manually.',
+                            message: 'Agreement ready. Share the link manually.',
                             signingUrl: signingUrl,
-                            smsSent: false,
+                            sendMethod: 'manual',
                             smsError: smsResult.error
                         });
                     }
                 } else {
-                    // Send via email (default)
+                    // Prepare email using default email app
                     const emailResult = await sendContractForSignature(
                         clientEmail,
                         clientName,
@@ -245,20 +245,22 @@ function createBookingAgreementRoutes(pool) {
                     );
 
                     if (emailResult.success) {
-                        console.log(`✅ Contract sent successfully to ${clientEmail}`);
+                        console.log(`📧 Contract email prepared for ${clientEmail}`);
                         res.json({ 
                             success: true, 
-                            message: 'Contract sent successfully for signature',
+                            message: 'Open your default email app to send the contract',
                             signingUrl: signingUrl,
-                            emailSent: true
+                            sendMethod: 'email',
+                            mailtoUrl: emailResult.mailtoUrl,
+                            requiresUserAction: true
                         });
                     } else {
-                        console.error('❌ Failed to send contract email:', emailResult.error);
+                        console.error('❌ Failed to prepare email:', emailResult.error);
                         res.json({ 
                             success: true, 
-                            message: 'Agreement ready but email sending failed. Share the link manually.',
+                            message: 'Agreement ready. Share the link manually.',
                             signingUrl: signingUrl,
-                            emailSent: false,
+                            sendMethod: 'manual',
                             emailError: emailResult.error
                         });
                     }
