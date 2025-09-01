@@ -64,8 +64,7 @@ class SubscriptionAuthMiddleware {
             const adminEmails = [
                 'lancecasselman@icloud.com',
                 'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com',
-                'm_casselman@icloud.com'
+                'lance@thelegacyphotography.com'
             ];
 
             if (adminEmails.includes(userEmail?.toLowerCase())) {
@@ -80,9 +79,16 @@ class SubscriptionAuthMiddleware {
 
             // Get user's subscription status
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
+            
+            console.log(`🔍 Subscription check for ${userEmail} (${userId}):`, {
+                hasProfessionalPlan: subscriptionStatus.hasProfessionalPlan,
+                professionalStatus: subscriptionStatus.professionalStatus,
+                totalStorageGb: subscriptionStatus.totalStorageGb
+            });
 
             // Check if user has active professional plan
             if (!subscriptionStatus.hasProfessionalPlan) {
+                console.log(`❌ Subscription check failed - no professional plan for ${userEmail}`);
                 return res.status(402).json({
                     error: 'Active subscription required',
                     message: 'You need an active Professional Plan to access this feature.',
