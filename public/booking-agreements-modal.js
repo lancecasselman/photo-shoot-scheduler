@@ -41,8 +41,14 @@ async function viewSignedPendingContracts() {
     try {
         console.log('📄 Fetching all agreements for current user...');
         
-        // Fetch all sent and signed agreements for the current user
-        const response = await fetch('/api/booking/agreements/all');
+        // Always fetch fresh data with no cache
+        const response = await fetch('/api/booking/agreements/all', {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         
         if (!response.ok) {
             throw new Error('Failed to fetch agreements');
@@ -1072,6 +1078,15 @@ async function sendViaEmail(sessionId) {
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             
+            // Refresh the signed/pending contracts if the modal is open
+            const signedPendingModal = document.getElementById('signedPendingModal');
+            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
+                console.log('📄 Auto-refreshing signed/pending contracts after sending...');
+                setTimeout(() => {
+                    viewSignedPendingContracts();
+                }, 1500);
+            }
+            
             // Close modal after short delay
             setTimeout(() => {
                 closeBookingAgreementModal();
@@ -1129,6 +1144,15 @@ async function sendViaSMS(sessionId) {
             
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
+            
+            // Refresh the signed/pending contracts if the modal is open
+            const signedPendingModal = document.getElementById('signedPendingModal');
+            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
+                console.log('📄 Auto-refreshing signed/pending contracts after sending...');
+                setTimeout(() => {
+                    viewSignedPendingContracts();
+                }, 1500);
+            }
             
             // Close modal after short delay
             setTimeout(() => {
