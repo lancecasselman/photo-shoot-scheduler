@@ -154,7 +154,11 @@ function createBookingAgreementRoutes(pool) {
                     [userId]
                 );
                 
-                console.log(`Found ${result.rows.length} agreements for user ${userId}`);
+                console.log(`📄 Found ${result.rows.length} agreements for user ${userId}`);
+                // Log agreement statuses for debugging
+                result.rows.forEach(agreement => {
+                    console.log(`  - ${agreement.session_client_name}: ${agreement.status} (Session: ${agreement.session_id})`);
+                });
                 res.json(result.rows);
             } finally {
                 client.release();

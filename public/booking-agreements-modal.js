@@ -39,6 +39,8 @@ let agreementTemplates = [];
 // Function to view signed/pending contracts
 async function viewSignedPendingContracts() {
     try {
+        console.log('📄 Fetching all agreements for current user...');
+        
         // Fetch all sent and signed agreements for the current user
         const response = await fetch('/api/booking/agreements/all');
         
@@ -47,11 +49,17 @@ async function viewSignedPendingContracts() {
         }
         
         const agreements = await response.json();
+        console.log(`📄 Received ${agreements.length} total agreements from server`);
         
         // Filter for sent, viewed, and signed agreements
         const sentAndSignedAgreements = agreements.filter(agreement => 
             ['sent', 'viewed', 'signed'].includes(agreement.status)
         );
+        
+        console.log(`📄 Filtered to ${sentAndSignedAgreements.length} sent/viewed/signed agreements`);
+        sentAndSignedAgreements.forEach(agreement => {
+            console.log(`  - ${agreement.session_client_name}: ${agreement.status} (ID: ${agreement.id})`);
+        });
         
         showSignedPendingContractsModal(sentAndSignedAgreements);
         
@@ -81,25 +89,28 @@ function showSignedPendingContractsModal(agreements) {
                 <div class="booking-modal-body">
                     <div id="agreementsList" style="max-height: 400px; overflow-y: auto;">
                         ${agreements.length > 0 ? agreements.map(agreement => `
-                            <div class="agreement-item" style="border: 1px solid #ddd; margin-bottom: 10px; padding: 15px; border-radius: 5px; background: white;">
-                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <div class="agreement-item" style="border: 2px solid ${agreement.status === 'signed' ? '#28a745' : '#ddd'}; margin-bottom: 10px; padding: 15px; border-radius: 5px; background: ${agreement.status === 'signed' ? '#f0fff4' : 'white'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <h4 style="margin: 0; color: #333;">${agreement.session_client_name || 'Unknown Client'}</h4>
                                     <span class="status-badge status-${agreement.status}" style="
-                                        padding: 4px 8px; 
+                                        padding: 6px 12px; 
                                         border-radius: 12px; 
-                                        font-size: 12px; 
+                                        font-size: 13px; 
                                         font-weight: bold;
                                         background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
                                         color: white;
-                                    ">${agreement.status.toUpperCase()}</span>
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 4px;
+                                    ">${agreement.status === 'signed' ? '✓ SIGNED' : agreement.status.toUpperCase()}</span>
                                 </div>
                                 <p style="margin: 5px 0; color: #666; font-size: 14px;">
                                     <strong>Session:</strong> ${agreement.session_type || 'Photography Session'} | 
                                     <strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleDateString() : 'N/A'}
-                                    ${agreement.signed_at ? ` | <strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleDateString()}` : ''}
+                                    ${agreement.signed_at ? ` | <strong style="color: #28a745;">✓ Signed:</strong> ${new Date(agreement.signed_at).toLocaleDateString()}` : ''}
                                 </p>
                                 <div style="margin-top: 10px;">
-                                    <button onclick="viewAgreementDetails('${agreement.id}')" class="btn btn-sm btn-primary" style="margin-right: 10px;">View Details</button>
+                                    <button onclick="viewAgreementDetails('${agreement.id}')" class="btn btn-sm ${agreement.status === 'signed' ? 'btn-success' : 'btn-primary'}" style="margin-right: 10px;">${agreement.status === 'signed' ? '📝 View Signed Agreement' : 'View Details'}</button>
                                     ${agreement.status !== 'signed' ? `<button onclick="resendAgreement('${agreement.id}')" class="btn btn-sm btn-secondary">Resend</button>` : ''}
                                 </div>
                             </div>
