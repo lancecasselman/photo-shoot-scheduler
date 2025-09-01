@@ -374,12 +374,11 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
-            // Get parameters from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            contractId = urlParams.get('contractId');
-            token = urlParams.get('token');
+            // Get token from URL path (/sign/token123)
+            const pathParts = window.location.pathname.split('/');
+            token = pathParts[pathParts.length - 1]; // Get the last part of the path
 
-            if (!contractId || !token) {
+            if (!token || token === 'sign') {
                 showError('Invalid contract link. Please use the link provided in your email.');
                 return;
             }
@@ -422,7 +421,7 @@
         // Load contract
         async function loadContract() {
             try {
-                const response = await fetch(`/api/contracts/${contractId}/view?token=${token}`);
+                const response = await fetch(`/api/booking/sign/${token}`);
                 
                 if (!response.ok) {
                     throw new Error('Failed to load contract');
@@ -437,10 +436,7 @@
                 }
 
                 // Display contract content
-                document.getElementById('contractContent').innerHTML = contractData.html;
-                
-                // Mark as viewed
-                await markAsViewed();
+                document.getElementById('contractContent').innerHTML = contractData.content || contractData.html || 'Contract content not available';
 
                 // Show main content
                 document.getElementById('loadingContainer').style.display = 'none';
@@ -455,7 +451,7 @@
         // Mark contract as viewed
         async function markAsViewed() {
             try {
-                await fetch(`/api/contracts/${contractId}/viewed`, {
+                await fetch(`/api/booking/sign/${token}/viewed`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -514,17 +510,18 @@
                 const signatureDataUrl = signaturePad.toDataURL('image/png');
 
                 // Submit to server
-                const response = await fetch(`/api/contracts/${contractId}/sign`, {
+                const response = await fetch(`/api/booking/sign/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        token,
-                        signatureDataUrl,
+                        signatureData: signatureDataUrl,
+                        signatureType: 'electronic',
                         signerName: name,
                         signerEmail: email,
-                        signerIp: await getClientIP()
+                        ipAddress: await getClientIP(),
+                        userAgent: navigator.userAgent
                     })
                 });
 
