@@ -392,11 +392,11 @@ function createBookingAgreementRoutes(pool) {
                     [agreement.id]
                 );
 
-                // Update session contract status
+                // Update session contract status  
                 await client.query(
-                    `UPDATE sessions 
+                    `UPDATE photography_sessions 
                      SET contract_signed = true, updated_at = NOW()
-                     WHERE id = $1`,
+                     WHERE id = $1::text`,
                     [agreement.session_id]
                 );
 
