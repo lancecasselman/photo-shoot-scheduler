@@ -1449,6 +1449,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <p>Choose method:</p>
             <button onclick="alert('Email selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: blue; color: white;">EMAIL</button>
             <button onclick="alert('SMS selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: green; color: white;">SMS</button>
+            <button onclick="viewSignedPendingContracts(); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: #17a2b8; color: white;">📄 SIGNED/PENDING CONTRACTS</button>
             <br><br>
             <button onclick="document.getElementById('simple-send-modal').remove();" style="padding: 10px; background: gray; color: white;">CANCEL</button>
         `;
