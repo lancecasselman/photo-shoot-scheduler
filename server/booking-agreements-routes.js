@@ -139,6 +139,9 @@ function createBookingAgreementRoutes(pool) {
                 return res.status(401).json({ error: 'User not authenticated' });
             }
 
+            console.log(`📄 DEBUGGING: Fetching agreements for user: ${userId}`);
+            console.log(`📄 DEBUGGING: Session user object:`, req.session?.user);
+
             const client = await pool.connect();
             try {
                 const result = await client.query(
@@ -159,6 +162,15 @@ function createBookingAgreementRoutes(pool) {
                 result.rows.forEach(agreement => {
                     console.log(`  - ${agreement.session_client_name}: ${agreement.status} (Session: ${agreement.session_id})`);
                 });
+                
+                // Also check if there are any agreements with different user_id patterns
+                const allAgreements = await client.query(
+                    `SELECT DISTINCT user_id, COUNT(*) as count 
+                     FROM booking_agreements 
+                     GROUP BY user_id`
+                );
+                console.log(`📄 All agreement user_ids in database:`, allAgreements.rows);
+                
                 res.json(result.rows);
             } finally {
                 client.release();
