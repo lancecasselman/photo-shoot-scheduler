@@ -409,21 +409,32 @@ async function saveAgreement() {
 
 // Send for signature
 async function sendForSignature() {
+    console.log('sendForSignature called');
+    
     if (!currentAgreement) {
+        console.log('No current agreement, saving first...');
         await saveAgreement();
     }
 
-    if (!currentAgreement) return;
+    if (!currentAgreement) {
+        console.log('Still no agreement after save attempt');
+        return;
+    }
 
     const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) return;
+    if (!session) {
+        console.log('No session found for ID:', currentAgreementSessionId);
+        return;
+    }
 
+    console.log('Showing send options modal for session:', session);
     // Show send options modal
     showSendOptionsModal(session);
 }
 
 // Show modal for choosing send method
 function showSendOptionsModal(session) {
+    console.log('showSendOptionsModal called with session:', session);
     const modal = document.createElement('div');
     modal.className = 'send-options-modal';
     const isResend = currentAgreement?.status === 'sent' || currentAgreement?.status === 'viewed';
@@ -595,16 +606,21 @@ async function sendViaEmail(sessionId) {
 
         if (response.ok) {
             const result = await response.json();
-            const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
             
-            // Create mailto link
-            const subject = `Photography Contract - ${session.sessionType} Session`;
-            const body = `Hello ${session.clientName},\n\nPlease review and sign your photography contract for your session on ${new Date(session.dateTime).toLocaleDateString()}.\n\nClick here to sign: ${signingLink}\n\nThank you!`;
+            // Check if backend returned a mailto URL
+            if (result.mailtoUrl) {
+                // Use the mailto URL from backend
+                window.location.href = result.mailtoUrl;
+                showMessage('Opening email client...', 'success');
+            } else {
+                // Fallback to creating our own (shouldn't happen with updated backend)
+                const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+                const subject = `Photography Contract - ${session.sessionType} Session`;
+                const body = `Hello ${session.clientName},\n\nPlease review and sign your photography contract for your session on ${new Date(session.dateTime).toLocaleDateString()}.\n\nClick here to sign: ${signingLink}\n\nThank you!`;
+                window.location.href = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                showMessage('Opening email client...', 'success');
+            }
             
-            // Open default email client
-            window.location.href = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            
-            showMessage('Opening email client...', 'success');
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             
@@ -647,21 +663,22 @@ async function sendViaSMS(sessionId) {
 
         if (response.ok) {
             const result = await response.json();
-            const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
             
-            // Format phone number (remove non-digits)
-            const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+            // Check if backend returned an sms URL
+            if (result.smsUrl) {
+                // Use the sms URL from backend
+                window.location.href = result.smsUrl;
+                showMessage('Opening SMS app...', 'success');
+            } else {
+                // Fallback to creating our own (shouldn't happen with updated backend)
+                const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+                const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+                const message = `Hi ${session.clientName}, please sign your photography contract: ${signingLink}`;
+                const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
+                window.location.href = smsLink;
+                showMessage('Opening SMS app...', 'success');
+            }
             
-            // Create SMS message
-            const message = `Hi ${session.clientName}, please sign your photography contract: ${signingLink}`;
-            
-            // Create sms: link
-            const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
-            
-            // Open default SMS app
-            window.location.href = smsLink;
-            
-            showMessage('Opening SMS app...', 'success');
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             

@@ -3309,9 +3309,160 @@ async function downloadAllRawFiles(sessionId, clientName) {
             // Implement contract viewing
         };
 
-        window.sendContract = function(contractId) {
-            showMessage('Sending contract to client...', 'info');
-            // Implement contract sending
+        window.sendContract = async function(contractId) {
+            console.log('sendContract called with ID:', contractId);
+            
+            try {
+                // Fetch the contract details
+                const response = await fetch(`/api/booking/agreements/${contractId}`);
+                if (!response.ok) {
+                    showMessage('Failed to load contract', 'error');
+                    return;
+                }
+                
+                const contract = await response.json();
+                
+                // Find the session for this contract
+                const sessionResponse = await fetch(`/api/sessions/${contract.session_id}`);
+                if (!sessionResponse.ok) {
+                    showMessage('Failed to load session details', 'error');
+                    return;
+                }
+                
+                const session = await sessionResponse.json();
+                
+                // Show modal for choosing send method
+                const modal = document.createElement('div');
+                modal.className = 'send-options-modal';
+                modal.style = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+                
+                modal.innerHTML = `
+                    <div class="send-options-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;">
+                        <h3>Send Contract for Signature</h3>
+                        <p>How would you like to send the contract to ${session.clientName}?</p>
+                        
+                        <div class="send-options" style="display: flex; gap: 15px; margin: 20px 0;">
+                            <div class="send-option" style="flex: 1; padding: 20px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s;" 
+                                 onclick="sendContractViaEmail('${contractId}', '${session.email}', '${session.clientName}')">
+                                <i class="fas fa-envelope" style="font-size: 24px; color: #3498db; margin-bottom: 10px;"></i>
+                                <h4>Email</h4>
+                                <p style="font-size: 14px; color: #666;">${session.email || 'No email provided'}</p>
+                                ${!session.email ? '<p style="color: #dc3545; font-size: 12px;">Email address required</p>' : ''}
+                            </div>
+                            
+                            <div class="send-option" style="flex: 1; padding: 20px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s;"
+                                 onclick="sendContractViaSMS('${contractId}', '${session.phoneNumber}', '${session.clientName}')">
+                                <i class="fas fa-sms" style="font-size: 24px; color: #27ae60; margin-bottom: 10px;"></i>
+                                <h4>Text Message (SMS)</h4>
+                                <p style="font-size: 14px; color: #666;">${session.phoneNumber || 'No phone number provided'}</p>
+                                ${!session.phoneNumber ? '<p style="color: #dc3545; font-size: 12px;">Phone number required</p>' : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding-top: 15px; border-top: 1px solid #e0e0e0; margin-top: 20px;">
+                            <button class="btn btn-secondary" onclick="closeContractSendModal()">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add hover effects
+                modal.querySelectorAll('.send-option').forEach(option => {
+                    option.addEventListener('mouseenter', function() {
+                        this.style.borderColor = '#3498db';
+                        this.style.background = '#f8f9fa';
+                    });
+                    option.addEventListener('mouseleave', function() {
+                        this.style.borderColor = '#e0e0e0';
+                        this.style.background = 'white';
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error in sendContract:', error);
+                showMessage('Error preparing to send contract', 'error');
+            }
+        };
+        
+        // Helper function to close the modal
+        window.closeContractSendModal = function() {
+            const modal = document.querySelector('.send-options-modal');
+            if (modal) modal.remove();
+        };
+        
+        // Send via Email
+        window.sendContractViaEmail = async function(contractId, email, clientName) {
+            if (!email) {
+                showMessage('Email address is required', 'error');
+                return;
+            }
+            
+            closeContractSendModal();
+            
+            try {
+                const response = await fetch(`/api/booking/agreements/${contractId}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientEmail: email,
+                        clientName: clientName,
+                        sendMethod: 'email'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Use the mailto URL from backend
+                    if (result.mailtoUrl) {
+                        window.location.href = result.mailtoUrl;
+                        showMessage('Opening email client...', 'success');
+                    }
+                } else {
+                    showMessage('Failed to prepare contract', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error sending contract', 'error');
+            }
+        };
+        
+        // Send via SMS
+        window.sendContractViaSMS = async function(contractId, phoneNumber, clientName) {
+            if (!phoneNumber) {
+                showMessage('Phone number is required', 'error');
+                return;
+            }
+            
+            closeContractSendModal();
+            
+            try {
+                const response = await fetch(`/api/booking/agreements/${contractId}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientPhone: phoneNumber,
+                        clientName: clientName,
+                        sendMethod: 'sms'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Use the sms URL from backend
+                    if (result.smsUrl) {
+                        window.location.href = result.smsUrl;
+                        showMessage('Opening SMS app...', 'success');
+                    }
+                } else {
+                    showMessage('Failed to prepare contract', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error sending contract', 'error');
+            }
         };
 
 window.switchTab = function(tabName) {
