@@ -16,16 +16,49 @@ class SubscriptionAuthMiddleware {
      */
     requireActiveSubscription = async (req, res, next) => {
         try {
-            // Check if user is authenticated first
-            if (!req.session?.user?.uid) {
-                return res.status(401).json({ 
-                    error: 'Authentication required',
-                    redirectTo: '/secure-login.html'
-                });
+            // Check if user is authenticated first - try multiple authentication methods
+            let userId = null;
+            let userEmail = null;
+
+            // Method 1: Check session user data
+            if (req.session?.user?.uid) {
+                userId = req.session.user.uid;
+                userEmail = req.session.user.email;
+            }
+            // Method 2: Check if user was set by previous middleware
+            else if (req.user?.uid) {
+                userId = req.user.uid;
+                userEmail = req.user.email;
+            }
+            // Method 3: Check Firebase auth header (for API calls)
+            else if (req.headers.authorization) {
+                try {
+                    const token = req.headers.authorization.split('Bearer ')[1];
+                    if (token) {
+                        const { admin } = require('./firebase-admin');
+                        const decodedToken = await admin.auth().verifyIdToken(token);
+                        userId = decodedToken.uid;
+                        userEmail = decodedToken.email;
+                        console.log('🔥 Firebase token verified for user:', userEmail);
+                    }
+                } catch (firebaseError) {
+                    console.log('🔥 Firebase token verification failed:', firebaseError.message);
+                }
             }
 
-            const userId = req.session.user.uid;
-            const userEmail = req.session.user.email;
+            if (!userId) {
+                console.log('🚫 Authentication failed - no valid user ID found');
+                return res.status(401).json({ 
+                    error: 'Authentication required',
+                    redirectTo: '/secure-login.html',
+                    debug: {
+                        hasSession: !!req.session,
+                        hasSessionUser: !!req.session?.user,
+                        hasReqUser: !!req.user,
+                        hasAuthHeader: !!req.headers.authorization
+                    }
+                });
+            }
 
             // ADMIN BYPASS: Skip subscription check for admin emails
             const adminEmails = [
