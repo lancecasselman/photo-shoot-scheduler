@@ -25,7 +25,7 @@ function getMimeType(filePath: string): string {
   return mimeTypes[ext] || 'application/octet-stream';
 }
 
-function setCorsHeaders(res: any) {
+function setCorsHeaders(res: any, req?: any) {
   // Secure CORS configuration - restrict to trusted domains
   const allowedOrigins = [
     'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev',
@@ -34,15 +34,28 @@ function setCorsHeaders(res: any) {
     'http://localhost:5000'  // Development
   ];
   
-  // Get origin from request (this would need to be passed in from the calling function)
-  // For now, use a more restrictive default
-  res.setHeader('Access-Control-Allow-Origin', 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev');
+  // Get the request origin
+  const requestOrigin = req?.headers?.origin;
+  
+  // Allow any .replit.app domain for published websites
+  if (requestOrigin && requestOrigin.includes('.replit.app')) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+  } 
+  // Allow specific trusted origins
+  else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+  }
+  // Default fallback for development
+  else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev');
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
-function serveStaticFile(filePath: string, res: any) {
+function serveStaticFile(filePath: string, res: any, req?: any) {
   try {
     // Security: Prevent path traversal attacks
     const normalizedPath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
@@ -66,7 +79,7 @@ function serveStaticFile(filePath: string, res: any) {
     const data = fs.readFileSync(fullPath);
     const mimeType = getMimeType(normalizedPath);
     
-    setCorsHeaders(res);
+    setCorsHeaders(res, req);
     res.writeHead(200, { 'Content-Type': mimeType });
     res.end(data);
   } catch (error) {
@@ -112,7 +125,7 @@ function isAuthenticated(req: any): boolean {
 }
 
 async function handleApiRequest(method: string, pathname: string, req: any, res: any) {
-  setCorsHeaders(res);
+  setCorsHeaders(res, req);
   
   if (method === 'OPTIONS') {
     res.writeHead(200);
@@ -216,21 +229,21 @@ const server = createServer(async (req, res) => {
 
   // Handle static files
   if (pathname === '/') {
-    serveStaticFile('index.html', res);
+    serveStaticFile('index.html', res, req);
   } else if (pathname === '/auth' || pathname === '/auth.html') {
-    serveStaticFile('auth.html', res);
+    serveStaticFile('auth.html', res, req);
   } else if (pathname === '/app' || pathname === '/app.html') {
-    serveStaticFile('index.html', res);
+    serveStaticFile('index.html', res, req);
   } else if (pathname === '/auth.js') {
-    serveStaticFile('auth.js', res);
+    serveStaticFile('auth.js', res, req);
   } else if (pathname === '/script.js') {
-    serveStaticFile('script.js', res);
+    serveStaticFile('script.js', res, req);
   } else if (pathname === '/style.css') {
-    serveStaticFile('style.css', res);
+    serveStaticFile('style.css', res, req);
   } else if (pathname === '/firebase-config.js') {
-    serveStaticFile('firebase-config.js', res);
+    serveStaticFile('firebase-config.js', res, req);
   } else {
-    serveStaticFile(pathname.substring(1), res);
+    serveStaticFile(pathname.substring(1), res, req);
   }
 });
 
