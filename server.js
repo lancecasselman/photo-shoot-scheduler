@@ -2113,11 +2113,13 @@ app.get('/api/verify-session', (req, res) => {
 
 // SECURE: Verify auth with Firebase token
 app.post('/api/verify-auth', async (req, res) => {
+    // Define userAgent outside try block so it's accessible in catch block
+    const userAgent = req.headers['user-agent'] || '';
+    
     try {
         const { idToken, isAndroid, isCapacitor } = req.body;
         
         // Android/Mobile debugging
-        const userAgent = req.headers['user-agent'] || '';
         const detectedAndroid = userAgent.includes('Android');
         const detectedCapacitor = userAgent.includes('CapacitorHttp');
         const isAndroidApp = isAndroid || detectedAndroid || detectedCapacitor;
