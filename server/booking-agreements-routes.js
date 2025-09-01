@@ -148,7 +148,7 @@ function createBookingAgreementRoutes(pool) {
                         s.session_type,
                         s.date_time as session_date
                      FROM booking_agreements a
-                     LEFT JOIN photography_sessions s ON a.session_id = s.id
+                     LEFT JOIN photography_sessions s ON a.session_id::text = s.id::text
                      WHERE a.user_id = $1
                      ORDER BY a.created_at DESC`,
                     [userId]
