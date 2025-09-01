@@ -509,6 +509,8 @@
                 // Get signature as data URL
                 const signatureDataUrl = signaturePad.toDataURL('image/png');
 
+                console.log('🖊️ Submitting signature...', { token, name, email });
+
                 // Submit to server
                 const response = await fetch(`/api/booking/sign/${token}`, {
                     method: 'POST',
@@ -525,8 +527,12 @@
                     })
                 });
 
+                console.log('📡 Signature submission response:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    throw new Error('Failed to submit signature');
+                    const errorData = await response.text();
+                    console.error('❌ Signature submission failed:', errorData);
+                    throw new Error(`Failed to submit signature: ${response.status} - ${errorData}`);
                 }
 
                 const result = await response.json();
