@@ -37,13 +37,6 @@ Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform
 - Portfolio showcases with your best work
 - SEO-optimized for local discovery
 
-### 📱 **Native Mobile Apps**
-- iOS and Android apps for on-the-go management
-- Upload photos directly from shoots
-- Manage sessions from anywhere
-- Push notifications keep you connected
-- Offline mode with automatic sync
-
 ### 🛡️ **Enterprise-Grade Storage**
 - Cloudflare R2 integration for unlimited scalability
 - Automatic backup of all photos including RAW files
@@ -96,7 +89,7 @@ Built with modern technology stack (React, Node.js, PostgreSQL) ensuring blazing
 
 - ✨ Unlimited client sessions
 - 📧 Automated email notifications
-- 📱 iOS & Android mobile apps
+- 📱 Mobile-responsive web app
 - 🌐 Professional website builder
 - 💾 100GB cloud storage
 - 🔐 Secure client galleries
@@ -126,7 +119,7 @@ Built with industry-leading technologies for reliability and performance:
 - **Storage**: Cloudflare R2
 - **Authentication**: Firebase Auth
 - **Payments**: Stripe
-- **Mobile**: Capacitor (iOS/Android)
+- **Mobile**: Progressive Web App (PWA)
 
 ## **Get Started Today**
 

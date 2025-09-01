@@ -20,7 +20,7 @@ A comprehensive AI-powered photography business management platform designed to 
 ### Business Features
 - **Subscription Management**: Freemium model with Stripe billing
 - **Email Automation**: SendGrid integration for client communications
-- **Mobile Support**: Capacitor-enabled mobile app capabilities
+- **Mobile Support**: Progressive Web App (PWA) with mobile-responsive design
 - **Analytics Dashboard**: Comprehensive storage and usage insights
 
 ## 🛠️ Technology Stack
