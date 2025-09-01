@@ -160,33 +160,6 @@ export const paymentRecords = pgTable("payment_records", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Contracts table for e-signature management
-export const contracts = pgTable("contracts", {
-  id: varchar("id").primaryKey().notNull(),
-  sessionId: varchar("session_id").notNull().references(() => photographySessions.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  contractType: varchar("contract_type").notNull(), // 'photo_release', 'wedding_contract', 'general_contract'
-  contractTitle: varchar("contract_title").notNull(),
-  contractContent: text("contract_content").notNull(),
-  status: varchar("status").notNull().default("pending"), // pending, sent, signed, cancelled
-  clientName: varchar("client_name").notNull(),
-  clientEmail: varchar("client_email").notNull(),
-  photographerName: varchar("photographer_name").notNull(),
-  photographerEmail: varchar("photographer_email").notNull(),
-  signedDate: timestamp("signed_date"),
-  clientSignature: text("client_signature"), // Base64 signature data
-  clientSignatureDate: timestamp("client_signature_date"),
-  photographerSignature: text("photographer_signature"),
-  photographerSignatureDate: timestamp("photographer_signature_date"),
-  accessToken: varchar("access_token").notNull(), // Secure token for client access
-  sentAt: timestamp("sent_at"),
-  viewedAt: timestamp("viewed_at"),
-  remindersSent: integer("reminders_sent").default(0),
-  lastReminderSent: timestamp("last_reminder_sent"),
-  customFields: jsonb("custom_fields").default({}), // Session-specific data
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Subscribers table for marketing notifications
 export const subscribers = pgTable("subscribers", {
