@@ -401,7 +401,20 @@ async function sendContractForSignature(clientEmail, clientName, sessionType, se
                 name: businessName || 'Photography Management System'
             },
             subject: emailContent.subject,
-            html: emailContent.html
+            html: emailContent.html,
+            // Disable SendGrid click tracking for contract emails to avoid SSL certificate issues
+            trackingSettings: {
+                clickTracking: {
+                    enable: false,
+                    enableText: false
+                },
+                openTracking: {
+                    enable: false
+                },
+                subscriptionTracking: {
+                    enable: false
+                }
+            }
         };
 
         const response = await sgMail.send(msg);
