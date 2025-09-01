@@ -7035,9 +7035,15 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // Add signed contract buttons to all sessions
+                    // Add signed contract buttons to all sessions - DEBUG
+                    console.log('TRIGGER: About to call addSignedContractButtons...');
                     setTimeout(() => {
-                        addSignedContractButtons();
+                        console.log('TIMEOUT: Calling addSignedContractButtons now...');
+                        if (typeof window.addSignedContractButtons === 'function') {
+                            window.addSignedContractButtons();
+                        } else {
+                            console.error('ERROR: addSignedContractButtons function not found!');
+                        }
                     }, 100);
 
                     
@@ -7276,10 +7282,14 @@ ${contract.contract_content}
             
             // No longer loading files for all sessions - simplified interface
             
-            // Add signed contract buttons after rendering sessions
+            // Add signed contract buttons after rendering sessions - DEBUG
+            console.log('RENDER: About to call addSignedContractButtons from renderSessions...');
             setTimeout(() => {
+                console.log('RENDER TIMEOUT: Calling addSignedContractButtons now...');
                 if (typeof window.addSignedContractButtons === 'function') {
                     window.addSignedContractButtons();
+                } else {
+                    console.error('RENDER ERROR: addSignedContractButtons function not found!');
                 }
             }, 50);
 
