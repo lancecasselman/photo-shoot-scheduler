@@ -738,11 +738,11 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(signedContractBtn);
     console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(bookingAgreementBtn);
-    actions.appendChild(signedContractBtn);
     console.log('DEBUG: Deposit button appended successfully');
     console.log(' DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
     actions.appendChild(rawUploadBtn);
