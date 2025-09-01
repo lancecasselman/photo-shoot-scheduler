@@ -6348,44 +6348,6 @@ ${contract.contract_content}
             }
         }
 
-        // Function to add signed contract buttons dynamically
-        window.addSignedContractButtons = function() {
-            console.log('Adding signed contract buttons to all sessions...');
-            
-            // Find all booking agreement buttons
-            const bookingAgreementButtons = document.querySelectorAll('.booking-agreement-btn');
-            
-            bookingAgreementButtons.forEach(button => {
-                const sessionId = button.getAttribute('data-session-id');
-                if (!sessionId) return;
-                
-                // Check if signed contract button already exists for this session
-                const existingButton = button.parentNode.querySelector(`.signed-contract-btn[data-session-id="${sessionId}"]`);
-                if (existingButton) return; // Skip if already exists
-                
-                // Find the session data to get client name
-                const session = window.sessions ? window.sessions.find(s => s.id === sessionId) : null;
-                const clientName = session ? session.clientName : 'Unknown';
-                
-                // Create the signed contract button
-                const signedContractButton = document.createElement('button');
-                signedContractButton.className = 'btn btn-secondary signed-contract-btn';
-                signedContractButton.setAttribute('data-session-id', sessionId);
-                signedContractButton.style.cssText = 'background-color: #6c757d; color: white; margin-left: 5px;';
-                signedContractButton.innerHTML = '📄 Signed Contract';
-                signedContractButton.onclick = function(event) {
-                    event.stopPropagation();
-                    viewSignedContract(sessionId, clientName);
-                };
-                
-                // Insert the button right after the booking agreement button
-                button.parentNode.insertBefore(signedContractButton, button.nextSibling);
-                
-                console.log(`Added signed contract button for session: ${sessionId}`);
-            });
-            
-            console.log('Finished adding signed contract buttons');
-        }
 
         let sessions = [];
 
@@ -7035,16 +6997,6 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // Add signed contract buttons to all sessions - DEBUG
-                    console.log('TRIGGER: About to call addSignedContractButtons...');
-                    setTimeout(() => {
-                        console.log('TIMEOUT: Calling addSignedContractButtons now...');
-                        if (typeof window.addSignedContractButtons === 'function') {
-                            window.addSignedContractButtons();
-                        } else {
-                            console.error('ERROR: addSignedContractButtons function not found!');
-                        }
-                    }, 100);
 
                     
 
@@ -7056,16 +7008,6 @@ ${contract.contract_content}
                         window.renderSessions();
                         console.log(' Sorted sessions rendered successfully');
                         
-                        // Add signed contract buttons RIGHT AFTER rendering
-                        console.log('MAIN: About to call addSignedContractButtons after render...');
-                        setTimeout(() => {
-                            console.log('MAIN TIMEOUT: Calling addSignedContractButtons now...');
-                            if (typeof window.addSignedContractButtons === 'function') {
-                                window.addSignedContractButtons();
-                            } else {
-                                console.error('MAIN ERROR: addSignedContractButtons function not found!');
-                            }
-                        }, 100);
                     }
                     
                     // Remove any existing storage display elements from session cards
@@ -7227,6 +7169,9 @@ ${contract.contract_content}
                                 <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary booking-agreement-btn" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
+                                <button onclick="viewSignedContract('${sessionId}', '${session.clientName}'); event.stopPropagation();" class="btn btn-secondary" style="background-color: #6c757d; color: white;">
+                                    📄 Signed Contract
+                                </button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -7293,16 +7238,6 @@ ${contract.contract_content}
             
             // No longer loading files for all sessions - simplified interface
             
-            // Add signed contract buttons after rendering sessions - DEBUG
-            console.log('RENDER: About to call addSignedContractButtons from renderSessions...');
-            setTimeout(() => {
-                console.log('RENDER TIMEOUT: Calling addSignedContractButtons now...');
-                if (typeof window.addSignedContractButtons === 'function') {
-                    window.addSignedContractButtons();
-                } else {
-                    console.error('RENDER ERROR: addSignedContractButtons function not found!');
-                }
-            }, 50);
 
         }
 
