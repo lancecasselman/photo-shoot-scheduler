@@ -685,6 +685,20 @@ function createSessionCard(session) {
     bookingAgreementBtn.style.margin = '2px';
     console.log('Booking Agreement button created for session:', session.id);
 
+    // Signed Contract Button (only show when contract is signed)
+    const signedContractBtn = document.createElement('button');
+    signedContractBtn.className = 'btn signed-contract-btn';
+    signedContractBtn.innerHTML = '✅ <span class="signed-status">Signed Contract</span>';
+    signedContractBtn.setAttribute('data-session-id', session.id);
+    signedContractBtn.onclick = () => {
+        showMessage(`Contract for ${session.clientName} has been signed successfully!`, 'success');
+    };
+    signedContractBtn.style.backgroundColor = '#28a745';
+    signedContractBtn.style.color = 'white';
+    signedContractBtn.style.margin = '2px';
+    signedContractBtn.style.display = session.contractSigned ? 'inline-block' : 'none';
+    console.log('Signed Contract button created for session:', session.id, 'Contract signed:', session.contractSigned);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -705,6 +719,7 @@ function createSessionCard(session) {
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(bookingAgreementBtn);
+    actions.appendChild(signedContractBtn);
     console.log('DEBUG: Deposit button appended successfully');
     console.log(' DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
     actions.appendChild(rawUploadBtn);

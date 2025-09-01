@@ -568,18 +568,23 @@ function updateModalButtons(status) {
 function updateAgreementStatus(sessionId, status) {
     // Look for booking agreement button with data-session-id attribute
     const button = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
+    const signedButton = document.querySelector(`.signed-contract-btn[data-session-id="${sessionId}"]`);
+    
     if (!button) {
         // Try again after a short delay in case the button hasn't been rendered yet
         setTimeout(() => {
             const buttonRetry = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
+            const signedButtonRetry = document.querySelector(`.signed-contract-btn[data-session-id="${sessionId}"]`);
             if (buttonRetry) {
                 updateAgreementStatusButton(buttonRetry, status);
+                updateSignedContractButton(signedButtonRetry, status);
             }
         }, 500);
         return;
     }
     
     updateAgreementStatusButton(button, status);
+    updateSignedContractButton(signedButton, status);
 }
 
 // Helper function to update the actual button
@@ -595,6 +600,22 @@ function updateAgreementStatusButton(button, status) {
 
     // Update status text
     statusSpan.textContent = getStatusText(status);
+}
+
+// Helper function to update the signed contract button
+function updateSignedContractButton(signedButton, status) {
+    if (!signedButton) {
+        return;
+    }
+
+    // Show the signed contract button only when status is 'signed'
+    if (status === 'signed') {
+        signedButton.style.display = 'inline-block';
+        console.log('✅ Showing signed contract button for status:', status);
+    } else {
+        signedButton.style.display = 'none';
+        console.log('❌ Hiding signed contract button for status:', status);
+    }
 }
 
 // Get status display text
