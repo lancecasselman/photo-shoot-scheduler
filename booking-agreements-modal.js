@@ -733,17 +733,41 @@ function sendViaSMS() {
         return;
     }
 
-    // Create the message text
-    const message = `Hi ${session.clientName}! Your photography contract is ready for review and signature. Please check your email for the contract details. If you have any questions, feel free to reach out. Thanks!`;
+    // Get the contract content from the editor
+    const agreementContent = document.getElementById('agreementContent');
+    if (!agreementContent || !agreementContent.innerHTML.trim()) {
+        showMessage('Please create or select a contract first', 'error');
+        return;
+    }
+
+    // Convert HTML to plain text and clean it up
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = agreementContent.innerHTML;
+    let contractText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Clean up the text - remove extra whitespace and format nicely
+    contractText = contractText
+        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+        .replace(/\n\s*\n/g, '\n\n') // Clean up line breaks
+        .trim();
+
+    // Create the message with contract content
+    const message = `Hi ${session.clientName}! Here's your photography contract for review:\n\n${contractText}\n\nPlease review and let me know if you have any questions. Thanks!`;
+    
+    // SMS has character limits, so truncate if too long (most carriers limit to 1600 chars)
+    const maxLength = 1500;
+    const finalMessage = message.length > maxLength ? 
+        message.substring(0, maxLength) + '...\n\n(Contract continues - please contact me for full details)' : 
+        message;
     
     // Create SMS URL - this will open the user's default SMS app
     const phoneNumber = session.phoneNumber.replace(/\D/g, ''); // Remove non-digits
-    const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+    const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(finalMessage)}`;
     
     // Open SMS app
     window.location.href = smsUrl;
     
-    showMessage(`SMS app opened for ${session.clientName}`, 'success');
+    showMessage(`SMS app opened with contract for ${session.clientName}`, 'success');
 }
 
 // Expose functions globally
