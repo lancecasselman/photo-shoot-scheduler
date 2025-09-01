@@ -7055,6 +7055,17 @@ ${contract.contract_content}
                     if (typeof window.renderSessions === 'function') {
                         window.renderSessions();
                         console.log(' Sorted sessions rendered successfully');
+                        
+                        // Add signed contract buttons RIGHT AFTER rendering
+                        console.log('MAIN: About to call addSignedContractButtons after render...');
+                        setTimeout(() => {
+                            console.log('MAIN TIMEOUT: Calling addSignedContractButtons now...');
+                            if (typeof window.addSignedContractButtons === 'function') {
+                                window.addSignedContractButtons();
+                            } else {
+                                console.error('MAIN ERROR: addSignedContractButtons function not found!');
+                            }
+                        }, 100);
                     }
                     
                     // Remove any existing storage display elements from session cards
