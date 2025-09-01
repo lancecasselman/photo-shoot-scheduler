@@ -133,7 +133,7 @@ function createBookingAgreementRoutes(pool) {
     // Get all agreements for the current user (for signed/pending contracts view)
     router.get('/agreements/all', async (req, res) => {
         try {
-            const userId = req.session?.user?.uid;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
             
             if (!userId) {
                 return res.status(401).json({ error: 'User not authenticated' });
@@ -148,12 +148,13 @@ function createBookingAgreementRoutes(pool) {
                         s.session_type,
                         s.date_time as session_date
                      FROM booking_agreements a
-                     LEFT JOIN photography_sessions s ON a.session_id::text = s.id::text
-                     WHERE a.user_id = $1
+                     INNER JOIN photography_sessions s ON a.session_id::text = s.id::text
+                     WHERE a.user_id = $1 AND s.user_id = $1
                      ORDER BY a.created_at DESC`,
                     [userId]
                 );
                 
+                console.log(`Found ${result.rows.length} agreements for user ${userId}`);
                 res.json(result.rows);
             } finally {
                 client.release();
@@ -582,7 +583,7 @@ function createBookingAgreementRoutes(pool) {
                         s.session_type,
                         s.date_time as session_date
                      FROM booking_agreements a
-                     JOIN sessions s ON a.session_id = s.id
+                     JOIN photography_sessions s ON a.session_id::text = s.id::text
                      WHERE a.user_id = $1 
                      AND a.status IN ('sent', 'viewed', 'draft')
                      ORDER BY a.created_at DESC`,
@@ -622,7 +623,7 @@ function createBookingAgreementRoutes(pool) {
                         s.session_type,
                         s.date_time as session_date
                      FROM booking_agreements a
-                     JOIN sessions s ON a.session_id = s.id
+                     JOIN photography_sessions s ON a.session_id::text = s.id::text
                      WHERE a.session_id = $1 
                      AND a.user_id = $2 
                      AND a.status IN ('sent', 'viewed', 'draft')

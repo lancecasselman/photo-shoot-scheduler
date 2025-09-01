@@ -261,6 +261,22 @@ async function initializeBookingAgreements() {
 
     // Update all session cards with agreement status
     await updateAllAgreementStatuses();
+    
+    // Listen for contract signing notifications from signature window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'contractSigned') {
+            console.log('📡 Received contract signed notification:', event.data);
+            // Refresh the signed/pending contracts if the modal is open
+            const signedPendingModal = document.getElementById('signedPendingModal');
+            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
+                setTimeout(() => {
+                    viewSignedPendingContracts(); // Refresh the modal
+                }, 1000); // Small delay to ensure database is updated
+            }
+            // Update session card status
+            updateAllAgreementStatuses();
+        }
+    });
 }
 
 // Create the modal HTML structure
