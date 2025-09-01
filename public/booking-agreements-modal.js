@@ -144,8 +144,8 @@ async function viewAgreementDetails(agreementId) {
         // Close current modal and open agreement modal with the details
         closeSignedPendingModal();
         
-        // Show the agreement content in a read-only view
-        showAgreementDetailsModal(agreement);
+        // Show the agreement content in a read-only view with signature if signed
+        await showAgreementDetailsModal(agreement);
         
     } catch (error) {
         console.error('Error fetching agreement details:', error);
@@ -154,7 +154,7 @@ async function viewAgreementDetails(agreementId) {
 }
 
 // Show agreement details in a modal
-function showAgreementDetailsModal(agreement) {
+async function showAgreementDetailsModal(agreement) {
     const modalHTML = `
         <div id="agreementDetailsModal" class="booking-modal" style="display: flex; z-index: 10001;">
             <div class="booking-modal-content" style="max-width: 700px; width: 90%;">
@@ -174,6 +174,15 @@ function showAgreementDetailsModal(agreement) {
                     <div class="agreement-content" style="border: 1px solid #ddd; padding: 20px; background: white; max-height: 400px; overflow-y: auto;">
                         ${agreement.content || 'No content available'}
                     </div>
+                    
+                    ${agreement.status === 'signed' ? `
+                        <div id="signatureSection" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 5px;">
+                            <h4 style="margin-bottom: 15px; color: #28a745;">📝 Electronic Signature</h4>
+                            <div id="signatureContent">
+                                <p style="margin: 5px 0; color: #666;">Loading signature...</p>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 <div class="booking-modal-footer">
@@ -185,6 +194,49 @@ function showAgreementDetailsModal(agreement) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // If the agreement is signed, load the signature
+    if (agreement.status === 'signed') {
+        await loadSignatureForAgreement(agreement.id);
+    }
+}
+
+// Load signature for a signed agreement
+async function loadSignatureForAgreement(agreementId) {
+    try {
+        const response = await fetch(`/api/booking/agreements/${agreementId}/signatures`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch signature');
+        }
+        
+        const signatures = await response.json();
+        if (signatures.length > 0) {
+            const signature = signatures[0]; // Get the most recent signature
+            
+            const signatureContent = document.getElementById('signatureContent');
+            if (signatureContent) {
+                signatureContent.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <p style="margin: 5px 0; color: #333;"><strong>Signed by:</strong> ${signature.signer_name}</p>
+                        <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> ${signature.signer_email}</p>
+                        <p style="margin: 5px 0; color: #333;"><strong>Date:</strong> ${new Date(signature.signed_at).toLocaleString()}</p>
+                        <p style="margin: 5px 0; color: #333;"><strong>IP Address:</strong> ${signature.ip_address}</p>
+                    </div>
+                    <div style="border: 1px solid #ddd; padding: 10px; background: white; border-radius: 5px;">
+                        <img src="${signature.signature_data}" alt="Electronic Signature" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading signature:', error);
+        const signatureContent = document.getElementById('signatureContent');
+        if (signatureContent) {
+            signatureContent.innerHTML = `
+                <p style="color: #dc3545;">Failed to load signature: ${error.message}</p>
+            `;
+        }
+    }
 }
 
 // Close agreement details modal
