@@ -3305,3 +3305,40 @@ window.switchTab = function(tabName) {
                 select.appendChild(option);
             });
         }
+
+        // Toggle workflow status for session checkboxes
+        window.toggleWorkflowStatus = function(sessionId, field, isChecked) {
+            console.log('Toggling workflow status:', sessionId, field, isChecked);
+            
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) {
+                console.error('Session not found:', sessionId);
+                return;
+            }
+
+            // Update local session data
+            session[field] = isChecked;
+
+            // Send update to server
+            updateSession(sessionId, { [field]: isChecked })
+                .then(() => {
+                    console.log('Workflow status updated successfully');
+                    // Update any related UI elements
+                    if (field === 'contractSigned') {
+                        // Update signed contract button status
+                        if (typeof window.updateAgreementStatus === 'function') {
+                            window.updateAgreementStatus(sessionId, isChecked ? 'signed' : 'none');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to update workflow status:', error);
+                    // Revert the checkbox
+                    const checkbox = document.getElementById(`${field}_${sessionId}`);
+                    if (checkbox) {
+                        checkbox.checked = !isChecked;
+                    }
+                    session[field] = !isChecked;
+                    showMessage('Failed to update status', 'error');
+                });
+        };
