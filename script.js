@@ -1,6 +1,29 @@
 // Photography Session Scheduler
 // Session management system with cloud database
 
+// Listen for contract signing messages from popup windows
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'contractSigned') {
+        console.log('📡 Received contract signed notification:', event.data);
+        
+        // Update the specific session's agreement status
+        const sessionId = event.data.sessionId;
+        if (sessionId) {
+            // Update the booking agreement status for this session
+            if (typeof window.updateAgreementStatus === 'function') {
+                window.updateAgreementStatus(sessionId, 'signed');
+            }
+            
+            // Also refresh the session data to get the latest contract_signed status
+            setTimeout(() => {
+                if (typeof loadSessions === 'function') {
+                    loadSessions();
+                }
+            }, 1000);
+        }
+    }
+});
+
 // Global variables
 // sessions variable is declared in index.html - using global scope
 let sessionIdCounter = 1;

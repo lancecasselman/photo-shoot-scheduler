@@ -315,6 +315,16 @@ function createBookingAgreementRoutes(pool) {
             const { token } = req.params;
             const { signerName, signerEmail, signatureData, signatureType, ipAddress, userAgent } = req.body;
 
+            console.log('🖊️ SIGNATURE SUBMISSION DEBUG:', {
+                token: token,
+                signerName: signerName,
+                signerEmail: signerEmail,
+                hasSignatureData: !!signatureData,
+                signatureType: signatureType,
+                ipAddress: ipAddress,
+                userAgent: userAgent?.substring(0, 50) + '...'
+            });
+
             const client = await pool.connect();
             try {
                 await client.query('BEGIN');
@@ -358,7 +368,19 @@ function createBookingAgreementRoutes(pool) {
 
                 await client.query('COMMIT');
 
-                res.json({ success: true, message: 'Agreement signed successfully' });
+                console.log('✅ SIGNATURE SAVED SUCCESSFULLY:', {
+                    agreementId: agreement.id,
+                    sessionId: agreement.session_id,
+                    signerName: signerName,
+                    timestamp: new Date().toISOString()
+                });
+
+                res.json({ 
+                    success: true, 
+                    message: 'Agreement signed successfully',
+                    agreementId: agreement.id,
+                    sessionId: agreement.session_id
+                });
             } catch (error) {
                 await client.query('ROLLBACK');
                 throw error;

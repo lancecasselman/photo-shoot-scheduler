@@ -852,6 +852,9 @@ if (document.readyState === 'loading') {
     initializeBookingAgreements();
 }
 
+// Make updateAgreementStatus accessible globally for message handling
+window.updateAgreementStatus = updateAgreementStatus;
+
 // Make sure to update statuses when sessions are loaded
 window.addEventListener('sessionsLoaded', function() {
     console.log('Sessions loaded event - updating booking agreement statuses');

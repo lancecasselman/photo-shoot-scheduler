@@ -537,11 +537,27 @@
 
                 const result = await response.json();
                 
+                console.log('✅ SIGNATURE SUBMISSION SUCCESS:', result);
+                
                 // Show success
-                showSuccess('Contract signed successfully! You will receive a copy via email.');
+                showSuccess('Contract signed successfully!');
                 
                 // Show signed section
                 showSigned(result);
+                
+                // Notify parent window about signature completion (if opened from main app)
+                if (window.opener && result.sessionId) {
+                    try {
+                        window.opener.postMessage({
+                            type: 'contractSigned',
+                            sessionId: result.sessionId,
+                            agreementId: result.agreementId
+                        }, '*');
+                        console.log('📡 Notified parent window about contract signing');
+                    } catch (error) {
+                        console.log('No parent window to notify');
+                    }
+                }
 
             } catch (error) {
                 console.error('Error submitting signature:', error);
