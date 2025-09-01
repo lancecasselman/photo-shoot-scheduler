@@ -716,7 +716,7 @@ async function resendAgreement() {
 }
 
 // Send via SMS using device's default SMS app
-function sendViaSMS() {
+async function sendViaSMS() {
     if (!currentAgreementSessionId) {
         showMessage('Please select a session first', 'error');
         return;
@@ -740,34 +740,61 @@ function sendViaSMS() {
         return;
     }
 
-    // Convert HTML to plain text and clean it up
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = agreementContent.innerHTML;
-    let contractText = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // Clean up the text - remove extra whitespace and format nicely
-    contractText = contractText
-        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-        .replace(/\n\s*\n/g, '\n\n') // Clean up line breaks
-        .trim();
+    try {
+        // First save the agreement to get a signable link
+        const templateId = document.getElementById('agreementTemplate').value;
+        const content = agreementContent.innerHTML;
 
-    // Create the message with contract content
-    const message = `Hi ${session.clientName}! Here's your photography contract for review:\n\n${contractText}\n\nPlease review and let me know if you have any questions. Thanks!`;
-    
-    // SMS has character limits, so truncate if too long (most carriers limit to 1600 chars)
-    const maxLength = 1500;
-    const finalMessage = message.length > maxLength ? 
-        message.substring(0, maxLength) + '...\n\n(Contract continues - please contact me for full details)' : 
-        message;
-    
-    // Create SMS URL - this will open the user's default SMS app
-    const phoneNumber = session.phoneNumber.replace(/\D/g, ''); // Remove non-digits
-    const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(finalMessage)}`;
-    
-    // Open SMS app
-    window.location.href = smsUrl;
-    
-    showMessage(`SMS app opened with contract for ${session.clientName}`, 'success');
+        const response = await fetch('/api/booking/agreements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: currentAgreementSessionId,
+                templateId: templateId,
+                content: content,
+                agreementId: currentAgreement?.id
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save agreement');
+        }
+
+        const savedAgreement = await response.json();
+
+        // Now send it for signature via SMS
+        const sendResponse = await fetch(`/api/booking/agreements/${savedAgreement.id}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientEmail: session.email,
+                clientPhone: session.phoneNumber,
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: session.dateTime,
+                sendMethod: 'sms'
+            })
+        });
+
+        if (!sendResponse.ok) {
+            throw new Error('Failed to prepare SMS');
+        }
+
+        const result = await sendResponse.json();
+        
+        if (result.success) {
+            showMessage('SMS app opened with signable contract link!', 'success');
+            // Update the agreement status
+            currentAgreement = savedAgreement;
+            updateModalForExistingAgreement();
+        } else {
+            showMessage('Error preparing SMS: ' + result.message, 'error');
+        }
+
+    } catch (error) {
+        console.error('Error sending via SMS:', error);
+        showMessage('Error sending contract: ' + error.message, 'error');
+    }
 }
 
 // Expose functions globally
