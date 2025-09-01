@@ -50,9 +50,6 @@ export const users = pgTable("users", {
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
   platformFeePercentage: decimal("platform_fee_percentage", { precision: 5, scale: 2 }).default("0.00"),
-  aiCredits: integer("ai_credits").default(0),
-  totalAiCreditsUsed: integer("total_ai_credits_used").default(0),
-  lastAiCreditPurchase: timestamp("last_ai_credit_purchase"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   subdomain: varchar("subdomain").unique(),
@@ -346,17 +343,6 @@ export type R2StorageUsage = typeof r2StorageUsage.$inferSelect;
 export type InsertR2StorageBilling = typeof r2StorageBilling.$inferInsert;
 export type R2StorageBilling = typeof r2StorageBilling.$inferSelect;
 
-// AI Credits purchase tracking
-export const aiCreditPurchases = pgTable("ai_credit_purchases", {
-  id: varchar("id").primaryKey().notNull(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  creditsAmount: integer("credits_amount").notNull(),
-  priceUsd: decimal("price_usd", { precision: 10, scale: 2 }).notNull(),
-  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
-  status: varchar("status").notNull().default("pending"), // pending, completed, failed
-  purchasedAt: timestamp("purchased_at").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 // AI Credits usage tracking
 export const aiCreditUsage = pgTable("ai_credit_usage", {
@@ -384,33 +370,7 @@ export const businessExpenses = pgTable("business_expenses", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Workflow automation tables
-export const userAutomationSettings = pgTable('user_automation_settings', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id').notNull().unique(),
-  automationSettings: jsonb('automation_settings').notNull(),
-  messageTemplate: text('message_template').default('professional'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow()
-});
 
-export const workflowLogs = pgTable('workflow_logs', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id').notNull(),
-  sessionId: text('session_id'),
-  workflowType: text('workflow_type').notNull(),
-  status: text('status').notNull(), // 'success', 'failed', 'pending'
-  executedAt: timestamp('executed_at').defaultNow(),
-  resultData: jsonb('result_data'),
-  createdAt: timestamp('created_at').defaultNow()
-});
-
-export type InsertUserAutomationSettings = typeof userAutomationSettings.$inferInsert;
-export type UserAutomationSettings = typeof userAutomationSettings.$inferSelect;
-export type InsertWorkflowLog = typeof workflowLogs.$inferInsert;
-export type WorkflowLog = typeof workflowLogs.$inferSelect;
-export type InsertAiCreditPurchase = typeof aiCreditPurchases.$inferInsert;
-export type AiCreditPurchase = typeof aiCreditPurchases.$inferSelect;
 export type InsertAiCreditUsage = typeof aiCreditUsage.$inferInsert;
 export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;
 export type InsertBusinessExpense = typeof businessExpenses.$inferInsert;
