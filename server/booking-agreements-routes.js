@@ -139,9 +139,6 @@ function createBookingAgreementRoutes(pool) {
                 return res.status(401).json({ error: 'User not authenticated' });
             }
 
-            console.log(`📄 DEBUGGING: Fetching agreements for user: ${userId}`);
-            console.log(`📄 DEBUGGING: Session user object:`, req.session?.user);
-
             const client = await pool.connect();
             try {
                 const result = await client.query(
@@ -158,19 +155,6 @@ function createBookingAgreementRoutes(pool) {
                 );
                 
                 console.log(`📄 Found ${result.rows.length} agreements for user ${userId}`);
-                // Log agreement statuses for debugging
-                result.rows.forEach(agreement => {
-                    console.log(`  - ${agreement.session_client_name}: ${agreement.status} (Session: ${agreement.session_id})`);
-                });
-                
-                // Also check if there are any agreements with different user_id patterns
-                const allAgreements = await client.query(
-                    `SELECT DISTINCT user_id, COUNT(*) as count 
-                     FROM booking_agreements 
-                     GROUP BY user_id`
-                );
-                console.log(`📄 All agreement user_ids in database:`, allAgreements.rows);
-                
                 res.json(result.rows);
             } finally {
                 client.release();
@@ -185,7 +169,8 @@ function createBookingAgreementRoutes(pool) {
     router.get('/agreements/session/:sessionId', async (req, res) => {
         try {
             const { sessionId } = req.params;
-            const userId = req.session?.user?.uid || '44735007';
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            console.log(`Fetching agreement for session ${sessionId}, user ${userId}`);
 
             const client = await pool.connect();
             try {
@@ -199,6 +184,13 @@ function createBookingAgreementRoutes(pool) {
                      LIMIT 1`,
                     [sessionId, userId]
                 );
+                
+                if (result.rows[0]) {
+                    console.log(`Found agreement for session ${sessionId}: ${result.rows[0].status}`);
+                } else {
+                    console.log(`No agreement found for session ${sessionId}`);
+                }
+                
                 res.json(result.rows[0] || null);
             } finally {
                 client.release();
@@ -617,12 +609,12 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
-    // Get pending contract for a specific session
-    router.get('/agreements/session/:sessionId', async (req, res) => {
+    // Get pending contract for a specific session (non-signed only)
+    router.get('/agreements/session/:sessionId/pending', async (req, res) => {
         try {
             const { sessionId } = req.params;
             const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
-            console.log('Fetching contract for session:', sessionId, 'user:', userId);
+            console.log('Fetching pending contract for session:', sessionId, 'user:', userId);
             
             const client = await pool.connect();
             try {
@@ -649,7 +641,7 @@ function createBookingAgreementRoutes(pool) {
                 );
                 
                 if (result.rows.length > 0) {
-                    console.log(`Found contract for session ${sessionId}:`, result.rows[0].status);
+                    console.log(`Found pending contract for session ${sessionId}:`, result.rows[0].status);
                     res.json(result.rows[0]);
                 } else {
                     console.log(`No pending contract found for session ${sessionId}`);
