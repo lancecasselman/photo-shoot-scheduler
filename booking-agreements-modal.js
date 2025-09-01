@@ -604,12 +604,15 @@ function updateAgreementStatusButton(button, status) {
 
 // Helper function to update the signed contract button
 function updateSignedContractButton(signedButton, status) {
+    console.log('🔍 updateSignedContractButton called with status:', status, 'button exists:', !!signedButton);
     if (!signedButton) {
+        console.log('❌ Signed contract button not found');
         return;
     }
 
     // Always show the signed contract button, but update its appearance based on status
     signedButton.style.display = 'inline-block';
+    console.log('✅ Signed contract button display set to inline-block');
     
     if (status === 'signed') {
         signedButton.style.backgroundColor = '#28a745'; // Green when signed

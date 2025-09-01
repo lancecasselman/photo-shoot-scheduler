@@ -739,6 +739,9 @@ function createSessionCard(session) {
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(signedContractBtn);
+    console.log('DEBUG: Signed Contract button appended for session:', session.id);
+    console.log('DEBUG: Signed Contract button display style:', signedContractBtn.style.display);
+    console.log('DEBUG: Signed Contract button visibility:', signedContractBtn.style.visibility);
     console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
