@@ -311,31 +311,6 @@ function showBothViewAndCreate(agreement, session) {
         }
     }
     
-    // Add buttons for existing contract at the top
-    if (agreement.status === 'sent' || agreement.status === 'viewed') {
-        const buttonsDiv = document.createElement('div');
-        buttonsDiv.className = 'existing-contract-actions';
-        buttonsDiv.style.cssText = 'background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; padding: 15px; margin-bottom: 20px;';
-        buttonsDiv.innerHTML = `
-            <p style="margin: 0 0 10px 0; font-weight: 600;">📋 Existing Contract Status: ${getStatusText(agreement.status)}</p>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="viewExistingInNewModal('${currentAgreementSessionId}')" class="btn btn-info" style="padding: 8px 16px;">
-                    <i class="fas fa-eye"></i> View Contract
-                </button>
-                <button onclick="resendExistingContract('${currentAgreementSessionId}')" class="btn btn-primary" style="padding: 8px 16px;">
-                    <i class="fas fa-redo"></i> Resend
-                </button>
-                <button onclick="cancelExistingContract('${currentAgreementSessionId}')" class="btn btn-danger" style="padding: 8px 16px;">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        `;
-        
-        const container = document.getElementById('templateSelector');
-        if (container && !container.querySelector('.existing-contract-actions')) {
-            container.insertBefore(buttonsDiv, container.firstChild);
-        }
-    }
     
     // Update buttons for creating new contracts
     updateModalButtons('new');
