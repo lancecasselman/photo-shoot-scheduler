@@ -569,13 +569,24 @@ function updateAgreementStatus(sessionId, status) {
     // Look for booking agreement button with data-session-id attribute
     const button = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
     if (!button) {
-        console.log(`No booking agreement button found for session ${sessionId}`);
+        // Try again after a short delay in case the button hasn't been rendered yet
+        setTimeout(() => {
+            const buttonRetry = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
+            if (buttonRetry) {
+                updateAgreementStatusButton(buttonRetry, status);
+            }
+        }, 500);
         return;
     }
+    
+    updateAgreementStatusButton(button, status);
+}
+
+// Helper function to update the actual button
+function updateAgreementStatusButton(button, status) {
 
     const statusSpan = button.querySelector('.agreement-status');
     if (!statusSpan) {
-        console.log(`No status span found in booking agreement button for session ${sessionId}`);
         return;
     }
 
@@ -584,8 +595,6 @@ function updateAgreementStatus(sessionId, status) {
 
     // Update status text
     statusSpan.textContent = getStatusText(status);
-
-    console.log(`Updated booking agreement status for session ${sessionId} to ${status}`);
 }
 
 // Get status display text

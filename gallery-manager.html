@@ -805,8 +805,10 @@
                 });
                 
                 if (!response.ok) {
-                    console.warn('Failed to check storage quota, allowing upload');
-                    return true; // Allow upload if we can't check quota
+                    console.error('Failed to check storage quota:', response.status, response.statusText);
+                    // For security, don't allow upload if we can't verify quota
+                    showMessage('Unable to verify storage quota. Please try again later.', 'error');
+                    return false;
                 }
                 
                 const result = await response.json();

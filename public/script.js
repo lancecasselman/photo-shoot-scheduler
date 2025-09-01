@@ -440,7 +440,6 @@ async function loadSessions() {
         const data = await response.json();
         console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
         console.log('Raw API response:', data);
-        console.log('Testing session deposit_amount from API:', data.find(s => s.clientName === 'Testing dammit')?.deposit_amount || 'NOT FOUND');
 
         if (!Array.isArray(data)) {
             console.error('API returned non-array data:', data);
