@@ -97,6 +97,9 @@ function createBookingAgreementModal() {
                         <button id="saveBtn" class="btn btn-primary" onclick="saveAgreement()">
                             <i class="fas fa-save"></i> Save Draft
                         </button>
+                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
+                            <i class="fas fa-sms"></i> Send via Text
+                        </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
                         </button>
@@ -712,12 +715,44 @@ async function resendAgreement() {
     }
 }
 
+// Send via SMS using device's default SMS app
+function sendViaSMS() {
+    if (!currentAgreementSessionId) {
+        showMessage('Please select a session first', 'error');
+        return;
+    }
+
+    const session = sessions.find(s => s.id === currentAgreementSessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+
+    if (!session.phoneNumber) {
+        showMessage('No phone number found for this client', 'error');
+        return;
+    }
+
+    // Create the message text
+    const message = `Hi ${session.clientName}! Your photography contract is ready for review and signature. Please check your email for the contract details. If you have any questions, feel free to reach out. Thanks!`;
+    
+    // Create SMS URL - this will open the user's default SMS app
+    const phoneNumber = session.phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+    
+    // Open SMS app
+    window.location.href = smsUrl;
+    
+    showMessage(`SMS app opened for ${session.clientName}`, 'success');
+}
+
 // Expose functions globally
 window.openBookingAgreementModal = openBookingAgreementModal;
 window.closeBookingAgreementModal = closeBookingAgreementModal;
 window.loadSelectedTemplate = loadSelectedTemplate;
 window.saveAgreement = saveAgreement;
 window.sendForSignature = sendForSignature;
+window.sendViaSMS = sendViaSMS;
 window.previewAgreement = previewAgreement;
 window.downloadAgreementPDF = downloadAgreementPDF;
 window.resendAgreement = resendAgreement;
