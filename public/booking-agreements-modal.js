@@ -409,32 +409,49 @@ async function saveAgreement() {
 
 // Send for signature
 async function sendForSignature() {
-    console.log('sendForSignature called');
+    console.log('🚀 sendForSignature called');
+    console.log('Current agreement:', currentAgreement);
+    console.log('Current session ID:', currentAgreementSessionId);
+    console.log('Sessions available:', sessions);
     
-    if (!currentAgreement) {
-        console.log('No current agreement, saving first...');
-        await saveAgreement();
-    }
+    try {
+        if (!currentAgreement) {
+            console.log('No current agreement, saving first...');
+            await saveAgreement();
+        }
 
-    if (!currentAgreement) {
-        console.log('Still no agreement after save attempt');
-        return;
-    }
+        if (!currentAgreement) {
+            console.log('Still no agreement after save attempt');
+            showMessage('Please add content to the agreement before sending', 'error');
+            return;
+        }
 
-    const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) {
-        console.log('No session found for ID:', currentAgreementSessionId);
-        return;
-    }
+        const session = sessions.find(s => s.id === currentAgreementSessionId);
+        if (!session) {
+            console.log('No session found for ID:', currentAgreementSessionId);
+            showMessage('Session not found. Please refresh and try again.', 'error');
+            return;
+        }
 
-    console.log('Showing send options modal for session:', session);
-    // Show send options modal
-    showSendOptionsModal(session);
+        console.log('✅ Showing send options modal for session:', session);
+        // Show send options modal
+        showSendOptionsModal(session);
+    } catch (error) {
+        console.error('❌ Error in sendForSignature:', error);
+        showMessage('Error preparing to send contract', 'error');
+    }
 }
 
 // Show modal for choosing send method
 function showSendOptionsModal(session) {
-    console.log('showSendOptionsModal called with session:', session);
+    console.log('📧 showSendOptionsModal called with session:', session);
+    
+    // Remove any existing modal first
+    const existingModal = document.querySelector('.send-options-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
     const modal = document.createElement('div');
     modal.className = 'send-options-modal';
     const isResend = currentAgreement?.status === 'sent' || currentAgreement?.status === 'viewed';
@@ -447,29 +464,78 @@ function showSendOptionsModal(session) {
             `The contract was previously sent. Choose how to resend it to ${session.clientName}:` :
             `How would you like to send the contract to ${session.clientName}?`);
     
+    // Set critical styles directly on the modal for immediate visibility
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 999999 !important;
+    `;
+    
     modal.innerHTML = `
-        <div class="send-options-content">
-            <h3>${title}</h3>
-            <p>${subtitle}</p>
+        <div class="send-options-content" style="
+            background: white !important;
+            padding: 30px !important;
+            border-radius: 12px !important;
+            max-width: 500px !important;
+            width: 90% !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+            position: relative !important;
+            z-index: 1000000 !important;
+        ">
+            <h3 style="margin-bottom: 15px; color: #333;">${title}</h3>
+            <p style="color: #666; margin-bottom: 25px;">${subtitle}</p>
             
-            <div class="send-options">
-                <div class="send-option" onclick="sendViaEmail('${session.id}')">
-                    <i class="fas fa-envelope"></i>
-                    <h4>Email</h4>
-                    <p class="send-option-detail">${session.email || 'No email provided'}</p>
-                    ${!session.email ? '<p class="text-danger">Email address required</p>' : ''}
+            <div class="send-options" style="display: flex; gap: 15px; margin: 20px 0;">
+                <div class="send-option" onclick="sendViaEmail('${session.id}')" style="
+                    flex: 1;
+                    padding: 20px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-align: center;
+                    transition: all 0.3s;
+                    background: white;
+                ">
+                    <i class="fas fa-envelope" style="font-size: 32px; color: #3498db; display: block; margin-bottom: 10px;"></i>
+                    <h4 style="margin: 10px 0 5px 0; color: #333;">Email</h4>
+                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${session.email || 'No email provided'}</p>
+                    ${!session.email ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Email address required</p>' : ''}
                 </div>
                 
-                <div class="send-option" onclick="sendViaSMS('${session.id}')">
-                    <i class="fas fa-sms"></i>
-                    <h4>Text Message (SMS)</h4>
-                    <p class="send-option-detail">${session.phoneNumber || 'No phone number provided'}</p>
-                    ${!session.phoneNumber ? '<p class="text-danger">Phone number required</p>' : ''}
+                <div class="send-option" onclick="sendViaSMS('${session.id}')" style="
+                    flex: 1;
+                    padding: 20px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-align: center;
+                    transition: all 0.3s;
+                    background: white;
+                ">
+                    <i class="fas fa-sms" style="font-size: 32px; color: #27ae60; display: block; margin-bottom: 10px;"></i>
+                    <h4 style="margin: 10px 0 5px 0; color: #333;">Text Message (SMS)</h4>
+                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${session.phoneNumber || 'No phone number provided'}</p>
+                    ${!session.phoneNumber ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Phone number required</p>' : ''}
                 </div>
             </div>
             
-            <div class="send-options-footer">
-                <button class="btn btn-secondary" onclick="closeSendOptionsModal()">Cancel</button>
+            <div class="send-options-footer" style="text-align: center; padding-top: 15px; border-top: 1px solid #e0e0e0; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeSendOptionsModal()" style="
+                    padding: 10px 30px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 16px;
+                ">Cancel</button>
             </div>
         </div>
     `;
@@ -570,6 +636,21 @@ function showSendOptionsModal(session) {
     
     document.head.appendChild(style);
     document.body.appendChild(modal);
+    
+    console.log('✅ Modal added to DOM');
+    console.log('Modal element:', modal);
+    console.log('Modal visible:', modal.style.display);
+    
+    // Force the modal to be visible
+    setTimeout(() => {
+        const addedModal = document.querySelector('.send-options-modal');
+        if (addedModal) {
+            console.log('✅ Modal found in DOM after adding');
+            addedModal.style.display = 'flex !important';
+        } else {
+            console.log('❌ Modal NOT found in DOM after adding');
+        }
+    }, 100);
 }
 
 // Close send options modal
