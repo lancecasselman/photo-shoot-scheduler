@@ -270,15 +270,9 @@ async function loadExistingAgreement(sessionId, session) {
 function displayAgreement(agreement, session) {
     const status = agreement.status;
 
-    if (status === 'draft') {
-        // Show editor mode
-        showEditMode(agreement, session);
-    } else {
-        // Show viewer mode
-        showViewMode(agreement, session);
-    }
-
-    updateModalButtons(status);
+    // Always show create mode instead of viewer mode
+    showCreateMode(session);
+    updateModalButtons('new');
 }
 
 // Show create mode
