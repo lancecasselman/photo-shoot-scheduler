@@ -36,6 +36,17 @@ let agreementTemplates = [];
     document.head.appendChild(criticalStyles);
 })();
 
+// Function to view signed/pending contracts
+function viewSignedPendingContracts() {
+    if (typeof viewPendingContractsForSession === 'function') {
+        // Use the existing function if available
+        viewPendingContractsForSession(currentAgreementSessionId);
+    } else {
+        // Fallback alert
+        alert('Signed/Pending Contracts feature - Session ID: ' + currentAgreementSessionId);
+    }
+}
+
 // Initialize booking agreements
 async function initializeBookingAgreements() {
     console.log('Initializing booking agreements system...');
@@ -99,6 +110,9 @@ function createBookingAgreementModal() {
                         </button>
                         <button id="sendBtn" class="btn btn-success" onclick="window.sendForSignature(); console.log('BUTTON CLICKED');" style="background: red !important;">
                             <i class="fas fa-paper-plane"></i> Send for Signature (FIXED)
+                        </button>
+                        <button class="btn btn-info" onclick="viewSignedPendingContracts()" style="background-color: #17a2b8; color: white;">
+                            📄 Signed/Pending Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
