@@ -108,8 +108,8 @@ function createBookingAgreementModal() {
                         <button id="saveBtn" class="btn btn-primary" onclick="saveAgreement()">
                             <i class="fas fa-save"></i> Save Draft
                         </button>
-                        <button id="sendBtn" class="btn btn-success" onclick="window.sendForSignature(); console.log('BUTTON CLICKED');" style="background: red !important;">
-                            <i class="fas fa-paper-plane"></i> Send for Signature (FIXED)
+                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
+                            <i class="fas fa-sms"></i> Send via Text
                         </button>
                         <button class="btn btn-info" onclick="viewSignedPendingContracts()" style="background-color: #17a2b8; color: white;">
                             📄 Signed/Pending Contracts
