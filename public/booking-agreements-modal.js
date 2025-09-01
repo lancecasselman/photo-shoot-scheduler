@@ -1490,3 +1490,48 @@ window.addEventListener('sessionsRendered', function() {
     console.log('Sessions rendered event - updating booking agreement statuses');
     setTimeout(updateAllAgreementStatuses, 100);
 });
+
+// Force add the signed/pending contracts button whenever modal opens
+function forceAddSignedPendingButton() {
+    setTimeout(() => {
+        console.log('🔧 FORCING signed/pending button insertion');
+        
+        // Find the modal and look for the button group
+        const modal = document.getElementById('bookingAgreementModal');
+        if (!modal) return;
+        
+        const buttonGroup = modal.querySelector('.button-group');
+        if (!buttonGroup) return;
+        
+        // Check if our button already exists
+        const existingButton = buttonGroup.querySelector('button[onclick*="viewSignedPendingContracts"]');
+        if (existingButton) return; // Already exists
+        
+        // Find the Send via Text button or Save Draft button as reference
+        const sendTextBtn = buttonGroup.querySelector('button[onclick*="sendViaSMS"], button[id="sendViaSmsBtn"]');
+        const saveDraftBtn = buttonGroup.querySelector('button[onclick*="saveAgreement"], button[id="saveBtn"]');
+        const referenceBtn = sendTextBtn || saveDraftBtn;
+        
+        if (!referenceBtn) return;
+        
+        // Create and insert the new button
+        const newButton = document.createElement('button');
+        newButton.className = 'btn btn-info';
+        newButton.onclick = () => viewSignedPendingContracts();
+        newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
+        newButton.innerHTML = '📄 Signed/Pending Contracts';
+        
+        // Insert after the reference button
+        referenceBtn.parentNode.insertBefore(newButton, referenceBtn.nextSibling);
+        console.log('✅ Successfully forced signed/pending button insertion');
+    }, 200);
+}
+
+// Override the openBookingAgreementModal function to add our button
+const originalOpenBookingAgreementModal = window.openBookingAgreementModal;
+window.openBookingAgreementModal = function(sessionId) {
+    if (originalOpenBookingAgreementModal) {
+        originalOpenBookingAgreementModal(sessionId);
+    }
+    forceAddSignedPendingButton();
+};
