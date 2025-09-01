@@ -518,6 +518,53 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Get pending contract for a specific session
+    router.get('/agreements/session/:sessionId', async (req, res) => {
+        try {
+            const { sessionId } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            console.log('Fetching contract for session:', sessionId, 'user:', userId);
+            
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT 
+                        a.id,
+                        a.session_id,
+                        a.status,
+                        a.created_at,
+                        a.sent_at,
+                        s.client_name,
+                        s.email as client_email,
+                        s.phone_number as client_phone,
+                        s.session_type,
+                        s.date_time as session_date
+                     FROM booking_agreements a
+                     JOIN sessions s ON a.session_id = s.id
+                     WHERE a.session_id = $1 
+                     AND a.user_id = $2 
+                     AND a.status IN ('sent', 'viewed', 'draft')
+                     ORDER BY a.created_at DESC
+                     LIMIT 1`,
+                    [sessionId, userId]
+                );
+                
+                if (result.rows.length > 0) {
+                    console.log(`Found contract for session ${sessionId}:`, result.rows[0].status);
+                    res.json(result.rows[0]);
+                } else {
+                    console.log(`No pending contract found for session ${sessionId}`);
+                    res.status(404).json({ error: 'No pending contract found for this session' });
+                }
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching session contract:', error);
+            res.status(500).json({ error: 'Failed to fetch session contract' });
+        }
+    });
+
     // Cancel contract by agreement ID
     router.post('/agreements/:id/cancel', async (req, res) => {
         try {
