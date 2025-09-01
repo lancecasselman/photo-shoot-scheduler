@@ -608,13 +608,17 @@ function updateSignedContractButton(signedButton, status) {
         return;
     }
 
-    // Show the signed contract button only when status is 'signed'
+    // Always show the signed contract button, but update its appearance based on status
+    signedButton.style.display = 'inline-block';
+    
     if (status === 'signed') {
-        signedButton.style.display = 'inline-block';
-        console.log('✅ Showing signed contract button for status:', status);
+        signedButton.style.backgroundColor = '#28a745'; // Green when signed
+        signedButton.innerHTML = '✅ <span class="signed-status">View Signed Contract</span>';
+        console.log('✅ Contract signed - button shows "View Signed Contract"');
     } else {
-        signedButton.style.display = 'none';
-        console.log('❌ Hiding signed contract button for status:', status);
+        signedButton.style.backgroundColor = '#6c757d'; // Gray when not signed
+        signedButton.innerHTML = '📄 <span class="signed-status">No Contract Signed</span>';
+        console.log('❌ No contract signed yet - button shows "No Contract Signed"');
     }
 }
 

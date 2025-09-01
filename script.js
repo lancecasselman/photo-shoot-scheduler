@@ -691,12 +691,12 @@ function createSessionCard(session) {
     signedContractBtn.innerHTML = '✅ <span class="signed-status">Signed Contract</span>';
     signedContractBtn.setAttribute('data-session-id', session.id);
     signedContractBtn.onclick = () => {
-        showMessage(`Contract for ${session.clientName} has been signed successfully!`, 'success');
+        viewSignedContract(session.id, session.clientName);
     };
     signedContractBtn.style.backgroundColor = '#28a745';
     signedContractBtn.style.color = 'white';
     signedContractBtn.style.margin = '2px';
-    signedContractBtn.style.display = session.contractSigned ? 'inline-block' : 'none';
+    signedContractBtn.style.display = 'inline-block';
     console.log('Signed Contract button created for session:', session.id, 'Contract signed:', session.contractSigned);
 
     const deleteBtn = document.createElement('button');
@@ -1155,6 +1155,85 @@ Professional Photography Services
 }
 
 // Copy gallery URL to clipboard
+// Function to view signed contract details
+async function viewSignedContract(sessionId, clientName) {
+    try {
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+        if (response.ok) {
+            const agreement = await response.json();
+            
+            if (agreement && agreement.status === 'signed') {
+                // Get signature details
+                const sigResponse = await fetch(`/api/booking/agreements/${agreement.id}/signatures`);
+                if (sigResponse.ok) {
+                    const signatures = await sigResponse.json();
+                    showSignedContractModal(agreement, signatures, clientName);
+                } else {
+                    showMessage('Contract found but signature details unavailable', 'warning');
+                }
+            } else {
+                showMessage(`No signed contract found for ${clientName}`, 'info');
+            }
+        } else {
+            showMessage(`No contract found for ${clientName}`, 'info');
+        }
+    } catch (error) {
+        console.error('Error fetching signed contract:', error);
+        showMessage('Error loading signed contract', 'error');
+    }
+}
+
+// Function to show signed contract modal
+function showSignedContractModal(agreement, signatures, clientName) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const signature = signatures[0]; // Get the first signature
+    const signedDate = new Date(signature.created_at).toLocaleString();
+
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #28a745;">✅ Signed Contract - ${clientName}</h3>
+                <button onclick="this.closest('.modal-overlay').remove()" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">Signature Details</h4>
+                <p style="margin: 5px 0;"><strong>Signer:</strong> ${signature.signer_name}</p>
+                <p style="margin: 5px 0;"><strong>Email:</strong> ${signature.signer_email}</p>
+                <p style="margin: 5px 0;"><strong>Signed Date:</strong> ${signedDate}</p>
+                <p style="margin: 5px 0;"><strong>IP Address:</strong> ${signature.ip_address}</p>
+            </div>
+            
+            <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; background: white;">
+                <h4 style="margin: 0 0 15px 0;">Contract Content</h4>
+                <div style="max-height: 300px; overflow-y: auto; line-height: 1.6;">
+                    ${agreement.content}
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="this.closest('.modal-overlay').remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
 async function copyGalleryUrl(sessionId) {
     try {
         showMessage('Generating gallery URL...', 'info');
