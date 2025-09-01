@@ -37,9 +37,9 @@ let agreementTemplates = [];
 })();
 
 // Function to view signed/pending contracts
-async function viewSignedPendingContracts() {
+async function viewSignedPendingContracts(sessionId = null) {
     try {
-        console.log('📄 Fetching all agreements for current user...');
+        console.log(`📄 Fetching agreements${sessionId ? ' for session ' + sessionId : ' for all sessions'}...`);
         
         // Always fetch fresh data with no cache
         const response = await fetch('/api/booking/agreements/all', {
@@ -58,16 +58,25 @@ async function viewSignedPendingContracts() {
         console.log(`📄 Received ${agreements.length} total agreements from server`);
         
         // Filter for sent, viewed, and signed agreements
-        const sentAndSignedAgreements = agreements.filter(agreement => 
+        let sentAndSignedAgreements = agreements.filter(agreement => 
             ['sent', 'viewed', 'signed'].includes(agreement.status)
         );
         
-        console.log(`📄 Filtered to ${sentAndSignedAgreements.length} sent/viewed/signed agreements`);
+        // If sessionId provided, further filter to just that session
+        if (sessionId) {
+            sentAndSignedAgreements = sentAndSignedAgreements.filter(agreement => 
+                agreement.session_id === sessionId
+            );
+            console.log(`📄 Filtered to ${sentAndSignedAgreements.length} agreements for session ${sessionId}`);
+        } else {
+            console.log(`📄 Filtered to ${sentAndSignedAgreements.length} sent/viewed/signed agreements for all sessions`);
+        }
+        
         sentAndSignedAgreements.forEach(agreement => {
             console.log(`  - ${agreement.session_client_name}: ${agreement.status} (ID: ${agreement.id})`);
         });
         
-        showSignedPendingContractsModal(sentAndSignedAgreements);
+        showSignedPendingContractsModal(sentAndSignedAgreements, sessionId);
         
     } catch (error) {
         console.error('Error fetching agreements:', error);
@@ -76,11 +85,25 @@ async function viewSignedPendingContracts() {
 }
 
 // Show the signed/pending contracts modal
-function showSignedPendingContractsModal(agreements) {
+function showSignedPendingContractsModal(agreements, sessionId = null) {
     // Remove existing modal if present
     const existingModal = document.getElementById('signedPendingModal');
     if (existingModal) {
         existingModal.remove();
+    }
+    
+    // Get session info if filtering by session
+    let modalTitle = '📄 Signed & Pending Contracts';
+    if (sessionId && agreements.length > 0) {
+        modalTitle = `📄 Contracts for ${agreements[0].session_client_name || 'Session'}`;
+    } else if (sessionId && agreements.length === 0) {
+        // Try to get session info from global sessions array if available
+        if (typeof sessions !== 'undefined' && sessions) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (session) {
+                modalTitle = `📄 Contracts for ${session.clientName || 'Session'}`;
+            }
+        }
     }
     
     // Create modal HTML
@@ -88,7 +111,7 @@ function showSignedPendingContractsModal(agreements) {
         <div id="signedPendingModal" class="booking-modal" style="display: flex; z-index: 10000;">
             <div class="booking-modal-content" style="max-width: 800px; width: 90%;">
                 <div class="booking-modal-header">
-                    <h2>📄 Signed & Pending Contracts</h2>
+                    <h2>${modalTitle}</h2>
                     <button class="booking-modal-close" onclick="closeSignedPendingModal()">&times;</button>
                 </div>
                 
@@ -120,7 +143,7 @@ function showSignedPendingContractsModal(agreements) {
                                     ${agreement.status !== 'signed' ? `<button onclick="resendAgreement('${agreement.id}')" class="btn btn-sm btn-secondary">Resend</button>` : ''}
                                 </div>
                             </div>
-                        `).join('') : '<p style="text-align: center; color: #666; padding: 20px;">No sent or signed contracts found.</p>'}
+                        `).join('') : `<p style="text-align: center; color: #666; padding: 20px;">No sent or signed contracts found${sessionId ? ' for this session' : ''}.</p>`}
                     </div>
                 </div>
                 
@@ -344,7 +367,7 @@ function createBookingAgreementModal() {
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
                         </button>
-                        <button class="btn btn-info" onclick="viewSignedPendingContracts()" style="background-color: #17a2b8; color: white;">
+                        <button class="btn btn-info" onclick="viewSignedPendingContracts(currentAgreementSessionId)" style="background-color: #17a2b8; color: white;">
                             📄 Signed/Pending Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
@@ -1771,7 +1794,7 @@ function forceAddSignedPendingButton() {
         // Create and insert the new button
         const newButton = document.createElement('button');
         newButton.className = 'btn btn-info';
-        newButton.onclick = () => viewSignedPendingContracts();
+        newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
         newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
         newButton.innerHTML = '📄 Signed/Pending Contracts';
         
@@ -1802,7 +1825,7 @@ const modalObserver = new MutationObserver(function(mutations) {
                         if (sendViaSmsBtn && !node.querySelector('button[onclick*="viewSignedPendingContracts"]')) {
                             const newButton = document.createElement('button');
                             newButton.className = 'btn btn-info';
-                            newButton.onclick = () => viewSignedPendingContracts();
+                            newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
                             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
                             newButton.innerHTML = '📄 Signed/Pending Contracts';
                             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
@@ -1833,7 +1856,7 @@ setInterval(() => {
         if (sendViaSmsBtn && !existingBtn) {
             const newButton = document.createElement('button');
             newButton.className = 'btn btn-info';
-            newButton.onclick = () => viewSignedPendingContracts();
+            newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
             newButton.innerHTML = '📄 Signed/Pending Contracts';
             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
