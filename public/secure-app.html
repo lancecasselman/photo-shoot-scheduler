@@ -7169,7 +7169,7 @@ ${contract.contract_content}
                                 <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary booking-agreement-btn" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
-                                <button onclick="viewSignedContract('${sessionId}', 'TEST'); event.stopPropagation();" class="btn btn-secondary" style="background-color: #6c757d; color: white;">
+                                <button onclick="alert('SIGNED CONTRACT CLICKED FOR SESSION: ${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background-color: #6c757d; color: white;">
                                     📄 Signed Contract
                                 </button>
 
@@ -7234,6 +7234,7 @@ ${contract.contract_content}
                 sessionElements.push(sessionHTML);
             }
             
+            console.log('TEMPLATE DEBUG: Generated HTML includes signed contract button?', sessionElements.join('').includes('📄 Signed Contract'));
             container.innerHTML = sessionElements.join('');
             
             // No longer loading files for all sessions - simplified interface
