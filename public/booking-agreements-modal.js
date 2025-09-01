@@ -1535,3 +1535,55 @@ window.openBookingAgreementModal = function(sessionId) {
     }
     forceAddSignedPendingButton();
 };
+
+// AGGRESSIVE DOM INJECTION - Watch for modal and inject button immediately
+const modalObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && node.id === 'bookingAgreementModal') {
+                    // Modal was just added to DOM, inject our button immediately
+                    setTimeout(() => {
+                        const sendViaSmsBtn = node.querySelector('#sendViaSmsBtn');
+                        if (sendViaSmsBtn && !node.querySelector('button[onclick*="viewSignedPendingContracts"]')) {
+                            const newButton = document.createElement('button');
+                            newButton.className = 'btn btn-info';
+                            newButton.onclick = () => viewSignedPendingContracts();
+                            newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
+                            newButton.innerHTML = '📄 Signed/Pending Contracts';
+                            sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
+                            console.log('🚀 AGGRESSIVE INJECTION: Button added to DOM!');
+                        }
+                    }, 10);
+                }
+            });
+        }
+    });
+});
+
+// Start watching for DOM changes
+modalObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+console.log('🔍 DOM observer started - watching for booking modal');
+
+// BACKUP INJECTION - Check periodically for the modal
+setInterval(() => {
+    const modal = document.getElementById('bookingAgreementModal');
+    if (modal && modal.style.display !== 'none') {
+        const sendViaSmsBtn = modal.querySelector('#sendViaSmsBtn');
+        const existingBtn = modal.querySelector('button[onclick*="viewSignedPendingContracts"]');
+        
+        if (sendViaSmsBtn && !existingBtn) {
+            const newButton = document.createElement('button');
+            newButton.className = 'btn btn-info';
+            newButton.onclick = () => viewSignedPendingContracts();
+            newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
+            newButton.innerHTML = '📄 Signed/Pending Contracts';
+            sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
+            console.log('🔄 BACKUP INJECTION: Button added via interval check!');
+        }
+    }
+}, 500);
