@@ -130,6 +130,40 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Get all agreements for the current user (for signed/pending contracts view)
+    router.get('/agreements/all', async (req, res) => {
+        try {
+            const userId = req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT 
+                        a.*,
+                        s.client_name as session_client_name,
+                        s.session_type,
+                        s.date_time as session_date
+                     FROM booking_agreements a
+                     LEFT JOIN photography_sessions s ON a.session_id = s.id
+                     WHERE a.user_id = $1
+                     ORDER BY a.created_at DESC`,
+                    [userId]
+                );
+                
+                res.json(result.rows);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching all agreements:', error);
+            res.status(500).json({ error: 'Failed to fetch agreements' });
+        }
+    });
+
     // Get agreement by session ID
     router.get('/agreements/session/:sessionId', async (req, res) => {
         try {
