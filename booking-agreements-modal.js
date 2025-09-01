@@ -598,7 +598,7 @@ function updateAgreementStatus(sessionId, status) {
 function getStatusText(status) {
     const statusTexts = {
         'draft': 'Draft Agreement',
-        'sent': 'Pending Signature',
+        'sent': '',
         'viewed': 'Viewed by Client',
         'signed': 'Signed ✓',
         'none': 'Create Agreement'
