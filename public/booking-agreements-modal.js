@@ -414,7 +414,14 @@ async function sendForSignature() {
     console.log('Current session ID:', currentAgreementSessionId);
     console.log('Sessions available:', sessions);
     
+    // STOP any automatic sending - always show the choice modal
     try {
+        // Load sessions if empty
+        if (!sessions || sessions.length === 0) {
+            console.log('📋 Loading sessions first...');
+            await loadSessions();
+        }
+        
         if (!currentAgreement) {
             console.log('No current agreement, saving first...');
             await saveAgreement();
@@ -429,13 +436,93 @@ async function sendForSignature() {
         const session = sessions.find(s => s.id === currentAgreementSessionId);
         if (!session) {
             console.log('No session found for ID:', currentAgreementSessionId);
+            console.log('Available session IDs:', sessions.map(s => s.id));
             showMessage('Session not found. Please refresh and try again.', 'error');
             return;
         }
 
         console.log('✅ Showing send options modal for session:', session);
-        // Show send options modal
-        showSendOptionsModal(session);
+        
+        // Create a simple test modal first to ensure it shows
+        const testModal = document.createElement('div');
+        testModal.id = 'contract-send-choice-modal';
+        testModal.style.cssText = `
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: white !important;
+            padding: 30px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+            z-index: 9999999 !important;
+            min-width: 400px !important;
+        `;
+        
+        testModal.innerHTML = `
+            <h2 style="margin-bottom: 20px; color: #333;">Send Contract</h2>
+            <p style="margin-bottom: 25px; color: #666;">How would you like to send the contract to ${session.clientName}?</p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <button onclick="sendViaEmailChoice('${session.id}')" style="
+                    flex: 1;
+                    padding: 15px;
+                    background: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 16px;
+                ">
+                    📧 Email<br>
+                    <small style="font-size: 12px;">${session.email || 'No email'}</small>
+                </button>
+                
+                <button onclick="sendViaSMSChoice('${session.id}')" style="
+                    flex: 1;
+                    padding: 15px;
+                    background: #27ae60;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 16px;
+                ">
+                    💬 SMS<br>
+                    <small style="font-size: 12px;">${session.phoneNumber || 'No phone'}</small>
+                </button>
+            </div>
+            
+            <button onclick="document.getElementById('contract-send-choice-modal').remove()" style="
+                width: 100%;
+                padding: 10px;
+                background: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            ">Cancel</button>
+        `;
+        
+        // Remove any existing modal
+        const existing = document.getElementById('contract-send-choice-modal');
+        if (existing) existing.remove();
+        
+        // Add the modal
+        document.body.appendChild(testModal);
+        console.log('📧 Choice modal added to page');
+        
+        // Define the choice handlers
+        window.sendViaEmailChoice = function(sessionId) {
+            document.getElementById('contract-send-choice-modal').remove();
+            sendViaEmail(sessionId);
+        };
+        
+        window.sendViaSMSChoice = function(sessionId) {
+            document.getElementById('contract-send-choice-modal').remove();
+            sendViaSMS(sessionId);
+        };
+        
     } catch (error) {
         console.error('❌ Error in sendForSignature:', error);
         showMessage('Error preparing to send contract', 'error');
