@@ -409,124 +409,151 @@ async function saveAgreement() {
 
 // Send for signature
 async function sendForSignature() {
-    console.log('🚀 sendForSignature called');
-    console.log('Current agreement:', currentAgreement);
-    console.log('Current session ID:', currentAgreementSessionId);
-    console.log('Sessions available:', sessions);
+    console.log('🚀 SEND BUTTON CLICKED - sendForSignature called');
+    alert('STOP! Choose how to send the contract.');
     
-    // STOP any automatic sending - always show the choice modal
-    try {
-        // Load sessions if empty
-        if (!sessions || sessions.length === 0) {
-            console.log('📋 Loading sessions first...');
-            await loadSessions();
-        }
+    // Get the current session
+    const session = sessions.find(s => s.id === currentAgreementSessionId);
+    if (!session) {
+        // Try to get session info from the modal title
+        const modalTitle = document.getElementById('agreementModalTitle');
+        const clientName = modalTitle ? modalTitle.textContent.replace('Booking Agreement for ', '') : 'Client';
         
-        if (!currentAgreement) {
-            console.log('No current agreement, saving first...');
-            await saveAgreement();
-        }
-
-        if (!currentAgreement) {
-            console.log('Still no agreement after save attempt');
-            showMessage('Please add content to the agreement before sending', 'error');
-            return;
-        }
-
-        const session = sessions.find(s => s.id === currentAgreementSessionId);
-        if (!session) {
-            console.log('No session found for ID:', currentAgreementSessionId);
-            console.log('Available session IDs:', sessions.map(s => s.id));
-            showMessage('Session not found. Please refresh and try again.', 'error');
-            return;
-        }
-
-        console.log('✅ Showing send options modal for session:', session);
+        // Create a basic session object
+        const basicSession = {
+            clientName: clientName,
+            email: 'Email not loaded',
+            phoneNumber: 'Phone not loaded'
+        };
         
-        // Create a simple test modal first to ensure it shows
-        const testModal = document.createElement('div');
-        testModal.id = 'contract-send-choice-modal';
-        testModal.style.cssText = `
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: white !important;
-            padding: 30px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
-            z-index: 9999999 !important;
-            min-width: 400px !important;
-        `;
+        showSendChoiceModal(basicSession);
+        return;
+    }
+    
+    showSendChoiceModal(session);
+}
+
+// Simple modal to choose send method
+function showSendChoiceModal(session) {
+    console.log('📧 Showing send choice modal');
+    
+    // Remove any existing modal
+    const existing = document.getElementById('send-choice-popup');
+    if (existing) existing.remove();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'send-choice-popup';
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        z-index: 99999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    `;
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white !important;
+        padding: 30px !important;
+        border-radius: 10px !important;
+        max-width: 450px !important;
+        width: 90% !important;
+        text-align: center !important;
+    `;
+    
+    modalContent.innerHTML = `
+        <h2 style="color: #333; margin-bottom: 20px;">How to Send Contract?</h2>
+        <p style="color: #666; margin-bottom: 30px;">Choose how to send the contract to ${session.clientName}</p>
         
-        testModal.innerHTML = `
-            <h2 style="margin-bottom: 20px; color: #333;">Send Contract</h2>
-            <p style="margin-bottom: 25px; color: #666;">How would you like to send the contract to ${session.clientName}?</p>
-            
-            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                <button onclick="sendViaEmailChoice('${session.id}')" style="
-                    flex: 1;
-                    padding: 15px;
-                    background: #3498db;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 16px;
-                ">
-                    📧 Email<br>
-                    <small style="font-size: 12px;">${session.email || 'No email'}</small>
-                </button>
-                
-                <button onclick="sendViaSMSChoice('${session.id}')" style="
-                    flex: 1;
-                    padding: 15px;
-                    background: #27ae60;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 16px;
-                ">
-                    💬 SMS<br>
-                    <small style="font-size: 12px;">${session.phoneNumber || 'No phone'}</small>
-                </button>
-            </div>
-            
-            <button onclick="document.getElementById('contract-send-choice-modal').remove()" style="
-                width: 100%;
-                padding: 10px;
-                background: #6c757d;
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <button id="email-send-btn" style="
+                flex: 1;
+                padding: 20px;
+                background: #007bff;
                 color: white;
                 border: none;
-                border-radius: 5px;
+                border-radius: 8px;
+                font-size: 18px;
                 cursor: pointer;
-            ">Cancel</button>
-        `;
+            ">
+                📧 Email<br>
+                <span style="font-size: 12px;">${session.email}</span>
+            </button>
+            
+            <button id="sms-send-btn" style="
+                flex: 1;
+                padding: 20px;
+                background: #28a745;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                cursor: pointer;
+            ">
+                💬 SMS<br>
+                <span style="font-size: 12px;">${session.phoneNumber}</span>
+            </button>
+        </div>
         
-        // Remove any existing modal
-        const existing = document.getElementById('contract-send-choice-modal');
-        if (existing) existing.remove();
+        <button id="cancel-send-btn" style="
+            width: 100%;
+            padding: 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        ">Cancel</button>
+    `;
+    
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
+    
+    // Add event listeners
+    document.getElementById('email-send-btn').onclick = async function() {
+        console.log('Email option selected');
+        overlay.remove();
         
-        // Add the modal
-        document.body.appendChild(testModal);
-        console.log('📧 Choice modal added to page');
+        // Save agreement first if needed
+        if (!currentAgreement) {
+            await saveAgreement();
+        }
         
-        // Define the choice handlers
-        window.sendViaEmailChoice = function(sessionId) {
-            document.getElementById('contract-send-choice-modal').remove();
-            sendViaEmail(sessionId);
-        };
+        if (currentAgreement && session.id) {
+            sendViaEmail(session.id);
+        } else {
+            showMessage('Please save the agreement first', 'error');
+        }
+    };
+    
+    document.getElementById('sms-send-btn').onclick = async function() {
+        console.log('SMS option selected');
+        overlay.remove();
         
-        window.sendViaSMSChoice = function(sessionId) {
-            document.getElementById('contract-send-choice-modal').remove();
-            sendViaSMS(sessionId);
-        };
+        // Save agreement first if needed
+        if (!currentAgreement) {
+            await saveAgreement();
+        }
         
-    } catch (error) {
-        console.error('❌ Error in sendForSignature:', error);
-        showMessage('Error preparing to send contract', 'error');
-    }
+        if (currentAgreement && session.id) {
+            sendViaSMS(session.id);
+        } else {
+            showMessage('Please save the agreement first', 'error');
+        }
+    };
+    
+    document.getElementById('cancel-send-btn').onclick = function() {
+        console.log('Cancel selected');
+        overlay.remove();
+    };
 }
 
 // Show modal for choosing send method
