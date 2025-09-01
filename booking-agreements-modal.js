@@ -783,7 +783,15 @@ async function sendViaSMS() {
         const result = await sendResponse.json();
         
         if (result.success) {
-            showMessage('SMS app opened with signable contract link!', 'success');
+            // Check if we got an SMS URL to open
+            if (result.smsUrl) {
+                // Open the SMS app with the pre-filled message
+                window.location.href = result.smsUrl;
+                showMessage('SMS app opened with signable contract link!', 'success');
+            } else {
+                showMessage('Contract prepared successfully!', 'success');
+            }
+            
             // Update the agreement status
             currentAgreement = savedAgreement;
             updateModalButtons('sent');
