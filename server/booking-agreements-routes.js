@@ -358,6 +358,66 @@ function createBookingAgreementRoutes(pool) {
 
                 await client.query('COMMIT');
 
+                // Get photographer info for notification
+                const photographerResult = await client.query(
+                    'SELECT email, display_name FROM users WHERE id = $1',
+                    [agreement.user_id]
+                );
+
+                const photographer = photographerResult.rows[0];
+                
+                // Send email notification to photographer
+                if (photographer && photographer.email) {
+                    try {
+                        const { sendEmail } = require('./notifications');
+                        
+                        const subject = `✅ Contract Signed - ${signerName}`;
+                        const emailBody = `
+Hi ${photographer.display_name || 'Photographer'},
+
+Great news! Your client has signed their photography contract.
+
+📋 Contract Details:
+• Client: ${signerName} (${signerEmail})
+• Signed: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+The contract is now complete and your session is ready to proceed!
+
+Best regards,
+Photography Management System`;
+
+                        await sendEmail(photographer.email, subject, emailBody);
+                        console.log(`📧 Signed contract notification sent to ${photographer.email}`);
+                    } catch (emailError) {
+                        console.error('❌ Failed to send photographer notification:', emailError);
+                    }
+                }
+
+                // Send confirmation email to client
+                try {
+                    const { sendEmail } = require('./notifications');
+                    
+                    const clientSubject = `✅ Contract Signed Successfully`;
+                    const clientEmailBody = `
+Hi ${signerName},
+
+Thank you for signing your photography contract! Your agreement is now complete.
+
+📋 Session Details:
+• Photographer: ${photographer.display_name || 'Your Photographer'}
+• Signed: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+You'll receive further session details and updates from your photographer soon.
+
+Best regards,
+Photography Management System`;
+
+                    await sendEmail(signerEmail, clientSubject, clientEmailBody);
+                    console.log(`📧 Contract confirmation sent to client ${signerEmail}`);
+                } catch (clientEmailError) {
+                    console.error('❌ Failed to send client confirmation:', clientEmailError);
+                }
+
                 res.json({ success: true, message: 'Agreement signed successfully' });
             } catch (error) {
                 await client.query('ROLLBACK');
