@@ -53,8 +53,7 @@ const bookingAgreementTemplates = {
             '    <br>',
             '    <p><strong>Photographer Signature:</strong> ___________________________ <strong>Date:</strong> _______________</p>',
             '    <br>',
-            '    <p><em>{{clientName}}</em></p>',
-            '    <p><em>{{clientEmail}} | {{clientPhone}}</em></p>',
+            '    <p><em>{{clientName}} - {{clientEmail}} | {{clientPhone}}</em></p>',
             '</div>'
         ].join('\n')
     },
