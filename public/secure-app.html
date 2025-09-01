@@ -7140,9 +7140,6 @@ ${contract.contract_content}
                                 <button onclick="viewSignedContract('${sessionId}', '${session.clientName}'); event.stopPropagation();" class="btn signed-contract-btn" data-session-id="${sessionId}" style="background-color: #6c757d; color: white; margin: 2px;">
                                     📄 <span class="signed-status">No Contract Signed</span>
                                 </button>
-                                <button onclick="viewPendingContractsForSession('${sessionId}'); event.stopPropagation();" class="btn" style="background: #ff6b6b; color: white; border: none;">
-                                    📋 View Pending Contracts
-                                </button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -7151,6 +7148,9 @@ ${contract.contract_content}
                                     <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: linear-gradient(135deg, #fd7e14, #ff9500); color: white; border: none;"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
+                                <button onclick="viewPendingContractsForSession('${sessionId}'); event.stopPropagation();" class="btn" style="background: #ff6b6b; color: white; border: none;">
+                                    📋 View Pending Contracts
+                                </button>
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
 
                                 <button onclick="deleteSession('${sessionId}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
