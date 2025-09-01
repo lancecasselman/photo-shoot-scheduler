@@ -64,7 +64,8 @@ class SubscriptionAuthMiddleware {
             const adminEmails = [
                 'lancecasselman@icloud.com',
                 'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com'
+                'lance@thelegacyphotography.com',
+                'm_casselman@icloud.com'
             ];
 
             if (adminEmails.includes(userEmail?.toLowerCase())) {
