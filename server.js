@@ -7229,6 +7229,11 @@ app.get('/payment-success', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'payment-success.html'));
 });
 
+// Serve contract signing page (no authentication required for client access)
+app.get('/sign/:token', (req, res) => {
+    res.sendFile(path.join(__dirname, 'sign.html'));
+});
+
 // Get payment session details (no auth required for payment confirmation)
 app.get('/api/payment/session/:sessionId/details', async (req, res) => {
     try {
