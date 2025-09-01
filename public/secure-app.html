@@ -6318,6 +6318,36 @@ ${contract.contract_content}
             }
         }
 
+        // View signed contract function
+        window.viewSignedContract = async function(sessionId, clientName) {
+            try {
+                console.log('Viewing signed contract for session:', sessionId);
+                
+                // Check if there are any signed contracts for this session
+                const response = await fetch(`/api/booking-agreements/session/${sessionId}/signed`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const contracts = await response.json();
+                    
+                    if (contracts.length > 0) {
+                        // Open the first signed contract
+                        const signedContract = contracts[0];
+                        window.open(`/sign.html?id=${signedContract.id}&mode=view`, '_blank');
+                    } else {
+                        showMessage('No signed contracts found for this session.', 'info');
+                    }
+                } else {
+                    showMessage('Unable to check for signed contracts.', 'error');
+                }
+            } catch (error) {
+                console.error('Error viewing signed contract:', error);
+                showMessage('Error checking for signed contracts.', 'error');
+            }
+        }
+
         let sessions = [];
 
         let currentPaymentPlanSessionId = null;
