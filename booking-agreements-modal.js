@@ -786,7 +786,7 @@ async function sendViaSMS() {
             showMessage('SMS app opened with signable contract link!', 'success');
             // Update the agreement status
             currentAgreement = savedAgreement;
-            updateModalForExistingAgreement();
+            updateModalButtons('sent');
         } else {
             showMessage('Error preparing SMS: ' + result.message, 'error');
         }
