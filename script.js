@@ -1182,7 +1182,7 @@ Professional Photography Services
 
 // Copy gallery URL to clipboard
 // Function to view signed contract details
-async function viewSignedContract(sessionId, clientName) {
+window.viewSignedContract = async function viewSignedContract(sessionId, clientName) {
     try {
         const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
         if (response.ok) {
