@@ -17338,6 +17338,81 @@ END:VCALENDAR`;
     <link rel="stylesheet" href="booking-agreements-modal.css">
     <script src="booking-agreements-modal.js?v=1756687600"></script>
     
+    <!-- FORCE INJECT SIGNED/PENDING BUTTON -->
+    <script>
+        console.log('🔥 DIRECT INJECTION: Starting button injection system...');
+        
+        // IMMEDIATE injection on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔥 DOM ready - setting up injection system');
+            setupButtonInjection();
+        });
+        
+        // If DOM is already ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupButtonInjection);
+        } else {
+            setupButtonInjection();
+        }
+        
+        function setupButtonInjection() {
+            console.log('🔥 Setting up button injection observers');
+            
+            // AGGRESSIVE interval checking
+            const forceInjectButton = () => {
+                const modal = document.getElementById('bookingAgreementModal');
+                if (modal && modal.style.display !== 'none') {
+                    const sendViaSmsBtn = modal.querySelector('#sendViaSmsBtn');
+                    const existingBtn = modal.querySelector('button[onclick*="viewSignedPendingContracts"]');
+                    
+                    if (sendViaSmsBtn && !existingBtn) {
+                        console.log('🔥 INJECTING BUTTON NOW!');
+                        const newButton = document.createElement('button');
+                        newButton.className = 'btn btn-info';
+                        newButton.onclick = () => {
+                            console.log('📄 Signed/Pending button clicked!');
+                            if (typeof viewSignedPendingContracts === 'function') {
+                                viewSignedPendingContracts();
+                            } else {
+                                openPendingContractsModal();
+                            }
+                        };
+                        newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
+                        newButton.innerHTML = '📄 Signed/Pending Contracts';
+                        sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
+                        console.log('✅ BUTTON SUCCESSFULLY INJECTED!');
+                        return true;
+                    }
+                }
+                return false;
+            };
+            
+            // Check every 100ms for the modal
+            setInterval(forceInjectButton, 100);
+            
+            // Also setup mutation observer
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1 && (node.id === 'bookingAgreementModal' || node.querySelector && node.querySelector('#bookingAgreementModal'))) {
+                                console.log('🔥 Modal detected in DOM, injecting button!');
+                                setTimeout(forceInjectButton, 50);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            console.log('🔥 Button injection system fully active!');
+        }
+    </script>
+    
     <!-- Pending Contracts Script -->
     <script>
         let pendingContracts = [];
