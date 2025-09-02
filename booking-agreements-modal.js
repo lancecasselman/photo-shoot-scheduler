@@ -36,327 +36,34 @@ let agreementTemplates = [];
     document.head.appendChild(criticalStyles);
 })();
 
-// Function to view contracts for the current session only
-async function viewSessionContracts() {
-    if (!currentAgreementSessionId) {
-        alert('No session selected');
-        return;
-    }
 
-    try {
-        // Fetch contracts specifically for this session
-        const response = await fetch(`/api/booking/agreements/session/${currentAgreementSessionId}/all`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch session contracts');
-        }
 
-        const agreements = await response.json();
-
-        // Filter for sent, viewed, and signed agreements only
-        const sessionContracts = Array.isArray(agreements) ? agreements.filter(agreement => 
-            ['sent', 'viewed', 'signed'].includes(agreement.status)
-        ) : (agreements && ['sent', 'viewed', 'signed'].includes(agreements.status)) ? [agreements] : [];
-
-        console.log(`📄 Session contracts found: ${sessionContracts.length} for session ${currentAgreementSessionId}`);
-        showSessionContractsModal(sessionContracts);
-
-    } catch (error) {
-        console.error('Error fetching session contracts:', error);
-
-        // More user-friendly error handling
-        if (error.message.includes('401') || error.message.includes('User not authenticated')) {
-            alert('Please refresh the page and try again - authentication session may have expired.');
-        } else if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
-            // Show modal with no contracts message instead of error
-            showSessionContractsModal([]);
-        } else {
-            alert('Error loading session contracts. Please try again or refresh the page.');
-        }
-    }
-}
-
-// Show session-specific contracts modal with signatures
-function showSessionContractsModal(agreements) {
-    // Remove existing modal if present
-    const existingModal = document.getElementById('sessionContractsModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    // Get current session info for modal title and fallback data
-    const currentSession = sessions.find(s => s.id === currentAgreementSessionId);
-    const sessionTitle = currentSession ? currentSession.clientName : 'Current Session';
-    const sessionClientName = currentSession ? currentSession.clientName : 'Unknown Client';
-    const sessionClientEmail = currentSession ? currentSession.email : 'No email';
-
-    // Create modal HTML
-    const modalHTML = `
-        <div id="sessionContractsModal" class="booking-modal" style="display: flex; z-index: 10000;">
-            <div class="booking-modal-content" style="max-width: 900px; width: 95%;">
-                <div class="booking-modal-header">
-                    <h2>📄 Contracts for ${sessionTitle}</h2>
-                    <button class="booking-modal-close" onclick="closeSessionContractsModal()">&times;</button>
-                </div>
-
-                <div class="booking-modal-body">
-                    <div id="sessionAgreementsList" style="max-height: 500px; overflow-y: auto;">
-                        ${agreements.length > 0 ? agreements.map(agreement => `
-                            <div class="agreement-item" style="border: 2px solid #ddd; margin-bottom: 15px; padding: 20px; border-radius: 8px; background: white;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h3 style="margin: 0; color: #333; font-size: 18px;">${agreement.session_client_name || agreement.client_name || sessionTitle}</h3>
-                                    <span class="status-badge status-${agreement.status}" style="
-                                        padding: 6px 12px; 
-                                        border-radius: 15px; 
-                                        font-size: 14px; 
-                                        font-weight: bold;
-                                        background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
-                                        color: white;
-                                        text-transform: uppercase;
-                                    ">${agreement.status}</span>
-                                </div>
-
-                                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                                    <p style="margin: 5px 0; color: #666;"><strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleString() : 'N/A'}</p>
-                                    ${agreement.viewed_at ? `<p style="margin: 5px 0; color: #666;"><strong>Viewed:</strong> ${new Date(agreement.viewed_at).toLocaleString()}</p>` : ''}
-                                    ${agreement.signed_at ? `<p style="margin: 5px 0; color: #666;"><strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleString()}</p>` : ''}
-                                </div>
-
-                                ${agreement.status === 'signed' ? `
-                                    <div id="signatureDisplay-${agreement.id}" style="margin: 15px 0; padding: 15px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 8px;">
-                                        <h4 style="margin-bottom: 10px; color: #15803d;">✍️ Digital Signature</h4>
-                                        <div class="signature-loading" style="text-align: center; color: #666;">Loading signature...</div>
-                                    </div>
-                                ` : ''}
-
-                                <div style="margin-top: 15px; text-align: center;">
-                                    ${agreement.status !== 'signed' ? `<button onclick="resendContractToClient('${agreement.id}')" class="btn btn-warning" style="padding: 10px 20px;">📤 Resend</button>` : ''}
-                                </div>
-                            </div>
-                        `).join('') : `<div style="text-align: center; color: #666; padding: 40px;">
-                            <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
-                            <h3 style="margin-bottom: 15px; color: #333;">No contracts found for this session</h3>
-                            <p style="margin-bottom: 10px;">Contracts that have been sent, viewed, or signed will appear here.</p>
-                            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
-                                <p style="margin: 0; font-size: 14px; color: #555;"><strong>💡 Tip:</strong> Create and send a booking agreement from the main booking modal to see contracts here.</p>
-                            </div>
-                        </div>`}
-                    </div>
-                </div>
-
-                <div class="booking-modal-footer">
-                    <button class="btn btn-secondary" onclick="closeSessionContractsModal()">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-    // Load signatures for signed contracts
-    agreements.forEach(agreement => {
-        if (agreement.status === 'signed') {
-            loadContractSignature(agreement.id, sessionClientName, sessionClientEmail);
-        }
-    });
-}
-
-// Close session contracts modal
-function closeSessionContractsModal() {
-    const modal = document.getElementById('sessionContractsModal');
-    if (modal) {
-        modal.remove();
-    }
-}
-
-// Load and display signature for a specific contract
-async function loadContractSignature(agreementId, fallbackClientName = 'Unknown Client', fallbackClientEmail = 'No email') {
-    try {
-        const response = await fetch(`/api/booking/agreements/${agreementId}/signatures`);
-        if (response.ok) {
-            const signatures = await response.json();
-            if (signatures.length > 0) {
-                const signature = signatures[0];
-                const signatureContainer = document.getElementById(`signatureDisplay-${agreementId}`);
-                if (signatureContainer) {
-                    signatureContainer.innerHTML = `
-                        <h4 style="margin-bottom: 10px; color: #15803d;">✍️ Digital Signature</h4>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <div style="padding: 15px; background: white; border: 1px solid #d1d5db; border-radius: 6px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                                    <p style="margin: 0; color: #374151;"><strong>Client Name:</strong> ${signature.signer_name || fallbackClientName}</p>
-                                    <p style="margin: 0; color: #374151;"><strong>Email:</strong> ${signature.signer_email || fallbackClientEmail}</p>
-                                </div>
-                                <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Signed Date:</strong> ${new Date(signature.created_at).toLocaleString()}</p>
-                                ${signature.ip_address ? `<p style="margin: 5px 0 0 0; color: #6b7280; font-size: 12px;"><strong>IP Address:</strong> ${signature.ip_address}</p>` : ''}
-                            </div>
-                            ${signature.signature_data ? `
-                                <div style="border: 2px solid #15803d; border-radius: 8px; padding: 10px; background: white;">
-                                    <p style="margin: 0 0 10px 0; color: #15803d; font-weight: bold;">Signature:</p>
-                                    <canvas id="signatureCanvas-${agreementId}" style="border: 1px solid #ddd; max-width: 100%; height: 120px;"></canvas>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-
-                    // Draw the signature if data exists
-                    if (signature.signature_data) {
-                        const canvas = document.getElementById(`signatureCanvas-${agreementId}`);
-                        if (canvas) {
-                            drawSignatureOnCanvas(canvas, signature.signature_data);
-                        }
-                    }
-                }
-            }
-        } else {
-            console.error('Failed to load signature for agreement:', agreementId);
-        }
-    } catch (error) {
-        console.error('Error loading signature:', error);
-        const signatureContainer = document.getElementById(`signatureDisplay-${agreementId}`);
-        if (signatureContainer) {
-            signatureContainer.innerHTML = `
-                <h4 style="margin-bottom: 10px; color: #dc2626;">❌ Signature Error</h4>
-                <p style="color: #666; margin: 0;">Unable to load signature data</p>
-            `;
-        }
-    }
-}
-
-// Draw signature on canvas
-function drawSignatureOnCanvas(canvas, signatureData) {
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = function() {
-        // Clear canvas and set size
-        canvas.width = canvas.offsetWidth;
-        canvas.height = 120;
-
-        // Clear with white background
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw signature image
-        ctx.drawImage(img, 10, 10, canvas.width - 20, canvas.height - 20);
-    };
-
-    img.onerror = function() {
-        // If image fails, try to parse as path data
-        try {
-            const paths = JSON.parse(signatureData);
-            if (Array.isArray(paths)) {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = 120;
-
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                paths.forEach(path => {
-                    if (path.length > 1) {
-                        ctx.beginPath();
-                        ctx.moveTo(path[0].x * canvas.width, path[0].y * canvas.height);
-                        for (let i = 1; i < path.length; i++) {
-                            ctx.lineTo(path[i].x * canvas.width, path[i].y * canvas.height);
-                        }
-                        ctx.stroke();
-                    }
-                });
-            }
-        } catch (e) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#666';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Signature data format not supported', canvas.width/2, canvas.height/2);
-        }
-    };
-
-    // Try to load as base64 image first
-    if (signatureData.startsWith('data:image/')) {
-        img.src = signatureData;
-    } else {
-        // Trigger the error handler to try path parsing
-        img.onerror();
-    }
-}
-
-// View full contract details
-async function viewContractDetails(agreementId) {
-    try {
-        const response = await fetch(`/api/booking/agreements/all`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch agreement details');
-        }
-
-        const agreements = await response.json();
-        const agreement = agreements.find(a => a.id === agreementId);
-
-        if (!agreement) {
-            throw new Error('Agreement not found');
-        }
-
-        // Close current modal and open detailed view
-        closeSessionContractsModal();
-
-        // Show the agreement content in a detailed modal
-        showContractDetailsModal(agreement);
-
-    } catch (error) {
-        console.error('Error fetching contract details:', error);
-        alert('Error loading contract details: ' + error.message);
-    }
-}
-
-// Resend contract to client
-async function resendContractToClient(agreementId) {
-    if (confirm('Are you sure you want to resend this contract to the client?')) {
-        try {
-            const response = await fetch(`/api/booking/agreements/${agreementId}/resend`, {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                alert('Contract has been resent successfully!');
-                // Refresh the modal
-                viewSessionContracts();
-            } else {
-                throw new Error('Failed to resend contract');
-            }
-        } catch (error) {
-            console.error('Error resending contract:', error);
-            alert('Error resending contract: ' + error.message);
-        }
-    }
-}
 
 // View agreement details
-async function viewAgreementDetails(agreementId) {
+async function viewAgreementDetails(agreementId, sessionId) {
     try {
-        // First try to get the agreement details from the all endpoint
-        const response = await fetch('/api/booking/agreements/all');
+        console.log('📄 Fetching agreement details:', agreementId, 'for session:', sessionId);
+        
+        // Use the session-specific endpoint to get signature data
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
         if (!response.ok) {
             throw new Error('Failed to fetch agreements');
         }
-
+        
         const agreements = await response.json();
         const agreement = agreements.find(a => a.id === agreementId);
-
+        
         if (!agreement) {
             throw new Error('Agreement not found');
         }
-
+        
+        console.log('📝 Agreement found with signature data:', !!agreement.signature_data);
+        
         // Close current modal and open agreement modal with the details
-        closeSignedPendingModal();
-
-        // Show the agreement content in a read-only view
-        showAgreementDetailsModal(agreement);
-
+        
+        // Show the agreement content in a read-only view with signature if signed
+        await showAgreementDetailsModal(agreement);
+        
     } catch (error) {
         console.error('Error fetching agreement details:', error);
         alert('Error loading agreement details: ' + error.message);
@@ -364,7 +71,7 @@ async function viewAgreementDetails(agreementId) {
 }
 
 // Show agreement details in a modal
-function showAgreementDetailsModal(agreement) {
+async function showAgreementDetailsModal(agreement) {
     const modalHTML = `
         <div id="agreementDetailsModal" class="booking-modal" style="display: flex; z-index: 10001;">
             <div class="booking-modal-content" style="max-width: 700px; width: 90%;">
@@ -372,20 +79,29 @@ function showAgreementDetailsModal(agreement) {
                     <h2>Agreement Details - ${agreement.session_client_name || 'Unknown Client'}</h2>
                     <button class="booking-modal-close" onclick="closeAgreementDetailsModal()">&times;</button>
                 </div>
-
+                
                 <div class="booking-modal-body">
                     <div class="agreement-status-info" style="margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                        <p><strong>Status:</strong> <span style="color: ${agreement.status === 'signed' ? '#28a745' : '#17a2b8'};">${agreement.status.toUpperCase()}</span></p>
+                        <p><strong>Status:</strong> <span style="color: ${agreement.status === 'signed' ? '#28a745' : '#6c757d'};">${agreement.status.toUpperCase()}</span></p>
                         <p><strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleString() : 'N/A'}</p>
                         ${agreement.viewed_at ? `<p><strong>Viewed:</strong> ${new Date(agreement.viewed_at).toLocaleString()}</p>` : ''}
                         ${agreement.signed_at ? `<p><strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleString()}</p>` : ''}
                     </div>
-
+                    
                     <div class="agreement-content" style="border: 1px solid #ddd; padding: 20px; background: white; max-height: 400px; overflow-y: auto;">
                         ${agreement.content || 'No content available'}
                     </div>
+                    
+                    ${agreement.status === 'signed' ? `
+                        <div id="signatureSection" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 5px;">
+                            <h4 style="margin-bottom: 15px; color: #28a745;">📝 Electronic Signature</h4>
+                            <div id="signatureContent">
+                                <p style="margin: 5px 0; color: #666;">Loading signature...</p>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
-
+                
                 <div class="booking-modal-footer">
                     <button class="btn btn-secondary" onclick="closeAgreementDetailsModal()">Close</button>
                     ${agreement.status !== 'signed' ? `<button class="btn btn-primary" onclick="resendAgreement('${agreement.id}')">Resend Agreement</button>` : ''}
@@ -393,8 +109,178 @@ function showAgreementDetailsModal(agreement) {
             </div>
         </div>
     `;
-
+    
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // If the agreement is signed, load the signature
+    if (agreement.status === 'signed') {
+        displaySignatureData(agreement);
+    }
+}
+
+// Display signature data directly from agreement object
+function displaySignatureData(agreement) {
+    const signatureContent = document.getElementById('signatureContent');
+    if (!signatureContent) return;
+    
+    if (agreement.signature_data && agreement.status === 'signed') {
+        signatureContent.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <p style="margin: 5px 0; color: #333;"><strong>Signed by:</strong> ${agreement.signer_name || 'Unknown'}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> ${agreement.signer_email || 'Unknown'}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Date:</strong> ${new Date(agreement.signature_created_at || agreement.signed_at).toLocaleString()}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>IP Address:</strong> ${agreement.ip_address || 'Unknown'}</p>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 10px; background: white; border-radius: 5px;">
+                <img src="${agreement.signature_data}" alt="Electronic Signature" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button class="btn btn-success" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')" style="margin-right: 10px;">
+                    📄 Download Signed Contract
+                </button>
+                <button class="btn btn-info" onclick="viewSignedCopyModal('${agreement.id}')">
+                    👁️ View Signed Copy
+                </button>
+            </div>
+        `;
+    } else if (agreement.status === 'signed') {
+        signatureContent.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #28a745;">
+                <p style="margin: 0; font-size: 16px;"><strong>✓ Contract Signed</strong></p>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Signature data is being processed</p>
+            </div>
+        `;
+    } else {
+        signatureContent.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <p style="margin: 0;">Contract not yet signed</p>
+            </div>
+        `;
+    }
+}
+
+// View signed copy in full screen modal
+async function viewSignedCopyModal(agreementId) {
+    try {
+        // Find the agreement data from the current modal
+        const currentModal = document.getElementById('agreementDetailsModal');
+        if (!currentModal) {
+            throw new Error('Current agreement modal not found');
+        }
+        
+        // Get all sessions to find the agreement
+        const sessionsResponse = await fetch('/api/sessions');
+        if (!sessionsResponse.ok) {
+            throw new Error('Failed to fetch sessions');
+        }
+        const sessions = await sessionsResponse.json();
+        
+        // Find the agreement in all sessions
+        let foundAgreement = null;
+        for (const session of sessions) {
+            const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
+            if (response.ok) {
+                const agreements = await response.json();
+                const agreement = agreements.find(a => a.id === agreementId && a.status === 'signed');
+                if (agreement) {
+                    foundAgreement = agreement;
+                    break;
+                }
+            }
+        }
+        
+        if (!foundAgreement || !foundAgreement.signature_data) {
+            throw new Error('Signed contract with signature not found');
+        }
+        
+        // Create full-screen signed copy modal
+        const signedCopyModalHTML = `
+            <div id="signedCopyModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002;">
+                <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 95vh; overflow-y: auto;">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
+                        <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract Copy - ${foundAgreement.session_client_name || 'Client'}</h2>
+                        <button onclick="closeModal('signedCopyModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    
+                    <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed & Verified</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div><strong>Client:</strong> ${foundAgreement.session_client_name || 'Unknown'}</div>
+                            <div><strong>Signer:</strong> ${foundAgreement.signer_name || 'Unknown'}</div>
+                            <div><strong>Email:</strong> ${foundAgreement.signer_email || 'Unknown'}</div>
+                            <div><strong>Signed Date:</strong> ${new Date(foundAgreement.signed_at).toLocaleString()}</div>
+                            ${foundAgreement.ip_address ? `<div><strong>IP Address:</strong> ${foundAgreement.ip_address}</div>` : ''}
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <strong>Electronic Signature:</strong>
+                            <div style="margin-top: 8px; text-align: center;">
+                                <img src="${foundAgreement.signature_data}" style="max-width: 400px; max-height: 150px; border: 2px solid #28a745; border-radius: 8px; background: white; padding: 10px;" alt="Electronic Signature">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-content" style="background: white; border: 2px solid #d4af37; border-radius: 6px; padding: 30px; margin-bottom: 20px; font-family: 'Times New Roman', serif; line-height: 1.6; white-space: pre-wrap; max-height: 500px; overflow-y: auto;">
+${foundAgreement.content || 'No content available'}
+                    </div>
+                    
+                    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is an official digitally signed copy with electronic signature verification</p>
+                        <button onclick="downloadSignedContract('${foundAgreement.id}', '${foundAgreement.session_client_name || 'client'}')" class="btn btn-success" style="margin-right: 10px;">
+                            📄 Download Contract
+                        </button>
+                        <button onclick="window.print()" class="btn btn-secondary" style="margin-right: 10px;">
+                            🖨️ Print Contract
+                        </button>
+                        <button onclick="closeModal('signedCopyModal')" class="btn btn-secondary">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', signedCopyModalHTML);
+        
+    } catch (error) {
+        console.error('Error viewing signed copy:', error);
+        alert('Failed to load signed copy: ' + error.message);
+    }
+}
+
+// Close modal helper
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Download signed contract as PDF
+async function downloadSignedContract(agreementId, clientName) {
+    try {
+        console.log('📄 Downloading signed contract:', agreementId);
+        
+        const response = await fetch(`/api/booking/agreements/${agreementId}/download`);
+        if (!response.ok) {
+            throw new Error(`Failed to download contract: ${response.statusText}`);
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `Signed_Contract_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showMessage('✅ Signed contract downloaded successfully!', 'success');
+    } catch (error) {
+        console.error('Error downloading signed contract:', error);
+        showMessage('❌ Failed to download contract: ' + error.message, 'error');
+    }
 }
 
 // Close agreement details modal
@@ -419,6 +305,15 @@ async function initializeBookingAgreements() {
 
     // Update all session cards with agreement status
     await updateAllAgreementStatuses();
+    
+    // Listen for contract signing notifications from signature window
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'contractSigned') {
+            console.log('📡 Received contract signed notification:', event.data);
+            // Update session card status
+            updateAllAgreementStatuses();
+        }
+    });
 }
 
 // Create the modal HTML structure
@@ -432,20 +327,7 @@ function createBookingAgreementModal() {
                 </div>
 
                 <div class="booking-modal-body">
-                    <!-- Template Selector -->
-                    <div id="templateSelector" class="template-section">
-                        <label for="agreementTemplate" style="display: block; color: #000000; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Select Template:</label>
-                        <select id="agreementTemplate" onchange="loadSelectedTemplate()" style="width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #000000; background-color: white; cursor: pointer;">
-                            <option value="" style="color: #666666;">Choose a template...</option>
-                        </select>
-                    </div>
-
-                    <!-- Agreement Editor -->
-                    <div id="agreementEditor" class="editor-section">
-                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; background-color: white !important; padding: 20px !important; border: 2px solid #ddd !important;"></div>
-                    </div>
-
-                    <!-- Agreement Viewer (for sent/signed) -->
+                    <!-- Agreement Viewer (for sent/signed) - SHOWN FIRST -->
                     <div id="agreementViewer" class="viewer-section" style="display: none;">
                         <div class="agreement-status-badge">
                             <span id="agreementStatusBadge"></span>
@@ -455,6 +337,19 @@ function createBookingAgreementModal() {
                             <p><strong>Signed by:</strong> <span id="signerName"></span></p>
                             <p><strong>Date:</strong> <span id="signedDate"></span></p>
                         </div>
+                    </div>
+
+                    <!-- Template Selector - ALWAYS AVAILABLE -->
+                    <div id="templateSelector" class="template-section">
+                        <label for="agreementTemplate">Select Template:</label>
+                        <select id="agreementTemplate" onchange="loadSelectedTemplate()">
+                            <option value="">Choose a template...</option>
+                        </select>
+                    </div>
+
+                    <!-- Agreement Editor - ALWAYS AVAILABLE -->
+                    <div id="agreementEditor" class="editor-section">
+                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; background-color: white !important; padding: 20px !important; border: 2px solid #ddd !important;"></div>
                     </div>
                 </div>
 
@@ -469,14 +364,14 @@ function createBookingAgreementModal() {
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
                         </button>
-                        <button class="btn btn-info" onclick="viewSessionContracts()" style="background-color: #17a2b8; color: white;">
-                            📄 View Session Contracts
-                        </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
                         </button>
                         <button id="resendBtn" class="btn btn-warning" onclick="resendAgreement()" style="display: none;">
                             <i class="fas fa-redo"></i> Resend
+                        </button>
+                        <button id="cancelContractBtn" class="btn btn-danger" onclick="cancelContract()" style="display: none;">
+                            <i class="fas fa-times-circle"></i> Cancel Contract
                         </button>
                     </div>
                 </div>
@@ -505,71 +400,22 @@ async function openBookingAgreementModal(sessionId) {
         showMessage('Session not found', 'error');
         return;
     }
+    
+    console.log('🔍 Found session data:', session);
 
     // Make sure templates are loaded
     if (!agreementTemplates || agreementTemplates.length === 0) {
         await loadAgreementTemplates();
     }
 
-    // Update modal title
+    // Update modal title with fallback
+    const clientName = session.clientName || session.client_name || 'Unknown Client';
     document.getElementById('agreementModalTitle').textContent = 
-        `Booking Agreement for ${session.clientName}`;
+        `Booking Agreement for ${clientName}`;
 
     // Show modal
     const modal = document.getElementById('bookingAgreementModal');
     modal.style.display = 'flex';
-
-    // Inject a critical style element to force black text
-    if (!document.getElementById('forceBlackTextStyles')) {
-        const styleEl = document.createElement('style');
-        styleEl.id = 'forceBlackTextStyles';
-        styleEl.innerHTML = `
-            #bookingAgreementModal * {
-                color: #000000 !important;
-                -webkit-text-fill-color: #000000 !important;
-            }
-            #agreementContent * {
-                color: #000000 !important;
-                -webkit-text-fill-color: #000000 !important;
-            }
-            [contenteditable="true"] * {
-                color: #000000 !important;
-                -webkit-text-fill-color: #000000 !important;
-            }
-        `;
-        document.head.appendChild(styleEl);
-    }
-
-    // Force ALL text in the modal to be black
-    setTimeout(() => {
-        const allElements = modal.querySelectorAll('*');
-        allElements.forEach(element => {
-            element.style.setProperty('color', '#000000', 'important');
-            element.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-        });
-
-        // Specifically target the content areas
-        const contentEditor = document.getElementById('agreementContent');
-        const contentViewer = document.getElementById('agreementViewContent');
-
-        if (contentEditor) {
-            contentEditor.style.setProperty('color', '#000000', 'important');
-            contentEditor.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-            contentEditor.querySelectorAll('*').forEach(el => {
-                el.style.setProperty('color', '#000000', 'important');
-                el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-            });
-        }
-
-        if (contentViewer) {
-            contentViewer.style.setProperty('color', '#000000', 'important');
-            contentViewer.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-            contentViewer.querySelectorAll('*').forEach(el => {
-                el.style.setProperty('color', '#000000', 'important');
-                el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
-            });
-        }
-    }, 200);
 
     // Load existing agreement or show template selector
     await loadExistingAgreement(sessionId, session);
@@ -597,13 +443,12 @@ async function loadAgreementTemplates() {
             // Populate template dropdown
             const select = document.getElementById('agreementTemplate');
             if (select) {
-                select.innerHTML = '<option value="" style="color: #666666;">Choose a template...</option>';
+                select.innerHTML = '<option value="">Choose a template...</option>';
                 agreementTemplates.forEach(template => {
                     const option = document.createElement('option');
                     option.value = template.id;
                     option.textContent = template.name;
                     option.dataset.category = template.category;
-                    option.style.color = '#000000';
                     select.appendChild(option);
                 });
             }
@@ -611,7 +456,8 @@ async function loadAgreementTemplates() {
             console.error('Failed to load templates, status:', response.status);
         }
     } catch (error) {
-        console.error('Error loading templates:', error);
+        console.error('Error loading templates:', error.message || error);
+        console.error('Full error details:', error);
     }
 }
 
@@ -624,7 +470,8 @@ async function loadExistingAgreement(sessionId, session) {
 
             if (agreement) {
                 currentAgreement = agreement;
-                displayAgreement(agreement, session);
+                // Show BOTH the existing agreement AND the create new section
+                showBothViewAndCreate(agreement, session);
             } else {
                 // No agreement exists, show template selector
                 showCreateMode(session);
@@ -633,7 +480,8 @@ async function loadExistingAgreement(sessionId, session) {
             showCreateMode(session);
         }
     } catch (error) {
-        console.error('Error loading agreement:', error);
+        console.error('Error loading agreement:', error.message || error);
+        console.error('Full error details:', error);
         showCreateMode(session);
     }
 }
@@ -642,9 +490,15 @@ async function loadExistingAgreement(sessionId, session) {
 function displayAgreement(agreement, session) {
     const status = agreement.status;
 
-    // Always show create mode instead of viewer mode
-    showCreateMode(session);
-    updateModalButtons('new');
+    if (status === 'draft') {
+        // Show editor mode
+        showEditMode(agreement, session);
+    } else {
+        // ALWAYS show create mode, not viewer
+        showBothViewAndCreate(agreement, session);
+    }
+
+    updateModalButtons('new'); // Always show create buttons
 }
 
 // Show create mode
@@ -660,14 +514,13 @@ function showCreateMode(session) {
     const select = document.getElementById('agreementTemplate');
     if (select && select.options.length <= 1) {
         // Re-populate dropdown
-        select.innerHTML = '<option value="" style="color: #666666;">Choose a template...</option>';
+        select.innerHTML = '<option value="">Choose a template...</option>';
         if (agreementTemplates && agreementTemplates.length > 0) {
             agreementTemplates.forEach(template => {
                 const option = document.createElement('option');
                 option.value = template.id;
                 option.textContent = template.name;
                 option.dataset.category = template.category;
-                option.style.color = '#000000';
                 select.appendChild(option);
             });
             console.log('Populated dropdown with', agreementTemplates.length, 'templates');
@@ -695,43 +548,113 @@ function showEditMode(agreement, session) {
     }
 }
 
-// Show view mode
-function showViewMode(agreement, session) {
-    document.getElementById('templateSelector').style.display = 'none';
-    document.getElementById('agreementEditor').style.display = 'none';
-    document.getElementById('agreementViewer').style.display = 'block';
 
-    // Display content
-    document.getElementById('agreementViewContent').innerHTML = agreement.content;
-
-    // Force all text to be black
-    const viewContent = document.getElementById('agreementViewContent');
-    if (viewContent) {
-        // Apply black color to all child elements
-        const allElements = viewContent.querySelectorAll('*');
-        allElements.forEach(el => {
-            el.style.color = '#000000';
-            el.style.setProperty('color', '#000000', 'important');
-        });
-        // Apply to the container itself
-        viewContent.style.color = '#000000';
-        viewContent.style.setProperty('color', '#000000', 'important');
-    }
-
-    // Show status badge
-    const badge = document.getElementById('agreementStatusBadge');
-    badge.className = `status-badge status-${agreement.status}`;
-    badge.textContent = getStatusText(agreement.status);
-
-    // Show signature info if signed
-    if (agreement.status === 'signed' && agreement.signature_data) {
-        document.getElementById('signatureInfo').style.display = 'block';
-        document.getElementById('signerName').textContent = agreement.signer_name || 'Client';
-        document.getElementById('signedDate').textContent = 
-            new Date(agreement.signature_date).toLocaleDateString();
+// Show both view and create mode for existing contracts
+async function showBothViewAndCreate(agreement, session) {
+    // Check if we should show existing signed contracts or allow creation
+    if (agreement.status === 'signed') {
+        // For signed contracts, show a list of signed contracts with option to create new
+        await showSignedContractsViewer(session.id);
+    } else if (agreement.status === 'sent' || agreement.status === 'viewed') {
+        // For sent/viewed contracts, show the pending contract with option to create new
+        await showPendingContractViewer(agreement, session);
     } else {
-        document.getElementById('signatureInfo').style.display = 'none';
+        // For drafts or other statuses, show creation interface
+        showCreateInterface();
     }
+}
+
+// Show signed contracts viewer
+async function showSignedContractsViewer(sessionId) {
+    try {
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch signed contracts');
+        }
+        
+        const agreements = await response.json();
+        const signedAgreements = agreements.filter(a => a.status === 'signed');
+        
+        if (signedAgreements.length === 0) {
+            showCreateInterface();
+            return;
+        }
+        
+        // Show the viewer with signed contracts
+        document.getElementById('templateSelector').style.display = 'none';
+        document.getElementById('agreementEditor').style.display = 'none';
+        document.getElementById('agreementViewer').style.display = 'block';
+        
+        // Create signed contracts list
+        const viewerContent = document.getElementById('agreementViewContent');
+        viewerContent.innerHTML = `
+            <h3 style="color: #28a745; margin-bottom: 20px;">📝 Signed Contracts</h3>
+            <div class="signed-contracts-list">
+                ${signedAgreements.map(agreement => `
+                    <div class="signed-contract-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #f8f9fa;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <strong>Signed: ${new Date(agreement.signed_at).toLocaleString()}</strong>
+                                <br>
+                                <small>Signer: ${agreement.signer_name || 'Unknown'} (${agreement.signer_email || 'Unknown'})</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-primary btn-sm" onclick="viewAgreementDetails('${agreement.id}', '${sessionId}')" style="margin-right: 5px;">
+                                    👁️ View Contract
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')">
+                                    📄 Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="contract-preview" style="max-height: 100px; overflow: hidden; color: #666; font-size: 14px;">
+                            ${(agreement.content || 'No content').substring(0, 200)}...
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <hr style="margin: 20px 0;">
+            <button class="btn btn-secondary" onclick="showCreateInterface()">
+                ➕ Create New Contract
+            </button>
+        `;
+        
+        // Update modal buttons for viewing mode  
+        updateModalButtons('view');
+        
+    } catch (error) {
+        console.error('Error loading signed contracts:', error);
+        showCreateInterface();
+    }
+}
+
+// Show create interface
+function showCreateInterface() {
+    document.getElementById('templateSelector').style.display = 'block';
+    document.getElementById('agreementEditor').style.display = 'block';
+    document.getElementById('agreementViewer').style.display = 'none';
+    
+    // Clear editor for new contract
+    document.getElementById('agreementContent').innerHTML = '';
+    document.getElementById('agreementTemplate').value = '';
+    
+    // Populate template dropdown
+    const select = document.getElementById('agreementTemplate');
+    if (select && select.options.length <= 1) {
+        select.innerHTML = '<option value="">Choose a template...</option>';
+        if (agreementTemplates && agreementTemplates.length > 0) {
+            agreementTemplates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                option.dataset.category = template.category;
+                select.appendChild(option);
+            });
+        }
+    }
+    
+    // Update buttons for creating new contracts
+    updateModalButtons('new');
 }
 
 // Load selected template
@@ -750,59 +673,16 @@ function loadSelectedTemplate() {
     content = replaceTemplateVariables(content, session);
 
     // Load into editor
-    const editor = document.getElementById('agreementContent');
-    editor.innerHTML = content;
-
-    // Add inline black styles to EVERY element
-    editor.style = 'color: #000000 !important;';
-    const allElements = editor.getElementsByTagName('*');
-    for (let i = 0; i < allElements.length; i++) {
-        allElements[i].style = 'color: #000000 !important;';
-    }
-
-    // Force all text to be black immediately and after a delay
-    const forceBlackText = () => {
-        const contentElement = document.getElementById('agreementContent');
-        if (contentElement) {
-            // Apply to the container
-            contentElement.style.setProperty('color', '#000000', 'important');
-
-            // Apply to ALL child elements
-            const allElements = contentElement.querySelectorAll('*');
-            allElements.forEach(el => {
-                el.style.setProperty('color', '#000000', 'important');
-            });
-
-            // Also apply to any text nodes
-            const walker = document.createTreeWalker(
-                contentElement,
-                NodeFilter.SHOW_ELEMENT,
-                null,
-                false
-            );
-
-            let node;
-            while (node = walker.nextNode()) {
-                node.style.setProperty('color', '#000000', 'important');
-            }
-        }
-    };
-
-    // Apply immediately
-    forceBlackText();
-
-    // Apply again after DOM updates
-    setTimeout(forceBlackText, 50);
-    setTimeout(forceBlackText, 150);
-    setTimeout(forceBlackText, 300);
+    document.getElementById('agreementContent').innerHTML = content;
 }
 
 // Replace template variables
 function replaceTemplateVariables(content, session) {
+    console.log('🔍 Session data in replaceTemplateVariables:', session);
     const replacements = {
-        '{{clientName}}': session.clientName || session.client_name,
-        '{{clientEmail}}': session.email,
-        '{{clientPhone}}': session.phoneNumber || session.phone_number,
+        '{{clientName}}': session.clientName || session.client_name || 'Unknown Client',
+        '{{clientEmail}}': session.email || 'no-email@example.com',
+        '{{clientPhone}}': session.phoneNumber || session.phone_number || 'No phone number',
         '{{sessionType}}': session.sessionType,
         '{{sessionDate}}': new Date(session.dateTime).toLocaleDateString(),
         '{{sessionTime}}': new Date(session.dateTime).toLocaleTimeString([], { 
@@ -864,44 +744,615 @@ async function saveAgreement() {
             showMessage('Failed to save agreement', 'error');
         }
     } catch (error) {
-        console.error('Error saving agreement:', error);
-        showMessage('Error saving agreement', 'error');
+        console.error('Error saving agreement:', error.message || error);
+        console.error('Full error details:', error);
+        showMessage('Error saving agreement: ' + (error.message || 'Unknown error'), 'error');
     }
 }
 
 // Send for signature
 async function sendForSignature() {
-    if (!currentAgreement) {
-        await saveAgreement();
-    }
-
-    if (!currentAgreement) return;
-
+    console.log('🚀🚀🚀 SEND BUTTON CLICKED!!!');
+    console.log('Current agreement:', currentAgreement);
+    console.log('Current session ID:', currentAgreementSessionId);
+    console.log('Sessions available:', sessions);
+    
+    // Show a visible alert first
+    alert('Contract send button clicked! Choose email or SMS.');
+    
+    // Get the current session
     const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) return;
+    if (!session) {
+        console.log('❌ No session found, creating basic session');
+        // Try to get session info from the modal title
+        const modalTitle = document.getElementById('agreementModalTitle');
+        const clientName = modalTitle ? modalTitle.textContent.replace('Booking Agreement for ', '') : 'Client';
+        
+        // Create a basic session object
+        const basicSession = {
+            id: currentAgreementSessionId,
+            clientName: clientName,
+            email: 'test@example.com',
+            phoneNumber: '555-1234'
+        };
+        
+        console.log('📧 Showing modal with basic session:', basicSession);
+        showSendChoiceModal(basicSession);
+        return;
+    }
+    
+    console.log('📧 Showing modal with found session:', session);
+    showSendChoiceModal(session);
+}
 
+// Simple modal to choose send method
+function showSendChoiceModal(session) {
+    console.log('📧 Showing send choice modal');
+    
+    // Remove any existing modal
+    const existing = document.getElementById('send-choice-popup');
+    if (existing) existing.remove();
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'send-choice-popup';
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        z-index: 99999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    `;
+    
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white !important;
+        padding: 30px !important;
+        border-radius: 10px !important;
+        max-width: 450px !important;
+        width: 90% !important;
+        text-align: center !important;
+    `;
+    
+    modalContent.innerHTML = `
+        <h2 style="color: #333; margin-bottom: 20px;">How to Send Contract?</h2>
+        <p style="color: #666; margin-bottom: 30px;">Choose how to send the contract to ${session.clientName}</p>
+        
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <button id="email-send-btn" style="
+                flex: 1;
+                padding: 20px;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                cursor: pointer;
+            ">
+                📧 Email<br>
+                <span style="font-size: 12px;">${session.email}</span>
+            </button>
+            
+            <button id="sms-send-btn" style="
+                flex: 1;
+                padding: 20px;
+                background: #28a745;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                cursor: pointer;
+            ">
+                💬 SMS<br>
+                <span style="font-size: 12px;">${session.phoneNumber}</span>
+            </button>
+        </div>
+        
+        <button id="cancel-send-btn" style="
+            width: 100%;
+            padding: 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        ">Cancel</button>
+    `;
+    
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
+    
+    // Add event listeners
+    document.getElementById('email-send-btn').onclick = async function() {
+        console.log('Email option selected');
+        overlay.remove();
+        
+        // Save agreement first if needed
+        if (!currentAgreement) {
+            await saveAgreement();
+        }
+        
+        if (currentAgreement && session.id) {
+            sendViaEmail(session.id);
+        } else {
+            showMessage('Please save the agreement first', 'error');
+        }
+    };
+    
+    document.getElementById('sms-send-btn').onclick = async function() {
+        console.log('SMS option selected');
+        overlay.remove();
+        
+        // Save agreement first if needed
+        if (!currentAgreement) {
+            await saveAgreement();
+        }
+        
+        if (currentAgreement && session.id) {
+            sendViaSMS(session.id);
+        } else {
+            showMessage('Please save the agreement first', 'error');
+        }
+    };
+    
+    document.getElementById('cancel-send-btn').onclick = function() {
+        console.log('Cancel selected');
+        overlay.remove();
+    };
+}
+
+// Show modal for choosing send method
+function showSendOptionsModal(session) {
+    console.log('📧 showSendOptionsModal called with session:', session);
+    
+    // Remove any existing modal first
+    const existingModal = document.querySelector('.send-options-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'send-options-modal';
+    const isResend = currentAgreement?.status === 'sent' || currentAgreement?.status === 'viewed';
+    const isSigned = currentAgreement?.status === 'signed';
+    
+    const title = isSigned ? 'Send to Another Recipient' : (isResend ? 'Resend Contract' : 'Send Contract for Signature');
+    const subtitle = isSigned ? 
+        `This contract has already been signed. You can send it to another recipient if needed.` :
+        (isResend ? 
+            `The contract was previously sent. Choose how to resend it to ${session.clientName}:` :
+            `How would you like to send the contract to ${session.clientName}?`);
+    
+    // Set critical styles directly on the modal for immediate visibility
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 999999 !important;
+    `;
+    
+    modal.innerHTML = `
+        <div class="send-options-content" style="
+            background: white !important;
+            padding: 30px !important;
+            border-radius: 12px !important;
+            max-width: 500px !important;
+            width: 90% !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+            position: relative !important;
+            z-index: 1000000 !important;
+        ">
+            <h3 style="margin-bottom: 15px; color: #333;">${title}</h3>
+            <p style="color: #666; margin-bottom: 25px;">${subtitle}</p>
+            
+            <div class="send-options" style="display: flex; gap: 15px; margin: 20px 0;">
+                <div class="send-option" onclick="sendViaEmail('${session.id}')" style="
+                    flex: 1;
+                    padding: 20px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-align: center;
+                    transition: all 0.3s;
+                    background: white;
+                ">
+                    <i class="fas fa-envelope" style="font-size: 32px; color: #3498db; display: block; margin-bottom: 10px;"></i>
+                    <h4 style="margin: 10px 0 5px 0; color: #333;">Email</h4>
+                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${session.email || 'No email provided'}</p>
+                    ${!session.email ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Email address required</p>' : ''}
+                </div>
+                
+                <div class="send-option" onclick="sendViaSMS('${session.id}')" style="
+                    flex: 1;
+                    padding: 20px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-align: center;
+                    transition: all 0.3s;
+                    background: white;
+                ">
+                    <i class="fas fa-sms" style="font-size: 32px; color: #27ae60; display: block; margin-bottom: 10px;"></i>
+                    <h4 style="margin: 10px 0 5px 0; color: #333;">Text Message (SMS)</h4>
+                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${session.phoneNumber || 'No phone number provided'}</p>
+                    ${!session.phoneNumber ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Phone number required</p>' : ''}
+                </div>
+            </div>
+            
+            <div class="send-options-footer" style="text-align: center; padding-top: 15px; border-top: 1px solid #e0e0e0; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeSendOptionsModal()" style="
+                    padding: 10px 30px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 16px;
+                ">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .send-options-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .send-options-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .send-options-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .send-options-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .send-options {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .send-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .send-option:hover:not(.disabled) {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .send-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .send-option i {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .send-option h4 {
+            margin: 10px 0 5px 0;
+            color: #333;
+        }
+        
+        .send-option-detail {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .send-options-footer {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+        
+        .text-danger {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+    
+    console.log('✅ Modal added to DOM');
+    console.log('Modal element:', modal);
+    console.log('Modal visible:', modal.style.display);
+    
+    // Force the modal to be visible
+    setTimeout(() => {
+        const addedModal = document.querySelector('.send-options-modal');
+        if (addedModal) {
+            console.log('✅ Modal found in DOM after adding');
+            addedModal.style.display = 'flex !important';
+        } else {
+            console.log('❌ Modal NOT found in DOM after adding');
+        }
+    }, 100);
+}
+
+// Close send options modal
+function closeSendOptionsModal() {
+    const modal = document.querySelector('.send-options-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Send via Email using mailto link
+async function sendViaEmail(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session || !session.email) {
+        showMessage('Email address is required', 'error');
+        return;
+    }
+    
+    closeSendOptionsModal();
+    
     try {
+        // Save the contract and get signing link
         const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 clientEmail: session.email,
-                clientName: session.clientName
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: new Date(session.dateTime).toLocaleDateString(),
+                sendMethod: 'email'
             })
         });
 
         if (response.ok) {
             const result = await response.json();
-            showMessage('Agreement sent for signature!', 'success');
+            
+            // Check if backend returned a mailto URL
+            if (result.mailtoUrl) {
+                // Use the mailto URL from backend
+                window.location.href = result.mailtoUrl;
+                showMessage('Opening email client...', 'success');
+            } else {
+                // Fallback to creating our own (shouldn't happen with updated backend)
+                const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+                const subject = `Photography Contract - ${session.sessionType} Session`;
+                const body = `Hello ${session.clientName},\n\nPlease review and sign your photography contract for your session on ${new Date(session.dateTime).toLocaleDateString()}.\n\nClick here to sign: ${signingLink}\n\nThank you!`;
+                window.location.href = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                showMessage('Opening email client...', 'success');
+            }
+            
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
-            displayAgreement(currentAgreement, session);
+            
+
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                closeBookingAgreementModal();
+            }, 1500);
         } else {
-            showMessage('Failed to send agreement', 'error');
+            showMessage('Failed to prepare contract', 'error');
         }
     } catch (error) {
-        console.error('Error sending agreement:', error);
-        showMessage('Error sending agreement', 'error');
+        console.error('Error:', error);
+        showMessage('Error sending contract', 'error');
+    }
+}
+
+// Send via SMS using sms: link
+async function sendViaSMS(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session || !session.phoneNumber) {
+        showMessage('Phone number is required', 'error');
+        return;
+    }
+    
+    closeSendOptionsModal();
+    
+    try {
+        // Save the contract and get signing link
+        const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                clientPhone: session.phoneNumber,
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: new Date(session.dateTime).toLocaleDateString(),
+                sendMethod: 'sms'
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Check if backend returned an sms URL
+            if (result.smsUrl) {
+                // Use the sms URL from backend
+                window.location.href = result.smsUrl;
+                showMessage('Opening SMS app...', 'success');
+            } else {
+                // Fallback to creating our own (shouldn't happen with updated backend)
+                const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
+                const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+                const message = `Hi ${session.clientName}, please sign your photography contract: ${signingLink}`;
+                const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
+                window.location.href = smsLink;
+                showMessage('Opening SMS app...', 'success');
+            }
+            
+            updateAgreementStatus(currentAgreementSessionId, 'sent');
+            currentAgreement.status = 'sent';
+            
+
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                closeBookingAgreementModal();
+            }, 1500);
+        } else {
+            showMessage('Failed to prepare contract', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error sending contract', 'error');
+    }
+}
+
+// Show modal with signing link for manual copying
+function showSigningLinkModal(signingUrl, phoneNumber) {
+    const modal = document.createElement('div');
+    modal.className = 'signing-link-modal';
+    modal.innerHTML = `
+        <div class="signing-link-content">
+            <h3>Contract Signing Link</h3>
+            <p>Copy this link to share with your client:</p>
+            
+            <div class="link-container">
+                <input type="text" id="signingLinkInput" value="${signingUrl}" readonly />
+                <button onclick="copySigningLink()" class="btn btn-primary">
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+            </div>
+            
+            ${phoneNumber ? `
+            <div class="sms-instructions">
+                <p><i class="fas fa-info-circle"></i> To send via SMS:</p>
+                <ol>
+                    <li>Copy the link above</li>
+                    <li>Open your messaging app</li>
+                    <li>Paste the link in a message to ${phoneNumber}</li>
+                </ol>
+            </div>
+            ` : ''}
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSigningLinkModal()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .signing-link-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        .signing-link-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .link-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .link-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .sms-instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .sms-instructions ol {
+            margin: 10px 0 0 20px;
+            padding: 0;
+        }
+        
+        .sms-instructions li {
+            margin: 5px 0;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+}
+
+// Copy signing link to clipboard
+function copySigningLink() {
+    const input = document.getElementById('signingLinkInput');
+    input.select();
+    document.execCommand('copy');
+    showMessage('Link copied to clipboard!', 'success');
+}
+
+// Close signing link modal
+function closeSigningLinkModal() {
+    const modal = document.querySelector('.signing-link-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -912,23 +1363,25 @@ function updateModalButtons(status) {
     const sendBtn = document.getElementById('sendBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const resendBtn = document.getElementById('resendBtn');
+    const cancelContractBtn = document.getElementById('cancelContractBtn');
 
-    // Reset all buttons
-    [previewBtn, saveBtn, sendBtn, downloadBtn, resendBtn].forEach(btn => {
-        if (btn) btn.style.display = 'none';
-    });
+    // Always show buttons for creating/sending new contracts
+    if (previewBtn) previewBtn.style.display = 'inline-block';
+    if (saveBtn) saveBtn.style.display = 'inline-block';
+    if (sendBtn) sendBtn.style.display = 'inline-block';
 
+    // Reset send button text to default
+    if (sendBtn) {
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Contract';
+    }
+
+    // Show additional buttons based on existing contract status
     switch(status) {
-        case 'new':
-        case 'draft':
-            if (previewBtn) previewBtn.style.display = 'inline-block';
-            if (saveBtn) saveBtn.style.display = 'inline-block';
-            if (sendBtn) sendBtn.style.display = 'inline-block';
-            break;
         case 'sent':
         case 'viewed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
-            if (resendBtn) resendBtn.style.display = 'inline-block';
+            // Show cancel button for pending contracts
+            if (cancelContractBtn) cancelContractBtn.style.display = 'inline-block';
             break;
         case 'signed':
             if (downloadBtn) downloadBtn.style.display = 'inline-block';
@@ -940,30 +1393,14 @@ function updateModalButtons(status) {
 function updateAgreementStatus(sessionId, status) {
     // Look for booking agreement button with data-session-id attribute
     const button = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
-    const signedButton = document.querySelector(`.signed-contract-btn[data-session-id="${sessionId}"]`);
-
     if (!button) {
-        // Try again after a short delay in case the button hasn't been rendered yet
-        setTimeout(() => {
-            const buttonRetry = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
-            const signedButtonRetry = document.querySelector(`.signed-contract-btn[data-session-id="${sessionId}"]`);
-            if (buttonRetry) {
-                updateAgreementStatusButton(buttonRetry, status);
-                updateSignedContractButton(signedButtonRetry, status);
-            }
-        }, 500);
+        console.log(`No booking agreement button found for session ${sessionId}`);
         return;
     }
 
-    updateAgreementStatusButton(button, status);
-    updateSignedContractButton(signedButton, status);
-}
-
-// Helper function to update the actual button
-function updateAgreementStatusButton(button, status) {
-
     const statusSpan = button.querySelector('.agreement-status');
     if (!statusSpan) {
+        console.log(`No status span found in booking agreement button for session ${sessionId}`);
         return;
     }
 
@@ -972,36 +1409,15 @@ function updateAgreementStatusButton(button, status) {
 
     // Update status text
     statusSpan.textContent = getStatusText(status);
-}
 
-// Helper function to update the signed contract button
-function updateSignedContractButton(signedButton, status) {
-    console.log('🔍 updateSignedContractButton called with status:', status, 'button exists:', !!signedButton);
-    if (!signedButton) {
-        console.log('❌ Signed contract button not found');
-        return;
-    }
-
-    // Always show the signed contract button, but update its appearance based on status
-    signedButton.style.display = 'inline-block';
-    console.log('✅ Signed contract button display set to inline-block');
-
-    if (status === 'signed') {
-        signedButton.style.backgroundColor = '#28a745'; // Green when signed
-        signedButton.innerHTML = '✅ <span class="signed-status">View Signed Contract</span>';
-        console.log('✅ Contract signed - button shows "View Signed Contract"');
-    } else {
-        signedButton.style.backgroundColor = '#6c757d'; // Gray when not signed
-        signedButton.innerHTML = '📄 <span class="signed-status">No Contract Signed</span>';
-        console.log('❌ No contract signed yet - button shows "No Contract Signed"');
-    }
+    console.log(`Updated booking agreement status for session ${sessionId} to ${status}`);
 }
 
 // Get status display text
 function getStatusText(status) {
     const statusTexts = {
         'draft': 'Draft Agreement',
-        'sent': '',
+        'sent': 'Pending Signature',
         'viewed': 'Viewed by Client',
         'signed': 'Signed ✓',
         'none': 'Create Agreement'
@@ -1103,106 +1519,233 @@ async function downloadAgreementPDF() {
     `);
 }
 
-// Resend agreement
-async function resendAgreement() {
-    if (!currentAgreement) return;
-
-    const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) return;
-
-    if (confirm('Resend agreement to ' + session.email + '?')) {
-        await sendForSignature();
+// Cancel contract function
+async function cancelContract() {
+    if (!currentAgreementSessionId) return;
+    
+    // Confirm cancellation
+    if (!confirm('Are you sure you want to cancel this contract? This will mark it as cancelled and remove the pending status.')) {
+        return;
+    }
+    
+    try {
+        const token = await getAuthToken();
+        if (!token) {
+            showMessage('Please log in to cancel contracts', 'error');
+            return;
+        }
+        
+        const response = await fetch(`/api/booking-agreements/${currentAgreementSessionId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to cancel contract');
+        }
+        
+        const result = await response.json();
+        showMessage('Contract cancelled successfully', 'success');
+        
+        // Update the current agreement status
+        if (currentAgreement) {
+            currentAgreement.status = 'cancelled';
+        }
+        
+        // Close the modal
+        closeBookingAgreementModal();
+        
+        // Update the session card to reflect the change
+        updateAgreementStatus(currentAgreementSessionId, 'cancelled');
+        
+        // Reload sessions to refresh the data
+        if (typeof loadSessions === 'function') {
+            await loadSessions();
+        }
+        
+    } catch (error) {
+        console.error('Error cancelling contract:', error);
+        showMessage('Failed to cancel contract: ' + error.message, 'error');
     }
 }
 
-// Send via SMS using device's default SMS app
-async function sendViaSMS() {
-    if (!currentAgreementSessionId) {
-        showMessage('Please select a session first', 'error');
-        return;
-    }
+// Resend agreement
+async function resendAgreement() {
+    // Just call sendForSignature which will show the send options modal
+    await sendForSignature();
+}
 
-    const session = sessions.find(s => s.id === currentAgreementSessionId);
-    if (!session) {
-        showMessage('Session not found', 'error');
-        return;
-    }
-
-    if (!session.phoneNumber) {
-        showMessage('No phone number found for this client', 'error');
-        return;
-    }
-
-    // Get the contract content from the editor
-    const agreementContent = document.getElementById('agreementContent');
-    if (!agreementContent || !agreementContent.innerHTML.trim()) {
-        showMessage('Please create or select a contract first', 'error');
-        return;
-    }
-
+// View pending contract in separate modal
+async function viewPendingContract(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
     try {
-        // First save the agreement to get a signable link
-        const templateId = document.getElementById('agreementTemplate').value;
-        const content = agreementContent.innerHTML;
-
-        const response = await fetch('/api/booking/agreements', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sessionId: currentAgreementSessionId,
-                templateId: templateId,
-                content: content,
-                agreementId: currentAgreement?.id
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to save agreement');
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+        if (!response.ok) return;
+        
+        const agreement = await response.json();
+        if (!agreement) return;
+        
+        // Create a simple modal to view pending contract
+        const modal = document.createElement('div');
+        modal.className = 'pending-contract-modal';
+        modal.innerHTML = `
+            <div class="pending-contract-overlay" onclick="this.parentElement.remove()">
+                <div class="pending-contract-content" onclick="event.stopPropagation()">
+                    <div class="pending-contract-header">
+                        <h3>Pending Contract - ${session.clientName}</h3>
+                        <button onclick="this.closest('.pending-contract-modal').remove()" class="close-btn">&times;</button>
+                    </div>
+                    
+                    <div class="pending-contract-body">
+                        <div class="status-badge status-${agreement.status}">
+                            ${getStatusText(agreement.status)}
+                        </div>
+                        <div class="contract-preview">
+                            ${agreement.content}
+                        </div>
+                    </div>
+                    
+                    <div class="pending-contract-footer">
+                        <button class="btn btn-primary" onclick="resendPendingContract('${sessionId}')">
+                            <i class="fas fa-redo"></i> Resend
+                        </button>
+                        <button class="btn btn-danger" onclick="cancelPendingContract('${sessionId}')">
+                            <i class="fas fa-times"></i> Cancel Contract
+                        </button>
+                        <button class="btn btn-secondary" onclick="this.closest('.pending-contract-modal').remove()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        const styles = `
+            <style>
+                .pending-contract-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 10001;
+                }
+                
+                .pending-contract-overlay {
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .pending-contract-content {
+                    background: white;
+                    border-radius: 10px;
+                    width: 90%;
+                    max-width: 700px;
+                    max-height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                .pending-contract-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .pending-contract-body {
+                    padding: 20px;
+                    overflow-y: auto;
+                    flex: 1;
+                }
+                
+                .pending-contract-footer {
+                    padding: 20px;
+                    border-top: 1px solid #e5e7eb;
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                }
+                
+                .contract-preview {
+                    margin-top: 20px;
+                    padding: 20px;
+                    background: #f9fafb;
+                    border-radius: 6px;
+                    border: 1px solid #e5e7eb;
+                }
+            </style>
+        `;
+        
+        if (!document.querySelector('.pending-contract-styles')) {
+            const styleEl = document.createElement('div');
+            styleEl.className = 'pending-contract-styles';
+            styleEl.innerHTML = styles;
+            document.head.appendChild(styleEl);
         }
-
-        const savedAgreement = await response.json();
-
-        // Now send it for signature via SMS
-        const sendResponse = await fetch(`/api/booking/agreements/${savedAgreement.id}/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                clientEmail: session.email,
-                clientPhone: session.phoneNumber,
-                clientName: session.clientName,
-                sessionType: session.sessionType,
-                sessionDate: session.dateTime,
-                sendMethod: 'sms'
-            })
-        });
-
-        if (!sendResponse.ok) {
-            throw new Error('Failed to prepare SMS');
-        }
-
-        const result = await sendResponse.json();
-
-        if (result.success) {
-            // Check if we got an SMS URL to open
-            if (result.smsUrl) {
-                // Open the SMS app with the pre-filled message
-                window.location.href = result.smsUrl;
-                showMessage('SMS app opened with signable contract link!', 'success');
-            } else {
-                showMessage('Contract prepared successfully!', 'success');
-            }
-
-            // Update the agreement status
-            currentAgreement = savedAgreement;
-            updateModalButtons('sent');
-        } else {
-            showMessage('Error preparing SMS: ' + result.message, 'error');
-        }
-
+        
+        document.body.appendChild(modal);
+        
+        // Store for resend
+        window.pendingContractAgreement = agreement;
+        window.pendingContractSession = session;
+        
     } catch (error) {
-        console.error('Error sending via SMS:', error);
-        showMessage('Error sending contract: ' + error.message, 'error');
+        console.error('Error viewing pending contract:', error);
     }
+}
+
+// Resend pending contract
+async function resendPendingContract(sessionId) {
+    const modal = document.querySelector('.pending-contract-modal');
+    if (modal) modal.remove();
+    
+    // Open booking modal to resend
+    currentAgreementSessionId = sessionId;
+    currentAgreement = window.pendingContractAgreement;
+    await openBookingAgreementModal(sessionId);
+}
+
+// Cancel pending contract
+async function cancelPendingContract(sessionId) {
+    if (!confirm('Are you sure you want to cancel this contract?')) return;
+    
+    currentAgreementSessionId = sessionId;
+    await cancelContract();
+    
+    const modal = document.querySelector('.pending-contract-modal');
+    if (modal) modal.remove();
+}
+
+// Helper functions for existing contract actions
+async function viewExistingInNewModal(sessionId) {
+    await viewPendingContract(sessionId);
+}
+
+async function resendExistingContract(sessionId) {
+    // Get the session
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    // Show send options modal directly
+    showSendOptionsModal(session);
+}
+
+async function cancelExistingContract(sessionId) {
+    currentAgreementSessionId = sessionId;
+    await cancelContract();
 }
 
 // Expose functions globally
@@ -1211,10 +1754,51 @@ window.closeBookingAgreementModal = closeBookingAgreementModal;
 window.loadSelectedTemplate = loadSelectedTemplate;
 window.saveAgreement = saveAgreement;
 window.sendForSignature = sendForSignature;
-window.sendViaSMS = sendViaSMS;
+
+// FORCE OVERRIDE THE FUNCTION TO MAKE SURE IT WORKS
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 FORCING sendForSignature override');
+    
+    window.sendForSignature = async function() {
+        console.log('🚨🚨🚨 OVERRIDE FUNCTION CALLED!!!');
+        alert('OVERRIDE: Choose how to send the contract!');
+        
+        // Create a super simple modal
+        const modal = document.createElement('div');
+        modal.id = 'simple-send-modal';
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: white !important;
+            padding: 30px !important;
+            border: 3px solid red !important;
+            z-index: 999999 !important;
+        `;
+        
+        modal.innerHTML = `
+            <h2>SEND CONTRACT</h2>
+            <p>Choose method:</p>
+            <button onclick="alert('Email selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: blue; color: white;">EMAIL</button>
+            <button onclick="alert('SMS selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: green; color: white;">SMS</button>
+            <br><br>
+            <button onclick="document.getElementById('simple-send-modal').remove();" style="padding: 10px; background: gray; color: white;">CANCEL</button>
+        `;
+        
+        document.body.appendChild(modal);
+    };
+});
 window.previewAgreement = previewAgreement;
 window.downloadAgreementPDF = downloadAgreementPDF;
 window.resendAgreement = resendAgreement;
+window.cancelContract = cancelContract;
+window.viewPendingContract = viewPendingContract;
+window.resendPendingContract = resendPendingContract;
+window.cancelPendingContract = cancelPendingContract;
+window.viewExistingInNewModal = viewExistingInNewModal;
+window.resendExistingContract = resendExistingContract;
+window.cancelExistingContract = cancelExistingContract;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
@@ -1227,9 +1811,6 @@ if (document.readyState === 'loading') {
     initializeBookingAgreements();
 }
 
-// Make updateAgreementStatus accessible globally for message handling
-window.updateAgreementStatus = updateAgreementStatus;
-
 // Make sure to update statuses when sessions are loaded
 window.addEventListener('sessionsLoaded', function() {
     console.log('Sessions loaded event - updating booking agreement statuses');
@@ -1241,3 +1822,4 @@ window.addEventListener('sessionsRendered', function() {
     console.log('Sessions rendered event - updating booking agreement statuses');
     setTimeout(updateAllAgreementStatuses, 100);
 });
+
