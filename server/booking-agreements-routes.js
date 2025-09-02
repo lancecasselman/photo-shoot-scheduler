@@ -672,6 +672,61 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Get signed contract with signature data
+    router.get('/agreements/:id/signed', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            
+            console.log(`📝 Fetching signed contract ${id} for user ${userId}`);
+            
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT 
+                        a.*,
+                        ps.client_name as session_client_name,
+                        ps.email as client_email,
+                        ps.phone_number as client_phone,
+                        sig.signature_data,
+                        sig.signature_type,
+                        sig.signer_name,
+                        sig.signer_email,
+                        sig.signed_at as signature_signed_at
+                     FROM booking_agreements a
+                     INNER JOIN photography_sessions ps ON a.session_id::text = ps.id::text
+                     LEFT JOIN booking_agreement_signatures sig ON a.id = sig.agreement_id
+                     WHERE a.id = $1 AND a.user_id = $2 AND ps.user_id = $2`,
+                    [id, userId]
+                );
+                
+                if (!result.rows[0]) {
+                    console.log(`❌ Contract ${id} not found for user ${userId}`);
+                    return res.status(404).json({ error: 'Contract not found' });
+                }
+                
+                const contract = result.rows[0];
+                console.log(`✅ Found signed contract:`, {
+                    id: contract.id,
+                    status: contract.status,
+                    hasSignature: !!contract.signature_data,
+                    signatureType: contract.signature_type
+                });
+                
+                res.json(contract);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching signed contract:', error);
+            res.status(500).json({ error: 'Failed to fetch signed contract' });
+        }
+    });
+
     // Get pending contract for a specific session (non-signed only)
     router.get('/agreements/session/:sessionId/pending', async (req, res) => {
         try {

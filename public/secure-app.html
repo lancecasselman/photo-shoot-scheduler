@@ -6135,37 +6135,36 @@ The Legacy Photography`);
             try {
                 console.log('🔍 Fetching signed contract:', contractId);
                 
-                // First, ensure sessions are loaded
-                if (!sessions || sessions.length === 0) {
-                    console.log('Loading sessions first...');
-                    const sessionsResponse = await fetch('/api/sessions');
-                    if (sessionsResponse.ok) {
-                        sessions = await sessionsResponse.json();
-                    }
+                // Fetch the signed contract directly using the new API endpoint
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                // Find the session that contains this agreement
-                let foundAgreement = null;
-                let sessionId = null;
+                const response = await fetch(`/api/booking/agreements/${contractId}/signed`, {
+                    method: 'GET',
+                    headers
+                });
                 
-                for (const session of sessions) {
-                    console.log('Checking session:', session.id);
-                    const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
-                    if (response.ok) {
-                        const agreements = await response.json();
-                        console.log(`Found ${agreements.length} agreements in session ${session.id}`);
-                        const agreement = agreements.find(a => a.id === contractId);
-                        if (agreement) {
-                            foundAgreement = agreement;
-                            sessionId = session.id;
-                            // Add session info to agreement
-                            foundAgreement.session_client_name = session.clientName || session.client_name || 'Unknown';
-                            foundAgreement.session_email = session.email || 'Unknown';
-                            console.log('Found agreement:', foundAgreement);
-                            break;
-                        }
-                    }
+                console.log('📡 API Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Failed to fetch signed contract:', errorText);
+                    throw new Error('Failed to fetch signed contract');
                 }
+                
+                const foundAgreement = await response.json();
+                console.log('✅ Signed contract received:', {
+                    id: foundAgreement.id,
+                    status: foundAgreement.status,
+                    hasSignature: !!foundAgreement.signature_data,
+                    signatureSize: foundAgreement.signature_data ? foundAgreement.signature_data.length : 0,
+                    clientName: foundAgreement.session_client_name
+                });
                 
                 if (!foundAgreement) {
                     throw new Error('Contract not found. It may have been deleted or you may not have access to it.');
