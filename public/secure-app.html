@@ -7033,6 +7033,53 @@ ${contract.contract_content}
                 console.error('Error loading sessions:', error);
             }
         }
+        
+        // Function to trigger immediate payment status refresh
+        window.triggerImmediatePaymentRefresh = async function() {
+            console.log('⚡ Triggering immediate payment status refresh...');
+            try {
+                const response = await fetch('/api/sessions');
+                if (response.ok) {
+                    const updatedSessions = await response.json();
+                    
+                    // Update sessions with latest data
+                    window.sessions = updatedSessions.map(session => ({
+                        id: session.id,
+                        sessionType: session.session_type || session.sessionType,
+                        clientName: session.client_name || session.clientName,
+                        dateTime: session.date_time || session.dateTime,
+                        location: session.location,
+                        phoneNumber: session.phone_number || session.phoneNumber,
+                        email: session.email,
+                        price: parseFloat(session.price) || 0,
+                        depositAmount: parseFloat(session.deposit_amount || session.depositAmount || 0),
+                        depositPaid: session.deposit_paid || session.depositPaid || false,
+                        depositSent: session.deposit_sent || session.depositSent || false,
+                        invoiceSent: session.invoice_sent || session.invoiceSent || false,
+                        depositPaidAt: session.deposit_paid_at || session.depositPaidAt,
+                        invoicePaidAt: session.invoice_paid_at || session.invoicePaidAt,
+                        duration: parseInt(session.duration) || 60,
+                        notes: session.notes || '',
+                        contractSigned: session.contract_signed || session.contractSigned || false,
+                        paid: session.paid || false,
+                        edited: session.edited || false,
+                        delivered: session.delivered || false,
+                        reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
+                        galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
+                        reminderSent: session.reminder_sent || session.reminderSent || false
+                    }));
+                    
+                    // Re-render sessions immediately
+                    if (typeof window.renderSessions === 'function') {
+                        window.renderSessions();
+                        showMessage('✅ Payment status updated!', 'success');
+                    }
+                    console.log('⚡ Immediate payment status refresh complete!');
+                }
+            } catch (error) {
+                console.error('Error in immediate payment refresh:', error);
+            }
+        }
 
         window.renderSessions = function renderSessions() {
             // SORT SESSIONS BY APPOINTMENT DATE BEFORE RENDERING
@@ -10171,7 +10218,12 @@ END:VCALENDAR`;
                 }
                 
                 showMessage('Payment marked as paid!', 'success');
-                loadSessions(); // Refresh session data
+                // Trigger immediate refresh for instant UI update
+                if (typeof window.triggerImmediatePaymentRefresh === 'function') {
+                    triggerImmediatePaymentRefresh();
+                } else {
+                    loadSessions(); // Fallback to regular refresh
+                }
                 // Re-open the payment plan view to show updated status
                 setTimeout(() => {
                     if (currentPaymentPlanSessionId) {
@@ -10197,7 +10249,10 @@ END:VCALENDAR`;
                 }
                 
                 showMessage('Payment invoice sent successfully!', 'success');
-                // Invoice sent successfully
+                // Trigger immediate refresh for instant UI update
+                if (typeof window.triggerImmediatePaymentRefresh === 'function') {
+                    triggerImmediatePaymentRefresh();
+                }
                 
             } catch (error) {
                 console.error('Error sending payment invoice:', error);

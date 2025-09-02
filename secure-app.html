@@ -6663,13 +6663,13 @@ ${contract.contract_content}
                 }
             }, 500);
             
-            // Auto-refresh session payment status every 30 seconds
+            // Start immediate payment status monitoring
             startPaymentStatusRefresh();
         };
         
         // Auto-refresh function for payment status updates
         window.startPaymentStatusRefresh = function() {
-            // Refresh every 30 seconds to check for payment updates
+            // Refresh every 5 seconds to check for payment updates (faster for better UX)
             setInterval(async () => {
                 try {
                     const response = await fetch('/api/sessions');
@@ -6739,9 +6739,9 @@ ${contract.contract_content}
                 } catch (error) {
                     console.error('Error checking payment status updates:', error);
                 }
-            }, 30000); // Check every 30 seconds
+            }, 5000); // Check every 5 seconds for immediate updates
             
-            console.log('💳 Payment status auto-refresh started (30-second interval)');
+            console.log('💳 Payment status auto-refresh started (5-second interval for immediate updates)');
         };
 
         window.setupEventListeners = function() {
