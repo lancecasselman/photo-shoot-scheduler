@@ -36,7 +36,287 @@ let agreementTemplates = [];
     document.head.appendChild(criticalStyles);
 })();
 
+// Function to view contracts for the current session only
+async function viewSessionContracts() {
+    if (!currentAgreementSessionId) {
+        alert('No session selected');
+        return;
+    }
 
+    try {
+        // Fetch contracts specifically for this session
+        const response = await fetch(`/api/booking/agreements/session/${currentAgreementSessionId}/all`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch session contracts');
+        }
+        
+        const agreements = await response.json();
+        
+        // Filter for sent, viewed, and signed agreements only
+        const sessionContracts = Array.isArray(agreements) ? agreements.filter(agreement => 
+            ['sent', 'viewed', 'signed'].includes(agreement.status)
+        ) : (agreements && ['sent', 'viewed', 'signed'].includes(agreements.status)) ? [agreements] : [];
+        
+        showSessionContractsModal(sessionContracts);
+        
+    } catch (error) {
+        console.error('Error fetching session contracts:', error);
+        alert('Error loading session contracts: ' + error.message);
+    }
+}
+
+// Show session-specific contracts modal with signatures
+function showSessionContractsModal(agreements) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('sessionContractsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Get current session info for modal title
+    const currentSession = sessions.find(s => s.id === currentAgreementSessionId);
+    const sessionTitle = currentSession ? currentSession.clientName : 'Current Session';
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div id="sessionContractsModal" class="booking-modal" style="display: flex; z-index: 10000;">
+            <div class="booking-modal-content" style="max-width: 900px; width: 95%;">
+                <div class="booking-modal-header">
+                    <h2>📄 Contracts for ${sessionTitle}</h2>
+                    <button class="booking-modal-close" onclick="closeSessionContractsModal()">&times;</button>
+                </div>
+                
+                <div class="booking-modal-body">
+                    <div id="sessionAgreementsList" style="max-height: 500px; overflow-y: auto;">
+                        ${agreements.length > 0 ? agreements.map(agreement => `
+                            <div class="agreement-item" style="border: 2px solid #ddd; margin-bottom: 15px; padding: 20px; border-radius: 8px; background: white;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h3 style="margin: 0; color: #333; font-size: 18px;">${agreement.session_client_name || sessionTitle}</h3>
+                                    <span class="status-badge status-${agreement.status}" style="
+                                        padding: 6px 12px; 
+                                        border-radius: 15px; 
+                                        font-size: 14px; 
+                                        font-weight: bold;
+                                        background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
+                                        color: white;
+                                        text-transform: uppercase;
+                                    ">${agreement.status}</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                    <p style="margin: 5px 0; color: #666;"><strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleString() : 'N/A'}</p>
+                                    ${agreement.viewed_at ? `<p style="margin: 5px 0; color: #666;"><strong>Viewed:</strong> ${new Date(agreement.viewed_at).toLocaleString()}</p>` : ''}
+                                    ${agreement.signed_at ? `<p style="margin: 5px 0; color: #666;"><strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleString()}</p>` : ''}
+                                </div>
+                                
+                                ${agreement.status === 'signed' ? `
+                                    <div id="signatureDisplay-${agreement.id}" style="margin: 15px 0; padding: 15px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 8px;">
+                                        <h4 style="margin-bottom: 10px; color: #15803d;">✍️ Digital Signature</h4>
+                                        <div class="signature-loading" style="text-align: center; color: #666;">Loading signature...</div>
+                                    </div>
+                                ` : ''}
+                                
+                                <div style="margin-top: 15px; text-align: center;">
+                                    <button onclick="viewContractDetails('${agreement.id}')" class="btn btn-primary" style="margin-right: 10px; padding: 10px 20px;">
+                                        📋 View Full Contract
+                                    </button>
+                                    ${agreement.status !== 'signed' ? `<button onclick="resendContractToClient('${agreement.id}')" class="btn btn-warning" style="padding: 10px 20px;">📤 Resend</button>` : ''}
+                                </div>
+                            </div>
+                        `).join('') : `<div style="text-align: center; color: #666; padding: 40px;">
+                            <h3>No contracts found for this session</h3>
+                            <p>Contracts that have been sent, viewed, or signed will appear here.</p>
+                        </div>`}
+                    </div>
+                </div>
+                
+                <div class="booking-modal-footer">
+                    <button class="btn btn-secondary" onclick="closeSessionContractsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Load signatures for signed contracts
+    agreements.forEach(agreement => {
+        if (agreement.status === 'signed') {
+            loadContractSignature(agreement.id);
+        }
+    });
+}
+
+// Close session contracts modal
+function closeSessionContractsModal() {
+    const modal = document.getElementById('sessionContractsModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Load and display signature for a specific contract
+async function loadContractSignature(agreementId) {
+    try {
+        const response = await fetch(`/api/booking/agreements/${agreementId}/signatures`);
+        if (response.ok) {
+            const signatures = await response.json();
+            if (signatures.length > 0) {
+                const signature = signatures[0];
+                const signatureContainer = document.getElementById(`signatureDisplay-${agreementId}`);
+                if (signatureContainer) {
+                    signatureContainer.innerHTML = `
+                        <h4 style="margin-bottom: 15px; color: #15803d;">✍️ Digital Signature</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="padding: 10px; background: white; border: 1px solid #d1d5db; border-radius: 6px;">
+                                <p style="margin: 0; color: #374151;"><strong>Signed by:</strong> ${signature.signer_name}</p>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>Date:</strong> ${new Date(signature.created_at).toLocaleString()}</p>
+                            </div>
+                            ${signature.signature_data ? `
+                                <div style="border: 2px solid #15803d; border-radius: 8px; padding: 10px; background: white;">
+                                    <p style="margin: 0 0 10px 0; color: #15803d; font-weight: bold;">Signature:</p>
+                                    <canvas id="signatureCanvas-${agreementId}" style="border: 1px solid #ddd; max-width: 100%; height: 120px;"></canvas>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // Draw the signature if data exists
+                    if (signature.signature_data) {
+                        const canvas = document.getElementById(`signatureCanvas-${agreementId}`);
+                        if (canvas) {
+                            drawSignatureOnCanvas(canvas, signature.signature_data);
+                        }
+                    }
+                }
+            }
+        } else {
+            console.error('Failed to load signature for agreement:', agreementId);
+        }
+    } catch (error) {
+        console.error('Error loading signature:', error);
+        const signatureContainer = document.getElementById(`signatureDisplay-${agreementId}`);
+        if (signatureContainer) {
+            signatureContainer.innerHTML = `
+                <h4 style="margin-bottom: 10px; color: #dc2626;">❌ Signature Error</h4>
+                <p style="color: #666; margin: 0;">Unable to load signature data</p>
+            `;
+        }
+    }
+}
+
+// Draw signature on canvas
+function drawSignatureOnCanvas(canvas, signatureData) {
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = function() {
+        // Clear canvas and set size
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 120;
+        
+        // Clear with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw signature image
+        ctx.drawImage(img, 10, 10, canvas.width - 20, canvas.height - 20);
+    };
+    
+    img.onerror = function() {
+        // If image fails, try to parse as path data
+        try {
+            const paths = JSON.parse(signatureData);
+            if (Array.isArray(paths)) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 120;
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                paths.forEach(path => {
+                    if (path.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(path[0].x * canvas.width, path[0].y * canvas.height);
+                        for (let i = 1; i < path.length; i++) {
+                            ctx.lineTo(path[i].x * canvas.width, path[i].y * canvas.height);
+                        }
+                        ctx.stroke();
+                    }
+                });
+            }
+        } catch (e) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#666';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Signature data format not supported', canvas.width/2, canvas.height/2);
+        }
+    };
+    
+    // Try to load as base64 image first
+    if (signatureData.startsWith('data:image/')) {
+        img.src = signatureData;
+    } else {
+        // Trigger the error handler to try path parsing
+        img.onerror();
+    }
+}
+
+// View full contract details
+async function viewContractDetails(agreementId) {
+    try {
+        const response = await fetch(`/api/booking/agreements/all`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch agreement details');
+        }
+        
+        const agreements = await response.json();
+        const agreement = agreements.find(a => a.id === agreementId);
+        
+        if (!agreement) {
+            throw new Error('Agreement not found');
+        }
+        
+        // Close current modal and open detailed view
+        closeSessionContractsModal();
+        
+        // Show the agreement content in a detailed modal
+        showContractDetailsModal(agreement);
+        
+    } catch (error) {
+        console.error('Error fetching contract details:', error);
+        alert('Error loading contract details: ' + error.message);
+    }
+}
+
+// Resend contract to client
+async function resendContractToClient(agreementId) {
+    if (confirm('Are you sure you want to resend this contract to the client?')) {
+        try {
+            const response = await fetch(`/api/booking/agreements/${agreementId}/resend`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                alert('Contract has been resent successfully!');
+                // Refresh the modal
+                viewSessionContracts();
+            } else {
+                throw new Error('Failed to resend contract');
+            }
+        } catch (error) {
+            console.error('Error resending contract:', error);
+            alert('Error resending contract: ' + error.message);
+        }
+    }
+}
 
 // View agreement details
 async function viewAgreementDetails(agreementId) {
@@ -171,6 +451,9 @@ function createBookingAgreementModal() {
                         </button>
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
+                        </button>
+                        <button class="btn btn-info" onclick="viewSessionContracts()" style="background-color: #17a2b8; color: white;">
+                            📄 View Session Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
