@@ -9404,23 +9404,31 @@ lance@thelegacyphotography.com`;
         // View contract details
         window.viewContractDetails = async function(contractId) {
             try {
-                const authToken = await getAuthToken();
-                const headers = {};
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
+                console.log('🔍 Fetching contract details for:', contractId);
+                
+                // Find the contract from all sessions
+                let foundContract = null;
+                for (const session of sessions) {
+                    const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
+                    if (response.ok) {
+                        const agreements = await response.json();
+                        const agreement = agreements.find(a => a.id === contractId);
+                        if (agreement) {
+                            foundContract = agreement;
+                            foundContract.session_id = session.id;
+                            foundContract.client_name = session.clientName || session.client_name || 'Unknown';
+                            foundContract.client_email = session.email || 'Unknown';
+                            break;
+                        }
+                    }
                 }
                 
-                const response = await fetch(`/api/contracts/${contractId}`, {
-                    method: 'GET',
-                    headers
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch contract details');
+                if (!foundContract) {
+                    throw new Error('Contract not found');
                 }
                 
-                const contract = await response.json();
-                showContractDetailsModal(contract);
+                console.log('📝 Found contract:', foundContract);
+                showContractDetailsModal(foundContract);
                 
             } catch (error) {
                 console.error('Error fetching contract details:', error);
@@ -9434,22 +9442,22 @@ lance@thelegacyphotography.com`;
                 <div id="contractDetailsModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">${contract.contract_title}</h2>
+                            <h2 style="color: #8b7355; margin: 0;">${contract.client_name || 'Contract Details'}</h2>
                             <button onclick="closeModal('contractDetailsModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
                         <div class="contract-info" style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 6px;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                <div><strong>Status:</strong> <span class="status-badge status-${contract.status}">${contract.status.toUpperCase()}</span></div>
+                                <div><strong>Status:</strong> <span class="status-badge status-${contract.status}" style="background: ${contract.status === 'signed' ? '#28a745' : '#17a2b8'}; color: white; padding: 3px 8px; border-radius: 4px;">${contract.status.toUpperCase()}</span></div>
                                 <div><strong>Created:</strong> ${new Date(contract.created_at).toLocaleDateString()}</div>
-                                <div><strong>Client:</strong> ${contract.client_name}</div>
-                                <div><strong>Email:</strong> ${contract.client_email}</div>
-                                ${contract.signed_date ? `<div><strong>Signed:</strong> ${new Date(contract.signed_date).toLocaleDateString()}</div>` : ''}
+                                <div><strong>Client:</strong> ${contract.client_name || 'Unknown'}</div>
+                                <div><strong>Email:</strong> ${contract.client_email || contract.signer_email || 'Unknown'}</div>
+                                ${contract.signed_at ? `<div><strong>Signed:</strong> ${new Date(contract.signed_at).toLocaleDateString()}</div>` : ''}
                             </div>
                         </div>
                         
                         <div class="contract-content" style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin-bottom: 20px; font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
-${contract.contract_content}
+${contract.content || 'No content available'}
                         </div>
                         
                         <div style="text-align: center;">
