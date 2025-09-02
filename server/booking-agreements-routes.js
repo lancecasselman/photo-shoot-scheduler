@@ -175,11 +175,13 @@ function createBookingAgreementRoutes(pool) {
             const client = await pool.connect();
             try {
                 const result = await client.query(
-                    `SELECT a.*, t.name as template_name, s.signature_data, s.signer_name, s.signed_at as signature_date
+                    `SELECT a.*, t.name as template_name, s.signature_data, s.signer_name, s.signed_at as signature_date,
+                            ps.client_name, ps.phone_number, ps.email
                      FROM booking_agreements a
                      LEFT JOIN booking_agreement_templates t ON a.template_id = t.id
                      LEFT JOIN booking_agreement_signatures s ON a.id = s.agreement_id
-                     WHERE a.session_id = $1 AND a.user_id = $2
+                     INNER JOIN photography_sessions ps ON a.session_id::text = ps.id::text
+                     WHERE a.session_id = $1 AND a.user_id = $2 AND ps.user_id = $2
                      ORDER BY a.created_at DESC
                      LIMIT 1`,
                     [sessionId, userId]

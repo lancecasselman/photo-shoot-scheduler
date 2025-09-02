@@ -17555,6 +17555,8 @@ END:VCALENDAR`;
                 if (response.ok) {
                     const agreement = await response.json();
                     if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'signed')) {
+                        // Log contract details for verification
+                        console.log(`📄 Opening contract for ${agreement.client_name} (${agreement.phone_number}) - Status: ${agreement.status}`);
                         // Open the contract in a new window
                         window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
                     } else {
