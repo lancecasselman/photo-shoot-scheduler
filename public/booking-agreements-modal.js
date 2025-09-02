@@ -136,8 +136,11 @@ function displaySignatureData(agreement) {
                 <img src="${agreement.signature_data}" alt="Electronic Signature" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
             </div>
             <div style="margin-top: 15px; text-align: center;">
-                <button class="btn btn-success" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')">
+                <button class="btn btn-success" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')" style="margin-right: 10px;">
                     📄 Download Signed Contract
+                </button>
+                <button class="btn btn-info" onclick="viewSignedCopyModal('${agreement.id}')">
+                    👁️ View Signed Copy
                 </button>
             </div>
         `;
@@ -154,6 +157,102 @@ function displaySignatureData(agreement) {
                 <p style="margin: 0;">Contract not yet signed</p>
             </div>
         `;
+    }
+}
+
+// View signed copy in full screen modal
+async function viewSignedCopyModal(agreementId) {
+    try {
+        // Find the agreement data from the current modal
+        const currentModal = document.getElementById('agreementDetailsModal');
+        if (!currentModal) {
+            throw new Error('Current agreement modal not found');
+        }
+        
+        // Get all sessions to find the agreement
+        const sessionsResponse = await fetch('/api/sessions');
+        if (!sessionsResponse.ok) {
+            throw new Error('Failed to fetch sessions');
+        }
+        const sessions = await sessionsResponse.json();
+        
+        // Find the agreement in all sessions
+        let foundAgreement = null;
+        for (const session of sessions) {
+            const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
+            if (response.ok) {
+                const agreements = await response.json();
+                const agreement = agreements.find(a => a.id === agreementId && a.status === 'signed');
+                if (agreement) {
+                    foundAgreement = agreement;
+                    break;
+                }
+            }
+        }
+        
+        if (!foundAgreement || !foundAgreement.signature_data) {
+            throw new Error('Signed contract with signature not found');
+        }
+        
+        // Create full-screen signed copy modal
+        const signedCopyModalHTML = `
+            <div id="signedCopyModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002;">
+                <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 95vh; overflow-y: auto;">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
+                        <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract Copy - ${foundAgreement.session_client_name || 'Client'}</h2>
+                        <button onclick="closeModal('signedCopyModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    
+                    <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed & Verified</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div><strong>Client:</strong> ${foundAgreement.session_client_name || 'Unknown'}</div>
+                            <div><strong>Signer:</strong> ${foundAgreement.signer_name || 'Unknown'}</div>
+                            <div><strong>Email:</strong> ${foundAgreement.signer_email || 'Unknown'}</div>
+                            <div><strong>Signed Date:</strong> ${new Date(foundAgreement.signed_at).toLocaleString()}</div>
+                            ${foundAgreement.ip_address ? `<div><strong>IP Address:</strong> ${foundAgreement.ip_address}</div>` : ''}
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <strong>Electronic Signature:</strong>
+                            <div style="margin-top: 8px; text-align: center;">
+                                <img src="${foundAgreement.signature_data}" style="max-width: 400px; max-height: 150px; border: 2px solid #28a745; border-radius: 8px; background: white; padding: 10px;" alt="Electronic Signature">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-content" style="background: white; border: 2px solid #d4af37; border-radius: 6px; padding: 30px; margin-bottom: 20px; font-family: 'Times New Roman', serif; line-height: 1.6; white-space: pre-wrap; max-height: 500px; overflow-y: auto;">
+${foundAgreement.content || 'No content available'}
+                    </div>
+                    
+                    <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is an official digitally signed copy with electronic signature verification</p>
+                        <button onclick="downloadSignedContract('${foundAgreement.id}', '${foundAgreement.session_client_name || 'client'}')" class="btn btn-success" style="margin-right: 10px;">
+                            📄 Download Contract
+                        </button>
+                        <button onclick="window.print()" class="btn btn-secondary" style="margin-right: 10px;">
+                            🖨️ Print Contract
+                        </button>
+                        <button onclick="closeModal('signedCopyModal')" class="btn btn-secondary">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', signedCopyModalHTML);
+        
+    } catch (error) {
+        console.error('Error viewing signed copy:', error);
+        alert('Failed to load signed copy: ' + error.message);
+    }
+}
+
+// Close modal helper
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.remove();
     }
 }
 
