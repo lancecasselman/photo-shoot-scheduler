@@ -715,15 +715,19 @@
         function handleAuthClick(e) {
             e.preventDefault();
             
-            // More comprehensive Capacitor and Android detection
+            // Comprehensive mobile platform detection
             const isCapacitor = !!(window.Capacitor || window.capacitor);
             const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             const isWebView = !!(window.chrome && window.chrome.webstore === undefined);
             const hasNativeMethod = !!(window.open && window.open.toString().includes('[native code]'));
+            const isMobile = isAndroid || isIOS || isCapacitor;
             
             console.log('🚀 AUTH BUTTON CLICKED - DEBUG INFO:', { 
                 isCapacitor, 
                 isAndroid, 
+                isIOS,
+                isMobile,
                 isWebView,
                 hasNativeMethod,
                 userAgent: navigator.userAgent,
@@ -736,14 +740,21 @@
             showLoading();
             
             // Platform-specific authentication
-            if (isCapacitor || isAndroid) {
-                console.log('📱 MOBILE DETECTED: Using Android authentication flow...');
+            if (isMobile) {
+                console.log('📱 MOBILE DETECTED: Using mobile authentication flow...');
+                
+                // Set flag to prevent auth checks during redirect (consistent across platforms)
+                sessionStorage.setItem('landingRedirect', 'true');
                 
                 // Get current domain for the redirect URL
                 const currentDomain = window.location.origin;
                 
-                // Create authentication URL with Android-specific parameters
-                const authUrl = `${currentDomain}/secure-login.html?android=true&redirect=photomanager://auth/success`;
+                // Create authentication URL with mobile-specific parameters
+                let redirectScheme = 'photomanager://auth/success';
+                if (isIOS) {
+                    redirectScheme = 'photomanager://auth/success';
+                }
+                const authUrl = `${currentDomain}/secure-login.html?mobile=true&platform=${isIOS ? 'ios' : 'android'}&redirect=${redirectScheme}`;
                 
                 console.log('🌐 Attempting to open browser with URL:', authUrl);
                 
@@ -808,7 +819,9 @@
                 console.log('📊 SESSION CHECK:', data);
                 
                 if (data.authenticated && data.userId) {
-                    console.log('✅ ANDROID: User authenticated, redirecting to app...');
+                    console.log('✅ MOBILE: User authenticated, redirecting to app...');
+                    // Set flag to prevent auth loops during mobile redirect
+                    sessionStorage.setItem('landingRedirect', 'true');
                     // User is authenticated, navigate to the secure app
                     window.location.href = '/secure-app.html';
                 } else {

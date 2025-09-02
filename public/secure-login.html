@@ -176,17 +176,21 @@
                         email: user.email,
                         displayName: user.displayName,
                         photoURL: user.photoURL,
-                        isAndroid: new URLSearchParams(window.location.search).get('android') === 'true'
+                        isMobile: new URLSearchParams(window.location.search).get('mobile') === 'true',
+                        platform: new URLSearchParams(window.location.search).get('platform') || 'web'
                     }),
                     credentials: 'include'
                 });
 
                 if (response.ok) {
                     console.log('🖥️ Session created successfully, redirecting...');
-                    // Check if this is an Android redirect
+                    // Set flag to prevent auth loops during redirect
+                    sessionStorage.setItem('landingRedirect', 'true');
+                    
+                    // Check if this is a mobile redirect
                     const redirect = new URLSearchParams(window.location.search).get('redirect');
                     if (redirect) {
-                        // For Android, try to redirect back to the app
+                        // For mobile apps, try to redirect back to the app
                         window.location.href = redirect;
                     } else {
                         // For web, go to secure app
@@ -208,8 +212,9 @@
             
             // Auto-start authentication if coming from mobile
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('android') === 'true') {
-                console.log('📱 Android authentication flow detected, auto-starting...');
+            if (urlParams.get('mobile') === 'true') {
+                const platform = urlParams.get('platform') || 'unknown';
+                console.log(`📱 Mobile authentication flow detected (${platform}), auto-starting...`);
                 setTimeout(signInWithGoogle, 500);
             }
         });
