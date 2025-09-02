@@ -36,94 +36,7 @@ let agreementTemplates = [];
     document.head.appendChild(criticalStyles);
 })();
 
-// Function to view signed/pending contracts
-async function viewSignedPendingContracts() {
-    try {
-        // Fetch all sent and signed agreements for the current user
-        const response = await fetch('/api/booking/agreements/all');
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch agreements');
-        }
-        
-        const agreements = await response.json();
-        
-        // Filter for sent, viewed, and signed agreements
-        const sentAndSignedAgreements = agreements.filter(agreement => 
-            ['sent', 'viewed', 'signed'].includes(agreement.status)
-        );
-        
-        showSignedPendingContractsModal(sentAndSignedAgreements);
-        
-    } catch (error) {
-        console.error('Error fetching agreements:', error);
-        alert('Error loading signed/pending contracts: ' + error.message);
-    }
-}
 
-// Show the signed/pending contracts modal
-function showSignedPendingContractsModal(agreements) {
-    // Remove existing modal if present
-    const existingModal = document.getElementById('signedPendingModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Create modal HTML
-    const modalHTML = `
-        <div id="signedPendingModal" class="booking-modal" style="display: flex; z-index: 10000;">
-            <div class="booking-modal-content" style="max-width: 800px; width: 90%;">
-                <div class="booking-modal-header">
-                    <h2>📄 Signed & Pending Contracts</h2>
-                    <button class="booking-modal-close" onclick="closeSignedPendingModal()">&times;</button>
-                </div>
-                
-                <div class="booking-modal-body">
-                    <div id="agreementsList" style="max-height: 400px; overflow-y: auto;">
-                        ${agreements.length > 0 ? agreements.map(agreement => `
-                            <div class="agreement-item" style="border: 1px solid #ddd; margin-bottom: 10px; padding: 15px; border-radius: 5px; background: white;">
-                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                    <h4 style="margin: 0; color: #333;">${agreement.session_client_name || 'Unknown Client'}</h4>
-                                    <span class="status-badge status-${agreement.status}" style="
-                                        padding: 4px 8px; 
-                                        border-radius: 12px; 
-                                        font-size: 12px; 
-                                        font-weight: bold;
-                                        background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
-                                        color: white;
-                                    ">${agreement.status.toUpperCase()}</span>
-                                </div>
-                                <p style="margin: 5px 0; color: #666; font-size: 14px;">
-                                    <strong>Session:</strong> ${agreement.session_type || 'Photography Session'} | 
-                                    <strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleDateString() : 'N/A'}
-                                    ${agreement.signed_at ? ` | <strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleDateString()}` : ''}
-                                </p>
-                                <div style="margin-top: 10px;">
-                                    <button onclick="viewAgreementDetails('${agreement.id}')" class="btn btn-sm btn-primary" style="margin-right: 10px;">View Details</button>
-                                    ${agreement.status !== 'signed' ? `<button onclick="resendAgreement('${agreement.id}')" class="btn btn-sm btn-secondary">Resend</button>` : ''}
-                                </div>
-                            </div>
-                        `).join('') : '<p style="text-align: center; color: #666; padding: 20px;">No sent or signed contracts found.</p>'}
-                    </div>
-                </div>
-                
-                <div class="booking-modal-footer">
-                    <button class="btn btn-secondary" onclick="closeSignedPendingModal()">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-// Close the signed/pending contracts modal
-function closeSignedPendingModal() {
-    const modal = document.getElementById('signedPendingModal');
-    if (modal) {
-        modal.remove();
-    }
-}
 
 // View agreement details
 async function viewAgreementDetails(agreementId) {
@@ -258,9 +171,6 @@ function createBookingAgreementModal() {
                         </button>
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
-                        </button>
-                        <button class="btn btn-info" onclick="viewSignedPendingContracts()" style="background-color: #17a2b8; color: white;">
-                            📄 Signed/Pending Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
