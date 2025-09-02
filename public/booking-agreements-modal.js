@@ -40,10 +40,12 @@ let agreementTemplates = [];
 
 
 // View agreement details
-async function viewAgreementDetails(agreementId) {
+async function viewAgreementDetails(agreementId, sessionId) {
     try {
-        // First try to get the agreement details from the all endpoint
-        const response = await fetch('/api/booking/agreements/all');
+        console.log('📄 Fetching agreement details:', agreementId, 'for session:', sessionId);
+        
+        // Use the session-specific endpoint to get signature data
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
         if (!response.ok) {
             throw new Error('Failed to fetch agreements');
         }
@@ -54,6 +56,8 @@ async function viewAgreementDetails(agreementId) {
         if (!agreement) {
             throw new Error('Agreement not found');
         }
+        
+        console.log('📝 Agreement found with signature data:', !!agreement.signature_data);
         
         // Close current modal and open agreement modal with the details
         closeSignedPendingModal();
@@ -451,11 +455,89 @@ function showEditMode(agreement, session) {
 
 
 // Show both view and create mode for existing contracts
-function showBothViewAndCreate(agreement, session) {
-    // ALWAYS show the create interface, never just the viewer
+async function showBothViewAndCreate(agreement, session) {
+    // Check if we should show existing signed contracts or allow creation
+    if (agreement.status === 'signed') {
+        // For signed contracts, show a list of signed contracts with option to create new
+        await showSignedContractsViewer(session.id);
+    } else if (agreement.status === 'sent' || agreement.status === 'viewed') {
+        // For sent/viewed contracts, show the pending contract with option to create new
+        await showPendingContractViewer(agreement, session);
+    } else {
+        // For drafts or other statuses, show creation interface
+        showCreateInterface();
+    }
+}
+
+// Show signed contracts viewer
+async function showSignedContractsViewer(sessionId) {
+    try {
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch signed contracts');
+        }
+        
+        const agreements = await response.json();
+        const signedAgreements = agreements.filter(a => a.status === 'signed');
+        
+        if (signedAgreements.length === 0) {
+            showCreateInterface();
+            return;
+        }
+        
+        // Show the viewer with signed contracts
+        document.getElementById('templateSelector').style.display = 'none';
+        document.getElementById('agreementEditor').style.display = 'none';
+        document.getElementById('agreementViewer').style.display = 'block';
+        
+        // Create signed contracts list
+        const viewerContent = document.getElementById('agreementViewContent');
+        viewerContent.innerHTML = `
+            <h3 style="color: #28a745; margin-bottom: 20px;">📝 Signed Contracts</h3>
+            <div class="signed-contracts-list">
+                ${signedAgreements.map(agreement => `
+                    <div class="signed-contract-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #f8f9fa;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <strong>Signed: ${new Date(agreement.signed_at).toLocaleString()}</strong>
+                                <br>
+                                <small>Signer: ${agreement.signer_name || 'Unknown'} (${agreement.signer_email || 'Unknown'})</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-primary btn-sm" onclick="viewAgreementDetails('${agreement.id}', '${sessionId}')" style="margin-right: 5px;">
+                                    👁️ View Contract
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')">
+                                    📄 Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="contract-preview" style="max-height: 100px; overflow: hidden; color: #666; font-size: 14px;">
+                            ${(agreement.content || 'No content').substring(0, 200)}...
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <hr style="margin: 20px 0;">
+            <button class="btn btn-secondary" onclick="showCreateInterface()">
+                ➕ Create New Contract
+            </button>
+        `;
+        
+        // Update modal buttons for viewing mode  
+        updateModalButtons('view');
+        
+    } catch (error) {
+        console.error('Error loading signed contracts:', error);
+        showCreateInterface();
+    }
+}
+
+// Show create interface
+function showCreateInterface() {
     document.getElementById('templateSelector').style.display = 'block';
     document.getElementById('agreementEditor').style.display = 'block';
-    document.getElementById('agreementViewer').style.display = 'none'; // Hide viewer
+    document.getElementById('agreementViewer').style.display = 'none';
     
     // Clear editor for new contract
     document.getElementById('agreementContent').innerHTML = '';
@@ -475,7 +557,6 @@ function showBothViewAndCreate(agreement, session) {
             });
         }
     }
-    
     
     // Update buttons for creating new contracts
     updateModalButtons('new');
