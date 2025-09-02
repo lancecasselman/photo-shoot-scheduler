@@ -17551,42 +17551,25 @@ END:VCALENDAR`;
             console.log('🎯 Viewing contracts for session:', sessionId);
             
             try {
-                // Always fetch fresh data with no cache
-                const response = await fetch('/api/booking/agreements/all', {
-                    cache: 'no-cache',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
+                const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+                if (response.ok) {
+                    const agreement = await response.json();
+                    if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'signed')) {
+                        // Open the contract in a new window
+                        window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
+                    } else {
+                        const session = sessions.find(s => s.id === sessionId);
+                        const clientName = session ? session.clientName : 'this session';
+                        showMessage(`No pending contracts found for ${clientName}`, 'info');
                     }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch agreements');
+                } else {
+                    const session = sessions.find(s => s.id === sessionId);
+                    const clientName = session ? session.clientName : 'this session';
+                    showMessage(`No pending contracts found for ${clientName}`, 'info');
                 }
-                
-                const agreements = await response.json();
-                console.log(`📄 Received ${agreements.length} total agreements from server`);
-                
-                // Filter for sent, viewed, and signed agreements for this specific session
-                const sessionAgreements = agreements.filter(agreement => 
-                    ['sent', 'viewed', 'signed'].includes(agreement.status) && 
-                    agreement.session_id === sessionId
-                );
-                
-                console.log(`📄 Filtered to ${sessionAgreements.length} agreements for session ${sessionId}`);
-                sessionAgreements.forEach(agreement => {
-                    console.log(`  - ${agreement.session_client_name}: ${agreement.status} (ID: ${agreement.id})`);
-                });
-                
-                // Get session info for title
-                const session = sessions.find(s => s.id === sessionId);
-                const clientName = session ? session.clientName : 'Session';
-                
-                showSessionContractsModal(sessionAgreements, clientName);
-                
             } catch (error) {
-                console.error('Error fetching session agreements:', error);
-                showMessage('Error loading session contracts: ' + error.message, 'error');
+                console.error('Error viewing pending contract:', error);
+                showMessage('Error loading pending contract', 'error');
             }
         }
 
