@@ -8693,7 +8693,7 @@ lance@thelegacyphotography.com`;
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
+                const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`, {
                     method: 'GET',
                     headers
                 });
@@ -8715,7 +8715,10 @@ lance@thelegacyphotography.com`;
         // Display contracts modal
         function displayContractsModal(sessionId, contracts) {
             const session = sessions.find(s => s.id === sessionId);
-            const clientName = session ? session.clientName : 'Unknown Client';
+            console.log('🔍 Session found for contracts modal:', session);
+            const clientName = session ? (session.clientName || session.client_name || 'Unknown Client') : 'Unknown Client';
+            const clientEmail = session ? (session.email || 'No email') : 'No email';
+            console.log('🔍 Using client data:', { clientName, clientEmail });
             
             let contractsHTML = '';
             if (contracts.length === 0) {
@@ -8773,7 +8776,10 @@ lance@thelegacyphotography.com`;
                 <div id="contractsViewModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Contracts for ${clientName}</h2>
+                            <div>
+                                <h2 style="color: #8b7355; margin: 0;">Contracts for ${clientName}</h2>
+                                <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Client: ${clientName} | Email: ${clientEmail}</p>
+                            </div>
                             <button onclick="closeModal('contractsViewModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
