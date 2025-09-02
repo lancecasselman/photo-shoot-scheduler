@@ -8759,20 +8759,22 @@ lance@thelegacyphotography.com`;
                     </div>
                 `;
             } else {
-                contractsHTML = contracts.map((contract, index) => `
+                contractsHTML = contracts.map((contract, index) => {
+                    console.log('Contract data:', contract);
+                    return `
                     <div class="contract-item" style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: #f9f9f9;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h4 style="margin: 0; color: #8b7355;">${contract.contract_title}</h4>
-                            <span class="status-badge status-${contract.status}" style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">
+                            <h4 style="margin: 0; color: #8b7355;">Contract #${index + 1} - ${clientName}</h4>
+                            <span class="status-badge status-${contract.status}" style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: ${contract.status === 'signed' ? '#28a745' : '#17a2b8'}; color: white;">
                                 ${contract.status}
                             </span>
                         </div>
                         <p style="margin: 5px 0; color: #666; font-size: 14px;">
                             Created: ${new Date(contract.created_at).toLocaleDateString()}
                         </p>
-                        ${contract.signed_date ? `
+                        ${contract.signed_at ? `
                             <p style="margin: 5px 0; color: #28a745; font-size: 14px;">
-                                <strong>Signed: ${new Date(contract.signed_date).toLocaleDateString()}</strong>
+                                <strong>✅ Signed: ${new Date(contract.signed_at).toLocaleDateString()}</strong>
                             </p>
                         ` : ''}
                         <div style="margin-top: 15px;">
@@ -8782,24 +8784,24 @@ lance@thelegacyphotography.com`;
                             <button onclick="editContract('${contract.id}')" class="btn btn-secondary" style="margin-right: 10px;">
                                 Edit
                             </button>
-                            ${contract.status === 'pending' ? `
-                                <button onclick="sendContractToClient('${contract.id}')" class="btn btn-secondary">
+                            ${contract.status === 'draft' || contract.status === 'pending' ? `
+                                <button onclick="resendAgreement('${contract.id}')" class="btn btn-secondary">
                                     Send to Client
                                 </button>
                             ` : ''}
                             ${contract.status === 'sent' || contract.status === 'signed' ? `
-                                <button onclick="sendContractToClient('${contract.id}')" class="btn btn-success" style="margin-left: 10px;">
-                                     Resend Contract
+                                <button onclick="resendAgreement('${contract.id}')" class="btn btn-success" style="margin-left: 10px;">
+                                    Resend Contract
                                 </button>
                             ` : ''}
                             ${contract.status === 'signed' ? `
                                 <button onclick="viewSignedCopy('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                     View Signed Copy
+                                    👁️ View Signed Copy
                                 </button>
                             ` : ''}
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
             
             const modalHTML = `
