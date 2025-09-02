@@ -803,9 +803,9 @@ function loadSelectedTemplate() {
 // Replace template variables
 function replaceTemplateVariables(content, session) {
     const replacements = {
-        '{{clientName}}': session.clientName,
+        '{{clientName}}': session.clientName || session.client_name,
         '{{clientEmail}}': session.email,
-        '{{clientPhone}}': session.phoneNumber,
+        '{{clientPhone}}': session.phoneNumber || session.phone_number,
         '{{sessionType}}': session.sessionType,
         '{{sessionDate}}': new Date(session.dateTime).toLocaleDateString(),
         '{{sessionTime}}': new Date(session.dateTime).toLocaleTimeString([], { 

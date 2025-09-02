@@ -273,15 +273,18 @@ async function openBookingAgreementModal(sessionId) {
         showMessage('Session not found', 'error');
         return;
     }
+    
+    console.log('🔍 Found session data:', session);
 
     // Make sure templates are loaded
     if (!agreementTemplates || agreementTemplates.length === 0) {
         await loadAgreementTemplates();
     }
 
-    // Update modal title
+    // Update modal title with fallback
+    const clientName = session.clientName || session.client_name || 'Unknown Client';
     document.getElementById('agreementModalTitle').textContent = 
-        `Booking Agreement for ${session.clientName}`;
+        `Booking Agreement for ${clientName}`;
 
     // Show modal
     const modal = document.getElementById('bookingAgreementModal');
@@ -471,10 +474,11 @@ function loadSelectedTemplate() {
 
 // Replace template variables
 function replaceTemplateVariables(content, session) {
+    console.log('🔍 Session data in replaceTemplateVariables:', session);
     const replacements = {
-        '{{clientName}}': session.clientName,
-        '{{clientEmail}}': session.email,
-        '{{clientPhone}}': session.phoneNumber,
+        '{{clientName}}': session.clientName || session.client_name || 'Unknown Client',
+        '{{clientEmail}}': session.email || 'no-email@example.com',
+        '{{clientPhone}}': session.phoneNumber || session.phone_number || 'No phone number',
         '{{sessionType}}': session.sessionType,
         '{{sessionDate}}': new Date(session.dateTime).toLocaleDateString(),
         '{{sessionTime}}': new Date(session.dateTime).toLocaleTimeString([], { 
