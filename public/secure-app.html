@@ -13707,7 +13707,7 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js?v=1756840200&customizable=deposit"></script>
+    <script src="script.js?v=1756841300&customizable=deposit"></script>
     
     <script>
         // Initialize authentication for secure app - use existing checkAuth from script.js
@@ -17556,7 +17556,7 @@ END:VCALENDAR`;
 
     <!-- Booking Agreements System -->
     <link rel="stylesheet" href="booking-agreements-modal.css">
-    <script src="booking-agreements-modal.js?v=1756840200"></script>
+    <script src="booking-agreements-modal.js?v=1756841300"></script>
     
     <!-- Contract Modal Button Script -->
     <script>
@@ -17574,52 +17574,7 @@ END:VCALENDAR`;
         }
         
         function setupButtonInjection() {
-            
-            // Check for modal and inject button
-            const forceInjectButton = () => {
-                const modal = document.getElementById('bookingAgreementModal');
-                if (modal && modal.style.display !== 'none') {
-                    const sendViaSmsBtn = modal.querySelector('#sendViaSmsBtn');
-                    const existingBtn = modal.querySelector('button[onclick*="viewSignedPendingContracts"]');
-                    
-                    if (sendViaSmsBtn && !existingBtn) {
-                        const newButton = document.createElement('button');
-                        newButton.className = 'btn btn-info';
-                        newButton.onclick = () => {
-                            console.log('📄 Opening all contracts modal...');
-                            openPendingContractsModal();
-                        };
-                        newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
-                        newButton.innerHTML = '📄 Signed/Pending Contracts';
-                        sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
-                        console.log('✅ BUTTON SUCCESSFULLY INJECTED!');
-                        return true;
-                    }
-                }
-                return false;
-            };
-            
-            // Check every 100ms for the modal
-            setInterval(forceInjectButton, 100);
-            
-            // Also setup mutation observer
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1 && (node.id === 'bookingAgreementModal' || node.querySelector && node.querySelector('#bookingAgreementModal'))) {
-                                setTimeout(forceInjectButton, 50);
-                            }
-                        });
-                    }
-                });
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-            
+            // Button injection disabled - buttons removed
         }
     </script>
     
