@@ -112,6 +112,16 @@ class NativeAuthHandler {
                 if (data.user) {
                     this.currentUser = data.user;
                     console.log('Web session restored:', data.user.email);
+                    
+                    // Remove login overlay if it exists (for desktop users)
+                    if (typeof window.removeLoginOverlay === 'function') {
+                        window.removeLoginOverlay();
+                    }
+                    
+                    // Initialize app content if available
+                    if (typeof window.initializeAppContent === 'function') {
+                        window.initializeAppContent();
+                    }
                 }
             }
         } catch (error) {
@@ -146,6 +156,16 @@ class NativeAuthHandler {
                 const data = await response.json();
                 this.currentUser = data.user;
                 console.log('Native iOS session created successfully');
+                
+                // Remove login overlay if it exists (for desktop users)
+                if (typeof window.removeLoginOverlay === 'function') {
+                    window.removeLoginOverlay();
+                }
+                
+                // Initialize app content if available
+                if (typeof window.initializeAppContent === 'function') {
+                    window.initializeAppContent();
+                }
                 
                 // Store token locally for iOS
                 if (this.isCapacitor) {

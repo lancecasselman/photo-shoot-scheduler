@@ -13702,9 +13702,12 @@ END:VCALENDAR`;
     <!-- Avatar Utilities to prevent Gravatar 404s -->
     <script src="client/avatar-utils.js"></script>
     
-    <!-- Firebase removed from secure-app.html to eliminate conflicts with secure-login.html authentication -->
+    <!-- Firebase SDK for desktop authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     
-    <!-- Mobile auth handler removed to prevent conflicts -->
+    <!-- Native Auth Handler for cross-platform authentication -->
+    <script src="native-auth.js"></script>
     
     <!-- Storage Quota Checker -->
     <script src="/static/js/storage-quota-checker.js"></script>
@@ -13713,23 +13716,125 @@ END:VCALENDAR`;
     <script src="script.js?v=1756687600&customizable=deposit"></script>
     
     <script>
-        // Initialize auth check only for secure app - not landing page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔐 SECURE APP: Starting authentication check...');
+        // Initialize authentication for secure app
+        let authHandler;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🔐 SECURE APP: Starting authentication system...');
             
-            // Trigger authentication check
-            checkAuth().then(authenticated => {
-                if (authenticated) {
+            try {
+                // Initialize the native auth handler
+                authHandler = new NativeAuthHandler();
+                const authInitialized = await authHandler.initialize();
+                
+                if (authInitialized && authHandler.currentUser) {
                     console.log('✅ SECURE APP: User authenticated, initializing app...');
                     if (typeof initializeAppContent === 'function') {
                         initializeAppContent();
                     }
                 } else {
-                    console.log('❌ SECURE APP: Authentication failed, redirecting...');
-                    // Auth check in script.js will handle redirect
+                    console.log('❌ SECURE APP: No authenticated user, showing login options...');
+                    showLoginOptions();
+                }
+            } catch (error) {
+                console.error('❌ SECURE APP: Authentication initialization failed:', error);
+                showLoginOptions();
+            }
+        });
+        
+        // Show login options for desktop users
+        function showLoginOptions() {
+            const loginHtml = `
+                <div id="loginOverlay" style="
+                    position: fixed; 
+                    top: 0; 
+                    left: 0; 
+                    width: 100vw; 
+                    height: 100vh; 
+                    background: rgba(26, 26, 26, 0.95); 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    z-index: 10000;
+                    backdrop-filter: blur(10px);
+                ">
+                    <div style="
+                        background: #2d2d2d; 
+                        padding: 3rem; 
+                        border-radius: 16px; 
+                        text-align: center; 
+                        max-width: 400px; 
+                        width: 90%;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                    ">
+                        <h2 style="color: #d4af37; margin-bottom: 1rem; font-size: 2rem;">📸 Welcome Back</h2>
+                        <p style="color: #cccccc; margin-bottom: 2rem;">Sign in to access your photography management platform</p>
+                        
+                        <button id="googleSignInBtn" style="
+                            width: 100%; 
+                            padding: 1rem; 
+                            background: #d4af37; 
+                            color: #1a1a1a; 
+                            border: none; 
+                            border-radius: 12px; 
+                            font-size: 1.1rem; 
+                            font-weight: 600; 
+                            cursor: pointer; 
+                            transition: all 0.3s ease;
+                            margin-bottom: 1rem;
+                        ">
+                            🔐 Sign in with Google
+                        </button>
+                        
+                        <div id="loginLoading" style="display: none; color: #d4af37; margin: 1rem 0;">
+                            🔄 Authenticating...
+                        </div>
+                        
+                        <div id="loginError" style="display: none; color: #dc3545; margin: 1rem 0; padding: 0.8rem; background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+                            ❌ Authentication failed. Please try again.
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', loginHtml);
+            
+            // Add event listener for Google sign-in
+            document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+                try {
+                    showLoginLoading();
+                    await authHandler.signInWithGoogle();
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    showLoginError('Authentication failed. Please try again.');
                 }
             });
-        });
+        }
+        
+        function showLoginLoading() {
+            document.getElementById('loginLoading').style.display = 'block';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('googleSignInBtn').disabled = true;
+        }
+        
+        function hideLoginLoading() {
+            document.getElementById('loginLoading').style.display = 'none';
+            document.getElementById('googleSignInBtn').disabled = false;
+        }
+        
+        function showLoginError(message) {
+            document.getElementById('loginError').innerHTML = `❌ ${message}`;
+            document.getElementById('loginError').style.display = 'block';
+            hideLoginLoading();
+        }
+        
+        // Remove login overlay after successful authentication
+        window.removeLoginOverlay = function() {
+            const overlay = document.getElementById('loginOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        };
     </script>
     
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
