@@ -6135,28 +6135,51 @@ The Legacy Photography`);
             try {
                 console.log('🔍 Fetching signed contract:', contractId);
                 
+                // First, ensure sessions are loaded
+                if (!sessions || sessions.length === 0) {
+                    console.log('Loading sessions first...');
+                    const sessionsResponse = await fetch('/api/sessions');
+                    if (sessionsResponse.ok) {
+                        sessions = await sessionsResponse.json();
+                    }
+                }
+                
                 // Find the session that contains this agreement
                 let foundAgreement = null;
                 let sessionId = null;
                 
                 for (const session of sessions) {
+                    console.log('Checking session:', session.id);
                     const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
                     if (response.ok) {
                         const agreements = await response.json();
-                        const agreement = agreements.find(a => a.id === contractId && a.status === 'signed');
+                        console.log(`Found ${agreements.length} agreements in session ${session.id}`);
+                        const agreement = agreements.find(a => a.id === contractId);
                         if (agreement) {
                             foundAgreement = agreement;
                             sessionId = session.id;
+                            // Add session info to agreement
+                            foundAgreement.session_client_name = session.clientName || session.client_name || 'Unknown';
+                            foundAgreement.session_email = session.email || 'Unknown';
+                            console.log('Found agreement:', foundAgreement);
                             break;
                         }
                     }
                 }
                 
                 if (!foundAgreement) {
-                    throw new Error('Signed contract not found');
+                    throw new Error('Contract not found. It may have been deleted or you may not have access to it.');
                 }
                 
-                console.log('📝 Found signed agreement with signature:', !!foundAgreement.signature_data);
+                if (foundAgreement.status !== 'signed') {
+                    throw new Error('This contract has not been signed yet.');
+                }
+                
+                if (!foundAgreement.signature_data) {
+                    console.warn('Contract is signed but signature image is missing');
+                }
+                
+                console.log('📝 Displaying signed agreement with signature:', !!foundAgreement.signature_data);
                 showSignedContractModal(foundAgreement);
                 
             } catch (error) {
@@ -6168,12 +6191,14 @@ The Legacy Photography`);
         // Show signed contract modal
         function showSignedContractModal(agreement) {
             const signedDate = agreement.signed_at ? new Date(agreement.signed_at).toLocaleDateString() : 'Not available';
+            const clientName = agreement.session_client_name || agreement.signer_name || 'Unknown Client';
+            const clientEmail = agreement.session_email || agreement.signer_email || 'Unknown';
             
             // Create signature display
             let signatureDisplay = '';
             if (agreement.signature_data) {
                 // Display the actual signature image
-                signatureDisplay = `<img src="${agreement.signature_data}" style="max-width: 300px; max-height: 120px; border: 1px solid #ddd; border-radius: 4px; background: white;" alt="Electronic Signature">`;
+                signatureDisplay = `<img src="${agreement.signature_data}" style="max-width: 300px; max-height: 120px; border: 1px solid #ddd; border-radius: 4px; background: white; padding: 5px;" alt="Electronic Signature">`;
             } else {
                 signatureDisplay = '<div style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-style: italic;">Digital signature on file</div>';
             }
@@ -6182,17 +6207,17 @@ The Legacy Photography`);
                 <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${agreement.session_client_name || 'Client'}</h2>
+                            <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${clientName}</h2>
                             <button onclick="closeModal('signedContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
                         <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                <div><strong>Client:</strong> ${agreement.session_client_name || 'Unknown'}</div>
-                                <div><strong>Email:</strong> ${agreement.signer_email || 'Unknown'}</div>
+                                <div><strong>Client:</strong> ${clientName}</div>
+                                <div><strong>Email:</strong> ${clientEmail}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
-                                <div><strong>Signer:</strong> ${agreement.signer_name || 'Unknown'}</div>
+                                <div><strong>Signer:</strong> ${agreement.signer_name || clientName}</div>
                                 ${agreement.ip_address ? `<div><strong>IP Address:</strong> ${agreement.ip_address}</div>` : ''}
                             </div>
                             <div style="margin-top: 15px;">
