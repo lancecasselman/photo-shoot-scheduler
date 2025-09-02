@@ -615,7 +615,12 @@ function createBookingAgreementRoutes(pool) {
     router.get('/agreements/session/:sessionId/all', async (req, res) => {
         try {
             const { sessionId } = req.params;
-            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            
             console.log(`📄 Fetching ALL agreements for session ${sessionId}, user ${userId}`);
 
             const client = await pool.connect();

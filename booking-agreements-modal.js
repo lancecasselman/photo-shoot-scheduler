@@ -57,11 +57,21 @@ async function viewSessionContracts() {
             ['sent', 'viewed', 'signed'].includes(agreement.status)
         ) : (agreements && ['sent', 'viewed', 'signed'].includes(agreements.status)) ? [agreements] : [];
         
+        console.log(`📄 Session contracts found: ${sessionContracts.length} for session ${currentAgreementSessionId}`);
         showSessionContractsModal(sessionContracts);
         
     } catch (error) {
         console.error('Error fetching session contracts:', error);
-        alert('Error loading session contracts: ' + error.message);
+        
+        // More user-friendly error handling
+        if (error.message.includes('401') || error.message.includes('User not authenticated')) {
+            alert('Please refresh the page and try again - authentication session may have expired.');
+        } else if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
+            // Show modal with no contracts message instead of error
+            showSessionContractsModal([]);
+        } else {
+            alert('Error loading session contracts. Please try again or refresh the page.');
+        }
     }
 }
 
@@ -124,8 +134,12 @@ function showSessionContractsModal(agreements) {
                                 </div>
                             </div>
                         `).join('') : `<div style="text-align: center; color: #666; padding: 40px;">
-                            <h3>No contracts found for this session</h3>
-                            <p>Contracts that have been sent, viewed, or signed will appear here.</p>
+                            <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+                            <h3 style="margin-bottom: 15px; color: #333;">No contracts found for this session</h3>
+                            <p style="margin-bottom: 10px;">Contracts that have been sent, viewed, or signed will appear here.</p>
+                            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
+                                <p style="margin: 0; font-size: 14px; color: #555;"><strong>💡 Tip:</strong> Create and send a booking agreement from the main booking modal to see contracts here.</p>
+                            </div>
                         </div>`}
                     </div>
                 </div>
