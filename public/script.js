@@ -3205,7 +3205,6 @@ async function downloadAllRawFiles(sessionId, clientName) {
                 if (response.ok) {
                     const result = await response.json();
                     showMessage('Booking agreement created successfully!', 'success');
-                    loadContracts();
                 } else {
                     const error = await response.json();
                     showMessage(error.error || 'Failed to create booking agreement', 'error');
@@ -3216,48 +3215,8 @@ async function downloadAllRawFiles(sessionId, clientName) {
             }
         };
 
-        window.loadContracts = async function() {
-            try {
-                const response = await fetch('/api/booking-agreements', {
-                    credentials: 'include'
-                });
 
-                if (response.ok) {
-                    const contracts = await response.json();
-                    renderContracts(contracts);
-                }
-            } catch (error) {
-                console.error('Error loading contracts:', error);
-            }
-        };
 
-        function renderContracts(contracts) {
-            const container = document.getElementById('contractsContainer');
-            if (!container) return;
-
-            if (contracts.length === 0) {
-                container.innerHTML = '<p>No contracts created yet.</p>';
-                return;
-            }
-
-            container.innerHTML = contracts.map(contract => `
-                <div class="contract-item" style="background: var(--bg-card); padding: 20px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--accent-beige);">
-                    <h4>${contract.client_name}</h4>
-                    <p><strong>Session:</strong> ${contract.session_type}</p>
-                    <p><strong>Status:</strong> ${contract.status}</p>
-                    <p><strong>Created:</strong> ${new Date(contract.created_at).toLocaleDateString()}</p>
-                    <div class="contract-actions" style="margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="viewContract('${contract.id}')">View</button>
-                        <button class="btn btn-secondary" onclick="sendContract('${contract.id}')">Send</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.viewContract = function(contractId) {
-            showMessage('Opening contract viewer...', 'info');
-            // Implement contract viewing
-        };
 
         window.sendContract = async function(contractId) {
             console.log('sendContract called with ID:', contractId);
@@ -3456,7 +3415,6 @@ window.switchTab = function(tabName) {
                 case 'contracts':
                     // Load sessions for contract creation
                     populateContractSessions();
-                    loadContracts();
                     break;
                 default:
                     break;
