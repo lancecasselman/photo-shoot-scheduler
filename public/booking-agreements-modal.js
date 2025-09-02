@@ -64,10 +64,15 @@ async function viewSignedPendingContracts(sessionId = null) {
         
         // If sessionId provided, further filter to just that session
         if (sessionId) {
+            console.log(`🔍 BEFORE filtering - ${sentAndSignedAgreements.length} agreements, looking for session: ${sessionId}`);
+            sentAndSignedAgreements.forEach(agreement => {
+                console.log(`  - Agreement ${agreement.id}: session_id="${agreement.session_id}" (${typeof agreement.session_id}) vs sessionId="${sessionId}" (${typeof sessionId}) = ${agreement.session_id === sessionId}`);
+            });
+            
             sentAndSignedAgreements = sentAndSignedAgreements.filter(agreement => 
-                agreement.session_id === sessionId
+                String(agreement.session_id) === String(sessionId)
             );
-            console.log(`📄 Filtered to ${sentAndSignedAgreements.length} agreements for session ${sessionId}`);
+            console.log(`📄 AFTER filtering to ${sentAndSignedAgreements.length} agreements for session ${sessionId}`);
         } else {
             console.log(`📄 Filtered to ${sentAndSignedAgreements.length} sent/viewed/signed agreements for all sessions`);
         }
