@@ -7181,6 +7181,9 @@ ${contract.contract_content}
                                 <button onclick="viewPendingContractsForSession('${sessionId}'); event.stopPropagation();" class="btn" style="background: #ff6b6b; color: white; border: none;">
                                     📋 View Pending Contracts
                                 </button>
+                                <button onclick="viewSignedPendingContracts('${sessionId}'); event.stopPropagation();" class="btn" style="background: #17a2b8; color: white; border: none;">
+                                    📄 Signed/Pending Contracts
+                                </button>
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
 
                                 <button onclick="deleteSession('${sessionId}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
