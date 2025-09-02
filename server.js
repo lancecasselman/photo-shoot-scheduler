@@ -4720,6 +4720,11 @@ async function deleteSession(id, userId) {
         await client.query(deleteBookingAgreementsQuery, [id]);
         console.log(`Deleted booking agreements for session ${id}`);
         
+        // Delete any deposit payments for this session
+        const deleteDepositPaymentsQuery = 'DELETE FROM deposit_payments WHERE session_id = $1';
+        await client.query(deleteDepositPaymentsQuery, [id]);
+        console.log(`Deleted deposit payments for session ${id}`);
+        
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
         if (userId) {
