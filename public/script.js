@@ -17,6 +17,13 @@ async function checkAuth() {
         return false; // Don't authenticate on landing page
     }
     
+    // Skip auth if this is a direct redirect from landing page buttons
+    if (sessionStorage.getItem('landingRedirect') === 'true') {
+        console.log('Direct redirect from landing page - clearing flag and proceeding with auth');
+        sessionStorage.removeItem('landingRedirect');
+        // Continue with normal auth check
+    }
+    
     // Only skip auth check if actively logging out (not for manual logout flag)
     if (sessionStorage.getItem('loggingOut') === 'true') {
         console.log('Skipping auth check - logout in progress');

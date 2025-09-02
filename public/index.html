@@ -784,8 +784,10 @@
                 }
                 
             } else {
-                // For web/desktop: Redirect to secure app (authentication happens there)
-                console.log('🖥️ DESKTOP: Redirecting to secure app for authentication');
+                // For web/desktop: Direct redirect to secure app (no auth checks on landing page)
+                console.log('🖥️ DESKTOP: Direct redirect to secure app');
+                // Set flag to prevent auth checks during redirect
+                sessionStorage.setItem('landingRedirect', 'true');
                 window.location.href = '/secure-app.html';
             }
         }
