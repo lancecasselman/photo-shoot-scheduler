@@ -39,32 +39,41 @@ let agreementTemplates = [];
 // Function to view signed/pending contracts  
 async function viewSignedPendingContracts(sessionId = null) {
     try {
-        // Use session-specific endpoint if sessionId provided, otherwise fetch all
-        const apiUrl = sessionId ? `/api/booking/agreements/session/${sessionId}` : '/api/booking/agreements/all';
-        const response = await fetch(apiUrl, {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
+        let sentAndSignedAgreements = [];
         
-        if (!response.ok) {
-            throw new Error('Failed to fetch agreements');
-        }
-        
-        const agreements = sessionId ? [await response.json()].filter(Boolean) : await response.json();
-        
-        // Filter for sent, viewed, and signed agreements
-        let sentAndSignedAgreements = agreements.filter(agreement => 
-            ['sent', 'viewed', 'signed'].includes(agreement.status)
-        );
-        
-        // If sessionId provided, further filter to just that session
         if (sessionId) {
-            sentAndSignedAgreements = sentAndSignedAgreements.filter(agreement => 
-                String(agreement.session_id) === String(sessionId)
-            );
+            // Fetch agreement for specific session only
+            const response = await fetch(`/api/booking/agreements/session/${sessionId}`, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (response.ok) {
+                const agreement = await response.json();
+                // Only include if it exists and has the right status
+                if (agreement && ['sent', 'viewed', 'signed'].includes(agreement.status)) {
+                    sentAndSignedAgreements = [agreement];
+                }
+            }
+        } else {
+            // Fetch all agreements and filter properly
+            const response = await fetch('/api/booking/agreements/all', {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (response.ok) {
+                const allAgreements = await response.json();
+                sentAndSignedAgreements = allAgreements.filter(agreement => 
+                    ['sent', 'viewed', 'signed'].includes(agreement.status)
+                );
+            }
         }
         
         showSignedPendingContractsModal(sentAndSignedAgreements, sessionId);
