@@ -17548,22 +17548,28 @@ END:VCALENDAR`;
         
         // View pending contracts for a specific session
         async function viewPendingContractsForSession(sessionId) {
-            try {
-                const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
-                if (response.ok) {
-                    const agreement = await response.json();
-                    if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'draft')) {
-                        // Open the contract in a new window
-                        window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
+            // Call the modal function with session filter
+            if (typeof viewSignedPendingContracts === 'function') {
+                viewSignedPendingContracts(sessionId);
+            } else {
+                // Fallback to old behavior if function not available
+                try {
+                    const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+                    if (response.ok) {
+                        const agreement = await response.json();
+                        if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'draft')) {
+                            // Open the contract in a new window
+                            window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
+                        } else {
+                            showMessage('No pending contract found for this session', 'info');
+                        }
                     } else {
                         showMessage('No pending contract found for this session', 'info');
                     }
-                } else {
-                    showMessage('No pending contract found for this session', 'info');
+                } catch (error) {
+                    console.error('Error viewing pending contract:', error);
+                    showMessage('Error loading pending contract', 'error');
                 }
-            } catch (error) {
-                console.error('Error viewing pending contract:', error);
-                showMessage('Error loading pending contract', 'error');
             }
         }
 
