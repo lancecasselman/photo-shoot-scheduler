@@ -7225,12 +7225,6 @@ ${contract.contract_content}
                                     <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: linear-gradient(135deg, #fd7e14, #ff9500); color: white; border: none;"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
-                                <button onclick="viewPendingContractsForSession('${sessionId}'); event.stopPropagation();" class="btn" style="background: #ff6b6b; color: white; border: none;">
-                                    📋 View Pending Contracts
-                                </button>
-                                <button onclick="viewSignedPendingContracts('${sessionId}'); event.stopPropagation();" class="btn" style="background: #17a2b8; color: white; border: none;">
-                                    📄 Signed/Pending Contracts
-                                </button>
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
 
                                 <button onclick="deleteSession('${sessionId}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
@@ -13713,7 +13707,7 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js?v=1756840100&customizable=deposit"></script>
+    <script src="script.js?v=1756840200&customizable=deposit"></script>
     
     <script>
         // Initialize authentication for secure app - use existing checkAuth from script.js
@@ -17562,7 +17556,7 @@ END:VCALENDAR`;
 
     <!-- Booking Agreements System -->
     <link rel="stylesheet" href="booking-agreements-modal.css">
-    <script src="booking-agreements-modal.js?v=1756840000"></script>
+    <script src="booking-agreements-modal.js?v=1756840200"></script>
     
     <!-- Contract Modal Button Script -->
     <script>
@@ -17762,29 +17756,6 @@ END:VCALENDAR`;
             }
         }
         
-        // View pending contracts for a specific session
-        async function viewPendingContractsForSession(sessionId) {
-            try {
-                const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
-                if (response.ok) {
-                    const agreement = await response.json();
-                    if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'signed')) {
-                        window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
-                    } else {
-                        const session = sessions.find(s => s.id === sessionId);
-                        const clientName = session ? session.clientName : 'this session';
-                        showMessage(`No pending contracts found for ${clientName}`, 'info');
-                    }
-                } else {
-                    const session = sessions.find(s => s.id === sessionId);
-                    const clientName = session ? session.clientName : 'this session';
-                    showMessage(`No pending contracts found for ${clientName}`, 'info');
-                }
-            } catch (error) {
-                console.error('Error viewing pending contract:', error);
-                showMessage('Error loading pending contract', 'error');
-            }
-        }
 
 
         // Update count when page loads

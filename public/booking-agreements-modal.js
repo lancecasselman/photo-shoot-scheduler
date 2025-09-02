@@ -36,134 +36,8 @@ let agreementTemplates = [];
     document.head.appendChild(criticalStyles);
 })();
 
-// Function to view signed/pending contracts  
-async function viewSignedPendingContracts(sessionId = null) {
-    try {
-        let sentAndSignedAgreements = [];
-        
-        if (sessionId) {
-            // Fetch agreement for specific session only
-            const response = await fetch(`/api/booking/agreements/session/${sessionId}`, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            
-            if (response.ok) {
-                const agreement = await response.json();
-                // Only include if it exists and has the right status
-                if (agreement && ['sent', 'viewed', 'signed'].includes(agreement.status)) {
-                    sentAndSignedAgreements = [agreement];
-                }
-            }
-        } else {
-            // Fetch all agreements and filter properly
-            const response = await fetch('/api/booking/agreements/all', {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            
-            if (response.ok) {
-                const allAgreements = await response.json();
-                sentAndSignedAgreements = allAgreements.filter(agreement => 
-                    ['sent', 'viewed', 'signed'].includes(agreement.status)
-                );
-            }
-        }
-        
-        showSignedPendingContractsModal(sentAndSignedAgreements, sessionId);
-        
-    } catch (error) {
-        console.error('Error fetching agreements:', error);
-        alert('Error loading signed/pending contracts: ' + error.message);
-    }
-}
 
-// Show the signed/pending contracts modal
-function showSignedPendingContractsModal(agreements, sessionId = null) {
-    // Remove existing modal if present
-    const existingModal = document.getElementById('signedPendingModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Get session info if filtering by session
-    let modalTitle = '📄 Signed & Pending Contracts';
-    if (sessionId && agreements.length > 0) {
-        modalTitle = `📄 Contracts for ${agreements[0].session_client_name || 'Session'}`;
-    } else if (sessionId && agreements.length === 0) {
-        // Try to get session info from global sessions array if available
-        if (typeof sessions !== 'undefined' && sessions) {
-            const session = sessions.find(s => s.id === sessionId);
-            if (session) {
-                modalTitle = `📄 Contracts for ${session.clientName || 'Session'}`;
-            }
-        }
-    }
-    
-    // Create modal HTML
-    const modalHTML = `
-        <div id="signedPendingModal" class="booking-modal" style="display: flex; z-index: 10000;">
-            <div class="booking-modal-content" style="max-width: 800px; width: 90%;">
-                <div class="booking-modal-header">
-                    <h2>${modalTitle}</h2>
-                    <button class="booking-modal-close" onclick="closeSignedPendingModal()">&times;</button>
-                </div>
-                
-                <div class="booking-modal-body">
-                    <div id="agreementsList" style="max-height: 400px; overflow-y: auto;">
-                        ${agreements.length > 0 ? agreements.map(agreement => `
-                            <div class="agreement-item" style="border: 2px solid ${agreement.status === 'signed' ? '#28a745' : '#ddd'}; margin-bottom: 10px; padding: 15px; border-radius: 5px; background: ${agreement.status === 'signed' ? '#f0fff4' : 'white'};">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <h4 style="margin: 0; color: #333;">${agreement.session_client_name || 'Unknown Client'}</h4>
-                                    <span class="status-badge status-${agreement.status}" style="
-                                        padding: 6px 12px; 
-                                        border-radius: 12px; 
-                                        font-size: 13px; 
-                                        font-weight: bold;
-                                        background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
-                                        color: white;
-                                        display: inline-flex;
-                                        align-items: center;
-                                        gap: 4px;
-                                    ">${agreement.status === 'signed' ? '✓ SIGNED' : agreement.status.toUpperCase()}</span>
-                                </div>
-                                <p style="margin: 5px 0; color: #666; font-size: 14px;">
-                                    <strong>Session:</strong> ${agreement.session_type || 'Photography Session'} | 
-                                    <strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleDateString() : 'N/A'}
-                                    ${agreement.signed_at ? ` | <strong style="color: #28a745;">✓ Signed:</strong> ${new Date(agreement.signed_at).toLocaleDateString()}` : ''}
-                                </p>
-                                <div style="margin-top: 10px;">
-                                    <button onclick="viewAgreementDetails('${agreement.id}')" class="btn btn-sm ${agreement.status === 'signed' ? 'btn-success' : 'btn-primary'}" style="margin-right: 10px;">${agreement.status === 'signed' ? '📝 View Signed Agreement' : 'View Details'}</button>
-                                    ${agreement.status !== 'signed' ? `<button onclick="resendAgreement('${agreement.id}')" class="btn btn-sm btn-secondary">Resend</button>` : ''}
-                                </div>
-                            </div>
-                        `).join('') : `<p style="text-align: center; color: #666; padding: 20px;">No sent or signed contracts found${sessionId ? ' for this session' : ''}.</p>`}
-                    </div>
-                </div>
-                
-                <div class="booking-modal-footer">
-                    <button class="btn btn-secondary" onclick="closeSignedPendingModal()">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
 
-// Close the signed/pending contracts modal
-function closeSignedPendingModal() {
-    const modal = document.getElementById('signedPendingModal');
-    if (modal) {
-        modal.remove();
-    }
-}
 
 // View agreement details
 async function viewAgreementDetails(agreementId) {
@@ -362,9 +236,6 @@ function createBookingAgreementModal() {
                         </button>
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
-                        </button>
-                        <button class="btn btn-info" onclick="if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected');" style="background-color: #17a2b8; color: white;">
-                            📄 View Session Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
@@ -1709,7 +1580,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <p>Choose method:</p>
             <button onclick="alert('Email selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: blue; color: white;">EMAIL</button>
             <button onclick="alert('SMS selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: green; color: white;">SMS</button>
-            <button onclick="if(currentAgreementSessionId) { viewPendingContractsForSession(currentAgreementSessionId); document.getElementById('simple-send-modal').remove(); } else alert('No session selected');" style="padding: 10px; margin: 5px; background: #17a2b8; color: white;">📄 VIEW SESSION CONTRACTS</button>
             <br><br>
             <button onclick="document.getElementById('simple-send-modal').remove();" style="padding: 10px; background: gray; color: white;">CANCEL</button>
         `;
@@ -1764,7 +1634,7 @@ function forceAddSignedPendingButton() {
         if (!buttonGroup) return;
         
         // Check if our button already exists
-        const existingButton = buttonGroup.querySelector('button[onclick*="viewSignedPendingContracts"]');
+        const existingButton = buttonGroup.querySelector('button[onclick*="nonexistent"]'); // Disabled
         if (existingButton) return; // Already exists
         
         // Find the Send via Text button or Save Draft button as reference
@@ -1777,7 +1647,7 @@ function forceAddSignedPendingButton() {
         // Create and insert the new button
         const newButton = document.createElement('button');
         newButton.className = 'btn btn-info';
-        newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
+        // Removed functionality
         newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
         newButton.innerHTML = '📄 Signed/Pending Contracts';
         
@@ -1805,10 +1675,10 @@ const modalObserver = new MutationObserver(function(mutations) {
                     // Modal was just added to DOM, inject our button immediately
                     setTimeout(() => {
                         const sendViaSmsBtn = node.querySelector('#sendViaSmsBtn');
-                        if (sendViaSmsBtn && !node.querySelector('button[onclick*="viewSignedPendingContracts"]')) {
+                        if (false) { // Disabled
                             const newButton = document.createElement('button');
                             newButton.className = 'btn btn-info';
-                            newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
+                            // Removed functionality
                             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
                             newButton.innerHTML = '📄 Signed/Pending Contracts';
                             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
@@ -1834,12 +1704,12 @@ setInterval(() => {
     const modal = document.getElementById('bookingAgreementModal');
     if (modal && modal.style.display !== 'none') {
         const sendViaSmsBtn = modal.querySelector('#sendViaSmsBtn');
-        const existingBtn = modal.querySelector('button[onclick*="viewSignedPendingContracts"]');
+        const existingBtn = null; // Disabled
         
         if (sendViaSmsBtn && !existingBtn) {
             const newButton = document.createElement('button');
             newButton.className = 'btn btn-info';
-            newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
+            // Removed functionality
             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
             newButton.innerHTML = '📄 Signed/Pending Contracts';
             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
