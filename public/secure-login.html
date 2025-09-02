@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - Photography Management System</title>
+    
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --primary-dark: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #cccccc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            max-width: 400px;
+            width: 100%;
+            background: rgba(45, 45, 45, 0.9);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-gold);
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .auth-btn:hover {
+            background: #b8941f;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            color: var(--primary-gold);
+            margin: 1rem 0;
+        }
+
+        .error {
+            display: none;
+            color: #dc3545;
+            margin: 1rem 0;
+            padding: 0.8rem;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1 class="logo">📸 Photography Pro</h1>
+        <p class="subtitle">Sign in to continue</p>
+        
+        <button id="googleSignInBtn" class="auth-btn">
+            🔐 Sign in with Google
+        </button>
+        
+        <div class="loading" id="loading">
+            <p>🔄 Authenticating...</p>
+        </div>
+        
+        <div class="error" id="error">
+            <p>❌ Authentication failed. Please try again.</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // UI Helper Functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('googleSignInBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('googleSignInBtn').disabled = false;
+        }
+
+        function showError(message) {
+            document.getElementById('error').innerHTML = `<p>❌ ${message}</p>`;
+            document.getElementById('error').style.display = 'block';
+            hideLoading();
+        }
+
+        // Google OAuth Authentication
+        async function signInWithGoogle() {
+            try {
+                console.log('🖥️ Starting Google OAuth authentication...');
+                showLoading();
+
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                // Set custom parameters for better UX
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+
+                const result = await firebase.auth().signInWithPopup(provider);
+                const user = result.user;
+                const idToken = await user.getIdToken();
+                
+                console.log('🖥️ Google authentication successful, creating session...');
+                
+                // Create session with backend
+                const response = await fetch('/api/auth/mobile-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                        isAndroid: new URLSearchParams(window.location.search).get('android') === 'true'
+                    }),
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    console.log('🖥️ Session created successfully, redirecting...');
+                    // Check if this is an Android redirect
+                    const redirect = new URLSearchParams(window.location.search).get('redirect');
+                    if (redirect) {
+                        // For Android, try to redirect back to the app
+                        window.location.href = redirect;
+                    } else {
+                        // For web, go to secure app
+                        window.location.href = '/secure-app.html';
+                    }
+                } else {
+                    throw new Error('Failed to create session');
+                }
+            } catch (error) {
+                console.error('🖥️ Authentication failed:', error);
+                showError('Authentication failed. Please try again.');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            const signInBtn = document.getElementById('googleSignInBtn');
+            signInBtn.addEventListener('click', signInWithGoogle);
+            
+            // Auto-start authentication if coming from mobile
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('android') === 'true') {
+                console.log('📱 Android authentication flow detected, auto-starting...');
+                setTimeout(signInWithGoogle, 500);
+            }
+        });
+    </script>
+</body>
+</html>

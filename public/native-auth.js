@@ -227,8 +227,8 @@ class NativeAuthHandler {
                 
                 return true;
             } else {
-                // Web authentication flow
-                window.location.href = '/secure-login.html';
+                // Web authentication flow - redirect to main login page
+                window.location.href = '/index.html';
                 return true;
             }
         } catch (error) {
