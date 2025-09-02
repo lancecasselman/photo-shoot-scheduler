@@ -697,77 +697,7 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
-    
     <script>
-        // Firebase configuration for desktop browsers
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: "photoshcheduleapp.firebaseapp.com",
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.appspot.com",
-            messagingSenderId: "1080892259604",
-            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
-        };
-
-        // Initialize Firebase for desktop browsers
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-        // Desktop Google OAuth authentication
-        async function authenticateWithGoogle() {
-            try {
-                console.log('🖥️ DESKTOP: Starting Google OAuth authentication...');
-                showLoading();
-
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.addScope('email');
-                provider.addScope('profile');
-                
-                // Set custom parameters for better UX
-                provider.setCustomParameters({
-                    prompt: 'select_account'
-                });
-
-                const result = await firebase.auth().signInWithPopup(provider);
-                const user = result.user;
-                const idToken = await user.getIdToken();
-                
-                console.log('🖥️ DESKTOP: Google authentication successful, creating session...');
-                
-                // Create session with backend
-                const response = await fetch('/api/auth/mobile-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}`
-                    },
-                    body: JSON.stringify({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
-                        isDesktop: true
-                    }),
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    console.log('🖥️ DESKTOP: Session created successfully, redirecting...');
-                    window.location.href = '/secure-app.html';
-                } else {
-                    throw new Error('Failed to create session');
-                }
-            } catch (error) {
-                console.error('🖥️ DESKTOP: Authentication failed:', error);
-                showError('Authentication failed. Please try again.');
-                hideLoading();
-            }
-        }
-
         // Android external browser authentication flow
         function setupAndroidAuth() {
             // Get both buttons
@@ -854,9 +784,9 @@
                 }
                 
             } else {
-                // For web/desktop: Use Google OAuth authentication
-                console.log('🖥️ DESKTOP: Using Google OAuth authentication');
-                authenticateWithGoogle();
+                // For web/desktop: Redirect to secure app (authentication happens there)
+                console.log('🖥️ DESKTOP: Redirecting to secure app for authentication');
+                window.location.href = '/secure-app.html';
             }
         }
 
