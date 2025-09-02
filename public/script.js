@@ -652,7 +652,7 @@ function createSessionCard(session) {
         currentGallerySessionId = session.id;
         initRawUpload();
     };
-    rawUploadBtn.style.backgroundColor = '#17a2b8';
+    rawUploadBtn.style.backgroundColor = '#6c757d';
     rawUploadBtn.style.color = 'white';
     rawUploadBtn.style.margin = '2px';
     rawUploadBtn.style.display = 'inline-block';
@@ -718,7 +718,7 @@ function createSessionCard(session) {
     // Show payment plan status if exists
     if (session.hasPaymentPlan) {
         paymentPlanBtn.textContent = ' View Payment Plan';
-        paymentPlanBtn.style.backgroundColor = '#17a2b8';
+        paymentPlanBtn.style.backgroundColor = '#6c757d';
     }
 
     // Booking Agreement Button

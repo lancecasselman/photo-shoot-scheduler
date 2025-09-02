@@ -8693,97 +8693,9 @@ lance@thelegacyphotography.com`;
             }
         }
 
-        // Simple contract viewer - fetches and displays all contracts for a session
-        window.viewSessionContracts = async function(sessionId) {
-            console.log('📋 Fetching contracts for session:', sessionId);
-            
-            try {
-                // Get the session data first
-                const session = sessions.find(s => s.id === sessionId);
-                if (!session) {
-                    throw new Error('Session not found');
-                }
-                
-                // Fetch contracts from API
-                const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
-                console.log('API Response:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch contracts: ${response.status}`);
-                }
-                
-                const contracts = await response.json();
-                console.log('Contracts received:', contracts.length);
-                
-                // Display the contracts
-                showSimpleContractsModal(session, contracts);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Failed to load contracts', 'error');
-            }
-        }
+        // REMOVED: viewSessionContracts function to eliminate all contract viewing buttons
 
-        // Simple modal to show all contracts
-        function showSimpleContractsModal(session, contracts) {
-            const clientName = session.client_name || session.clientName || 'Client';
-            const sessionId = session.id;
-            
-            // Remove any existing modal
-            const existingModal = document.getElementById('contractsModal');
-            if (existingModal) existingModal.remove();
-            
-            // Build contracts list
-            let contractsList = '';
-            if (contracts && contracts.length > 0) {
-                contracts.forEach((contract, index) => {
-                    const isSigned = contract.status === 'signed';
-                    const signedDate = contract.signed_at ? new Date(contract.signed_at).toLocaleDateString() : '';
-                    
-                    contractsList += `
-                        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: ${isSigned ? '#f0fff0' : '#fff'}">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <h4>Contract #${index + 1}</h4>
-                                <span style="background: ${isSigned ? '#28a745' : '#17a2b8'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                                    ${contract.status.toUpperCase()}
-                                </span>
-                            </div>
-                            ${isSigned ? `<p style="color: #28a745; margin: 10px 0;">✅ Signed on ${signedDate}</p>` : ''}
-                            <div style="margin-top: 10px;">
-                                ${isSigned ? 
-                                    `<button onclick="viewSignedContract('${contract.id}')" class="btn btn-primary">View Signed Contract</button>` :
-                                    `<button onclick="resendAgreement('${contract.id}')" class="btn btn-secondary">Send to Client</button>`
-                                }
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                contractsList = '<p style="text-align: center; color: #666;">No contracts found for this session</p>';
-            }
-            
-            // Create modal
-            const modal = document.createElement('div');
-            modal.id = 'contractsModal';
-            modal.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
-                    <div style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 700px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h2>Contracts - ${clientName}</h2>
-                            <button onclick="document.getElementById('contractsModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                        </div>
-                        ${contractsList}
-                        <div style="margin-top: 20px; text-align: center;">
-                            <button onclick="openContractModal('${sessionId}'); document.getElementById('contractsModal').remove();" class="btn btn-secondary">
-                                Create New Contract
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
+        // REMOVED: showSimpleContractsModal function to eliminate teal contract buttons
         
         // OLD display contracts modal - keeping for compatibility
         function displayContractsModal(sessionId, contracts) {
@@ -8808,7 +8720,7 @@ lance@thelegacyphotography.com`;
                     <div class="contract-item" style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: #f9f9f9;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4 style="margin: 0; color: #8b7355;">Contract #${index + 1} - ${clientName}</h4>
-                            <span class="status-badge status-${contract.status}" style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: ${contract.status === 'signed' ? '#28a745' : '#17a2b8'}; color: white;">
+                            <span class="status-badge status-${contract.status}" style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: ${contract.status === 'signed' ? '#28a745' : '#6c757d'}; color: white;">
                                 ${contract.status}
                             </span>
                         </div>
@@ -8876,7 +8788,7 @@ lance@thelegacyphotography.com`;
                 <style>
                     .status-pending { background: #ffc107; color: #000; }
                     .status-signed { background: #28a745; color: white; }
-                    .status-sent { background: #17a2b8; color: white; }
+                    .status-sent { background: #6c757d; color: white; }
                     .status-expired { background: #dc3545; color: white; }
                     
                     /* Home Base Setup Styles */
@@ -9312,7 +9224,7 @@ lance@thelegacyphotography.com`;
                     }
 
                     .location-btn {
-                        background: #17a2b8;
+                        background: #6c757d;
                         color: white;
                         border: none;
                         padding: 8px 16px;

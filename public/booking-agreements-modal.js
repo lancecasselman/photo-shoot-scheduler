@@ -82,7 +82,7 @@ async function showAgreementDetailsModal(agreement) {
                 
                 <div class="booking-modal-body">
                     <div class="agreement-status-info" style="margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                        <p><strong>Status:</strong> <span style="color: ${agreement.status === 'signed' ? '#28a745' : '#17a2b8'};">${agreement.status.toUpperCase()}</span></p>
+                        <p><strong>Status:</strong> <span style="color: ${agreement.status === 'signed' ? '#28a745' : '#6c757d'};">${agreement.status.toUpperCase()}</span></p>
                         <p><strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleString() : 'N/A'}</p>
                         ${agreement.viewed_at ? `<p><strong>Viewed:</strong> ${new Date(agreement.viewed_at).toLocaleString()}</p>` : ''}
                         ${agreement.signed_at ? `<p><strong>Signed:</strong> ${new Date(agreement.signed_at).toLocaleString()}</p>` : ''}
