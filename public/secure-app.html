@@ -8733,9 +8733,6 @@ lance@thelegacyphotography.com`;
                             </p>
                         ` : ''}
                         <div style="margin-top: 15px;">
-                            <button onclick="viewContractDetails('${contract.id}')" class="btn btn-primary" style="margin-right: 10px;">
-                                View Details
-                            </button>
                             <button onclick="editContract('${contract.id}')" class="btn btn-secondary" style="margin-right: 10px;">
                                 Edit
                             </button>
@@ -8750,8 +8747,8 @@ lance@thelegacyphotography.com`;
                                 </button>
                             ` : ''}
                             ${contract.status === 'signed' ? `
-                                <button onclick="viewSignedContract('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                    👁️ View Signed Copy
+                                <button onclick="downloadSignedContract('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
+                                    📥 Download Signed️ View Signed Copy
                                 </button>
                             ` : ''}
                         </div>
@@ -9460,8 +9457,8 @@ ${contract.content || 'No content available'}
                                 </button>
                             ` : ''}
                             ${contract.status === 'signed' ? `
-                                <button onclick="viewSignedCopy('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                     View Signed Copy
+                                <button onclick="downloadSignedContract('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
+                                     📥 Download Signedy
                                 </button>
                             ` : ''}
                         </div>
