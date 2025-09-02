@@ -314,11 +314,7 @@ async function initializeBookingAgreements() {
             console.log('📡 Received contract signed notification:', event.data);
             // Refresh the signed/pending contracts if the modal is open
             const signedPendingModal = document.getElementById('signedPendingModal');
-            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-                setTimeout(() => {
-                    viewSignedPendingContracts(); // Refresh the modal
-                }, 1000); // Small delay to ensure database is updated
-            }
+            // Modal refresh removed - using session-specific viewing instead
             // Update session card status
             updateAllAgreementStatuses();
         }
@@ -1110,10 +1106,7 @@ async function sendViaEmail(sessionId) {
             // Refresh the signed/pending contracts if the modal is open
             const signedPendingModal = document.getElementById('signedPendingModal');
             if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-                console.log('📄 Auto-refreshing signed/pending contracts after sending...');
-                setTimeout(() => {
-                    viewSignedPendingContracts();
-                }, 1500);
+                console.log('📄 Contract sent successfully - session-specific viewing active');
             }
             
             // Close modal after short delay
@@ -1177,10 +1170,7 @@ async function sendViaSMS(sessionId) {
             // Refresh the signed/pending contracts if the modal is open
             const signedPendingModal = document.getElementById('signedPendingModal');
             if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-                console.log('📄 Auto-refreshing signed/pending contracts after sending...');
-                setTimeout(() => {
-                    viewSignedPendingContracts();
-                }, 1500);
+                console.log('📄 Contract sent successfully - session-specific viewing active');
             }
             
             // Close modal after short delay

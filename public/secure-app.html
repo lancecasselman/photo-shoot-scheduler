@@ -6057,10 +6057,6 @@
                                 💬 Send via Text Message
                             </button>
                             
-                            <button onclick="viewSignedPendingContracts()" 
-                                    class="btn btn-info" style="width: 100%; margin-bottom: 15px; padding: 15px; font-size: 16px; background-color: #17a2b8; color: white;">
-                                📄 Signed/Pending Contracts
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -17370,12 +17366,8 @@ END:VCALENDAR`;
                         const newButton = document.createElement('button');
                         newButton.className = 'btn btn-info';
                         newButton.onclick = () => {
-                            console.log('📄 Signed/Pending button clicked!');
-                            if (typeof viewSignedPendingContracts === 'function') {
-                                viewSignedPendingContracts();
-                            } else {
-                                openPendingContractsModal();
-                            }
+                            console.log('📄 Opening all contracts modal...');
+                            openPendingContractsModal();
                         };
                         newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
                         newButton.innerHTML = '📄 Signed/Pending Contracts';
@@ -17575,71 +17567,6 @@ END:VCALENDAR`;
             }
         }
 
-        // Show contracts modal for a specific session
-        function showSessionContractsModal(agreements, clientName) {
-            // Remove existing modal if present
-            const existingModal = document.getElementById('sessionContractsModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-            
-            // Create modal HTML
-            const modalHTML = `
-                <div id="sessionContractsModal" class="booking-modal" style="display: flex; z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
-                    <div class="booking-modal-content" style="max-width: 800px; width: 90%; margin: auto; background: white; border-radius: 8px; max-height: 80vh; overflow-y: auto;">
-                        <div class="booking-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                            <h2>📄 Contracts for ${clientName}</h2>
-                            <button onclick="closeSessionContractsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                        </div>
-                        
-                        <div class="booking-modal-body" style="padding: 20px;">
-                            <div style="max-height: 400px; overflow-y: auto;">
-                                ${agreements.length > 0 ? agreements.map(agreement => `
-                                    <div style="border: 2px solid ${agreement.status === 'signed' ? '#28a745' : '#ddd'}; margin-bottom: 10px; padding: 15px; border-radius: 5px; background: ${agreement.status === 'signed' ? '#f0fff4' : 'white'};">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                            <h4 style="margin: 0; color: #333;">${agreement.session_client_name || 'Unknown Client'}</h4>
-                                            <span style="
-                                                padding: 6px 12px; 
-                                                border-radius: 12px; 
-                                                font-size: 13px; 
-                                                font-weight: bold;
-                                                background: ${agreement.status === 'signed' ? '#28a745' : agreement.status === 'viewed' ? '#ffc107' : '#17a2b8'};
-                                                color: white;
-                                                display: inline-flex;
-                                                align-items: center;
-                                                gap: 4px;
-                                            ">${agreement.status === 'signed' ? '✓ SIGNED' : agreement.status.toUpperCase()}</span>
-                                        </div>
-                                        <p style="margin: 5px 0; color: #666; font-size: 14px;">
-                                            <strong>Session:</strong> ${agreement.session_type || 'Photography Session'} | 
-                                            <strong>Sent:</strong> ${agreement.sent_at ? new Date(agreement.sent_at).toLocaleDateString() : 'N/A'}
-                                            ${agreement.signed_at ? ` | <strong style="color: #28a745;">✓ Signed:</strong> ${new Date(agreement.signed_at).toLocaleDateString()}` : ''}
-                                        </p>
-                                        <div style="margin-top: 10px;">
-                                            <button onclick="window.open('/api/booking/agreements/view/${agreement.id}', '_blank')" class="btn btn-sm ${agreement.status === 'signed' ? 'btn-success' : 'btn-primary'}" style="margin-right: 10px; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; color: white; background: ${agreement.status === 'signed' ? '#28a745' : '#007bff'};">${agreement.status === 'signed' ? '📝 View Signed Agreement' : 'View Details'}</button>
-                                        </div>
-                                    </div>
-                                `).join('') : `<p style="text-align: center; color: #666; padding: 20px;">No sent or signed contracts found for this session.</p>`}
-                            </div>
-                        </div>
-                        
-                        <div style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
-                            <button onclick="closeSessionContractsModal()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
-
-        // Close session contracts modal
-        function closeSessionContractsModal() {
-            const modal = document.getElementById('sessionContractsModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
 
         // Update count when page loads
         document.addEventListener('DOMContentLoaded', updatePendingContractsCount);
