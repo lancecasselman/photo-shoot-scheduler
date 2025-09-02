@@ -6133,23 +6133,31 @@ The Legacy Photography`);
         // View signed copy of contract
         window.viewSignedCopy = async function(contractId) {
             try {
-                const authToken = await getAuthToken();
-                const headers = {};
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
+                console.log('🔍 Fetching signed contract:', contractId);
+                
+                // Find the session that contains this agreement
+                let foundAgreement = null;
+                let sessionId = null;
+                
+                for (const session of sessions) {
+                    const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
+                    if (response.ok) {
+                        const agreements = await response.json();
+                        const agreement = agreements.find(a => a.id === contractId && a.status === 'signed');
+                        if (agreement) {
+                            foundAgreement = agreement;
+                            sessionId = session.id;
+                            break;
+                        }
+                    }
                 }
                 
-                const response = await fetch(`/api/contracts/${contractId}`, {
-                    method: 'GET',
-                    headers
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch signed contract');
+                if (!foundAgreement) {
+                    throw new Error('Signed contract not found');
                 }
                 
-                const contract = await response.json();
-                showSignedContractModal(contract);
+                console.log('📝 Found signed agreement with signature:', !!foundAgreement.signature_data);
+                showSignedContractModal(foundAgreement);
                 
             } catch (error) {
                 console.error('Error fetching signed contract:', error);
@@ -6158,18 +6166,14 @@ The Legacy Photography`);
         }
 
         // Show signed contract modal
-        function showSignedContractModal(contract) {
-            const signedDate = contract.signed_date ? new Date(contract.signed_date).toLocaleDateString() : 'Not available';
+        function showSignedContractModal(agreement) {
+            const signedDate = agreement.signed_at ? new Date(agreement.signed_at).toLocaleDateString() : 'Not available';
             
             // Create signature display
             let signatureDisplay = '';
-            if (contract.client_signature) {
-                // Check if it's a base64 data URL
-                if (contract.client_signature.startsWith('data:image/')) {
-                    signatureDisplay = `<img src="${contract.client_signature}" style="max-width: 200px; max-height: 80px; border: 1px solid #ddd; border-radius: 4px; background: white;" alt="Client Signature">`;
-                } else {
-                    signatureDisplay = `<div style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-style: italic;">Signature: ${contract.client_signature}</div>`;
-                }
+            if (agreement.signature_data) {
+                // Display the actual signature image
+                signatureDisplay = `<img src="${agreement.signature_data}" style="max-width: 300px; max-height: 120px; border: 1px solid #ddd; border-radius: 4px; background: white;" alt="Electronic Signature">`;
             } else {
                 signatureDisplay = '<div style="padding: 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-style: italic;">Digital signature on file</div>';
             }
@@ -6178,20 +6182,21 @@ The Legacy Photography`);
                 <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;"> Signed Contract - ${contract.contract_title}</h2>
+                            <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${agreement.session_client_name || 'Client'}</h2>
                             <button onclick="closeModal('signedContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
                         <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3 style="color: #28a745; margin: 0 0 15px 0;"> Contract Signed</h3>
+                            <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                <div><strong>Client:</strong> ${contract.client_name}</div>
-                                <div><strong>Email:</strong> ${contract.client_email}</div>
+                                <div><strong>Client:</strong> ${agreement.session_client_name || 'Unknown'}</div>
+                                <div><strong>Email:</strong> ${agreement.signer_email || 'Unknown'}</div>
                                 <div><strong>Signed Date:</strong> ${signedDate}</div>
-                                <div><strong>Contract Type:</strong> ${contract.contract_title}</div>
+                                <div><strong>Signer:</strong> ${agreement.signer_name || 'Unknown'}</div>
+                                ${agreement.ip_address ? `<div><strong>IP Address:</strong> ${agreement.ip_address}</div>` : ''}
                             </div>
                             <div style="margin-top: 15px;">
-                                <strong>Client Signature:</strong>
+                                <strong>Electronic Signature:</strong>
                                 <div style="margin-top: 8px;">
                                     ${signatureDisplay}
                                 </div>
@@ -6199,16 +6204,16 @@ The Legacy Photography`);
                         </div>
                         
                         <div class="contract-content" style="background: white; border: 2px solid #d4af37; border-radius: 6px; padding: 30px; margin-bottom: 20px; font-family: 'Times New Roman', serif; line-height: 1.6; white-space: pre-wrap; max-height: 500px; overflow-y: auto;">
-${contract.contract_content}
+${agreement.content || 'No content available'}
                         </div>
                         
                         <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
                             <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is a digitally signed copy stored for your records</p>
-                            <button onclick="downloadSignedContractPDF('${contract.id}')" class="btn btn-primary" style="margin-right: 10px;">
-                                 Download PDF Copy
+                            <button onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')" class="btn btn-success" style="margin-right: 10px;">
+                                📄 Download Contract
                             </button>
-                            <button onclick="printSignedContract('${contract.id}')" class="btn btn-secondary" style="margin-right: 10px;">
-                                 Print Contract
+                            <button onclick="printSignedContract('${agreement.id}')" class="btn btn-secondary" style="margin-right: 10px;">
+                                🖨️ Print Contract
                             </button>
                             <button onclick="closeModal('signedContractModal')" class="btn btn-secondary">
                                 Close
