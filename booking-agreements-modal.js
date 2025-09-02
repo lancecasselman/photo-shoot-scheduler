@@ -182,9 +182,13 @@ async function loadContractSignature(agreementId) {
                     signatureContainer.innerHTML = `
                         <h4 style="margin-bottom: 15px; color: #15803d;">✍️ Digital Signature</h4>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <div style="padding: 10px; background: white; border: 1px solid #d1d5db; border-radius: 6px;">
-                                <p style="margin: 0; color: #374151;"><strong>Signed by:</strong> ${signature.signer_name}</p>
-                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>Date:</strong> ${new Date(signature.created_at).toLocaleString()}</p>
+                            <div style="padding: 15px; background: white; border: 1px solid #d1d5db; border-radius: 6px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <p style="margin: 0; color: #374151;"><strong>Client Name:</strong> ${signature.signer_name || 'Not provided'}</p>
+                                    <p style="margin: 0; color: #374151;"><strong>Email:</strong> ${signature.signer_email || 'Not provided'}</p>
+                                </div>
+                                <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Signed Date:</strong> ${new Date(signature.created_at).toLocaleString()}</p>
+                                ${signature.ip_address ? `<p style="margin: 5px 0 0 0; color: #6b7280; font-size: 12px;"><strong>IP Address:</strong> ${signature.ip_address}</p>` : ''}
                             </div>
                             ${signature.signature_data ? `
                                 <div style="border: 2px solid #15803d; border-radius: 8px; padding: 10px; background: white;">
