@@ -633,10 +633,18 @@ function createBookingAgreementRoutes(pool) {
                         ps.phone_number,
                         ps.email,
                         ps.session_type,
-                        ps.date_time as session_date
+                        ps.date_time as session_date,
+                        sig.id as signature_id,
+                        sig.signer_name,
+                        sig.signer_email,
+                        sig.signature_data,
+                        sig.signature_type,
+                        sig.signed_at as signature_created_at,
+                        sig.ip_address
                      FROM booking_agreements a
                      LEFT JOIN booking_agreement_templates t ON a.template_id = t.id
                      INNER JOIN photography_sessions ps ON a.session_id::text = ps.id::text
+                     LEFT JOIN booking_agreement_signatures sig ON a.id = sig.agreement_id
                      WHERE a.session_id = $1 AND a.user_id = $2 AND ps.user_id = $2
                        AND a.status IN ('sent', 'viewed', 'signed')
                      ORDER BY a.created_at DESC`,
@@ -644,6 +652,16 @@ function createBookingAgreementRoutes(pool) {
                 );
                 
                 console.log(`📄 Found ${result.rows.length} agreements for session ${sessionId} with status: sent/viewed/signed`);
+                
+                // Log signature data for debugging
+                result.rows.forEach((row, index) => {
+                    if (row.signature_data) {
+                        console.log(`📝 Agreement ${index + 1} has signature data: ${row.signature_type || 'unknown type'}`);
+                    } else {
+                        console.log(`⏳ Agreement ${index + 1} has no signature data yet`);
+                    }
+                });
+                
                 res.json(result.rows);
             } finally {
                 client.release();
@@ -658,7 +676,11 @@ function createBookingAgreementRoutes(pool) {
     router.get('/agreements/session/:sessionId/pending', async (req, res) => {
         try {
             const { sessionId } = req.params;
-            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
             console.log('Fetching pending contract for session:', sessionId, 'user:', userId);
             
             const client = await pool.connect();
