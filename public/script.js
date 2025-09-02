@@ -544,55 +544,9 @@ async function getAuthToken() {
     return null;
 }
 
-// Render sessions in the UI - DISABLED: Using index.html version instead
-// function renderSessions() {
-//     console.log('renderSessions called with', sessions.length, 'sessions');
-//     const container = document.getElementById('sessionsContainer');
-//
-//     if (!container) {
-//         console.error('Sessions container not found');
-//         return;
-//     }
-//
-//     // Clear container
-//     container.innerHTML = '';
-//
-//     if (sessions.length === 0) {
-//         const emptyState = document.createElement('div');
-//         emptyState.className = 'empty-state';
-//         emptyState.innerHTML = '<p>No sessions scheduled yet. Add your first session above!</p>';
-//         container.appendChild(emptyState);
-//         return;
-//     }
-//
-//     console.log('Rendering', sessions.length, 'session cards');
-//
-//     // Sort sessions by date
-//     const sortedSessions = [...sessions].sort((a, b) => {
-//         const dateA = new Date(a.dateTime || a.date_time);
-//         const dateB = new Date(b.dateTime || b.date_time);
-//         return dateA - dateB;
-//     });
-//
-//     console.log('Sorted sessions:', sortedSessions);
-//
-//     // Create session cards
-//     sortedSessions.forEach((session, index) => {
-//         console.log(`Creating session card ${index + 1}:`, session.clientName);
-//         const card = createSessionCard(session);
-//         container.appendChild(card);
-//         console.log(`Session card ${index + 1} added`);
-//     });
-//
-//     console.log('All session cards rendered. Container children count:', container.children.length);
-//     console.log('Sessions rendered, container should now show', sessions.length, 'sessions');
-// }
 
 // Create individual session card
 function createSessionCard(session) {
-    console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
-    console.log('Session object:', session);
-    console.log(' RAW BUTTONS DEBUG: Starting button creation process');
 
     // Create main card container
     const card = document.createElement('div');
@@ -728,25 +682,21 @@ function createSessionCard(session) {
         createInvoice(session);
     };
 
-    console.log('DEBUG: Creating deposit button for session:', session.clientName);
     const depositBtn = document.createElement('button');
     depositBtn.className = 'btn btn-warning';
     depositBtn.textContent = '💳 Send Deposit';
     // Capture the session object properly in closure
     depositBtn.onclick = function() {
-        console.log('DEBUG: Deposit button clicked with session:', session);
         sendDepositInvoice(session);
     };
     depositBtn.style.backgroundColor = '#fd7e14';
     depositBtn.style.color = 'white';
-    console.log('DEBUG: Deposit button created:', depositBtn.textContent);
 
     // Payment Plan Button
     const paymentPlanBtn = document.createElement('button');
     paymentPlanBtn.className = 'btn btn-success';
     paymentPlanBtn.textContent = ' Payment Plan';
     paymentPlanBtn.onclick = function() {
-        console.log('DEBUG: Payment plan button clicked with session:', session);
         if (typeof window.openPaymentPlanModal === 'function') {
             window.openPaymentPlanModal(session);
         } else {
@@ -803,17 +753,11 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
-    console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(bookingAgreementBtn);
-    console.log('DEBUG: Deposit button appended successfully');
-    console.log(' DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
     actions.appendChild(rawUploadBtn);
-    console.log(' DEBUG: RAW Upload button appended successfully');
-    console.log(' DEBUG: About to append RAW Folder button:', rawFolderBtn.textContent);
     actions.appendChild(rawFolderBtn);
-    console.log(' DEBUG: RAW Folder button appended successfully');
     actions.appendChild(deleteBtn);
 
     // Debug: Log all buttons in the actions container

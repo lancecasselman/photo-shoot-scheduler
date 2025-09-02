@@ -39,7 +39,6 @@ let agreementTemplates = [];
 // Function to view signed/pending contracts
 async function viewSignedPendingContracts(sessionId = null) {
     try {
-        console.log(`📄 Fetching agreements${sessionId ? ' for session ' + sessionId : ' for all sessions'}...`);
         
         // Use session-specific endpoint if sessionId provided, otherwise fetch all
         const apiUrl = sessionId ? `/api/booking/agreements/session/${sessionId}` : '/api/booking/agreements/all';
@@ -56,7 +55,6 @@ async function viewSignedPendingContracts(sessionId = null) {
         }
         
         const agreements = sessionId ? [await response.json()].filter(Boolean) : await response.json();
-        console.log(`📄 Received ${agreements.length} total agreements from server`);
         
         // Filter for sent, viewed, and signed agreements
         let sentAndSignedAgreements = agreements.filter(agreement => 
@@ -73,9 +71,7 @@ async function viewSignedPendingContracts(sessionId = null) {
             sentAndSignedAgreements = sentAndSignedAgreements.filter(agreement => 
                 String(agreement.session_id) === String(sessionId)
             );
-            console.log(`📄 AFTER filtering to ${sentAndSignedAgreements.length} agreements for session ${sessionId}`);
         } else {
-            console.log(`📄 Filtered to ${sentAndSignedAgreements.length} sent/viewed/signed agreements for all sessions`);
         }
         
         sentAndSignedAgreements.forEach(agreement => {
@@ -553,11 +549,6 @@ function showEditMode(agreement, session) {
     }
 }
 
-// Show view mode - DEPRECATED, redirects to showBothViewAndCreate
-function showViewMode(agreement, session) {
-    // Don't show viewer anymore, always show create mode
-    showBothViewAndCreate(agreement, session);
-}
 
 // Show both view and create mode for existing contracts
 function showBothViewAndCreate(agreement, session) {
@@ -1106,7 +1097,6 @@ async function sendViaEmail(sessionId) {
             // Refresh the signed/pending contracts if the modal is open
             const signedPendingModal = document.getElementById('signedPendingModal');
             if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-                console.log('📄 Contract sent successfully - session-specific viewing active');
             }
             
             // Close modal after short delay
@@ -1170,7 +1160,6 @@ async function sendViaSMS(sessionId) {
             // Refresh the signed/pending contracts if the modal is open
             const signedPendingModal = document.getElementById('signedPendingModal');
             if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-                console.log('📄 Contract sent successfully - session-specific viewing active');
             }
             
             // Close modal after short delay
