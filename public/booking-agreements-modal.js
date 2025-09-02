@@ -60,7 +60,6 @@ async function viewAgreementDetails(agreementId, sessionId) {
         console.log('📝 Agreement found with signature data:', !!agreement.signature_data);
         
         // Close current modal and open agreement modal with the details
-        closeSignedPendingModal();
         
         // Show the agreement content in a read-only view with signature if signed
         await showAgreementDetailsModal(agreement);
@@ -311,9 +310,6 @@ async function initializeBookingAgreements() {
     window.addEventListener('message', function(event) {
         if (event.data.type === 'contractSigned') {
             console.log('📡 Received contract signed notification:', event.data);
-            // Refresh the signed/pending contracts if the modal is open
-            const signedPendingModal = document.getElementById('signedPendingModal');
-            // Modal refresh removed - using session-specific viewing instead
             // Update session card status
             updateAllAgreementStatuses();
         }
@@ -1175,10 +1171,7 @@ async function sendViaEmail(sessionId) {
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             
-            // Refresh the signed/pending contracts if the modal is open
-            const signedPendingModal = document.getElementById('signedPendingModal');
-            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-            }
+
             
             // Close modal after short delay
             setTimeout(() => {
@@ -1238,10 +1231,7 @@ async function sendViaSMS(sessionId) {
             updateAgreementStatus(currentAgreementSessionId, 'sent');
             currentAgreement.status = 'sent';
             
-            // Refresh the signed/pending contracts if the modal is open
-            const signedPendingModal = document.getElementById('signedPendingModal');
-            if (signedPendingModal && signedPendingModal.style.display === 'flex') {
-            }
+
             
             // Close modal after short delay
             setTimeout(() => {

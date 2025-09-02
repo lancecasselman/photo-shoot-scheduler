@@ -5673,14 +5673,6 @@
                 <h1>Session Management</h1>
                 <p>Manage your photography sessions and client bookings</p>
                 
-                <!-- GIANT PENDING CONTRACTS BUTTON -->
-                <div style="text-align: center; margin: 20px 0; padding: 20px; background: linear-gradient(45deg, #FFD700, #FFA500); border: 5px solid #FF0000; border-radius: 15px; box-shadow: 0 10px 30px rgba(255, 0, 0, 0.5);">
-                    <button onclick="openPendingContractsModal()" style="background: #FF4444; color: white; border: none; padding: 20px 40px; border-radius: 10px; font-size: 24px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                        🚨 VIEW PENDING CONTRACTS 🚨
-                        <br>
-                        <span id="pending-contracts-count-big" style="font-size: 32px; margin-top: 10px; display: block;">0</span>
-                    </button>
-                </div>
             </div>
         
         <!-- ENHANCED CLIENT DASHBOARD CONTROLS -->
@@ -5707,9 +5699,6 @@
                         </button>
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
                              Sort Options <span id="sort-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
-                        </button>
-                        <button type="button" class="filter-toggle-btn" onclick="openPendingContractsModal()" style="background: #FFD700 !important; color: #000 !important; border: 3px solid #FF0000 !important; padding: 15px 25px !important; border-radius: 8px; cursor: pointer; font-weight: 800 !important; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5) !important; font-size: 16px !important; text-transform: uppercase !important;">
-                            📄 PENDING CONTRACTS <span id="pending-contracts-count" style="background: red; color: white; padding: 4px 8px; border-radius: 12px; margin-left: 6px; font-size: 14px; font-weight: 900;">0</span>
                         </button>
                     </div>
 
@@ -17635,24 +17624,6 @@ END:VCALENDAR`;
         }
     </script>
 
-    <!-- Pending Contracts Modal -->
-    <div id="pendingContractsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999;">
-        <div style="position: relative; margin: 50px auto; width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; background: var(--bg-primary); border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h2 style="color: var(--text-primary); margin: 0;">📋 Pending Contracts</h2>
-                <button onclick="closePendingContractsModal()" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">✕</button>
-            </div>
-            
-            <div id="pendingContractsList" style="display: flex; flex-direction: column; gap: 20px;">
-                <!-- Pending contracts will be loaded here -->
-            </div>
-            
-            <div id="noPendingContracts" style="display: none; text-align: center; padding: 40px; color: var(--text-secondary);">
-                <p style="font-size: 18px;">No pending contracts at this time.</p>
-                <p>All your contracts have been signed or cancelled.</p>
-            </div>
-        </div>
-    </div>
 
     <!-- Booking Agreements System -->
     <link rel="stylesheet" href="booking-agreements-modal.css">
@@ -17676,145 +17647,6 @@ END:VCALENDAR`;
         function setupButtonInjection() {
             // Button injection disabled - buttons removed
         }
-    </script>
-    
-    <!-- Pending Contracts Script -->
-    <script>
-        let pendingContracts = [];
-        
-        async function openPendingContractsModal() {
-            document.getElementById('pendingContractsModal').style.display = 'block';
-            await loadPendingContracts();
-        }
-        
-        function closePendingContractsModal() {
-            document.getElementById('pendingContractsModal').style.display = 'none';
-        }
-        
-        async function loadPendingContracts() {
-            try {
-                const response = await fetch('/api/booking/agreements/pending');
-                if (response.ok) {
-                    pendingContracts = await response.json();
-                    displayPendingContracts();
-                }
-            } catch (error) {
-                console.error('Error loading pending contracts:', error);
-            }
-        }
-        
-        function displayPendingContracts() {
-            const listContainer = document.getElementById('pendingContractsList');
-            const noContractsMessage = document.getElementById('noPendingContracts');
-            
-            if (pendingContracts.length === 0) {
-                listContainer.style.display = 'none';
-                noContractsMessage.style.display = 'block';
-                document.getElementById('pending-contracts-count').textContent = '0';
-                return;
-            }
-            
-            listContainer.style.display = 'flex';
-            noContractsMessage.style.display = 'none';
-            document.getElementById('pending-contracts-count').textContent = pendingContracts.length;
-            
-            listContainer.innerHTML = pendingContracts.map(contract => `
-                <div style="background: var(--bg-elevated); border: 2px solid var(--primary-accent); border-radius: 8px; padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                        <div>
-                            <h3 style="margin: 0 0 5px 0; color: var(--text-primary);">${contract.client_name}</h3>
-                            <p style="margin: 0; color: var(--text-secondary);">
-                                ${contract.session_type} - ${new Date(contract.session_date).toLocaleDateString()}
-                            </p>
-                        </div>
-                        <span style="background: #fbbf24; color: #78350f; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                            ${contract.status.toUpperCase()}
-                        </span>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button onclick="viewPendingContract('${contract.id}')" style="padding: 8px 16px; background: var(--primary-accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            View Contract
-                        </button>
-                        <button onclick="resendPendingContract('${contract.id}')" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Resend
-                        </button>
-                        <button onclick="cancelPendingContract('${contract.id}')" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        async function viewPendingContract(contractId) {
-            const contract = pendingContracts.find(c => c.id === contractId);
-            if (contract) {
-                // Open in new window to view the contract
-                window.open(`/api/booking/agreements/view/${contractId}`, '_blank');
-            }
-        }
-        
-        async function resendPendingContract(contractId) {
-            const contract = pendingContracts.find(c => c.id === contractId);
-            if (!contract) return;
-            
-            const method = confirm('Send via Email (OK) or SMS (Cancel)?') ? 'email' : 'sms';
-            
-            if (method === 'email') {
-                const subject = encodeURIComponent(`Photography Contract - ${contract.session_type}`);
-                const body = encodeURIComponent(`Hello ${contract.client_name},\n\nPlease review and sign your photography contract:\n${window.location.origin}/api/booking/agreements/view/${contractId}\n\nThank you!`);
-                window.location.href = `mailto:${contract.client_email}?subject=${subject}&body=${body}`;
-            } else {
-                const message = encodeURIComponent(`Hi ${contract.client_name}, please sign your photography contract: ${window.location.origin}/api/booking/agreements/view/${contractId}`);
-                window.location.href = `sms:${contract.client_phone}?body=${message}`;
-            }
-            
-            showMessage('Contract resend initiated', 'success');
-        }
-        
-        async function cancelPendingContract(contractId) {
-            if (!confirm('Are you sure you want to cancel this contract?')) return;
-            
-            try {
-                const response = await fetch(`/api/booking/agreements/${contractId}/cancel`, {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    showMessage('Contract cancelled successfully', 'success');
-                    await loadPendingContracts();
-                } else {
-                    showMessage('Failed to cancel contract', 'error');
-                }
-            } catch (error) {
-                console.error('Error cancelling contract:', error);
-                showMessage('Error cancelling contract', 'error');
-            }
-        }
-        
-        // Load pending contracts count on page load
-        async function updatePendingContractsCount() {
-            try {
-                const response = await fetch('/api/booking/agreements/pending');
-                if (response.ok) {
-                    const contracts = await response.json();
-                    const count = contracts.length;
-                    document.getElementById('pending-contracts-count').textContent = count;
-                    const bigCountElement = document.getElementById('pending-contracts-count-big');
-                    if (bigCountElement) {
-                        bigCountElement.textContent = count;
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating pending contracts count:', error);
-            }
-        }
-        
-
-
-        // Update count when page loads
-        document.addEventListener('DOMContentLoaded', updatePendingContractsCount);
     </script>
     
     <!-- Console Cleanup for Production -->
