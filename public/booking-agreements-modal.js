@@ -111,45 +111,73 @@ async function showAgreementDetailsModal(agreement) {
     
     // If the agreement is signed, load the signature
     if (agreement.status === 'signed') {
-        await loadSignatureForAgreement(agreement.id);
+        displaySignatureData(agreement);
     }
 }
 
-// Load signature for a signed agreement
-async function loadSignatureForAgreement(agreementId) {
+// Display signature data directly from agreement object
+function displaySignatureData(agreement) {
+    const signatureContent = document.getElementById('signatureContent');
+    if (!signatureContent) return;
+    
+    if (agreement.signature_data && agreement.status === 'signed') {
+        signatureContent.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <p style="margin: 5px 0; color: #333;"><strong>Signed by:</strong> ${agreement.signer_name || 'Unknown'}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> ${agreement.signer_email || 'Unknown'}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Date:</strong> ${new Date(agreement.signature_created_at || agreement.signed_at).toLocaleString()}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>IP Address:</strong> ${agreement.ip_address || 'Unknown'}</p>
+            </div>
+            <div style="border: 1px solid #ddd; padding: 10px; background: white; border-radius: 5px;">
+                <img src="${agreement.signature_data}" alt="Electronic Signature" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <button class="btn btn-success" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')">
+                    📄 Download Signed Contract
+                </button>
+            </div>
+        `;
+    } else if (agreement.status === 'signed') {
+        signatureContent.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #28a745;">
+                <p style="margin: 0; font-size: 16px;"><strong>✓ Contract Signed</strong></p>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Signature data is being processed</p>
+            </div>
+        `;
+    } else {
+        signatureContent.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <p style="margin: 0;">Contract not yet signed</p>
+            </div>
+        `;
+    }
+}
+
+// Download signed contract as PDF
+async function downloadSignedContract(agreementId, clientName) {
     try {
-        const response = await fetch(`/api/booking/agreements/${agreementId}/signatures`);
+        console.log('📄 Downloading signed contract:', agreementId);
+        
+        const response = await fetch(`/api/booking/agreements/${agreementId}/download`);
         if (!response.ok) {
-            throw new Error('Failed to fetch signature');
+            throw new Error(`Failed to download contract: ${response.statusText}`);
         }
         
-        const signatures = await response.json();
-        if (signatures.length > 0) {
-            const signature = signatures[0]; // Get the most recent signature
-            
-            const signatureContent = document.getElementById('signatureContent');
-            if (signatureContent) {
-                signatureContent.innerHTML = `
-                    <div style="margin-bottom: 15px;">
-                        <p style="margin: 5px 0; color: #333;"><strong>Signed by:</strong> ${signature.signer_name}</p>
-                        <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> ${signature.signer_email}</p>
-                        <p style="margin: 5px 0; color: #333;"><strong>Date:</strong> ${new Date(signature.signed_at).toLocaleString()}</p>
-                        <p style="margin: 5px 0; color: #333;"><strong>IP Address:</strong> ${signature.ip_address}</p>
-                    </div>
-                    <div style="border: 1px solid #ddd; padding: 10px; background: white; border-radius: 5px;">
-                        <img src="${signature.signature_data}" alt="Electronic Signature" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
-                    </div>
-                `;
-            }
-        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `Signed_Contract_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showMessage('✅ Signed contract downloaded successfully!', 'success');
     } catch (error) {
-        console.error('Error loading signature:', error);
-        const signatureContent = document.getElementById('signatureContent');
-        if (signatureContent) {
-            signatureContent.innerHTML = `
-                <p style="color: #dc3545;">Failed to load signature: ${error.message}</p>
-            `;
-        }
+        console.error('Error downloading signed contract:', error);
+        showMessage('❌ Failed to download contract: ' + error.message, 'error');
     }
 }
 

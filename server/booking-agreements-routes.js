@@ -868,6 +868,112 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Download signed contract as PDF
+    router.get('/agreements/:agreementId/download', async (req, res) => {
+        try {
+            const { agreementId } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            
+            console.log(`📄 Download request for agreement ${agreementId} by user ${userId}`);
+            
+            const client = await pool.connect();
+            try {
+                // Get agreement with signature data
+                const result = await client.query(
+                    `SELECT 
+                        a.*,
+                        ps.client_name as session_client_name,
+                        ps.phone_number,
+                        ps.email,
+                        ps.session_type,
+                        ps.date_time as session_date,
+                        sig.signer_name,
+                        sig.signer_email,
+                        sig.signature_data,
+                        sig.signature_type,
+                        sig.signed_at as signature_created_at,
+                        sig.ip_address
+                     FROM booking_agreements a
+                     INNER JOIN photography_sessions ps ON a.session_id::text = ps.id::text
+                     LEFT JOIN booking_agreement_signatures sig ON a.id = sig.agreement_id
+                     WHERE a.id = $1 AND a.user_id = $2 AND ps.user_id = $2`,
+                    [agreementId, userId]
+                );
+                
+                if (result.rows.length === 0) {
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+                
+                const agreement = result.rows[0];
+                
+                if (agreement.status !== 'signed') {
+                    return res.status(400).json({ error: 'Agreement is not signed' });
+                }
+                
+                // Create HTML with signature
+                const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Signed Contract - ${agreement.session_client_name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #000; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #8b7355; padding-bottom: 20px; }
+                        .content { line-height: 1.6; margin-bottom: 40px; }
+                        .signature-section { border: 1px solid #ddd; padding: 20px; margin-top: 30px; background: #f9f9f9; }
+                        .signature-info { margin-bottom: 15px; }
+                        .signature-info p { margin: 5px 0; color: #333; }
+                        .signature-image { text-align: center; margin: 20px 0; }
+                        .signature-image img { max-width: 300px; height: auto; border: 1px solid #ccc; }
+                        .status-badge { background: #10b981; color: white; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+                        * { color: #000 !important; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Photography Contract</h1>
+                        <p><strong>Client:</strong> ${agreement.session_client_name}</p>
+                        <p><strong>Session:</strong> ${agreement.session_type} - ${new Date(agreement.session_date).toLocaleDateString()}</p>
+                        <p><strong>Status:</strong> <span class="status-badge">SIGNED</span></p>
+                    </div>
+                    <div class="content">
+                        ${agreement.content}
+                    </div>
+                    ${agreement.signature_data ? `
+                        <div class="signature-section">
+                            <h3 style="text-align: center; color: #28a745; margin-bottom: 20px;">✓ Electronic Signature</h3>
+                            <div class="signature-info">
+                                <p><strong>Signed by:</strong> ${agreement.signer_name || 'Unknown'}</p>
+                                <p><strong>Email:</strong> ${agreement.signer_email || 'Unknown'}</p>
+                                <p><strong>Date:</strong> ${new Date(agreement.signature_created_at || agreement.signed_at).toLocaleString()}</p>
+                                <p><strong>IP Address:</strong> ${agreement.ip_address || 'Unknown'}</p>
+                            </div>
+                            <div class="signature-image">
+                                <img src="${agreement.signature_data}" alt="Electronic Signature">
+                            </div>
+                        </div>
+                    ` : ''}
+                </body>
+                </html>
+                `;
+                
+                res.setHeader('Content-Type', 'text/html');
+                res.setHeader('Content-Disposition', `attachment; filename="Signed_Contract_${agreement.session_client_name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.html"`);
+                res.send(html);
+                
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error downloading agreement:', error);
+            res.status(500).json({ error: 'Failed to download agreement' });
+        }
+    });
+
     return router;
 }
 
