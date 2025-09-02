@@ -611,6 +611,44 @@ function createBookingAgreementRoutes(pool) {
         }
     });
 
+    // Get ALL agreements for a specific session (sent, viewed, signed)
+    router.get('/agreements/session/:sessionId/all', async (req, res) => {
+        try {
+            const { sessionId } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            console.log(`📄 Fetching ALL agreements for session ${sessionId}, user ${userId}`);
+
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT 
+                        a.*,
+                        t.name as template_name,
+                        ps.client_name as session_client_name,
+                        ps.phone_number,
+                        ps.email,
+                        ps.session_type,
+                        ps.date_time as session_date
+                     FROM booking_agreements a
+                     LEFT JOIN booking_agreement_templates t ON a.template_id = t.id
+                     INNER JOIN photography_sessions ps ON a.session_id::text = ps.id::text
+                     WHERE a.session_id = $1 AND a.user_id = $2 AND ps.user_id = $2
+                       AND a.status IN ('sent', 'viewed', 'signed')
+                     ORDER BY a.created_at DESC`,
+                    [sessionId, userId]
+                );
+                
+                console.log(`📄 Found ${result.rows.length} agreements for session ${sessionId} with status: sent/viewed/signed`);
+                res.json(result.rows);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching session agreements:', error);
+            res.status(500).json({ error: 'Failed to fetch session agreements' });
+        }
+    });
+
     // Get pending contract for a specific session (non-signed only)
     router.get('/agreements/session/:sessionId/pending', async (req, res) => {
         try {
