@@ -17534,49 +17534,21 @@ END:VCALENDAR`;
         
         // View pending contracts for a specific session
         async function viewPendingContractsForSession(sessionId) {
-            console.log('🚀 SEPARATION TEST: viewPendingContractsForSession called with sessionId:', sessionId);
-            console.log('🔍 Session ID type:', typeof sessionId, '| Length:', sessionId ? sessionId.length : 'null');
-            
-            // Find the session to verify which client we're dealing with
-            const session = sessions.find(s => s.id === sessionId);
-            const expectedClient = session ? session.clientName : 'Unknown';
-            console.log(`🎯 Expected client for this session: "${expectedClient}"`);
-            
             try {
-                const apiUrl = `/api/booking/agreements/session/${sessionId}`;
-                console.log('🌐 Calling API:', apiUrl);
-                
-                const response = await fetch(apiUrl);
+                const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
                 if (response.ok) {
                     const agreement = await response.json();
-                    console.log('📋 Received agreement data:', {
-                        client_name: agreement.client_name,
-                        phone_number: agreement.phone_number,
-                        session_id: agreement.session_id,
-                        status: agreement.status,
-                        id: agreement.id
-                    });
-                    
-                    // CRITICAL VERIFICATION
-                    if (agreement.client_name !== expectedClient) {
-                        console.error('🚨 CONTRACT SEPARATION FAILURE!');
-                        console.error(`   Expected: "${expectedClient}"`);
-                        console.error(`   Got: "${agreement.client_name}"`);
-                        console.error(`   Session ID sent: "${sessionId}"`);
-                        console.error(`   Session ID received: "${agreement.session_id}"`);
-                    } else {
-                        console.log('✅ Contract separation is working correctly');
-                    }
-                    
                     if (agreement && (agreement.status === 'sent' || agreement.status === 'viewed' || agreement.status === 'signed')) {
-                        console.log(`📄 Opening contract for ${agreement.client_name} (${agreement.phone_number}) - Status: ${agreement.status}`);
                         window.open(`/api/booking/agreements/view/${agreement.id}`, '_blank');
                     } else {
-                        showMessage(`No pending contracts found for ${expectedClient}`, 'info');
+                        const session = sessions.find(s => s.id === sessionId);
+                        const clientName = session ? session.clientName : 'this session';
+                        showMessage(`No pending contracts found for ${clientName}`, 'info');
                     }
                 } else {
-                    console.log('❌ No contract found for session:', sessionId);
-                    showMessage(`No pending contracts found for ${expectedClient}`, 'info');
+                    const session = sessions.find(s => s.id === sessionId);
+                    const clientName = session ? session.clientName : 'this session';
+                    showMessage(`No pending contracts found for ${clientName}`, 'info');
                 }
             } catch (error) {
                 console.error('Error viewing pending contract:', error);

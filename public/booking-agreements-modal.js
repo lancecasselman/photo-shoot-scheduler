@@ -38,15 +38,9 @@ let agreementTemplates = [];
 
 // Function to view signed/pending contracts  
 async function viewSignedPendingContracts(sessionId = null) {
-    console.log('🔄 MODAL FUNCTION: viewSignedPendingContracts called');
-    console.log('   Session ID provided:', sessionId);
-    console.log('   Is this session-specific?', sessionId !== null);
-    
     try {
         // Use session-specific endpoint if sessionId provided, otherwise fetch all
         const apiUrl = sessionId ? `/api/booking/agreements/session/${sessionId}` : '/api/booking/agreements/all';
-        console.log('🌐 MODAL API Call:', apiUrl);
-        
         const response = await fetch(apiUrl, {
             cache: 'no-cache',
             headers: {
@@ -60,35 +54,18 @@ async function viewSignedPendingContracts(sessionId = null) {
         }
         
         const agreements = sessionId ? [await response.json()].filter(Boolean) : await response.json();
-        console.log('📋 MODAL Raw agreements received:', agreements.length);
         
         // Filter for sent, viewed, and signed agreements
         let sentAndSignedAgreements = agreements.filter(agreement => 
             ['sent', 'viewed', 'signed'].includes(agreement.status)
         );
-        console.log('📋 MODAL Filtered to sent/viewed/signed:', sentAndSignedAgreements.length);
-        
-        // Log each agreement for verification
-        sentAndSignedAgreements.forEach(agreement => {
-            console.log(`   - Client: "${agreement.client_name}" | Session: ${agreement.session_id} | Status: ${agreement.status}`);
-        });
         
         // If sessionId provided, further filter to just that session
         if (sessionId) {
-            console.log(`🔍 MODAL Additional session filtering for: ${sessionId}`);
-            const beforeCount = sentAndSignedAgreements.length;
-            
             sentAndSignedAgreements = sentAndSignedAgreements.filter(agreement => 
                 String(agreement.session_id) === String(sessionId)
             );
-            
-            console.log(`🔍 MODAL After session filtering: ${beforeCount} → ${sentAndSignedAgreements.length}`);
         }
-        
-        console.log('📋 MODAL Final agreements to display:', sentAndSignedAgreements.length);
-        sentAndSignedAgreements.forEach(agreement => {
-            console.log(`   → "${agreement.client_name}" (${agreement.phone_number})`);
-        });
         
         showSignedPendingContractsModal(sentAndSignedAgreements, sessionId);
         
