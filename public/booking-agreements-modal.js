@@ -41,8 +41,9 @@ async function viewSignedPendingContracts(sessionId = null) {
     try {
         console.log(`📄 Fetching agreements${sessionId ? ' for session ' + sessionId : ' for all sessions'}...`);
         
-        // Always fetch fresh data with no cache
-        const response = await fetch('/api/booking/agreements/all', {
+        // Use session-specific endpoint if sessionId provided, otherwise fetch all
+        const apiUrl = sessionId ? `/api/booking/agreements/session/${sessionId}` : '/api/booking/agreements/all';
+        const response = await fetch(apiUrl, {
             cache: 'no-cache',
             headers: {
                 'Cache-Control': 'no-cache',
@@ -54,7 +55,7 @@ async function viewSignedPendingContracts(sessionId = null) {
             throw new Error('Failed to fetch agreements');
         }
         
-        const agreements = await response.json();
+        const agreements = sessionId ? [await response.json()].filter(Boolean) : await response.json();
         console.log(`📄 Received ${agreements.length} total agreements from server`);
         
         // Filter for sent, viewed, and signed agreements
@@ -372,8 +373,8 @@ function createBookingAgreementModal() {
                         <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
                             <i class="fas fa-sms"></i> Send via Text
                         </button>
-                        <button class="btn btn-info" onclick="viewSignedPendingContracts(currentAgreementSessionId)" style="background-color: #17a2b8; color: white;">
-                            📄 Signed/Pending Contracts
+                        <button class="btn btn-info" onclick="if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected');" style="background-color: #17a2b8; color: white;">
+                            📄 View Session Contracts
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
                             <i class="fas fa-download"></i> Download PDF
@@ -1731,7 +1732,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <p>Choose method:</p>
             <button onclick="alert('Email selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: blue; color: white;">EMAIL</button>
             <button onclick="alert('SMS selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: green; color: white;">SMS</button>
-            <button onclick="viewSignedPendingContracts(); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: #17a2b8; color: white;">📄 SIGNED/PENDING CONTRACTS</button>
+            <button onclick="if(currentAgreementSessionId) { viewPendingContractsForSession(currentAgreementSessionId); document.getElementById('simple-send-modal').remove(); } else alert('No session selected');" style="padding: 10px; margin: 5px; background: #17a2b8; color: white;">📄 VIEW SESSION CONTRACTS</button>
             <br><br>
             <button onclick="document.getElementById('simple-send-modal').remove();" style="padding: 10px; background: gray; color: white;">CANCEL</button>
         `;
@@ -1799,7 +1800,7 @@ function forceAddSignedPendingButton() {
         // Create and insert the new button
         const newButton = document.createElement('button');
         newButton.className = 'btn btn-info';
-        newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
+        newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
         newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
         newButton.innerHTML = '📄 Signed/Pending Contracts';
         
@@ -1830,7 +1831,7 @@ const modalObserver = new MutationObserver(function(mutations) {
                         if (sendViaSmsBtn && !node.querySelector('button[onclick*="viewSignedPendingContracts"]')) {
                             const newButton = document.createElement('button');
                             newButton.className = 'btn btn-info';
-                            newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
+                            newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
                             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
                             newButton.innerHTML = '📄 Signed/Pending Contracts';
                             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
@@ -1861,7 +1862,7 @@ setInterval(() => {
         if (sendViaSmsBtn && !existingBtn) {
             const newButton = document.createElement('button');
             newButton.className = 'btn btn-info';
-            newButton.onclick = () => viewSignedPendingContracts(currentAgreementSessionId);
+            newButton.onclick = () => { if(currentAgreementSessionId) viewPendingContractsForSession(currentAgreementSessionId); else alert('No session selected'); };
             newButton.style.cssText = 'background-color: #17a2b8; color: white; margin-left: 10px;';
             newButton.innerHTML = '📄 Signed/Pending Contracts';
             sendViaSmsBtn.parentNode.insertBefore(newButton, sendViaSmsBtn.nextSibling);
