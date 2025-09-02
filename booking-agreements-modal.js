@@ -83,9 +83,11 @@ function showSessionContractsModal(agreements) {
         existingModal.remove();
     }
     
-    // Get current session info for modal title
+    // Get current session info for modal title and fallback data
     const currentSession = sessions.find(s => s.id === currentAgreementSessionId);
     const sessionTitle = currentSession ? currentSession.clientName : 'Current Session';
+    const sessionClientName = currentSession ? currentSession.clientName : 'Unknown Client';
+    const sessionClientEmail = currentSession ? currentSession.email : 'No email';
     
     // Create modal HTML
     const modalHTML = `
@@ -101,7 +103,7 @@ function showSessionContractsModal(agreements) {
                         ${agreements.length > 0 ? agreements.map(agreement => `
                             <div class="agreement-item" style="border: 2px solid #ddd; margin-bottom: 15px; padding: 20px; border-radius: 8px; background: white;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h3 style="margin: 0; color: #333; font-size: 18px;">${agreement.session_client_name || sessionTitle}</h3>
+                                    <h3 style="margin: 0; color: #333; font-size: 18px;">${agreement.session_client_name || agreement.client_name || sessionTitle}</h3>
                                     <span class="status-badge status-${agreement.status}" style="
                                         padding: 6px 12px; 
                                         border-radius: 15px; 
@@ -156,7 +158,7 @@ function showSessionContractsModal(agreements) {
     // Load signatures for signed contracts
     agreements.forEach(agreement => {
         if (agreement.status === 'signed') {
-            loadContractSignature(agreement.id);
+            loadContractSignature(agreement.id, sessionClientName, sessionClientEmail);
         }
     });
 }
@@ -170,7 +172,7 @@ function closeSessionContractsModal() {
 }
 
 // Load and display signature for a specific contract
-async function loadContractSignature(agreementId) {
+async function loadContractSignature(agreementId, fallbackClientName = 'Unknown Client', fallbackClientEmail = 'No email') {
     try {
         const response = await fetch(`/api/booking/agreements/${agreementId}/signatures`);
         if (response.ok) {
@@ -184,8 +186,8 @@ async function loadContractSignature(agreementId) {
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="padding: 15px; background: white; border: 1px solid #d1d5db; border-radius: 6px;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                                    <p style="margin: 0; color: #374151;"><strong>Client Name:</strong> ${signature.signer_name || 'Not provided'}</p>
-                                    <p style="margin: 0; color: #374151;"><strong>Email:</strong> ${signature.signer_email || 'Not provided'}</p>
+                                    <p style="margin: 0; color: #374151;"><strong>Client Name:</strong> ${signature.signer_name || fallbackClientName}</p>
+                                    <p style="margin: 0; color: #374151;"><strong>Email:</strong> ${signature.signer_email || fallbackClientEmail}</p>
                                 </div>
                                 <p style="margin: 0; color: #6b7280; font-size: 14px;"><strong>Signed Date:</strong> ${new Date(signature.created_at).toLocaleString()}</p>
                                 ${signature.ip_address ? `<p style="margin: 5px 0 0 0; color: #6b7280; font-size: 12px;"><strong>IP Address:</strong> ${signature.ip_address}</p>` : ''}
