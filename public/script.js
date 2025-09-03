@@ -721,8 +721,15 @@ function createSessionCard(session) {
         paymentPlanBtn.style.backgroundColor = '#6c757d';
     }
 
-    // Booking Agreement Button
-    // Booking Agreement button removed
+    // Simple View Contracts Button
+    const viewContractsBtn = document.createElement('button');
+    viewContractsBtn.className = 'btn btn-secondary';
+    viewContractsBtn.textContent = '📄 View Contracts';
+    viewContractsBtn.onclick = () => {
+        showMessage('View Contracts feature coming soon!', 'info');
+    };
+    viewContractsBtn.style.backgroundColor = '#6c757d';
+    viewContractsBtn.style.color = 'white';
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
@@ -742,7 +749,7 @@ function createSessionCard(session) {
     actions.appendChild(invoiceBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
-    // Booking Agreement button removed
+    actions.appendChild(viewContractsBtn);
     actions.appendChild(rawUploadBtn);
     actions.appendChild(rawFolderBtn);
     actions.appendChild(deleteBtn);
