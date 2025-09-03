@@ -3364,6 +3364,30 @@ async function viewSessionContractsPDF(sessionId, clientName) {
 
         const contracts = await response.json();
         
+        // For each contract, fetch signature data if it's signed
+        for (let contract of contracts) {
+            if (contract.status === 'signed') {
+                try {
+                    const sigResponse = await fetch(`/api/booking/agreements/${contract.id}/signatures`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (sigResponse.ok) {
+                        const signatures = await sigResponse.json();
+                        if (signatures && signatures.length > 0) {
+                            contract.signature_info = signatures[0]; // Get the first signature
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch signature for contract:', contract.id);
+                }
+            }
+        }
+        
         if (!contracts || contracts.length === 0) {
             showMessage('No contracts found for this session', 'info');
             return;
@@ -3456,12 +3480,32 @@ function downloadContractPDF(contract, clientName) {
                 ${content}
             </div>
             
-            ${contract.status === 'signed' ? `
+            ${contract.status === 'signed' && contract.signature_info ? `
+                <div class="signature-section">
+                    <h3>Digital Signature</h3>
+                    <p><strong>Status:</strong> Electronically Signed</p>
+                    <p><strong>Signed by:</strong> ${contract.signature_info.signer_name}</p>
+                    <p><strong>Email:</strong> ${contract.signature_info.signer_email}</p>
+                    <p><strong>Date & Time:</strong> ${new Date(contract.signature_info.signed_at).toLocaleString()}</p>
+                    ${contract.signature_info.signature_data ? `
+                        <div style="margin-top: 20px;">
+                            <p><strong>Client Signature:</strong></p>
+                            <div style="border: 2px solid #333; padding: 10px; background: white; display: inline-block; margin-top: 10px;">
+                                <img src="${contract.signature_info.signature_data}" 
+                                     alt="Client Signature" 
+                                     style="max-width: 300px; max-height: 100px; display: block;" />
+                            </div>
+                        </div>
+                    ` : ''}
+                    <p style="font-size: 12px; color: #666; margin-top: 15px;">
+                        <em>This signature was captured electronically and is legally binding.</em>
+                    </p>
+                </div>
+            ` : contract.status === 'signed' ? `
                 <div class="signature-section">
                     <h3>Signature Information</h3>
                     <p><strong>Status:</strong> Signed</p>
                     <p><strong>Signed Date:</strong> ${new Date(contract.signed_at).toLocaleDateString()}</p>
-                    ${contract.client_signature ? `<p><strong>Client Signature:</strong> ${contract.client_signature}</p>` : ''}
                 </div>
             ` : ''}
         </body>
