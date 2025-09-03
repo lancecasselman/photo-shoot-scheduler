@@ -1016,9 +1016,193 @@ function createBookingAgreementRoutes(pool) {
                 </html>
                 `;
                 
-                res.setHeader('Content-Type', 'text/html');
-                res.setHeader('Content-Disposition', `attachment; filename="Signed_Contract_${agreement.session_client_name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.html"`);
-                res.send(html);
+                // Set proper headers for HTML that will be converted to PDF by browser
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.setHeader('Content-Disposition', `inline; filename="Contract_${agreement.session_client_name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`);
+                
+                // Add PDF-optimized HTML with print styles
+                const pdfOptimizedHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Contract - ${agreement.session_client_name}</title>
+                    <meta charset="utf-8">
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 1in;
+                        }
+                        
+                        body { 
+                            font-family: 'Arial', sans-serif; 
+                            line-height: 1.4; 
+                            color: #000; 
+                            max-width: 100%; 
+                            margin: 0; 
+                            padding: 0;
+                            background: white;
+                        }
+                        
+                        .container {
+                            max-width: 100%;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 30px; 
+                            border-bottom: 2px solid #333; 
+                            padding-bottom: 20px; 
+                        }
+                        
+                        .header h1 {
+                            font-size: 24px;
+                            margin: 0 0 15px 0;
+                            color: #000;
+                        }
+                        
+                        .content { 
+                            line-height: 1.6; 
+                            margin-bottom: 40px; 
+                            color: #000;
+                        }
+                        
+                        .signature-section { 
+                            border: 2px solid #333; 
+                            padding: 20px; 
+                            margin-top: 30px; 
+                            background: #f9f9f9; 
+                            page-break-inside: avoid;
+                        }
+                        
+                        .signature-info { 
+                            margin-bottom: 15px; 
+                        }
+                        
+                        .signature-info p { 
+                            margin: 5px 0; 
+                            color: #000; 
+                            font-size: 14px;
+                        }
+                        
+                        .signature-image { 
+                            text-align: center; 
+                            margin: 20px 0; 
+                        }
+                        
+                        .signature-image img { 
+                            max-width: 300px; 
+                            height: auto; 
+                            border: 1px solid #333;
+                            background: white;
+                        }
+                        
+                        .status-badge { 
+                            background: #28a745; 
+                            color: white; 
+                            padding: 8px 15px; 
+                            border-radius: 4px; 
+                            display: inline-block; 
+                            font-weight: bold;
+                        }
+                        
+                        h1, h2, h3, h4, h5, h6, p, div, span, strong { 
+                            color: #000 !important; 
+                        }
+                        
+                        .pdf-controls {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            z-index: 1000;
+                            background: white;
+                            padding: 15px;
+                            border: 2px solid #007bff;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                        }
+                        
+                        .pdf-btn {
+                            background: #007bff;
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-size: 16px;
+                            font-weight: bold;
+                        }
+                        
+                        .pdf-btn:hover {
+                            background: #0056b3;
+                        }
+                        
+                        @media print {
+                            .pdf-controls {
+                                display: none !important;
+                            }
+                            
+                            body {
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                        }
+                    </style>
+                    <script>
+                        window.onload = function() {
+                            // Auto-trigger print dialog for PDF conversion
+                            setTimeout(function() {
+                                window.print();
+                            }, 100);
+                        };
+                        
+                        function downloadPDF() {
+                            window.print();
+                        }
+                    </script>
+                </head>
+                <body>
+                    <div class="pdf-controls">
+                        <button class="pdf-btn" onclick="downloadPDF()">📄 Save as PDF</button>
+                    </div>
+                    
+                    <div class="container">
+                        <div class="header">
+                            <h1>Photography Contract</h1>
+                            <p><strong>Client:</strong> ${agreement.session_client_name}</p>
+                            <p><strong>Session:</strong> ${agreement.session_type} - ${new Date(agreement.session_date).toLocaleDateString()}</p>
+                            <p><strong>Status:</strong> <span class="status-badge">ELECTRONICALLY SIGNED</span></p>
+                        </div>
+                        
+                        <div class="content">
+                            ${agreement.content}
+                        </div>
+                        
+                        ${agreement.signature_data ? `
+                            <div class="signature-section">
+                                <h3 style="text-align: center; color: #28a745; margin-bottom: 20px;">✓ Digital Signature</h3>
+                                <div class="signature-info">
+                                    <p><strong>Electronically Signed by:</strong> ${agreement.signer_name || 'Unknown'}</p>
+                                    <p><strong>Email Address:</strong> ${agreement.signer_email || 'Unknown'}</p>
+                                    <p><strong>Date & Time:</strong> ${new Date(agreement.signature_created_at || agreement.signed_at).toLocaleString()}</p>
+                                    <p><strong>IP Address:</strong> ${agreement.ip_address || 'Unknown'}</p>
+                                </div>
+                                <div class="signature-image">
+                                    <p><strong>Client Signature:</strong></p>
+                                    <img src="${agreement.signature_data}" alt="Client Electronic Signature">
+                                </div>
+                                <p style="text-align: center; font-style: italic; margin-top: 20px; font-size: 12px;">
+                                    This signature was captured electronically and is legally binding.
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </body>
+                </html>
+                `;
+                
+                res.send(pdfOptimizedHtml);
                 
             } finally {
                 client.release();
