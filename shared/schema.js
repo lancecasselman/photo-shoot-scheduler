@@ -31,6 +31,12 @@ exports.users = (0, pg_core_1.pgTable)("users", {
     subscriptionStatus: (0, pg_core_1.varchar)("subscription_status").default("trial"),
     subscriptionPlan: (0, pg_core_1.varchar)("subscription_plan").default("basic"),
     subscriptionExpiresAt: (0, pg_core_1.timestamp)("subscription_expires_at"),
+    // 3-Day Trial System Fields
+    trialStartDate: (0, pg_core_1.timestamp)("trial_start_date"),
+    trialEndDate: (0, pg_core_1.timestamp)("trial_end_date"),
+    trialUsed: (0, pg_core_1.boolean)("trial_used").default(false),
+    trialExpiredNotificationSent: (0, pg_core_1.boolean)("trial_expired_notification_sent").default(false),
+    accessRestricted: (0, pg_core_1.boolean)("access_restricted").default(false),
     stripeCustomerId: (0, pg_core_1.varchar)("stripe_customer_id"),
     stripeSubscriptionId: (0, pg_core_1.varchar)("stripe_subscription_id"),
     stripeConnectAccountId: (0, pg_core_1.varchar)("stripe_connect_account_id"),

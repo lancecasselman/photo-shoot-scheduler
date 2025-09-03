@@ -45,6 +45,12 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status").default("trial"),
   subscriptionPlan: varchar("subscription_plan").default("basic"),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  // 3-Day Trial System Fields
+  trialStartDate: timestamp("trial_start_date"),
+  trialEndDate: timestamp("trial_end_date"),
+  trialUsed: boolean("trial_used").default(false),
+  trialExpiredNotificationSent: boolean("trial_expired_notification_sent").default(false),
+  accessRestricted: boolean("access_restricted").default(false),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),

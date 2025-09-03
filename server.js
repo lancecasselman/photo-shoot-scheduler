@@ -821,7 +821,10 @@ const isAuthenticated = async (req, res, next) => {
 // Initialize subscription auth middleware
 const subscriptionAuth = new SubscriptionAuthMiddleware(pool);
 
-// Subscription check middleware - ENFORCED
+// Initialize trial system background jobs (runs hourly to terminate expired trials)
+subscriptionAuth.initializeTrialJobs();
+
+// Subscription check middleware - ENFORCED (now includes 3-day trial support)
 const requireSubscription = subscriptionAuth.requireActiveSubscription;
 
 // Create professional email transporter with better deliverability

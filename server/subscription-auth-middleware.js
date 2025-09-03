@@ -1,18 +1,123 @@
 /**
- * Subscription-aware authentication middleware
- * Blocks access for users without active subscriptions
+ * Enhanced Subscription & Trial Authentication Middleware
+ * Implements 3-day free trial with guaranteed access termination
+ * Blocks access for expired trials and inactive subscriptions
  */
 
 const UnifiedSubscriptionManager = require('./unified-subscription-manager');
+const { Pool } = require('pg');
 
 class SubscriptionAuthMiddleware {
     constructor(pool) {
         this.subscriptionManager = new UnifiedSubscriptionManager(pool);
+        this.pool = pool;
+        this.TRIAL_DURATION_DAYS = 3;
     }
 
     /**
-     * Middleware to check if user has active subscription
-     * Blocks access for cancelled/expired subscriptions
+     * Initialize trial for new user
+     */
+    async initializeTrial(userId, userEmail) {
+        const client = await this.pool.connect();
+        try {
+            const trialStart = new Date();
+            const trialEnd = new Date(trialStart.getTime() + (this.TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000));
+            
+            await client.query(
+                `UPDATE users SET 
+                 trial_start_date = $1, 
+                 trial_end_date = $2, 
+                 trial_used = TRUE,
+                 subscription_status = 'trial',
+                 access_restricted = FALSE
+                 WHERE id = $3`,
+                [trialStart, trialEnd, userId]
+            );
+            
+            console.log(`🆓 Trial initialized for ${userEmail}: ${this.TRIAL_DURATION_DAYS} days until ${trialEnd.toISOString()}`);
+            return { trialStart, trialEnd, isActive: true };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Check trial status with guaranteed access termination
+     */
+    async checkTrialStatus(userId, userEmail) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                `SELECT trial_start_date, trial_end_date, trial_used, 
+                        subscription_status, access_restricted,
+                        trial_expired_notification_sent
+                 FROM users WHERE id = $1`,
+                [userId]
+            );
+
+            if (result.rows.length === 0) {
+                return { hasValidAccess: false, reason: 'user_not_found' };
+            }
+
+            const user = result.rows[0];
+            const now = new Date();
+            
+            // If user has never started a trial, initialize it
+            if (!user.trial_used) {
+                await this.initializeTrial(userId, userEmail);
+                return { 
+                    hasValidAccess: true, 
+                    status: 'trial_active',
+                    trialEnd: new Date(now.getTime() + (this.TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000))
+                };
+            }
+
+            // Check if trial has expired
+            const trialEnd = new Date(user.trial_end_date);
+            const isTrialExpired = now > trialEnd;
+
+            if (isTrialExpired) {
+                // GUARANTEED ACCESS TERMINATION: Mark as restricted immediately
+                await client.query(
+                    `UPDATE users SET 
+                     access_restricted = TRUE,
+                     subscription_status = 'trial_expired'
+                     WHERE id = $1`,
+                    [userId]
+                );
+
+                console.log(`🚫 TRIAL EXPIRED: Access terminated for ${userEmail} (expired: ${trialEnd.toISOString()})`);
+                return { 
+                    hasValidAccess: false, 
+                    reason: 'trial_expired',
+                    trialEnd: trialEnd,
+                    expiredHours: Math.round((now - trialEnd) / (1000 * 60 * 60))
+                };
+            }
+
+            // Trial is still active
+            const hoursRemaining = Math.round((trialEnd - now) / (1000 * 60 * 60));
+            console.log(`⏰ Trial active for ${userEmail}: ${hoursRemaining} hours remaining`);
+            
+            return { 
+                hasValidAccess: true, 
+                status: 'trial_active',
+                trialEnd: trialEnd,
+                hoursRemaining: hoursRemaining
+            };
+            
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Enhanced middleware with trial support and guaranteed access termination
+     * MULTIPLE LAYERS OF PROTECTION:
+     * 1. Real-time trial expiration checking
+     * 2. Database-level access restriction flags  
+     * 3. Subscription status verification
+     * 4. Admin bypass system
      */
     requireActiveSubscription = async (req, res, next) => {
         try {
@@ -60,57 +165,75 @@ class SubscriptionAuthMiddleware {
                 });
             }
 
-            // ADMIN BYPASS: Skip subscription check for admin emails
+            // ADMIN BYPASS: Skip all checks for admin emails
             const adminEmails = [
                 'lancecasselman@icloud.com',
                 'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com'
+                'lance@thelegacyphotography.com',
+                'm_casselman@icloud.com'
             ];
 
             if (adminEmails.includes(userEmail?.toLowerCase())) {
-                console.log(`✅ Admin bypass: ${userEmail} granted access without subscription check`);
+                console.log(`✅ Admin bypass: ${userEmail} granted access without trial/subscription check`);
                 req.subscriptionStatus = { 
                     hasProfessionalPlan: true, 
                     professionalStatus: 'active',
-                    isAdmin: true 
+                    isAdmin: true,
+                    trialStatus: 'admin_bypass'
                 };
                 return next();
             }
 
-            // Get user's subscription status
+            // STEP 1: Check trial status first (guaranteed access termination)
+            const trialStatus = await this.checkTrialStatus(userId, userEmail);
+            
+            if (!trialStatus.hasValidAccess) {
+                console.log(`🚫 ACCESS DENIED: ${trialStatus.reason} for ${userEmail}`);
+                
+                if (trialStatus.reason === 'trial_expired') {
+                    return res.status(402).json({
+                        error: 'Trial period expired',
+                        message: `Your 3-day free trial expired ${trialStatus.expiredHours} hours ago. Subscribe now to restore access.`,
+                        trialExpired: true,
+                        subscriptionRequired: true,
+                        redirectTo: '/subscription-checkout.html',
+                        trialEndDate: trialStatus.trialEnd,
+                        expiredHours: trialStatus.expiredHours
+                    });
+                }
+                
+                return res.status(401).json({
+                    error: 'Access denied',
+                    message: 'Unable to verify access permissions.',
+                    redirectTo: '/secure-login.html'
+                });
+            }
+
+            // STEP 2: Check if user has upgraded to paid subscription
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
             
-            console.log(`🔍 Subscription check for ${userEmail} (${userId}):`, {
-                hasProfessionalPlan: subscriptionStatus.hasProfessionalPlan,
-                professionalStatus: subscriptionStatus.professionalStatus,
-                totalStorageGb: subscriptionStatus.totalStorageGb
-            });
-
-            // Check if user has active professional plan
-            if (!subscriptionStatus.hasProfessionalPlan) {
-                console.log(`❌ Subscription check failed - no professional plan for ${userEmail}`);
-                return res.status(402).json({
-                    error: 'Active subscription required',
-                    message: 'You need an active Professional Plan to access this feature.',
-                    subscriptionRequired: true,
-                    redirectTo: '/subscription-checkout.html',
-                    currentStatus: subscriptionStatus
-                });
+            // If user has active paid subscription, grant full access
+            if (subscriptionStatus.hasProfessionalPlan && subscriptionStatus.professionalStatus === 'active') {
+                console.log(`✅ PAID SUBSCRIPTION: Full access granted to ${userEmail}`);
+                req.subscriptionStatus = {
+                    ...subscriptionStatus,
+                    trialStatus: 'upgraded_to_paid'
+                };
+                return next();
             }
 
-            // Check if subscription is actually active (not cancelled/expired)
-            if (subscriptionStatus.professionalStatus !== 'active') {
-                return res.status(402).json({
-                    error: 'Subscription inactive',
-                    message: `Your subscription is ${subscriptionStatus.professionalStatus}. Please reactivate to continue.`,
-                    subscriptionRequired: true,
-                    redirectTo: '/subscription-checkout.html',
-                    currentStatus: subscriptionStatus
-                });
-            }
-
-            // Add subscription info to request for later use
-            req.subscriptionStatus = subscriptionStatus;
+            // STEP 3: User is on active trial - grant temporary access
+            console.log(`⏰ TRIAL ACCESS: ${trialStatus.hoursRemaining} hours remaining for ${userEmail}`);
+            req.subscriptionStatus = {
+                hasProfessionalPlan: false,
+                professionalStatus: 'trial',
+                totalStorageGb: 100, // Trial includes 100GB
+                trialStatus: trialStatus.status,
+                trialEnd: trialStatus.trialEnd,
+                hoursRemaining: trialStatus.hoursRemaining,
+                isTrial: true
+            };
+            
             next();
 
         } catch (error) {
@@ -217,12 +340,18 @@ class SubscriptionAuthMiddleware {
             }
 
             const userId = req.session.user.uid;
+            const userEmail = req.session.user.email;
+            
+            // Check trial status first
+            const trialStatus = await this.checkTrialStatus(userId, userEmail);
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
 
             res.json({
                 success: true,
                 status: subscriptionStatus,
-                hasAccess: subscriptionStatus.hasProfessionalPlan && subscriptionStatus.professionalStatus === 'active'
+                trialStatus: trialStatus,
+                hasAccess: trialStatus.hasValidAccess || (subscriptionStatus.hasProfessionalPlan && subscriptionStatus.professionalStatus === 'active'),
+                isTrial: trialStatus.hasValidAccess && trialStatus.status === 'trial_active'
             });
 
         } catch (error) {
@@ -230,6 +359,87 @@ class SubscriptionAuthMiddleware {
             res.status(500).json({ error: 'Failed to get subscription status' });
         }
     };
+
+    /**
+     * Background job to check and terminate expired trials
+     * Run this every hour to guarantee access termination
+     */
+    async checkExpiredTrials() {
+        const client = await this.pool.connect();
+        try {
+            console.log('🔍 BACKGROUND JOB: Checking for expired trials...');
+            
+            const now = new Date();
+            
+            // Find all users with expired trials that haven't been restricted yet
+            const expiredTrials = await client.query(`
+                SELECT id, email, display_name, trial_end_date, subscription_status
+                FROM users 
+                WHERE trial_used = TRUE 
+                AND trial_end_date < $1 
+                AND access_restricted = FALSE
+                AND subscription_status != 'active'
+            `, [now]);
+
+            if (expiredTrials.rows.length === 0) {
+                console.log('✅ No expired trials found');
+                return { expiredCount: 0, terminatedCount: 0 };
+            }
+
+            console.log(`🚫 Found ${expiredTrials.rows.length} expired trials to terminate`);
+            
+            let terminatedCount = 0;
+            
+            for (const user of expiredTrials.rows) {
+                try {
+                    // GUARANTEED ACCESS TERMINATION: Mark as restricted
+                    await client.query(`
+                        UPDATE users SET 
+                        access_restricted = TRUE,
+                        subscription_status = 'trial_expired'
+                        WHERE id = $1
+                    `, [user.id]);
+
+                    const expiredHours = Math.round((now - new Date(user.trial_end_date)) / (1000 * 60 * 60));
+                    console.log(`🔒 TERMINATED: ${user.email} (expired ${expiredHours} hours ago)`);
+                    terminatedCount++;
+                    
+                    // TODO: Send expiration notification email
+                    // await this.sendTrialExpiredNotification(user.email, user.display_name);
+                    
+                } catch (error) {
+                    console.error(`❌ Failed to terminate trial for ${user.email}:`, error);
+                }
+            }
+
+            console.log(`✅ BACKGROUND JOB COMPLETE: Terminated ${terminatedCount}/${expiredTrials.rows.length} expired trials`);
+            return { expiredCount: expiredTrials.rows.length, terminatedCount };
+            
+        } catch (error) {
+            console.error('❌ Error in expired trials background job:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Initialize trial system background jobs
+     */
+    initializeTrialJobs() {
+        const cron = require('node-cron');
+        
+        // Run every hour to check for expired trials
+        cron.schedule('0 * * * *', async () => {
+            try {
+                await this.checkExpiredTrials();
+            } catch (error) {
+                console.error('❌ Trial expiration background job failed:', error);
+            }
+        });
+
+        console.log('⏰ Trial system background jobs initialized (runs hourly)');
+    }
 }
 
 module.exports = SubscriptionAuthMiddleware;
