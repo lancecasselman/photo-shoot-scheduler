@@ -711,19 +711,15 @@ function createSessionCard(session) {
     bookingAgreementBtn.style.margin = '2px';
     console.log('Booking Agreement button created for session:', session.id);
 
-    // Signed Contract Button (only show when contract is signed)
-    const signedContractBtn = document.createElement('button');
-    signedContractBtn.className = 'btn signed-contract-btn';
-    signedContractBtn.innerHTML = '✅ <span class="signed-status">Signed Contract</span>';
-    signedContractBtn.setAttribute('data-session-id', session.id);
-    signedContractBtn.onclick = () => {
-        viewSignedContract(session.id, session.clientName);
+    // Simple View Contracts Button
+    const viewContractsBtn = document.createElement('button');
+    viewContractsBtn.className = 'btn btn-secondary';
+    viewContractsBtn.textContent = '📄 View Contracts';
+    viewContractsBtn.onclick = () => {
+        showMessage('View Contracts feature coming soon!', 'info');
     };
-    signedContractBtn.style.backgroundColor = '#28a745';
-    signedContractBtn.style.color = 'white';
-    signedContractBtn.style.margin = '2px';
-    signedContractBtn.style.display = 'inline-block';
-    console.log('Signed Contract button created for session:', session.id, 'Contract signed:', session.contractSigned);
+    viewContractsBtn.style.backgroundColor = '#6c757d';
+    viewContractsBtn.style.color = 'white';
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
@@ -741,13 +737,9 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
-    actions.appendChild(signedContractBtn);
-    console.log('DEBUG: Signed Contract button appended for session:', session.id);
-    console.log('DEBUG: Signed Contract button display style:', signedContractBtn.style.display);
-    console.log('DEBUG: Signed Contract button visibility:', signedContractBtn.style.visibility);
-    console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
+    actions.appendChild(viewContractsBtn);
     actions.appendChild(bookingAgreementBtn);
     console.log('DEBUG: Deposit button appended successfully');
     console.log(' DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
