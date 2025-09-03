@@ -32,6 +32,47 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
         }
     });
     
+    // Get user storage quota (simple quota check)
+    app.get('/api/storage/quota', isAuthenticated, async (req, res) => {
+        try {
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
+            const userEmail = req.user.email;
+            
+            // Admin bypass for specific email addresses
+            const adminEmails = [
+                'lancecasselman@icloud.com',
+                'lancecasselman2011@gmail.com', 
+                'lance@thelegacyphotography.com',
+                'm_casselman@icloud.com'
+            ];
+
+            if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+                return res.json({
+                    quota_gb: Number.MAX_SAFE_INTEGER,
+                    used_gb: 0,
+                    remaining_gb: Number.MAX_SAFE_INTEGER,
+                    is_admin: true,
+                    can_upload: true
+                });
+            }
+            
+            const quota = await storageSystem.getUserQuota(userId);
+            const usage = await storageSystem.calculateStorageUsage(userId);
+            
+            res.json({
+                quota_gb: parseFloat(quota.total_quota_gb),
+                used_gb: usage.totalGB,
+                remaining_gb: parseFloat((quota.total_quota_gb - usage.totalGB).toFixed(3)),
+                is_admin: false,
+                can_upload: usage.totalGB < quota.total_quota_gb
+            });
+        } catch (error) {
+            console.error('Error getting storage quota:', error);
+            res.status(500).json({ error: 'Failed to get storage quota' });
+        }
+    });
+
     // Get user's storage summary
     app.get('/api/storage/summary', isAuthenticated, async (req, res) => {
         try {
