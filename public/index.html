@@ -456,8 +456,82 @@
             color: var(--text-muted);
         }
 
+        /* Admin Edit Button Styles */
+        .admin-edit-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+            padding: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-edit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.4);
+        }
+        
+        .edit-mode-btn {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a1a;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 140px;
+            justify-content: center;
+        }
+        
+        .edit-mode-btn:hover {
+            background: linear-gradient(135deg, #FFA500, #FFD700);
+            transform: scale(1.02);
+        }
+        
+        .edit-mode-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .edit-icon {
+            font-size: 16px;
+        }
+        
+        .edit-text {
+            font-weight: 600;
+        }
+        
+        /* Active edit mode styling */
+        .edit-mode-active .edit-mode-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .edit-mode-active .edit-text::after {
+            content: " (Active)";
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
+            .admin-edit-button {
+                top: 15px;
+                right: 15px;
+            }
+            
+            .edit-mode-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+                min-width: 120px;
+            }
+            
             .nav-menu {
                 display: none;
             }
@@ -525,6 +599,14 @@
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
             <a href="#" id="launchAppBtn" class="cta-button" data-content-key="nav.cta">Launch Application</a>
+            
+            <!-- High Z-Index Admin Edit Button -->
+            <div id="admin-edit-button" class="admin-edit-button" style="display: none;">
+                <button onclick="toggleEditMode()" class="edit-mode-btn">
+                    <span class="edit-icon">✏️</span>
+                    <span class="edit-text">Edit Page</span>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -916,6 +998,6 @@
     </script>
     
     <!-- Content Editor for Admin Users -->
-    <script src="content-editor.js"></script>
+    <script src="/assets/content-editor.js"></script>
 </body>
 </html>

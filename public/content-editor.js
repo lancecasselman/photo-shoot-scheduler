@@ -106,6 +106,9 @@ class ContentEditor {
   }
 
   setupAdminInterface() {
+    // Show admin edit button
+    this.showAdminEditButton();
+    
     // Create admin toolbar
     this.createAdminToolbar();
     
@@ -113,6 +116,14 @@ class ContentEditor {
     this.addAdminStyles();
     
     console.log('🛠️ CONTENT EDITOR: Admin interface created');
+  }
+
+  showAdminEditButton() {
+    const adminButton = document.getElementById('admin-edit-button');
+    if (adminButton) {
+      adminButton.style.display = 'block';
+      console.log('🔧 CONTENT EDITOR: Admin edit button shown');
+    }
   }
 
   createAdminToolbar() {
@@ -795,6 +806,83 @@ class ContentEditor {
     `;
     
     document.head.appendChild(styles);
+  }
+
+  toggleEditMode() {
+    this.isEditMode = !this.isEditMode;
+    
+    const adminButton = document.getElementById('admin-edit-button');
+    const toolbar = document.getElementById('content-editor-toolbar');
+    
+    if (this.isEditMode) {
+      // Enter edit mode
+      adminButton.classList.add('edit-mode-active');
+      if (toolbar) toolbar.style.display = 'block';
+      this.enableEditing();
+      console.log('✏️ CONTENT EDITOR: Edit mode enabled');
+    } else {
+      // Exit edit mode
+      adminButton.classList.remove('edit-mode-active');
+      if (toolbar) toolbar.style.display = 'none';
+      this.disableEditing();
+      console.log('👁️ CONTENT EDITOR: Edit mode disabled');
+    }
+  }
+
+  enableEditing() {
+    // Add editing indicators to all editable elements
+    this.editableElements.forEach((element, key) => {
+      element.classList.add('content-editable-hover');
+    });
+    
+    // Show editing instructions
+    this.showEditingInstructions();
+  }
+
+  disableEditing() {
+    // Remove editing indicators
+    this.editableElements.forEach((element, key) => {
+      element.classList.remove('content-editable-hover', 'content-editing');
+    });
+    
+    // Hide editing instructions
+    this.hideEditingInstructions();
+  }
+
+  showEditingInstructions() {
+    let instructions = document.getElementById('editing-instructions');
+    if (!instructions) {
+      instructions = document.createElement('div');
+      instructions.id = 'editing-instructions';
+      instructions.className = 'editing-instructions';
+      instructions.innerHTML = `
+        <div class="instructions-content">
+          <h4>🎨 Edit Mode Active</h4>
+          <p>Click any highlighted text to edit it directly!</p>
+          <button onclick="window.contentEditor.toggleEditMode()" class="btn-exit-edit">
+            Exit Edit Mode
+          </button>
+        </div>
+      `;
+      document.body.appendChild(instructions);
+    }
+    instructions.style.display = 'block';
+  }
+
+  hideEditingInstructions() {
+    const instructions = document.getElementById('editing-instructions');
+    if (instructions) {
+      instructions.style.display = 'none';
+    }
+  }
+}
+
+// Global function for button onclick
+function toggleEditMode() {
+  if (window.contentEditor && window.contentEditor.isAdmin) {
+    window.contentEditor.toggleEditMode();
+  } else {
+    console.warn('⚠️ CONTENT EDITOR: Only admin users can toggle edit mode');
   }
 }
 
