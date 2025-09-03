@@ -721,12 +721,12 @@ function createSessionCard(session) {
         paymentPlanBtn.style.backgroundColor = '#6c757d';
     }
 
-    // Simple View Contracts Button
+    // View Contracts Button with PDF functionality
     const viewContractsBtn = document.createElement('button');
     viewContractsBtn.className = 'btn btn-secondary';
     viewContractsBtn.textContent = '📄 View Contracts';
     viewContractsBtn.onclick = () => {
-        showMessage('View Contracts feature coming soon!', 'info');
+        viewSessionContractsPDF(session.id, session.clientName);
     };
     viewContractsBtn.style.backgroundColor = '#6c757d';
     viewContractsBtn.style.color = 'white';
@@ -3360,6 +3360,320 @@ async function downloadAllRawFiles(sessionId, clientName) {
                 showMessage('Error sending contract', 'error');
             }
         };
+
+// View Session Contracts with PDF Download
+async function viewSessionContractsPDF(sessionId, clientName) {
+    try {
+        const token = await getAuthToken();
+        if (!token) {
+            showMessage('Please log in to view contracts', 'error');
+            return;
+        }
+
+        // Fetch contracts for this session
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch contracts');
+        }
+
+        const contracts = await response.json();
+        
+        // For each contract, fetch signature data if it's signed
+        for (let contract of contracts) {
+            if (contract.status === 'signed') {
+                try {
+                    const sigResponse = await fetch(`/api/booking/agreements/${contract.id}/signatures`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (sigResponse.ok) {
+                        const signatures = await sigResponse.json();
+                        if (signatures && signatures.length > 0) {
+                            contract.signature_info = signatures[0]; // Get the first signature
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch signature for contract:', contract.id);
+                }
+            }
+        }
+        
+        if (!contracts || contracts.length === 0) {
+            showMessage('No contracts found for this session', 'info');
+            return;
+        }
+
+        // If there's only one contract, download it directly
+        if (contracts.length === 1) {
+            downloadContractPDF(contracts[0], clientName);
+        } else {
+            // Show selection dialog for multiple contracts
+            showContractSelectionDialog(contracts, clientName);
+        }
+
+    } catch (error) {
+        console.error('Error fetching contracts:', error);
+        showMessage('Failed to load contracts', 'error');
+    }
+}
+
+// Download contract as PDF
+function downloadContractPDF(contract, clientName) {
+    const content = contract.content || contract.template_content || 'No content available';
+    
+    // Create a clean filename
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `Contract_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${date}.pdf`;
+    
+    // Create a print-ready window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Booking Agreement - ${clientName}</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 1in;
+                }
+                
+                body { 
+                    font-family: Arial, sans-serif; 
+                    line-height: 1.4; 
+                    color: #000; 
+                    max-width: 100%; 
+                    margin: 0; 
+                    padding: 0;
+                    background: white;
+                }
+                
+                .container {
+                    max-width: 100%;
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                .header { 
+                    text-align: center; 
+                    margin-bottom: 30px; 
+                    border-bottom: 2px solid #333; 
+                    padding-bottom: 20px; 
+                }
+                
+                .header h1 {
+                    font-size: 24px;
+                    margin: 0 0 15px 0;
+                    color: #000;
+                }
+                
+                .content { 
+                    line-height: 1.6; 
+                    margin-bottom: 40px; 
+                    color: #000;
+                }
+                
+                .signature-section { 
+                    border: 2px solid #333; 
+                    padding: 20px; 
+                    margin-top: 30px; 
+                    background: #f9f9f9; 
+                    page-break-inside: avoid;
+                }
+                
+                .signature-info { 
+                    margin-bottom: 15px; 
+                }
+                
+                .signature-info p { 
+                    margin: 5px 0; 
+                    color: #000; 
+                    font-size: 14px;
+                }
+                
+                .signature-image { 
+                    text-align: center; 
+                    margin: 20px 0; 
+                }
+                
+                .signature-image img { 
+                    max-width: 300px; 
+                    height: auto; 
+                    border: 1px solid #333;
+                    background: white;
+                }
+                
+                .status-badge { 
+                    background: #28a745; 
+                    color: white; 
+                    padding: 8px 15px; 
+                    border-radius: 4px; 
+                    display: inline-block; 
+                    font-weight: bold;
+                }
+                
+                h1, h2, h3, h4, h5, h6, p, div, span, strong { 
+                    color: #000 !important; 
+                }
+                
+                .pdf-controls {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 1000;
+                    background: white;
+                    padding: 15px;
+                    border: 2px solid #007bff;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                
+                .pdf-btn {
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+                
+                .pdf-btn:hover {
+                    background: #0056b3;
+                }
+                
+                @media print {
+                    .pdf-controls {
+                        display: none !important;
+                    }
+                    
+                    body {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+            </style>
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 100);
+                };
+                
+                function downloadPDF() {
+                    window.print();
+                }
+            </script>
+        </head>
+        <body>
+            <div class="pdf-controls">
+                <button class="pdf-btn" onclick="downloadPDF()">📄 Save as PDF</button>
+            </div>
+            
+            <div class="container">
+                <div class="header">
+                    <h1>Photography Contract</h1>
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>Status:</strong> <span class="status-badge">${contract.status === 'signed' ? 'ELECTRONICALLY SIGNED' : 'PENDING'}</span></p>
+                </div>
+                
+                <div class="content">
+                    ${content}
+                </div>
+                
+                ${contract.status === 'signed' && contract.signature_info ? `
+                    <div class="signature-section">
+                        <h3 style="text-align: center; color: #28a745; margin-bottom: 20px;">✓ Digital Signature</h3>
+                        <div class="signature-info">
+                            <p><strong>Electronically Signed by:</strong> ${contract.signature_info.signer_name}</p>
+                            <p><strong>Email Address:</strong> ${contract.signature_info.signer_email}</p>
+                            <p><strong>Date & Time:</strong> ${new Date(contract.signature_info.signed_at).toLocaleString()}</p>
+                        </div>
+                        ${contract.signature_info.signature_data ? `
+                            <div class="signature-image">
+                                <p><strong>Client Signature:</strong></p>
+                                <img src="${contract.signature_info.signature_data}" alt="Client Electronic Signature">
+                            </div>
+                        ` : ''}
+                        <p style="text-align: center; font-style: italic; margin-top: 20px; font-size: 12px;">
+                            This signature was captured electronically and is legally binding.
+                        </p>
+                    </div>
+                ` : contract.status === 'signed' ? `
+                    <div class="signature-section">
+                        <h3>Signature Information</h3>
+                        <p><strong>Status:</strong> Signed</p>
+                        <p><strong>Signed Date:</strong> ${new Date(contract.signed_at).toLocaleDateString()}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+
+// Show contract selection dialog for multiple contracts
+function showContractSelectionDialog(contracts, clientName) {
+    const dialogHTML = `
+        <div class="contract-selection-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+            <div class="contract-selection-dialog" style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+                <h3 style="margin-top: 0; color: #333;">Select Contract to Download</h3>
+                <div class="contract-list">
+                    ${contracts.map((contract, index) => `
+                        <div class="contract-option" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; cursor: pointer;" onclick="selectContract(${index})">
+                            <h4 style="margin: 0 0 10px 0; color: #333;">Contract ${index + 1}</h4>
+                            <p style="margin: 5px 0; color: #666;"><strong>Status:</strong> ${contract.status}</p>
+                            ${contract.status === 'signed' ? `<p style="margin: 5px 0; color: #666;"><strong>Signed:</strong> ${new Date(contract.signed_at).toLocaleDateString()}</p>` : ''}
+                            <p style="margin: 5px 0; color: #666; font-size: 14px;">${(contract.content || 'No content').substring(0, 100)}...</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeContractSelectionDialog()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', dialogHTML);
+    
+    // Store contracts for selection
+    window.selectedContracts = contracts;
+    window.selectedClientName = clientName;
+}
+
+// Handle contract selection
+window.selectContract = function(index) {
+    const contract = window.selectedContracts[index];
+    const clientName = window.selectedClientName;
+    
+    closeContractSelectionDialog();
+    downloadContractPDF(contract, clientName);
+};
+
+// Close contract selection dialog
+window.closeContractSelectionDialog = function() {
+    const dialog = document.querySelector('.contract-selection-overlay');
+    if (dialog) {
+        dialog.remove();
+    }
+    delete window.selectedContracts;
+    delete window.selectedClientName;
+};
 
 window.switchTab = function(tabName) {
             // Hide all tab contents
