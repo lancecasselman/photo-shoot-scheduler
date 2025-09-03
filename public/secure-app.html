@@ -5428,10 +5428,27 @@
                 padding: var(--spacing-xs);
             }
         }
+
+        /* Mobile-only Landing Page Banner */
+        @media (max-width: 768px) {
+            .mobile-landing-banner {
+                display: block !important;
+            }
+            .container {
+                padding-top: 60px !important; /* Make room for the banner */
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Mobile-Only Landing Page Button -->
+        <div class="mobile-landing-banner" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; background: #00D4AA; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);">
+            <a href="/" target="_blank" style="color: white; text-decoration: none; font-weight: 800; font-size: 18px;">
+                🏠 LANDING PAGE - EDIT YOUR WEBSITE
+            </a>
+        </div>
+
         <!-- Header with Hamburger Menu -->
         <div class="header">
             <div class="header-left">
