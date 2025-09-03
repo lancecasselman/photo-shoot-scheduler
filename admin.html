@@ -27,7 +27,6 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
-            position: relative;
         }
 
         .header h1 {
@@ -38,113 +37,6 @@
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
-        }
-
-        .landing-page-nav {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-        }
-
-        .landing-page-btn {
-            background: rgba(0, 212, 170, 0.2);
-            color: #00D4AA;
-            padding: 12px 18px;
-            border: 2px solid #00D4AA;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .landing-page-btn:hover {
-            background: #00D4AA;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
-        }
-
-        /* Mobile hamburger menu */
-        .mobile-menu-toggle {
-            display: none;
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .mobile-menu.active {
-            display: flex;
-        }
-
-        .mobile-menu-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-        }
-
-        .mobile-menu-item {
-            margin: 20px 0;
-        }
-
-        .mobile-menu-item a {
-            color: white;
-            text-decoration: none;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .mobile-landing-btn {
-            background: rgba(0, 212, 170, 0.2);
-            color: #00D4AA;
-            padding: 15px 25px;
-            border: 2px solid #00D4AA;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 18px;
-            margin: 20px 0;
-            display: block;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: block;
-            }
-
-            .landing-page-nav {
-                position: static;
-                text-align: center;
-                margin: 20px 0;
-            }
         }
 
         .stats-grid {
@@ -347,106 +239,13 @@
                 margin-right: 0;
             }
         }
-        /* Mobile hamburger menu */
-        .mobile-menu-toggle {
-            display: none;
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .mobile-menu.active {
-            display: flex;
-        }
-
-        .mobile-menu-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-        }
-
-        .mobile-menu-item {
-            margin: 20px 0;
-        }
-
-        .mobile-menu-item a {
-            color: white;
-            text-decoration: none;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .mobile-landing-btn {
-            background: rgba(0, 212, 170, 0.2);
-            color: #00D4AA;
-            padding: 15px 25px;
-            border: 2px solid #00D4AA;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 18px;
-            margin: 20px 0;
-            display: block;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: block;
-            }
-
-            .landing-page-nav {
-                position: static;
-                text-align: center;
-                margin: 20px 0;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="mobile-menu" id="mobileMenu">
-        <button class="mobile-menu-close" onclick="toggleMobileMenu()">&times;</button>
-        <div class="mobile-menu-item">
-            <a href="/" target="_blank" class="mobile-landing-btn">🏠 LANDING PAGE</a>
-        </div>
-        <div class="mobile-menu-item">
-            <a href="/app" target="_blank">📊 Admin Dashboard</a>
-        </div>
-    </div>
     <div class="container">
         <a href="/" class="back-link">← Back to Main Dashboard</a>
         
         <div class="header">
-            <div class="landing-page-nav">
-                <a href="/" target="_blank" class="landing-page-btn">
-                    🏠 Landing Page
-                </a>
-            </div>
             <h1>Subscriber Management</h1>
             <p>Professional notification system for The Client Management Area</p>
         </div>

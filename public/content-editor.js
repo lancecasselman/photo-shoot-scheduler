@@ -133,9 +133,6 @@ class ContentEditor {
           <span class="toolbar-status" id="edit-status">View Mode</span>
         </div>
         <div class="toolbar-right">
-          <a href="/app" target="_blank" class="toolbar-btn secondary" style="margin-right: 10px; text-decoration: none;">
-            🏠 Admin Dashboard
-          </a>
           <button id="toggle-edit-mode" class="toolbar-btn primary">
             Enable Edit Mode
           </button>

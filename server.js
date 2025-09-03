@@ -12587,14 +12587,6 @@ app.get('/test-android-auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
 });
 
-// Serve static files from public directory FIRST
-app.use(express.static(path.join(__dirname, 'public'), {
-    index: false,
-    etag: false,
-    lastModified: false
-}));
-
-// Then serve from root directory for other files
 app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,

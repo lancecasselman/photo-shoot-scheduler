@@ -30,7 +30,6 @@
             border-radius: 10px;
             margin-bottom: 30px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: relative;
         }
         
         .header h1 {
@@ -42,85 +41,6 @@
         .header p {
             color: #7f8c8d;
             font-size: 16px;
-        }
-
-        .landing-page-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 212, 170, 0.1);
-            color: #00D4AA;
-            padding: 12px 18px;
-            border: 2px solid #00D4AA;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
-            z-index: 1000;
-        }
-
-        .landing-page-btn:hover {
-            background: #00D4AA;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
-        }
-
-        /* Mobile menu */
-        .mobile-menu-toggle {
-            display: none;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: none;
-            border: none;
-            color: #2c3e50;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 2000;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .mobile-menu.active {
-            display: flex;
-        }
-
-        .mobile-landing-btn {
-            background: rgba(0, 212, 170, 0.2);
-            color: #00D4AA;
-            padding: 18px 30px;
-            border: 2px solid #00D4AA;
-            border-radius: 15px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 20px;
-            margin: 20px;
-            display: block;
-            text-align: center;
-            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: block;
-            }
-            .landing-page-btn {
-                display: none;
-            }
         }
         
         .card {
@@ -202,32 +122,6 @@
         
         .button.success:hover {
             background: #229954;
-        }
-        
-        .landing-page-nav {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        
-        .landing-page-btn {
-            background: #00D4AA;
-            color: white;
-            padding: 12px 18px;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .landing-page-btn:hover {
-            background: #00C299;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.4);
         }
         
         .info-section {
@@ -330,11 +224,6 @@
     </style>
 </head>
 <body>
-    <div class="landing-page-nav">
-        <a href="/" target="_blank" class="landing-page-btn">
-            🏠 Landing Page
-        </a>
-    </div>
     <div class="container">
         <a href="/" class="back-link">← Back to Dashboard</a>
         

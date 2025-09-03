@@ -454,8 +454,6 @@
             animation: slideDown 0.3s ease;
             margin: 0;
             backdrop-filter: blur(20px);
-            max-height: 80vh;
-            overflow-y: auto;
         }
 
         .mobile-menu.show {
@@ -5428,27 +5426,10 @@
                 padding: var(--spacing-xs);
             }
         }
-
-        /* Mobile-only Landing Page Banner */
-        @media (max-width: 768px) {
-            .mobile-landing-banner {
-                display: block !important;
-            }
-            .container {
-                padding-top: 60px !important; /* Make room for the banner */
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Mobile-Only Landing Page Button -->
-        <div class="mobile-landing-banner" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; background: #00D4AA; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);">
-            <a href="/" target="_blank" style="color: white; text-decoration: none; font-weight: 800; font-size: 18px;">
-                🏠 LANDING PAGE - EDIT YOUR WEBSITE
-            </a>
-        </div>
-
         <!-- Header with Hamburger Menu -->
         <div class="header">
             <div class="header-left">
@@ -5461,10 +5442,6 @@
             </div>
             
             <div class="header-right">
-                <a href="/" target="_blank" style="color: #00D4AA; text-decoration: none; margin-right: 20px; font-weight: 700; padding: 10px 16px; border: 2px solid #00D4AA; border-radius: 8px; transition: all 0.2s; background: rgba(0, 212, 170, 0.1); font-size: 14px; z-index: 1005; position: relative;" 
-                   onmouseover="this.style.backgroundColor='#00D4AA'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(0, 212, 170, 0.1)'; this.style.color='#00D4AA';">
-                    🏠 Landing Page
-                </a>
                 <div id="userInfo" class="user-info" style="display: block;">
                     <span id="userName">Loading...</span>
                 </div>
@@ -5474,11 +5451,6 @@
         <div class="mobile-menu" id="mobileMenu">
             <nav class="nav-menu">
                 <ul>
-                    <li class="nav-item" style="background: rgba(0, 212, 170, 0.2) !important; border: 3px solid #00D4AA !important; border-radius: 12px !important; margin: 12px 8px !important; box-shadow: 0 6px 20px rgba(0, 212, 170, 0.5) !important; display: block !important; visibility: visible !important; position: relative !important; z-index: 9999 !important;">
-                        <a href="/" target="_blank" class="nav-link" onclick="closeMobileMenu();" style="color: #00D4AA !important; font-weight: 900 !important; font-size: 20px !important; padding: 20px !important; display: block !important; text-align: center !important; text-decoration: none !important; visibility: visible !important; opacity: 1 !important;">
-                            🏠 LANDING PAGE
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link active" onclick="switchTab('clients'); closeMobileMenu();">
                             Sessions
