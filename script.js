@@ -711,12 +711,12 @@ function createSessionCard(session) {
     bookingAgreementBtn.style.margin = '2px';
     console.log('Booking Agreement button created for session:', session.id);
 
-    // Simple View Contracts Button
+    // View Contracts Button with PDF Download
     const viewContractsBtn = document.createElement('button');
     viewContractsBtn.className = 'btn btn-secondary';
     viewContractsBtn.textContent = '📄 View Contracts';
     viewContractsBtn.onclick = () => {
-        showMessage('View Contracts feature coming soon!', 'info');
+        viewSessionContractsPDF(session.id, session.clientName);
     };
     viewContractsBtn.style.backgroundColor = '#6c757d';
     viewContractsBtn.style.color = 'white';
@@ -3339,3 +3339,208 @@ window.switchTab = function(tabName) {
                     showMessage('Failed to update status', 'error');
                 });
         };
+
+// View Session Contracts with PDF Download
+async function viewSessionContractsPDF(sessionId, clientName) {
+    try {
+        const token = await getAuthToken();
+        if (!token) {
+            showMessage('Please log in to view contracts', 'error');
+            return;
+        }
+
+        // Fetch contracts for this session
+        const response = await fetch(`/api/booking/agreements/session/${sessionId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch contracts');
+        }
+
+        const contracts = await response.json();
+        
+        if (!contracts || contracts.length === 0) {
+            showMessage('No contracts found for this session', 'info');
+            return;
+        }
+
+        // If there's only one contract, download it directly
+        if (contracts.length === 1) {
+            downloadContractPDF(contracts[0], clientName);
+        } else {
+            // Show selection dialog for multiple contracts
+            showContractSelectionDialog(contracts, clientName);
+        }
+
+    } catch (error) {
+        console.error('Error fetching contracts:', error);
+        showMessage('Failed to load contracts', 'error');
+    }
+}
+
+// Download contract as PDF
+function downloadContractPDF(contract, clientName) {
+    const content = contract.content || contract.template_content || 'No content available';
+    
+    // Create a clean filename
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `Contract_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${date}.pdf`;
+    
+    // Create a print-ready window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Booking Agreement - ${clientName}</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    max-width: 800px; 
+                    margin: 20px auto; 
+                    padding: 20px;
+                    line-height: 1.6;
+                    color: #333;
+                }
+                h1, h2, h3 { 
+                    color: #2c3e50; 
+                    margin-top: 30px;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 10px;
+                }
+                .contract-header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                .signature-section { 
+                    margin-top: 50px; 
+                    padding: 20px; 
+                    border: 1px solid #ddd;
+                    background: #f9f9f9;
+                }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                }
+                .download-btn {
+                    background: #007bff;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="contract-header">
+                <h1>Photography Session Agreement</h1>
+                <p><strong>Client:</strong> ${clientName}</p>
+                <p><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+                <button class="download-btn" onclick="window.print()">📄 Save as PDF</button>
+                <button class="download-btn" onclick="window.close()">✖ Close</button>
+            </div>
+            
+            <div class="contract-content">
+                ${content}
+            </div>
+            
+            ${contract.status === 'signed' ? `
+                <div class="signature-section">
+                    <h3>Signature Information</h3>
+                    <p><strong>Status:</strong> Signed</p>
+                    <p><strong>Signed Date:</strong> ${new Date(contract.signed_at).toLocaleDateString()}</p>
+                    ${contract.client_signature ? `<p><strong>Client Signature:</strong> ${contract.client_signature}</p>` : ''}
+                </div>
+            ` : ''}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+
+// Show contract selection dialog for multiple contracts
+function showContractSelectionDialog(contracts, clientName) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    content.innerHTML = `
+        <h3>Select Contract to Download</h3>
+        <p>Multiple contracts found for ${clientName}:</p>
+        <div id="contractList"></div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px;">Cancel</button>
+        </div>
+    `;
+    
+    const contractList = content.querySelector('#contractList');
+    
+    contracts.forEach((contract, index) => {
+        const contractDiv = document.createElement('div');
+        contractDiv.style.cssText = `
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        `;
+        
+        contractDiv.innerHTML = `
+            <strong>Contract ${index + 1}</strong><br>
+            <small>Status: ${contract.status || 'Draft'}</small><br>
+            <small>Created: ${new Date(contract.created_at).toLocaleDateString()}</small>
+        `;
+        
+        contractDiv.onclick = () => {
+            downloadContractPDF(contract, clientName);
+            modal.remove();
+        };
+        
+        contractDiv.onmouseover = () => contractDiv.style.backgroundColor = '#f8f9fa';
+        contractDiv.onmouseout = () => contractDiv.style.backgroundColor = 'white';
+        
+        contractList.appendChild(contractDiv);
+    });
+    
+    modal.appendChild(content);
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+}
+
+// Make function available globally
+window.viewSessionContractsPDF = viewSessionContractsPDF;
