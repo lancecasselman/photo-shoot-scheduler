@@ -2407,6 +2407,9 @@ app.use('/api/system', createProductionRoutes(healthCheck, logger));
 // Support system routes
 app.use('/api/support', createSupportRoutes(supportSystem, isAuthenticated));
 
+// Content management routes
+app.use('/api/content', require('./server/content-api-routes'));
+
 // Analytics routes (admin only)
 app.get('/api/admin/analytics', async (req, res) => {
     try {

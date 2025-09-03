@@ -516,7 +516,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">Photography Management System</div>
+            <div class="logo" data-content-key="nav.logo">Photography Management System</div>
             <ul class="nav-menu">
                 <li><a href="#home" class="nav-link">Home</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
@@ -524,7 +524,7 @@
                 <li><a href="#pricing" class="nav-link">Pricing</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
-            <a href="#" id="launchAppBtn" class="cta-button">Launch Application</a>
+            <a href="#" id="launchAppBtn" class="cta-button" data-content-key="nav.cta">Launch Application</a>
         </div>
     </nav>
 
@@ -532,11 +532,11 @@
     <section id="home" class="hero">
         <div class="hero-container">
             <div class="hero-content">
-                <h1>Professional Photography Business Platform</h1>
-                <p>Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios, our platform handles everything from client bookings to final delivery.</p>
+                <h1 data-content-key="hero.title">Professional Photography Business Platform</h1>
+                <p data-content-key="hero.description">Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios, our platform handles everything from client bookings to final delivery.</p>
                 <div class="hero-buttons">
-                    <a href="#" id="getStartedBtn" class="btn-primary">Get Started</a>
-                    <a href="#features" class="btn-secondary">Learn More</a>
+                    <a href="#" id="getStartedBtn" class="btn-primary" data-content-key="hero.primary_button">Get Started</a>
+                    <a href="#features" class="btn-secondary" data-content-key="hero.secondary_button">Learn More</a>
                 </div>
                 <div class="loading" id="authLoading">
                     <p>🔄 Authenticating...</p>
@@ -546,7 +546,7 @@
                 </div>
             </div>
             <div class="hero-image">
-                <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Professional Photography Camera" />
+                <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Professional Photography Camera" data-content-key="hero.image_url" />
             </div>
         </div>
     </section>
@@ -555,23 +555,23 @@
     <section id="features" class="features">
         <div class="features-container">
             <div class="section-header">
-                <h2>Everything You Need to Manage Your Photography Business</h2>
-                <p>Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform brings every aspect of your photography business into one seamless experience, accessible from anywhere on any device.</p>
+                <h2 data-content-key="features.title">Everything You Need to Manage Your Photography Business</h2>
+                <p data-content-key="features.description">Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform brings every aspect of your photography business into one seamless experience, accessible from anywhere on any device.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
                     <span class="feature-icon">📅</span>
-                    <h3>Session Management</h3>
-                    <p>Schedule and track photography sessions with comprehensive client management tools, automated reminders, and detailed session planning.</p>
+                    <h3 data-content-key="features.session.title">Session Management</h3>
+                    <p data-content-key="features.session.description">Schedule and track photography sessions with comprehensive client management tools, automated reminders, and detailed session planning.</p>
                 </div>
                 <div class="feature-card">
                     <span class="feature-icon">🖼️</span>
-                    <h3>Gallery Management</h3>
-                    <p>Organize and share client galleries with secure access, download capabilities, and professional presentation tools.</p>
+                    <h3 data-content-key="features.gallery.title">Gallery Management</h3>
+                    <p data-content-key="features.gallery.description">Organize and share client galleries with secure access, download capabilities, and professional presentation tools.</p>
                 </div>
                 <div class="feature-card">
                     <span class="feature-icon">💰</span>
-                    <h3>Invoicing & Payments</h3>
+                    <h3 data-content-key="features.billing.title">Invoicing & Payments</h3>
                     <p>Generate professional invoices, manage payments, and track financial performance with integrated billing systems.</p>
                 </div>
                 <div class="feature-card">
@@ -597,7 +597,7 @@
     <section id="about" class="about">
         <div class="about-container">
             <div class="about-content">
-                <h2>Built for Growth</h2>
+                <h2 data-content-key="about.title">Built for Growth</h2>
                 <p><strong>For Solo Photographers:</strong> Start with everything you need to run a professional photography business. No setup fees, no hidden costs.</p>
                 <p><strong>For Studios & Teams:</strong> Scale effortlessly with multi-photographer support, team collaboration tools, and unified billing through Stripe Connect. Each photographer maintains their individual brand while benefiting from shared infrastructure.</p>
                 <p><strong>Photographer-First Design:</strong> Every feature is crafted based on real photographer workflows. No unnecessary complexity - just tools that work the way you do.</p>
@@ -612,12 +612,12 @@
     <section id="pricing" class="pricing">
         <div class="pricing-container">
             <div class="section-header">
-                <h2>Simple, Transparent Pricing</h2>
-                <p>No setup fees. No hidden costs. Cancel anytime.</p>
+                <h2 data-content-key="pricing.title">Simple, Transparent Pricing</h2>
+                <p data-content-key="pricing.subtitle">No setup fees. No hidden costs. Cancel anytime.</p>
             </div>
             <div class="pricing-card">
-                <h3>Professional Plan</h3>
-                <div class="price">$39<span style="font-size: 1rem; color: var(--text-muted);">/month</span></div>
+                <h3 data-content-key="pricing.plan_name">Professional Plan</h3>
+                <div class="price"><span data-content-key="pricing.price">$39</span><span style="font-size: 1rem; color: var(--text-muted);" data-content-key="pricing.period">/month</span></div>
                 <ul class="pricing-features">
                     <li>Unlimited client sessions</li>
                     <li>100GB cloud storage</li>
@@ -637,8 +637,8 @@
     <section id="contact" class="contact">
         <div class="contact-container">
             <div class="section-header">
-                <h2>Get in Touch</h2>
-                <p>Have questions about our platform? We're here to help you succeed.</p>
+                <h2 data-content-key="contact.title">Get in Touch</h2>
+                <p data-content-key="contact.description">Have questions about our platform? We're here to help you succeed.</p>
             </div>
             <form class="contact-form">
                 <div class="form-group">
@@ -914,5 +914,8 @@
             this.reset();
         });
     </script>
+    
+    <!-- Content Editor for Admin Users -->
+    <script src="content-editor.js"></script>
 </body>
 </html>

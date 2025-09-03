@@ -9,6 +9,7 @@ import {
   integer,
   decimal,
   serial,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 // Session storage table.
@@ -461,6 +462,40 @@ export const communityChallenges = pgTable("community_challenges", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Content Management System Tables
+export const landingPageContent = pgTable("landing_page_content", {
+  id: serial("id").primaryKey(),
+  contentKey: varchar("content_key").unique().notNull(), // e.g., 'hero.title', 'features.session.title'
+  contentValue: text("content_value").notNull(),
+  contentType: varchar("content_type").notNull().default("text"), // text, html, image_url, json
+  section: varchar("section").notNull(), // hero, features, about, pricing, contact, footer
+  isActive: boolean("is_active").default(true),
+  lastModifiedBy: varchar("last_modified_by").notNull(), // admin email who made the change
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const contentVersions = pgTable("content_versions", {
+  id: serial("id").primaryKey(),
+  contentId: integer("content_id").notNull().references(() => landingPageContent.id),
+  oldValue: text("old_value").notNull(),
+  newValue: text("new_value").notNull(),
+  changeReason: varchar("change_reason"), // Optional reason for the change
+  modifiedBy: varchar("modified_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  displayName: varchar("display_name"),
+  permissions: jsonb("permissions").default({}), // {content_edit: true, user_management: true}
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Community type exports
 export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;
 export type CommunityProfile = typeof communityProfiles.$inferSelect;
@@ -478,3 +513,11 @@ export type InsertCommunityMessage = typeof communityMessages.$inferInsert;
 export type CommunityMessage = typeof communityMessages.$inferSelect;
 export type InsertCommunityChallenge = typeof communityChallenges.$inferInsert;
 export type CommunityChallenge = typeof communityChallenges.$inferSelect;
+
+// Content Management type exports
+export type InsertLandingPageContent = typeof landingPageContent.$inferInsert;
+export type LandingPageContent = typeof landingPageContent.$inferSelect;
+export type InsertContentVersion = typeof contentVersions.$inferInsert;
+export type ContentVersion = typeof contentVersions.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
+export type AdminUser = typeof adminUsers.$inferSelect;
