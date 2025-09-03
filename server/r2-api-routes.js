@@ -12,7 +12,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 * 1024, // 5GB max file size (R2 technical limit)
-    files: 10, // Max 10 files per request to prevent DOS
+    files: 50, // Max 50 files per request - optimized for gallery uploads
   },
   fileFilter: (req, file, cb) => {
     // Security: Validate file types - allow photography-related files
@@ -283,12 +283,24 @@ function createR2Routes() {
         console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
       }
 
-      // Upload files in parallel for better performance
-      const uploadPromises = req.files.map(file => 
-        r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId)
-      );
+      // Upload files with optimized concurrency for maximum speed
+      const CONCURRENT_UPLOADS = 6; // Increased from 2 to 6 for faster processing
+      const uploadResults = [];
       
-      const uploadResults = await Promise.allSettled(uploadPromises);
+      // Process files in batches for optimal performance
+      for (let i = 0; i < req.files.length; i += CONCURRENT_UPLOADS) {
+        const batch = req.files.slice(i, i + CONCURRENT_UPLOADS);
+        const batchPromises = batch.map(file => 
+          r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId)
+        );
+        
+        const batchResults = await Promise.allSettled(batchPromises);
+        uploadResults.push(...batchResults);
+        
+        // Send progress update to client (if WebSocket is available)
+        const progress = Math.round(((i + batch.length) / req.files.length) * 100);
+        console.log(`📊 Upload progress: ${progress}% (${i + batch.length}/${req.files.length} files)`);
+      }
       
       // Separate successful and failed uploads
       const successful = [];

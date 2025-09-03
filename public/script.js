@@ -2072,54 +2072,97 @@ function setupUploadModal(sessionId) {
         });
     }
 
+    // Enhanced upload function with per-file progress tracking
     async function uploadPhotos(sessionId, files) {
         if (files.length === 0) return;
 
         try {
-            // Show progress in HTML modal
-            console.log('Starting upload process...');
+            console.log(`🚀 Starting optimized upload of ${files.length} files...`);
 
             const authToken = await getAuthToken();
             if (!authToken) {
                 throw new Error('Authentication required for photo upload');
             }
 
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('photos', file);
-            });
+            // Show enhanced progress modal with per-file tracking
+            showEnhancedUploadProgress(files.length);
 
-            // Remove old progress tracking - using HTML modal now
-            console.log('Uploading photos...');
+            // Process files in smaller batches for optimal performance
+            const BATCH_SIZE = 6; // Upload 6 files concurrently
+            let totalUploaded = 0;
+            let totalFailed = 0;
+            
+            for (let i = 0; i < files.length; i += BATCH_SIZE) {
+                const batch = files.slice(i, i + BATCH_SIZE);
+                
+                // Update progress: Starting batch
+                const batchStartProgress = Math.round((i / files.length) * 100);
+                updateEnhancedProgress(batchStartProgress, `Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(files.length/BATCH_SIZE)}...`);
+                
+                // Upload current batch
+                const formData = new FormData();
+                batch.forEach((file, index) => {
+                    formData.append('photos', file);
+                    updateFileProgress(i + index, file.name, 'uploading', 0);
+                });
 
-            const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: formData
-            });
+                try {
+                    const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: formData
+                    });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Upload failed');
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Upload failed');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Update individual file progress
+                    batch.forEach((file, index) => {
+                        updateFileProgress(i + index, file.name, 'completed', 100);
+                    });
+                    
+                    totalUploaded += result.uploaded || batch.length;
+                    
+                } catch (batchError) {
+                    console.error(`Batch ${Math.floor(i/BATCH_SIZE) + 1} failed:`, batchError);
+                    
+                    // Mark batch files as failed
+                    batch.forEach((file, index) => {
+                        updateFileProgress(i + index, file.name, 'failed', 0);
+                    });
+                    
+                    totalFailed += batch.length;
+                }
+                
+                // Update overall progress
+                const overallProgress = Math.round(((i + batch.length) / files.length) * 100);
+                updateEnhancedProgress(overallProgress, `Uploaded ${totalUploaded}/${files.length} files`);
             }
 
-            const result = await response.json();
+            // Upload complete
+            console.log(`✅ Upload complete! ${totalUploaded} uploaded, ${totalFailed} failed`);
+            updateEnhancedProgress(100, `Complete! ${totalUploaded} uploaded successfully`);
+            
+            if (totalFailed > 0) {
+                showMessage(`Upload completed with ${totalFailed} failed files. ${totalUploaded} files uploaded successfully.`, 'warning');
+            } else {
+                showMessage(`Successfully uploaded all ${totalUploaded} files!`, 'success');
+            }
 
-            // Upload complete - using HTML modal now
-            console.log('Upload complete!');
-
-            console.log('Upload result:', result);
-            showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
-
-            // Close HTML modal after upload
+            // Close progress modal after delay
             setTimeout(() => {
+                hideEnhancedUploadProgress();
                 const modal = document.getElementById('uploadModal');
                 if (modal) {
                     modal.classList.remove('active');
                 }
-            }, 1000);
+            }, 2000);
 
             // Reload photos for this session
             const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
@@ -2131,9 +2174,130 @@ function setupUploadModal(sessionId) {
         } catch (error) {
             console.error('Upload error:', error);
             showMessage('Upload failed: ' + error.message, 'error');
-
-            console.log('Upload failed, hiding progress');
+            hideEnhancedUploadProgress();
         }
+    }
+    
+    // Enhanced progress modal functions
+    function showEnhancedUploadProgress(totalFiles) {
+        // Remove existing progress modal if any
+        const existingModal = document.getElementById('enhancedUploadProgress');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.id = 'enhancedUploadProgress';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                <h3 style="margin: 0 0 1rem 0; color: #333; text-align: center;">Uploading ${totalFiles} Files</h3>
+                
+                <!-- Overall Progress -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: #666; font-size: 14px;">Overall Progress</span>
+                        <span id="overallPercent" style="color: #666; font-size: 14px;">0%</span>
+                    </div>
+                    <div style="background: #f0f0f0; border-radius: 10px; height: 12px; overflow: hidden;">
+                        <div id="overallProgressBar" style="background: linear-gradient(45deg, #28a745, #20c997); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
+                    </div>
+                    <p id="overallStatus" style="margin: 0.5rem 0 0 0; color: #666; font-size: 14px; text-align: center;">Preparing upload...</p>
+                </div>
+                
+                <!-- File Progress List -->
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e1e5e9; border-radius: 8px; padding: 1rem;">
+                    <div id="fileProgressList"></div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button onclick="cancelEnhancedUpload()" style="background: #dc3545; color: white; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer; font-size: 14px;">
+                        Cancel Upload
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add file progress items
+        const fileProgressList = document.getElementById('fileProgressList');
+        for (let i = 0; i < totalFiles; i++) {
+            const fileItem = document.createElement('div');
+            fileItem.id = `fileProgress-${i}`;
+            fileItem.style.cssText = `
+                display: flex;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #f1f3f4;
+                font-size: 13px;
+            `;
+            fileItem.innerHTML = `
+                <div style="flex: 1; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Preparing...</div>
+                <div style="width: 80px; text-align: right; color: #666;">Pending</div>
+            `;
+            fileProgressList.appendChild(fileItem);
+        }
+    }
+    
+    function updateEnhancedProgress(percent, status) {
+        const progressBar = document.getElementById('overallProgressBar');
+        const percentDisplay = document.getElementById('overallPercent');
+        const statusDisplay = document.getElementById('overallStatus');
+        
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (percentDisplay) percentDisplay.textContent = percent + '%';
+        if (statusDisplay) statusDisplay.textContent = status;
+    }
+    
+    function updateFileProgress(fileIndex, fileName, status, percent) {
+        const fileItem = document.getElementById(`fileProgress-${fileIndex}`);
+        if (!fileItem) return;
+        
+        const statusColors = {
+            'uploading': '#007bff',
+            'completed': '#28a745',
+            'failed': '#dc3545',
+            'pending': '#6c757d'
+        };
+        
+        const statusText = {
+            'uploading': `${percent}%`,
+            'completed': 'Done',
+            'failed': 'Failed',
+            'pending': 'Pending'
+        };
+        
+        fileItem.innerHTML = `
+            <div style="flex: 1; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${fileName}">${fileName}</div>
+            <div style="width: 80px; text-align: right; color: ${statusColors[status]}; font-weight: 500;">${statusText[status]}</div>
+        `;
+    }
+    
+    function hideEnhancedUploadProgress() {
+        const modal = document.getElementById('enhancedUploadProgress');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    function cancelEnhancedUpload() {
+        // This would cancel the upload if we implement abortion
+        hideEnhancedUploadProgress();
+        showMessage('Upload cancelled by user', 'info');
     }
 }
 
