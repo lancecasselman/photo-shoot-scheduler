@@ -780,8 +780,9 @@ function createSessionCard(session) {
         <div class="detail-value">${session.location}</div>
     `;
 
-    // Phone number with call and text buttons
-    const phoneDiv = createPhoneDetailItem('Phone', session.phoneNumber);
+    // Phone number with call and text buttons  
+    const phoneNumber = session.phoneNumber || session.phone_number;
+    const phoneDiv = createPhoneDetailItem('Phone', phoneNumber);
 
     // Email
     const emailDiv = document.createElement('div');
@@ -923,7 +924,7 @@ window.editSession = function(sessionId) {
     form.elements.dateTime.value = formattedDateTime;
 
     form.elements.location.value = session.location;
-    form.elements.phoneNumber.value = session.phoneNumber;
+    form.elements.phoneNumber.value = session.phone_number || session.phoneNumber;
     form.elements.email.value = session.email;
     form.elements.price.value = session.price;
     form.elements.duration.value = session.duration;
@@ -1016,7 +1017,7 @@ window.exportToCalendar = function(sessionId) {
         `DTSTART:${formatICSDate(startDate)}`,
         `DTEND:${formatICSDate(endDate)}`,
         `SUMMARY:${session.sessionType} Photography Session - ${session.clientName}`,
-        `DESCRIPTION:Photography session with ${session.clientName}\\n\\nContact: ${session.phoneNumber}\\nEmail: ${session.email}\\nPrice: $${session.price}\\nDuration: ${session.duration} minutes\\n\\nNotes: ${session.notes || 'No additional notes'}`,
+        `DESCRIPTION:Photography session with ${session.clientName}\\n\\nContact: ${session.phone_number || session.phoneNumber}\\nEmail: ${session.email}\\nPrice: $${session.price}\\nDuration: ${session.duration} minutes\\n\\nNotes: ${session.notes || 'No additional notes'}`,
         `LOCATION:${session.location}`,
         'ORGANIZER;CN=Lance - The Legacy Photography:mailto:lance@thelegacyphotography.com',
         `ATTENDEE;CN=${session.clientName};RSVP=TRUE:mailto:${session.email}`,
@@ -1104,7 +1105,7 @@ window.exportToCalendar = function(sessionId) {
             `&location=${encodeURIComponent(session.location)}` +
             `&details=${encodeURIComponent(
                 `Photography session with ${session.clientName}\n\n` +
-                `Contact: ${session.phoneNumber}\n` +
+                `Contact: ${session.phone_number || session.phoneNumber}\n` +
                 `Email: ${session.email}\n` +
                 `Price: $${session.price}\n` +
                 `Duration: ${session.duration} minutes\n\n` +
@@ -1159,7 +1160,7 @@ Looking forward to capturing some beautiful moments with you!
 Best regards,
 Lance - The Legacy Photography
 Professional Photography Services
- Call/Text: ${session.phoneNumber}
+ Call/Text: ${session.phone_number || session.phoneNumber}
  Email: lance@thelegacyphotography.com`;
 
     const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -1445,7 +1446,7 @@ function showInvoiceSendDialog(data) {
                     <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">Send Invoice to Client:</h3>
                     
                     <div style="display: grid; gap: 12px;">
-                        <button onclick="sendViaSMS('${clientPhone}', '${clientName}', '${amount}', '${invoiceUrl}')" 
+                        <button onclick="sendViaSMS('${session.phone_number || session.phoneNumber}', '${clientName}', '${amount}', '${invoiceUrl}')" 
                                 style="padding: 15px 20px; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                             📱 Send via SMS
                         </button>
@@ -2439,7 +2440,7 @@ async function executeWorkflow(sessionId, workflowType) {
         const clientData = {
             clientName: session.clientName,
             email: session.email,
-            phoneNumber: session.phoneNumber,
+            phoneNumber: session.phone_number || session.phoneNumber,
             sessionType: session.sessionType,
             sessionDate: new Date(session.dateTime).toLocaleDateString()
         };
