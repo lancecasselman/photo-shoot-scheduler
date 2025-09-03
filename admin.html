@@ -27,6 +27,7 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            position: relative;
         }
 
         .header h1 {
@@ -37,6 +38,30 @@
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
+        }
+
+        .landing-page-nav {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+
+        .landing-page-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .landing-page-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
         }
 
         .stats-grid {
@@ -246,6 +271,11 @@
         <a href="/" class="back-link">← Back to Main Dashboard</a>
         
         <div class="header">
+            <div class="landing-page-nav">
+                <a href="/" target="_blank" class="landing-page-btn">
+                    🏠 Landing Page
+                </a>
+            </div>
             <h1>Subscriber Management</h1>
             <p>Professional notification system for The Client Management Area</p>
         </div>

@@ -124,6 +124,32 @@
             background: #229954;
         }
         
+        .landing-page-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .landing-page-btn {
+            background: #00D4AA;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .landing-page-btn:hover {
+            background: #00C299;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.4);
+        }
+        
         .info-section {
             margin-top: 20px;
             padding: 20px;
@@ -224,6 +250,11 @@
     </style>
 </head>
 <body>
+    <div class="landing-page-nav">
+        <a href="/" target="_blank" class="landing-page-btn">
+            🏠 Landing Page
+        </a>
+    </div>
     <div class="container">
         <a href="/" class="back-link">← Back to Dashboard</a>
         
