@@ -1558,13 +1558,29 @@
                                 pattern="[a-z0-9-]+"
                             />
                         </div>
-                        <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px;">
-                            <span style="color: #6b7280; font-size: 13px;">Your website will be available at:</span><br>
-                            <span style="color: #374151; font-size: 14px; font-family: monospace;" id="url-preview">${window.location.origin}/site/${suggestedSubdomain || 'your-name'}</span>
-                            <br>
-                            <span style="color: #9ca3af; font-size: 12px; margin-top: 5px; display: block;">
-                                💡 With custom domain: ${suggestedSubdomain || 'your-name'}.yourdomain.com
-                            </span>
+                        <div style="margin-top: 15px;">
+                            <div style="padding: 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; margin-bottom: 10px;">
+                                <div style="font-weight: 600; color: #0369a1; font-size: 14px; margin-bottom: 8px;">
+                                    🌐 Your Website URLs:
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <span style="color: #6b7280; font-size: 12px;">Standard URL (Available Now):</span><br>
+                                    <span style="color: #0c4a6e; font-size: 14px; font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;" id="url-preview-standard">
+                                        ${window.location.origin}/site/${suggestedSubdomain || 'your-name'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span style="color: #6b7280; font-size: 12px;">Subdomain URL (With Custom Domain Setup):</span><br>
+                                    <span style="color: #0c4a6e; font-size: 14px; font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;" id="url-preview-subdomain">
+                                        ${suggestedSubdomain || 'your-name'}.yourdomain.com
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="padding: 10px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px;">
+                                <div style="font-size: 12px; color: #92400e;">
+                                    <strong>ℹ️ Note:</strong> The subdomain option (photographer.yourdomain.com) requires custom domain setup in production deployment. The standard URL works immediately.
+                                </div>
+                            </div>
                         </div>
                         <small style="color: #9ca3af; display: block; margin-top: 5px;">
                             Use only lowercase letters, numbers, and hyphens
@@ -1624,16 +1640,16 @@
                     const subdomain = subdomainInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
                     subdomainInput.value = subdomain;
                     
-                    // Update URL preview
-                    const urlPreview = document.getElementById('url-preview');
-                    if (urlPreview) {
-                        urlPreview.innerHTML = `
-                            ${window.location.origin}/site/${subdomain || 'your-name'}
-                            <br>
-                            <span style="color: #9ca3af; font-size: 12px; margin-top: 5px; display: block;">
-                                💡 With custom domain: ${subdomain || 'your-name'}.yourdomain.com
-                            </span>
-                        `;
+                    // Update both URL previews
+                    const standardPreview = document.getElementById('url-preview-standard');
+                    const subdomainPreview = document.getElementById('url-preview-subdomain');
+                    
+                    if (standardPreview) {
+                        standardPreview.textContent = `${window.location.origin}/site/${subdomain || 'your-name'}`;
+                    }
+                    
+                    if (subdomainPreview) {
+                        subdomainPreview.textContent = `${subdomain || 'your-name'}.yourdomain.com`;
                     }
                     
                     if (subdomain.length < 3) {
