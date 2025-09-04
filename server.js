@@ -11254,13 +11254,30 @@ app.get('/auth.html', (req, res) => {
 
 // Publish or update a website
 app.post('/api/website/publish', isAuthenticated, async (req, res) => {
+    console.log('🌐 WEBSITE PUBLISH: Endpoint reached after auth middleware');
+    
     try {
         console.log('🌐 WEBSITE PUBLISH: Request received', {
             sessionId: req.session?.id,
             hasUser: !!req.session?.user,
             userEmail: req.session?.user?.email,
-            userId: req.session?.user?.uid
+            userId: req.session?.user?.uid,
+            bodyKeys: Object.keys(req.body || {}),
+            bodySize: JSON.stringify(req.body || {}).length
         });
+        
+        if (!req.session || !req.session.user || !req.session.user.uid) {
+            console.error('❌ WEBSITE PUBLISH: Missing session or user data');
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required',
+                debug: {
+                    hasSession: !!req.session,
+                    hasUser: !!req.session?.user,
+                    hasUid: !!req.session?.user?.uid
+                }
+            });
+        }
         
         const userId = req.session.user.uid;
         const { subdomain, websiteData, pages, metadata, theme } = req.body;
@@ -11324,10 +11341,24 @@ app.post('/api/website/publish', isAuthenticated, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error publishing website:', error);
+        console.error('❌ WEBSITE PUBLISH ERROR:', {
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            detail: error.detail,
+            userId: req.session?.user?.uid,
+            subdomain: req.body?.subdomain
+        });
+        
+        // Detailed error response for debugging
         res.status(500).json({
             success: false,
-            error: 'Failed to publish website'
+            error: 'Failed to publish website',
+            debug: {
+                message: error.message,
+                code: error.code,
+                detail: error.detail
+            }
         });
     }
 });
