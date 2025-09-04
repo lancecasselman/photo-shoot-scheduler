@@ -1305,7 +1305,7 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
     }
 });
 
-// Body parsing middleware (must be AFTER webhook routes)
+// Body parsing middleware (must be AFTER webhook routes but BEFORE other API routes)
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
