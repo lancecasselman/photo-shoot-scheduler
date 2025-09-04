@@ -1417,7 +1417,15 @@ app.use(session({
 }));
 
 // Body parsing middleware (MUST be after session but BEFORE all routes)
-app.use(express.json({ limit: '100gb' }));
+app.use(express.json({ 
+    limit: '100gb',
+    verify: (req, res, buf) => {
+        // Log large requests for debugging
+        if (buf.length > 1000000) {
+            console.log(`⚠️ Large request body: ${buf.length} bytes on ${req.path}`);
+        }
+    }
+}));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
 // CORS configuration for custom domains and Android app
@@ -11252,9 +11260,36 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
-// Publish or update a website
-app.post('/api/website/publish', isAuthenticated, async (req, res) => {
-    console.log('🌐 WEBSITE PUBLISH: Endpoint reached after auth middleware');
+// Test endpoint to verify middleware is working
+app.get('/api/website/test', (req, res) => {
+    console.log('🧪 WEBSITE TEST: Endpoint reached', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        hasBody: !!req.body
+    });
+    res.json({ 
+        success: true, 
+        message: 'Test endpoint working',
+        session: !!req.session,
+        user: req.session?.user?.email 
+    });
+});
+
+// Debug middleware to catch any errors BEFORE auth
+app.post('/api/website/publish', (req, res, next) => {
+    console.log('🚀 WEBSITE PUBLISH: Request received at endpoint', {
+        method: req.method,
+        path: req.path,
+        hasBody: !!req.body,
+        bodyKeys: req.body ? Object.keys(req.body) : [],
+        headers: {
+            contentType: req.headers['content-type'],
+            cookie: !!req.headers.cookie
+        }
+    });
+    next();
+}, isAuthenticated, async (req, res) => {
+    console.log('🌐 WEBSITE PUBLISH: Passed authentication');
     
     try {
         console.log('🌐 WEBSITE PUBLISH: Request received', {
