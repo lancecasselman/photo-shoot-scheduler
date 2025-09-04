@@ -1784,6 +1784,11 @@
                         };
                         
                         // Publish website
+                        console.log('🌐 FRONTEND: Starting website publish request...', {
+                            subdomain: subdomain,
+                            dataSize: JSON.stringify(publishData).length
+                        });
+                        
                         const publishResponse = await fetch('/api/website/publish', {
                             method: 'POST',
                             headers: {
@@ -1793,7 +1798,14 @@
                             body: JSON.stringify(publishData)
                         });
                         
+                        console.log('🌐 FRONTEND: Publish response received', {
+                            status: publishResponse.status,
+                            statusText: publishResponse.statusText,
+                            ok: publishResponse.ok
+                        });
+                        
                         const result = await publishResponse.json();
+                        console.log('🌐 FRONTEND: Publish result', result);
                         
                         if (result.success) {
                             // Remove dialog
