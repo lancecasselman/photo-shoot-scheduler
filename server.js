@@ -11281,8 +11281,34 @@ app.get('/api/website/test', (req, res) => {
     });
 });
 
-// Debug middleware to catch any errors BEFORE auth
-app.post('/api/website/publish', 
+// TEMPORARY: Simple publish endpoint for testing
+app.post('/api/website/publish', async (req, res) => {
+    console.log('🎯 PUBLISH ENDPOINT HIT!');
+    
+    try {
+        // Basic auth check
+        if (!req.session || !req.session.user) {
+            console.log('❌ No session/user');
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+        
+        console.log('✅ User authenticated:', req.session.user.email);
+        
+        // For now, just return success to test the endpoint
+        res.json({ 
+            success: true, 
+            message: 'Publish endpoint working',
+            user: req.session.user.email 
+        });
+    } catch (error) {
+        console.error('🔴 PUBLISH ERROR:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Original endpoint (commented out for now)
+/*
+app.post('/api/website/publish_ORIGINAL', 
     // First middleware - just log that we reached here
     (req, res, next) => {
         console.log('🚀 WEBSITE PUBLISH: Request reached endpoint');
@@ -11418,6 +11444,7 @@ app.post('/api/website/publish',
         });
     }
 });
+*/  // END OF COMMENTED OUT ORIGINAL PUBLISH ENDPOINT
 
 // Get published website data for editing
 app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
