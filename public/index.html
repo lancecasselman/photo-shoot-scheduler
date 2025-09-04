@@ -1148,7 +1148,7 @@
     <script>
         let isEditMode = false;
         
-        function toggleEditMode() {
+        async function toggleEditMode() {
             isEditMode = !isEditMode;
             const button = document.getElementById('edit-mode-btn');
             const editableElements = document.querySelectorAll('.editable');
@@ -1157,29 +1157,163 @@
                 button.textContent = '💾 Save Changes';
                 button.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
                 
+                // Store original values and track changes
+                window.originalValues = new Map();
+                window.changedElements = new Set();
+                
                 editableElements.forEach(element => {
+                    const key = element.getAttribute('data-content-key');
+                    if (key) {
+                        window.originalValues.set(key, element.textContent);
+                    }
+                    
                     element.contentEditable = true;
                     element.style.border = '2px dashed #FFD700';
                     element.style.padding = '8px';
                     element.style.borderRadius = '4px';
                     element.title = 'Click to edit this text';
+                    
+                    // Track changes
+                    element.addEventListener('input', function() {
+                        window.changedElements.add(element);
+                        element.style.borderColor = '#28a745';
+                        element.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
+                    });
                 });
                 
                 console.log('✏️ Edit mode enabled - click any highlighted text to edit');
             } else {
-                button.textContent = '✏️ Edit Page';
-                button.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                // SAVE CHANGES PROPERLY
+                button.textContent = '⏳ Saving...';
+                button.disabled = true;
                 
-                editableElements.forEach(element => {
-                    element.contentEditable = false;
-                    element.style.border = 'none';
-                    element.style.padding = '';
-                    element.title = '';
-                });
-                
-                console.log('💾 Changes saved - edit mode disabled');
-                alert('✅ Your changes have been saved!');
+                try {
+                    await saveAllChanges();
+                    
+                    button.textContent = '✏️ Edit Page';
+                    button.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                    button.disabled = false;
+                    
+                    editableElements.forEach(element => {
+                        element.contentEditable = false;
+                        element.style.border = 'none';
+                        element.style.padding = '';
+                        element.style.backgroundColor = '';
+                        element.title = '';
+                    });
+                    
+                    console.log('💾 Changes saved - edit mode disabled');
+                    showNotification('✅ Your changes have been saved!', 'success');
+                    
+                } catch (error) {
+                    console.error('❌ Save failed:', error);
+                    button.textContent = '💾 Save Changes';
+                    button.disabled = false;
+                    showNotification('❌ Failed to save changes: ' + error.message, 'error');
+                }
             }
+        }
+
+        async function saveAllChanges() {
+            if (!window.changedElements || window.changedElements.size === 0) {
+                console.log('ℹ️ No changes to save');
+                return;
+            }
+
+            console.log(`💾 Saving ${window.changedElements.size} changes...`);
+            
+            const savePromises = [];
+            
+            window.changedElements.forEach(element => {
+                const key = element.getAttribute('data-content-key');
+                if (key) {
+                    const newValue = element.textContent.trim();
+                    const originalValue = window.originalValues.get(key);
+                    
+                    if (newValue !== originalValue) {
+                        const section = guessSection(key);
+                        console.log(`📝 Saving ${key}: "${newValue}" (was: "${originalValue}")`);
+                        savePromises.push(saveContentItem(key, newValue, 'text', section));
+                    }
+                }
+            });
+
+            if (savePromises.length === 0) {
+                console.log('ℹ️ No actual changes detected');
+                return;
+            }
+
+            await Promise.all(savePromises);
+            console.log('✅ All changes saved successfully!');
+        }
+
+        async function saveContentItem(key, value, type, section) {
+            const response = await fetch(`/api/content/${key}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    value: value,
+                    type: type,
+                    section: section,
+                    reason: 'Inline edit via landing page'
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+                throw new Error(`Failed to save ${key}: ${error.message}`);
+            }
+
+            console.log(`✅ Saved ${key}: "${value}"`);
+            return response.json();
+        }
+
+        function guessSection(key) {
+            if (key.startsWith('nav.')) return 'navigation';
+            if (key.startsWith('hero.')) return 'hero';
+            if (key.startsWith('features.')) return 'features';
+            if (key.startsWith('about.')) return 'about';
+            if (key.startsWith('pricing.')) return 'pricing';
+            if (key.startsWith('contact.')) return 'contact';
+            if (key.startsWith('footer.')) return 'footer';
+            return 'general';
+        }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existing = document.querySelectorAll('.edit-notification');
+            existing.forEach(n => n.remove());
+            
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `edit-notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10001;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                animation: slideInRight 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
         }
         
         // Initialize edit button when page loads

@@ -162,9 +162,28 @@ router.get('/', checkAdminAccess, async (req, res) => {
 
 /**
  * PUT /api/content/:key - Update specific content item
- * Admin-only endpoint
+ * Admin-only endpoint (supports both Firebase auth and session auth)
  */
-router.put('/:key', requireContentAdminAuth, async (req, res) => {
+router.put('/:key', async (req, res) => {
+  // Check if user is authenticated via session (lancecasselman@icloud.com)
+  if (req.session && req.session.user && req.session.user.email === 'lancecasselman@icloud.com') {
+    // Session-based admin access
+    req.admin = {
+      uid: req.session.user.uid || 'session-user',
+      email: req.session.user.email,
+      displayName: req.session.user.displayName || req.session.user.email,
+      isContentAdmin: true
+    };
+    
+    console.log(`✅ CONTENT API: Session-based admin access granted for: ${req.admin.email}`);
+    return handleContentUpdate(req, res);
+  }
+  
+  // Fall back to Firebase auth
+  return requireContentAdminAuth(req, res, () => handleContentUpdate(req, res));
+});
+
+async function handleContentUpdate(req, res) {
   try {
     const { key } = req.params;
     const { value, type = 'text', section, reason } = req.body;
@@ -256,7 +275,7 @@ router.put('/:key', requireContentAdminAuth, async (req, res) => {
       message: error.message 
     });
   }
-});
+}
 
 /**
  * GET /api/content/:key/history - Get version history for content item
