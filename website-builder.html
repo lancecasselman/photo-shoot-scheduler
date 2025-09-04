@@ -1559,8 +1559,12 @@
                             />
                         </div>
                         <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px;">
-                            <span style="color: #6b7280; font-size: 13px;">Your website URL will be:</span><br>
+                            <span style="color: #6b7280; font-size: 13px;">Your website will be available at:</span><br>
                             <span style="color: #374151; font-size: 14px; font-family: monospace;" id="url-preview">${window.location.origin}/site/${suggestedSubdomain || 'your-name'}</span>
+                            <br>
+                            <span style="color: #9ca3af; font-size: 12px; margin-top: 5px; display: block;">
+                                💡 With custom domain: ${suggestedSubdomain || 'your-name'}.yourdomain.com
+                            </span>
                         </div>
                         <small style="color: #9ca3af; display: block; margin-top: 5px;">
                             Use only lowercase letters, numbers, and hyphens
@@ -1623,7 +1627,13 @@
                     // Update URL preview
                     const urlPreview = document.getElementById('url-preview');
                     if (urlPreview) {
-                        urlPreview.textContent = `${window.location.origin}/site/${subdomain || 'your-name'}`;
+                        urlPreview.innerHTML = `
+                            ${window.location.origin}/site/${subdomain || 'your-name'}
+                            <br>
+                            <span style="color: #9ca3af; font-size: 12px; margin-top: 5px; display: block;">
+                                💡 With custom domain: ${subdomain || 'your-name'}.yourdomain.com
+                            </span>
+                        `;
                     }
                     
                     if (subdomain.length < 3) {

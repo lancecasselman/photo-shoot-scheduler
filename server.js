@@ -19,6 +19,10 @@ const { Pool } = require('pg');
 const session = require('express-session');
 const connectPg = require('connect-pg-simple');
 
+// Subdomain routing support
+const vhost = require('vhost');
+const wildcardSubdomains = require('wildcard-subdomains');
+
 // Production middleware
 const helmet = require('helmet');
 const compression = require('compression');
@@ -1363,6 +1367,28 @@ if (process.env.NODE_ENV === 'production') {
     
     // Request logging middleware
     app.use(logger.requestLogger.bind(logger));
+}
+
+// ==================== SUBDOMAIN ROUTING CONFIGURATION ====================
+// Enable both subdomain and path-based routing for maximum flexibility
+
+// Configuration flag - can be set via environment variable
+const ENABLE_SUBDOMAIN_ROUTING = process.env.ENABLE_SUBDOMAIN_ROUTING === 'true' || false;
+
+// If subdomain routing is enabled and we have a proper domain
+if (ENABLE_SUBDOMAIN_ROUTING) {
+    console.log('🌐 Subdomain routing enabled');
+    
+    // Enable wildcard subdomain middleware
+    app.use(wildcardSubdomains({
+        namespace: 's',
+        whitelist: ['www', 'api', 'admin']
+    }));
+    
+    // This will make subdomain routes accessible at /_s/:subdomain/*
+    // Example: john.yourdomain.com -> /_s/john
+} else {
+    console.log('📁 Path-based routing active (default)');
 }
 
 // Session configuration with fallback mechanism
@@ -11446,10 +11472,45 @@ app.get('/api/website/check-subdomain/:subdomain', isAuthenticated, async (req, 
     }
 });
 
-// Serve published websites by subdomain
+// Dual routing support - handle both subdomain and path-based access
+// Path 1: Subdomain routing when enabled (photographer.yourdomain.com)
+if (ENABLE_SUBDOMAIN_ROUTING) {
+    app.get('/_s/:subdomain', async (req, res) => {
+        try {
+            const subdomain = req.params.subdomain;
+            console.log(`🌐 Serving website via subdomain: ${subdomain}`);
+            
+            // Use the same serving logic
+            await servePublishedWebsite(req, res, subdomain);
+        } catch (error) {
+            console.error('Error serving subdomain website:', error);
+            res.status(500).send('Internal server error');
+        }
+    });
+    
+    // Also handle root path for subdomains
+    app.get('/_s/:subdomain/*', async (req, res) => {
+        const subdomain = req.params.subdomain;
+        await servePublishedWebsite(req, res, subdomain);
+    });
+}
+
+// Path 2: Always support path-based routing (/site/photographer-name)
 app.get('/site/:subdomain', async (req, res) => {
     try {
         const subdomain = req.params.subdomain;
+        console.log(`📁 Serving website via path: /site/${subdomain}`);
+        
+        await servePublishedWebsite(req, res, subdomain);
+    } catch (error) {
+        console.error('Error serving path-based website:', error);
+        res.status(500).send('Internal server error');
+    }
+});
+
+// Shared function to serve published websites
+async function servePublishedWebsite(req, res, subdomain) {
+    try {
         
         // Get website data from database
         const result = await pool.query(
@@ -11601,7 +11662,7 @@ app.get('/site/:subdomain', async (req, res) => {
         console.error('Error serving public website:', error);
         res.status(500).send('Error loading website');
     }
-});
+}
 
 // Helper function to get theme styles
 function getThemeStyles(theme) {
