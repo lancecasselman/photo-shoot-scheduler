@@ -492,24 +492,6 @@
             }
         }
 
-        /* Loading and Error States */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .error {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-            color: var(--error-red);
-            background: rgba(220, 53, 69, 0.1);
-            border: 1px solid rgba(220, 53, 69, 0.3);
-            border-radius: 10px;
-            margin: 1rem 0;
-        }
     </style>
 </head>
 <body>
@@ -537,12 +519,6 @@
                 <div class="hero-buttons">
                     <a href="#" id="getStartedBtn" class="btn-primary">Get Started</a>
                     <a href="#features" class="btn-secondary">Learn More</a>
-                </div>
-                <div class="loading" id="authLoading">
-                    <p>🔄 Authenticating...</p>
-                </div>
-                <div class="error" id="authError">
-                    <p>❌ Authentication failed. Please try again.</p>
                 </div>
             </div>
             <div class="hero-image">
@@ -715,174 +691,18 @@
         function handleAuthClick(e) {
             e.preventDefault();
             
-            // Comprehensive mobile platform detection
-            const isCapacitor = !!(window.Capacitor || window.capacitor);
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            const isWebView = !!(window.chrome && window.chrome.webstore === undefined);
-            const hasNativeMethod = !!(window.open && window.open.toString().includes('[native code]'));
-            const isMobile = isAndroid || isIOS || isCapacitor;
+            console.log('🚀 Launch button clicked - redirecting to secure app');
             
-            console.log('🚀 AUTH BUTTON CLICKED - DEBUG INFO:', { 
-                isCapacitor, 
-                isAndroid, 
-                isIOS,
-                isMobile,
-                isWebView,
-                hasNativeMethod,
-                userAgent: navigator.userAgent,
-                windowCapacitor: !!window.Capacitor,
-                windowcapacitor: !!window.capacitor,
-                href: window.location.href
-            });
+            // Set flag to prevent auth checks during redirect
+            sessionStorage.setItem('landingRedirect', 'true');
             
-            // Show loading state
-            showLoading();
-            
-            // Platform-specific authentication
-            if (isMobile) {
-                console.log('📱 MOBILE DETECTED: Using mobile authentication flow...');
-                
-                // Set flag to prevent auth checks during redirect (consistent across platforms)
-                sessionStorage.setItem('landingRedirect', 'true');
-                
-                // Get current domain for the redirect URL
-                const currentDomain = window.location.origin;
-                
-                // Create authentication URL with mobile-specific parameters
-                let redirectScheme = 'photomanager://auth/success';
-                if (isIOS) {
-                    redirectScheme = 'photomanager://auth/success';
-                }
-                const authUrl = `${currentDomain}/secure-login.html?mobile=true&platform=${isIOS ? 'ios' : 'android'}&redirect=${redirectScheme}`;
-                
-                console.log('🌐 Attempting to open browser with URL:', authUrl);
-                
-                // Try multiple methods to open external browser
-                try {
-                    // Method 1: Standard window.open with _system
-                    const opened = window.open(authUrl, '_system');
-                    console.log('Method 1 (window.open _system) result:', opened);
-                    
-                    // Method 2: If Capacitor is available, try Browser plugin
-                    if (window.Capacitor && window.Capacitor.Plugins) {
-                        setTimeout(async () => {
-                            try {
-                                const { Browser } = window.Capacitor.Plugins;
-                                if (Browser) {
-                                    await Browser.open({ url: authUrl });
-                                    console.log('Method 2 (Capacitor Browser) executed successfully');
-                                } else {
-                                    console.log('Browser plugin not available');
-                                }
-                            } catch (browserError) {
-                                console.error('Browser plugin error:', browserError);
-                            }
-                        }, 100);
-                    }
-                    
-                    // Method 3: Direct location change as fallback
-                    setTimeout(() => {
-                        console.log('Method 3 (location change) executing...');
-                        window.location.href = authUrl;
-                    }, 200);
-                    
-                } catch (error) {
-                    console.error('🚨 Error opening external browser:', error);
-                    showError('Failed to open authentication. Please try again.');
-                    // Fallback to normal navigation
-                    window.location.href = authUrl;
-                }
-                
-            } else {
-                // For web/desktop: Direct redirect to secure app (no auth checks on landing page)
-                console.log('🖥️ DESKTOP: Direct redirect to secure app');
-                // Set flag to prevent auth checks during redirect
-                sessionStorage.setItem('landingRedirect', 'true');
-                window.location.href = '/secure-app.html';
-            }
-        }
-
-        // Android authentication return handler
-        function handleAndroidAuthReturn() {
-            console.log('🔄 ANDROID: Handling authentication return...');
-            
-            // Check if user has authenticated session
-            fetch('/api/debug/session', {
-                credentials: 'include',
-                headers: {
-                    'X-Android-App': 'true'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('📊 SESSION CHECK:', data);
-                
-                if (data.authenticated && data.userId) {
-                    console.log('✅ MOBILE: User authenticated, redirecting to app...');
-                    // Set flag to prevent auth loops during mobile redirect
-                    sessionStorage.setItem('landingRedirect', 'true');
-                    // User is authenticated, navigate to the secure app
-                    window.location.href = '/secure-app.html';
-                } else {
-                    console.log('❌ ANDROID: No authentication found');
-                    hideLoading();
-                }
-            })
-            .catch(error => {
-                console.error('🚨 SESSION CHECK ERROR:', error);
-                hideLoading();
-            });
-        }
-
-        // UI Helper Functions
-        function showLoading() {
-            const loading = document.getElementById('authLoading');
-            const error = document.getElementById('authError');
-            if (loading) loading.style.display = 'block';
-            if (error) error.style.display = 'none';
-        }
-
-        function hideLoading() {
-            const loading = document.getElementById('authLoading');
-            if (loading) loading.style.display = 'none';
-        }
-
-        function showError(message) {
-            const error = document.getElementById('authError');
-            const loading = document.getElementById('authLoading');
-            if (error) {
-                error.innerHTML = `<p>❌ ${message}</p>`;
-                error.style.display = 'block';
-            }
-            if (loading) loading.style.display = 'none';
+            // Direct redirect to secure app - let the app handle authentication
+            window.location.href = '/secure-app.html';
         }
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
             setupAndroidAuth();
-            
-            // Check if this is Capacitor/Android environment
-            if (window.Capacitor) {
-                console.log('📱 CAPACITOR: Adding Android auth listeners...');
-                
-                // Listen for app state changes (when returning from browser)
-                document.addEventListener('resume', () => {
-                    console.log('📱 APP RESUMED: Checking for authentication...');
-                    setTimeout(handleAndroidAuthReturn, 500); // Small delay to ensure session is set
-                });
-                
-                // Listen for visibility changes (when app becomes visible again)
-                document.addEventListener('visibilitychange', () => {
-                    if (!document.hidden) {
-                        console.log('👀 APP VISIBLE: Checking for authentication...');
-                        setTimeout(handleAndroidAuthReturn, 500);
-                    }
-                });
-                
-                // Also check immediately if app was opened via deep link
-                handleAndroidAuthReturn();
-            }
         });
 
         // Smooth scrolling for navigation links
