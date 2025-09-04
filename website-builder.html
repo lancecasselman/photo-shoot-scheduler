@@ -1471,6 +1471,36 @@
             }
         }
         
+        // Test function to verify endpoint connectivity
+        async function testPublishEndpoint() {
+            console.log('🧪 TESTING: Direct endpoint test...');
+            try {
+                const response = await fetch('/api/website/test');
+                const data = await response.json();
+                console.log('🧪 TEST RESULT:', data);
+                
+                // Now try publish with minimal data
+                const testPublish = await fetch('/api/website/publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        subdomain: 'test',
+                        title: 'Test',
+                        pages: {}
+                    })
+                });
+                console.log('🧪 PUBLISH TEST:', {
+                    status: testPublish.status,
+                    statusText: testPublish.statusText
+                });
+            } catch (error) {
+                console.error('🧪 TEST ERROR:', error);
+            }
+        }
+        
         // Publish website function
         async function publishWebsite() {
             try {
@@ -1796,6 +1826,9 @@
                             },
                             credentials: 'include',
                             body: JSON.stringify(publishData)
+                        }).catch(error => {
+                            console.error('🔴 FRONTEND: Fetch failed completely:', error);
+                            throw error;
                         });
                         
                         console.log('🌐 FRONTEND: Publish response received', {
@@ -1855,7 +1888,11 @@
                             publishBtn.textContent = websiteData.hasWebsite ? 'Update Website' : 'Publish Website';
                         }
                     } catch (error) {
-                        console.error('Error publishing website:', error);
+                        console.error('🔴 FRONTEND ERROR: Publishing failed:', {
+                            message: error.message,
+                            stack: error.stack,
+                            responseStatus: error.status
+                        });
                         showMessage('Error publishing website: ' + error.message, 'error');
                         publishBtn.disabled = false;
                         publishBtn.textContent = websiteData.hasWebsite ? 'Update Website' : 'Publish Website';
