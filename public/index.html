@@ -25,145 +25,6 @@
             --error-red: #dc3545;
             --success-green: #28a745;
             --bg-secondary: #2d2d2d;
-            --primary-accent: #00D4AA;
-            --primary-accent-hover: #00BF9A;
-        }
-
-        /* Smart Page View States */
-        .marketing-view {
-            display: block;
-        }
-        
-        .dashboard-view {
-            display: none;
-            min-height: 100vh;
-            background: #0A0A0B;
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .app-authenticated .marketing-view {
-            display: none;
-        }
-        
-        .app-authenticated .dashboard-view {
-            display: block;
-        }
-        
-        /* Dashboard Quick Styles */
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .dashboard-header {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .dashboard-title {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, #00D4AA);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .logout-btn {
-            background: linear-gradient(135deg, #dc3545, #ff6b7a);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
-        }
-        
-        .sessions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        
-        .session-card {
-            background: #1F1F28;
-            border: 1px solid #2A2A35;
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .session-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: var(--primary-accent);
-        }
-        
-        .session-client {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-accent);
-            margin-bottom: 0.5rem;
-        }
-        
-        .session-type {
-            color: #B4B4B8;
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
-        
-        .session-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            color: #8A8A95;
-        }
-        
-        .loading-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-        
-        .auth-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 50vh;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(212, 175, 55, 0.3);
-            border-top: 3px solid var(--primary-gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         * {
@@ -595,82 +456,8 @@
             color: var(--text-muted);
         }
 
-        /* Admin Edit Button Styles */
-        .admin-edit-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
-            padding: 4px;
-            transition: all 0.3s ease;
-        }
-        
-        .admin-edit-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.4);
-        }
-        
-        .edit-mode-btn {
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            border: none;
-            border-radius: 8px;
-            color: #1a1a1a;
-            padding: 12px 20px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-            min-width: 140px;
-            justify-content: center;
-        }
-        
-        .edit-mode-btn:hover {
-            background: linear-gradient(135deg, #FFA500, #FFD700);
-            transform: scale(1.02);
-        }
-        
-        .edit-mode-btn:active {
-            transform: scale(0.98);
-        }
-        
-        .edit-icon {
-            font-size: 16px;
-        }
-        
-        .edit-text {
-            font-weight: 600;
-        }
-        
-        /* Active edit mode styling */
-        .edit-mode-active .edit-mode-btn {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-        }
-        
-        .edit-mode-active .edit-text::after {
-            content: " (Active)";
-        }
-
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
-            .admin-edit-button {
-                top: 15px;
-                right: 15px;
-            }
-            
-            .edit-mode-btn {
-                padding: 10px 16px;
-                font-size: 13px;
-                min-width: 120px;
-            }
-            
             .nav-menu {
                 display: none;
             }
@@ -726,46 +513,30 @@
     </style>
 </head>
 <body>
-    <!-- Loading State (Shows First) -->
-    <div id="initialLoading" class="auth-loading">
-        <div class="spinner"></div>
-        <p>Loading your dashboard...</p>
-    </div>
-
-    <!-- Marketing View (Shows to visitors) -->
-    <div class="marketing-view" id="marketingView">
-        <!-- Navigation -->
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="logo editable" data-content-key="nav.logo">Photography Management System</div>
-                <ul class="nav-menu">
-                    <li><a href="#home" class="nav-link">Home</a></li>
-                    <li><a href="#features" class="nav-link">Features</a></li>
-                    <li><a href="#about" class="nav-link">About</a></li>
-                    <li><a href="#pricing" class="nav-link">Pricing</a></li>
-                    <li><a href="#contact" class="nav-link">Contact</a></li>
-                </ul>
-                <a href="#" id="launchAppBtn" class="cta-button editable" data-content-key="nav.cta">Launch Application</a>
-                
-                <!-- High Z-Index Admin Edit Button -->
-                <div id="admin-edit-button" class="admin-edit-button" style="display: none;">
-                    <button onclick="toggleEditMode()" class="edit-mode-btn" id="edit-mode-btn">
-                        <span class="edit-icon">✏️</span>
-                        <span class="edit-text">Edit Page</span>
-                    </button>
-                </div>
-            </div>
-        </nav>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Photography Management System</div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#pricing" class="nav-link">Pricing</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <a href="#" id="launchAppBtn" class="cta-button">Launch Application</a>
+        </div>
+    </nav>
 
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-container">
             <div class="hero-content">
-                <h1 class="editable" data-content-key="hero.title">Professional Photography Business Platform</h1>
-                <p class="editable" data-content-key="hero.description">Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios, our platform handles everything from client bookings to final delivery.</p>
+                <h1>Professional Photography Business Platform</h1>
+                <p>Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios, our platform handles everything from client bookings to final delivery.</p>
                 <div class="hero-buttons">
-                    <a href="#" id="getStartedBtn" class="btn-primary editable" data-content-key="hero.primary_button">Get Started</a>
-                    <a href="#features" class="btn-secondary" data-content-key="hero.secondary_button">Learn More</a>
+                    <a href="#" id="getStartedBtn" class="btn-primary">Get Started</a>
+                    <a href="#features" class="btn-secondary">Learn More</a>
                 </div>
                 <div class="loading" id="authLoading">
                     <p>🔄 Authenticating...</p>
@@ -775,7 +546,7 @@
                 </div>
             </div>
             <div class="hero-image">
-                <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Professional Photography Camera" data-content-key="hero.image_url" />
+                <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Professional Photography Camera" />
             </div>
         </div>
     </section>
@@ -784,23 +555,23 @@
     <section id="features" class="features">
         <div class="features-container">
             <div class="section-header">
-                <h2 data-content-key="features.title">Everything You Need to Manage Your Photography Business</h2>
-                <p data-content-key="features.description">Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform brings every aspect of your photography business into one seamless experience, accessible from anywhere on any device.</p>
+                <h2>Everything You Need to Manage Your Photography Business</h2>
+                <p>Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform brings every aspect of your photography business into one seamless experience, accessible from anywhere on any device.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
                     <span class="feature-icon">📅</span>
-                    <h3 data-content-key="features.session.title">Session Management</h3>
-                    <p data-content-key="features.session.description">Schedule and track photography sessions with comprehensive client management tools, automated reminders, and detailed session planning.</p>
+                    <h3>Session Management</h3>
+                    <p>Schedule and track photography sessions with comprehensive client management tools, automated reminders, and detailed session planning.</p>
                 </div>
                 <div class="feature-card">
                     <span class="feature-icon">🖼️</span>
-                    <h3 data-content-key="features.gallery.title">Gallery Management</h3>
-                    <p data-content-key="features.gallery.description">Organize and share client galleries with secure access, download capabilities, and professional presentation tools.</p>
+                    <h3>Gallery Management</h3>
+                    <p>Organize and share client galleries with secure access, download capabilities, and professional presentation tools.</p>
                 </div>
                 <div class="feature-card">
                     <span class="feature-icon">💰</span>
-                    <h3 data-content-key="features.billing.title">Invoicing & Payments</h3>
+                    <h3>Invoicing & Payments</h3>
                     <p>Generate professional invoices, manage payments, and track financial performance with integrated billing systems.</p>
                 </div>
                 <div class="feature-card">
@@ -826,7 +597,7 @@
     <section id="about" class="about">
         <div class="about-container">
             <div class="about-content">
-                <h2 data-content-key="about.title">Built for Growth</h2>
+                <h2>Built for Growth</h2>
                 <p><strong>For Solo Photographers:</strong> Start with everything you need to run a professional photography business. No setup fees, no hidden costs.</p>
                 <p><strong>For Studios & Teams:</strong> Scale effortlessly with multi-photographer support, team collaboration tools, and unified billing through Stripe Connect. Each photographer maintains their individual brand while benefiting from shared infrastructure.</p>
                 <p><strong>Photographer-First Design:</strong> Every feature is crafted based on real photographer workflows. No unnecessary complexity - just tools that work the way you do.</p>
@@ -841,12 +612,12 @@
     <section id="pricing" class="pricing">
         <div class="pricing-container">
             <div class="section-header">
-                <h2 data-content-key="pricing.title">Simple, Transparent Pricing</h2>
-                <p data-content-key="pricing.subtitle">No setup fees. No hidden costs. Cancel anytime.</p>
+                <h2>Simple, Transparent Pricing</h2>
+                <p>No setup fees. No hidden costs. Cancel anytime.</p>
             </div>
             <div class="pricing-card">
-                <h3 data-content-key="pricing.plan_name">Professional Plan</h3>
-                <div class="price"><span data-content-key="pricing.price">$39</span><span style="font-size: 1rem; color: var(--text-muted);" data-content-key="pricing.period">/month</span></div>
+                <h3>Professional Plan</h3>
+                <div class="price">$39<span style="font-size: 1rem; color: var(--text-muted);">/month</span></div>
                 <ul class="pricing-features">
                     <li>Unlimited client sessions</li>
                     <li>100GB cloud storage</li>
@@ -866,8 +637,8 @@
     <section id="contact" class="contact">
         <div class="contact-container">
             <div class="section-header">
-                <h2 data-content-key="contact.title">Get in Touch</h2>
-                <p data-content-key="contact.description">Have questions about our platform? We're here to help you succeed.</p>
+                <h2>Get in Touch</h2>
+                <p>Have questions about our platform? We're here to help you succeed.</p>
             </div>
             <form class="contact-form">
                 <div class="form-group">
@@ -1141,415 +912,6 @@
             e.preventDefault();
             alert('Thank you for your message! We\'ll get back to you soon.');
             this.reset();
-        });
-    </script>
-    
-    <!-- Simple Local Content Editor -->
-    <script>
-        let isEditMode = false;
-        
-        async function toggleEditMode() {
-            isEditMode = !isEditMode;
-            const button = document.getElementById('edit-mode-btn');
-            const editableElements = document.querySelectorAll('.editable');
-            
-            if (isEditMode) {
-                button.textContent = '💾 Save Changes';
-                button.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-                
-                // Store original values and track changes
-                window.originalValues = new Map();
-                window.changedElements = new Set();
-                
-                editableElements.forEach(element => {
-                    const key = element.getAttribute('data-content-key');
-                    if (key) {
-                        window.originalValues.set(key, element.textContent);
-                    }
-                    
-                    element.contentEditable = true;
-                    element.style.border = '2px dashed #FFD700';
-                    element.style.padding = '8px';
-                    element.style.borderRadius = '4px';
-                    element.title = 'Click to edit this text';
-                    
-                    // Track changes
-                    element.addEventListener('input', function() {
-                        window.changedElements.add(element);
-                        element.style.borderColor = '#28a745';
-                        element.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
-                    });
-                });
-                
-                console.log('✏️ Edit mode enabled - click any highlighted text to edit');
-            } else {
-                // SAVE CHANGES PROPERLY
-                button.textContent = '⏳ Saving...';
-                button.disabled = true;
-                
-                try {
-                    await saveAllChanges();
-                    
-                    button.textContent = '✏️ Edit Page';
-                    button.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
-                    button.disabled = false;
-                    
-                    editableElements.forEach(element => {
-                        element.contentEditable = false;
-                        element.style.border = 'none';
-                        element.style.padding = '';
-                        element.style.backgroundColor = '';
-                        element.title = '';
-                    });
-                    
-                    console.log('💾 Changes saved - edit mode disabled');
-                    showNotification('✅ Your changes have been saved!', 'success');
-                    
-                } catch (error) {
-                    console.error('❌ Save failed:', error);
-                    button.textContent = '💾 Save Changes';
-                    button.disabled = false;
-                    showNotification('❌ Failed to save changes: ' + error.message, 'error');
-                }
-            }
-        }
-
-        async function saveAllChanges() {
-            if (!window.changedElements || window.changedElements.size === 0) {
-                console.log('ℹ️ No changes to save');
-                return;
-            }
-
-            console.log(`💾 Saving ${window.changedElements.size} changes...`);
-            
-            const savePromises = [];
-            
-            window.changedElements.forEach(element => {
-                const key = element.getAttribute('data-content-key');
-                if (key) {
-                    const newValue = element.textContent.trim();
-                    const originalValue = window.originalValues.get(key);
-                    
-                    if (newValue !== originalValue) {
-                        const section = guessSection(key);
-                        console.log(`📝 Saving ${key}: "${newValue}" (was: "${originalValue}")`);
-                        savePromises.push(saveContentItem(key, newValue, 'text', section));
-                    }
-                }
-            });
-
-            if (savePromises.length === 0) {
-                console.log('ℹ️ No actual changes detected');
-                return;
-            }
-
-            await Promise.all(savePromises);
-            console.log('✅ All changes saved successfully!');
-        }
-
-        async function saveContentItem(key, value, type, section) {
-            const response = await fetch(`/api/content/${key}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    value: value,
-                    type: type,
-                    section: section,
-                    reason: 'Inline edit via landing page'
-                })
-            });
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-                throw new Error(`Failed to save ${key}: ${error.message}`);
-            }
-
-            console.log(`✅ Saved ${key}: "${value}"`);
-            return response.json();
-        }
-
-        function guessSection(key) {
-            if (key.startsWith('nav.')) return 'navigation';
-            if (key.startsWith('hero.')) return 'hero';
-            if (key.startsWith('features.')) return 'features';
-            if (key.startsWith('about.')) return 'about';
-            if (key.startsWith('pricing.')) return 'pricing';
-            if (key.startsWith('contact.')) return 'contact';
-            if (key.startsWith('footer.')) return 'footer';
-            return 'general';
-        }
-
-        function showNotification(message, type = 'info') {
-            // Remove existing notifications
-            const existing = document.querySelectorAll('.edit-notification');
-            existing.forEach(n => n.remove());
-            
-            // Create notification
-            const notification = document.createElement('div');
-            notification.className = `edit-notification ${type}`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                padding: 12px 20px;
-                border-radius: 8px;
-                color: white;
-                font-weight: 600;
-                z-index: 10001;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-                animation: slideInRight 0.3s ease;
-            `;
-            notification.textContent = message;
-            
-            // Add to page
-            document.body.appendChild(notification);
-            
-            // Auto-remove after 4 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 4000);
-        }
-        
-        // Initialize edit button when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show edit button
-            const editButton = document.getElementById('admin-edit-button');
-            if (editButton) {
-                editButton.style.display = 'block';
-            }
-        });
-    </script>
-
-    </div> <!-- End Marketing View -->
-
-    <!-- Dashboard View (Shows to authenticated users) -->
-    <div class="dashboard-view" id="dashboardView">
-        <div class="dashboard-container">
-            <div class="dashboard-header">
-                <div>
-                    <div class="dashboard-title">Photography Dashboard</div>
-                    <p style="color: #B4B4B8; margin: 0;" id="welcomeMessage">Welcome back!</p>
-                </div>
-                <button class="logout-btn" onclick="handleLogout()">Logout</button>
-            </div>
-
-            <div id="sessionsContainer">
-                <div class="loading-state" id="dashboardLoading">
-                    <div class="spinner"></div>
-                    <p>Loading your sessions...</p>
-                </div>
-                
-                <div id="sessionsContent" style="display: none;">
-                    <h3 style="color: var(--primary-accent); margin-bottom: 1rem;">Recent Sessions</h3>
-                    <div class="sessions-grid" id="sessionsGrid">
-                        <!-- Sessions will be loaded here -->
-                    </div>
-                </div>
-                
-                <div id="noSessions" style="display: none; text-align: center; padding: 3rem;">
-                    <h3 style="color: var(--text-muted);">No sessions yet</h3>
-                    <p style="color: #8A8A95;">Create your first photography session to get started!</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Smart Page JavaScript -->
-    <script>
-        let currentUser = null;
-        let isAuthChecking = false;
-
-        // Initialize the smart landing page
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🎯 Smart Landing Page: Initializing...');
-            
-            // Show loading initially
-            showInitialLoading();
-            
-            // Check authentication status
-            await checkAuthenticationStatus();
-        });
-
-        async function checkAuthenticationStatus() {
-            if (isAuthChecking) return;
-            isAuthChecking = true;
-
-            try {
-                console.log('🔍 Checking authentication status...');
-                
-                const response = await fetch('/api/auth/check', {
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-                console.log('📊 Auth check result:', data);
-
-                if (data.authenticated && data.user) {
-                    // User is authenticated - show dashboard
-                    currentUser = data.user;
-                    console.log('✅ User authenticated:', currentUser.email);
-                    await showDashboard();
-                } else {
-                    // User not authenticated - show marketing
-                    console.log('👤 User not authenticated - showing marketing page');
-                    showMarketing();
-                }
-            } catch (error) {
-                console.error('❌ Auth check failed:', error);
-                // On error, show marketing page
-                showMarketing();
-            } finally {
-                isAuthChecking = false;
-                hideInitialLoading();
-            }
-        }
-
-        function showInitialLoading() {
-            document.getElementById('initialLoading').style.display = 'flex';
-            document.getElementById('marketingView').style.display = 'none';
-            document.getElementById('dashboardView').style.display = 'none';
-        }
-
-        function hideInitialLoading() {
-            document.getElementById('initialLoading').style.display = 'none';
-        }
-
-        function showMarketing() {
-            document.body.classList.remove('app-authenticated');
-            document.getElementById('marketingView').style.display = 'block';
-            document.getElementById('dashboardView').style.display = 'none';
-            console.log('📄 Showing marketing page');
-        }
-
-        async function showDashboard() {
-            document.body.classList.add('app-authenticated');
-            document.getElementById('marketingView').style.display = 'none';
-            document.getElementById('dashboardView').style.display = 'block';
-            
-            // Update welcome message
-            const welcomeMsg = document.getElementById('welcomeMessage');
-            if (welcomeMsg && currentUser) {
-                welcomeMsg.textContent = `Welcome back, ${currentUser.email}!`;
-            }
-            
-            console.log('🎛️ Showing dashboard');
-            
-            // Load dashboard data
-            await loadDashboardData();
-        }
-
-        async function loadDashboardData() {
-            try {
-                document.getElementById('dashboardLoading').style.display = 'block';
-                document.getElementById('sessionsContent').style.display = 'none';
-                document.getElementById('noSessions').style.display = 'none';
-
-                console.log('📊 Loading sessions...');
-                const response = await fetch('/api/sessions', {
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    const sessions = await response.json();
-                    console.log('✅ Loaded', sessions.length, 'sessions');
-                    
-                    if (sessions.length > 0) {
-                        renderSessions(sessions.slice(0, 6)); // Show first 6 sessions
-                        document.getElementById('sessionsContent').style.display = 'block';
-                    } else {
-                        document.getElementById('noSessions').style.display = 'block';
-                    }
-                } else {
-                    console.error('❌ Failed to load sessions');
-                    document.getElementById('noSessions').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('❌ Error loading dashboard:', error);
-                document.getElementById('noSessions').style.display = 'block';
-            } finally {
-                document.getElementById('dashboardLoading').style.display = 'none';
-            }
-        }
-
-        function renderSessions(sessions) {
-            const grid = document.getElementById('sessionsGrid');
-            grid.innerHTML = '';
-
-            sessions.forEach(session => {
-                const sessionCard = document.createElement('div');
-                sessionCard.className = 'session-card';
-                
-                const sessionDate = new Date(session.dateTime).toLocaleDateString();
-                const sessionTime = new Date(session.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                sessionCard.innerHTML = `
-                    <div class="session-client">${session.clientName}</div>
-                    <div class="session-type">${session.sessionType}</div>
-                    <div class="session-details">
-                        <div><strong>Date:</strong> ${sessionDate}</div>
-                        <div><strong>Time:</strong> ${sessionTime}</div>
-                        <div><strong>Location:</strong> ${session.location}</div>
-                        <div><strong>Price:</strong> $${session.price}</div>
-                    </div>
-                `;
-                
-                sessionCard.addEventListener('click', () => {
-                    // Redirect to full app for detailed view
-                    window.location.href = '/secure-app.html';
-                });
-                
-                grid.appendChild(sessionCard);
-            });
-        }
-
-        async function handleLogout() {
-            try {
-                console.log('🚪 Logging out...');
-                
-                const response = await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    console.log('✅ Logout successful');
-                    currentUser = null;
-                    showMarketing();
-                } else {
-                    console.error('❌ Logout failed');
-                }
-            } catch (error) {
-                console.error('❌ Logout error:', error);
-            }
-        }
-
-        // Update existing launch app handlers to use authentication
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle launch app button clicks
-            const launchBtns = document.querySelectorAll('#launchAppBtn, #getStartedBtn');
-            launchBtns.forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    if (currentUser) {
-                        // Already authenticated, go to full app
-                        window.location.href = '/secure-app.html';
-                    } else {
-                        // Not authenticated, trigger auth flow
-                        console.log('🔐 Starting authentication...');
-                        window.location.href = '/secure-app.html';
-                    }
-                });
-            });
         });
     </script>
 </body>
