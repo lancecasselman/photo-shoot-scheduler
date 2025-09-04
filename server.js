@@ -11260,17 +11260,17 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
-// Global error handler for debugging
-app.use((err, req, res, next) => {
-    if (req.path === '/api/website/publish') {
-        console.error('🔴 PUBLISH ERROR CAUGHT:', {
-            message: err.message,
-            stack: err.stack,
+// Add a catch-all logger for all POST requests to /api/website/*
+app.use((req, res, next) => {
+    if (req.method === 'POST' && req.path.startsWith('/api/website')) {
+        console.log('📍 REQUEST INTERCEPTED:', {
+            method: req.method,
             path: req.path,
-            method: req.method
+            hasBody: !!req.body,
+            contentType: req.headers['content-type']
         });
     }
-    next(err);
+    next();
 });
 
 // Test endpoint to verify middleware is working
