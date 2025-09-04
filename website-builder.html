@@ -1544,7 +1544,7 @@
                 
                 dialog.innerHTML = `
                     <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #1f2937;">🌐 Publish Your Website</h2>
-                    <p style="color: #6b7280; margin-bottom: 20px;">Choose a subdomain for your photography website:</p>
+                    <p style="color: #6b7280; margin-bottom: 20px;">Choose a unique name for your photography website:</p>
                     
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
@@ -1557,7 +1557,10 @@
                                 style="flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;"
                                 pattern="[a-z0-9-]+"
                             />
-                            <span style="color: #6b7280; font-size: 14px;">.photomanagementsystem.com</span>
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px;">
+                            <span style="color: #6b7280; font-size: 13px;">Your website URL will be:</span><br>
+                            <span style="color: #374151; font-size: 14px; font-family: monospace;" id="url-preview">${window.location.origin}/site/${suggestedSubdomain || 'your-name'}</span>
                         </div>
                         <small style="color: #9ca3af; display: block; margin-top: 5px;">
                             Use only lowercase letters, numbers, and hyphens
@@ -1617,9 +1620,15 @@
                     const subdomain = subdomainInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
                     subdomainInput.value = subdomain;
                     
+                    // Update URL preview
+                    const urlPreview = document.getElementById('url-preview');
+                    if (urlPreview) {
+                        urlPreview.textContent = `${window.location.origin}/site/${subdomain || 'your-name'}`;
+                    }
+                    
                     if (subdomain.length < 3) {
                         document.getElementById('availability-message').innerHTML = 
-                            '<span style="color: #ef4444;">Subdomain must be at least 3 characters</span>';
+                            '<span style="color: #ef4444;">Website name must be at least 3 characters</span>';
                         return;
                     }
                     
@@ -1629,9 +1638,9 @@
                         
                         const message = document.getElementById('availability-message');
                         if (checkData.available) {
-                            message.innerHTML = '<span style="color: #10b981;">✓ This subdomain is available!</span>';
+                            message.innerHTML = '<span style="color: #10b981;">✓ This name is available!</span>';
                         } else {
-                            message.innerHTML = '<span style="color: #ef4444;">This subdomain is already taken</span>';
+                            message.innerHTML = '<span style="color: #ef4444;">This name is already taken</span>';
                         }
                     }, 500);
                 });
@@ -1677,7 +1686,7 @@
                         
                         <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 1: Publish Your Website</h3>
                         <p style="color: #6b7280; margin-bottom: 20px;">
-                            First, publish your website to get your subdomain: <strong>${subdomain}.photomanagementsystem.com</strong>
+                            First, publish your website to get your URL: <strong>${window.location.origin}/site/${subdomain}</strong>
                         </p>
                         
                         <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 2: Add DNS Records in GoDaddy</h3>
@@ -1697,7 +1706,7 @@
                             </div>
                             
                             <div>
-                                <strong style="color: #1f2937;">For www subdomain (www.example.com):</strong><br>
+                                <strong style="color: #1f2937;">For www version (www.example.com):</strong><br>
                                 <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
                                     Type: <span style="color: #059669;">CNAME</span><br>
                                     Name: <span style="color: #059669;">www</span><br>
@@ -1714,7 +1723,7 @@
                         
                         <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                             <p style="margin: 0; color: #92400e;">
-                                <strong>💡 Pro Tip:</strong> Some registrars use "Host" instead of "Name". Use "@" for the root domain and "www" for the www subdomain.
+                                <strong>💡 Pro Tip:</strong> Some registrars use "Host" instead of "Name". Use "@" for the root domain and "www" for the www version.
                             </p>
                         </div>
                         
@@ -1776,7 +1785,7 @@
                     const title = document.getElementById('website-title-input').value;
                     
                     if (!subdomain || subdomain.length < 3) {
-                        showMessage('Please enter a valid subdomain', 'error');
+                        showMessage('Please enter a valid website name', 'error');
                         return;
                     }
                     
