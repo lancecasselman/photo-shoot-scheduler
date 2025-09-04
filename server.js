@@ -11255,7 +11255,7 @@ app.get('/auth.html', (req, res) => {
 // Publish or update a website
 app.post('/api/website/publish', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        const userId = req.session.user.uid;
         const { subdomain, websiteData, pages, metadata, theme } = req.body;
         
         // Validate subdomain
@@ -11328,7 +11328,7 @@ app.post('/api/website/publish', isAuthenticated, async (req, res) => {
 // Get published website data for editing
 app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        const userId = req.session.user.uid;
         
         const result = await pool.query(
             'SELECT * FROM published_websites WHERE user_id = $1',
