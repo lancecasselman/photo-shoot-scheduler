@@ -11260,6 +11260,19 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
+// Global error handler for debugging
+app.use((err, req, res, next) => {
+    if (req.path === '/api/website/publish') {
+        console.error('🔴 PUBLISH ERROR CAUGHT:', {
+            message: err.message,
+            stack: err.stack,
+            path: req.path,
+            method: req.method
+        });
+    }
+    next(err);
+});
+
 // Test endpoint to verify middleware is working
 app.get('/api/website/test', (req, res) => {
     console.log('🧪 WEBSITE TEST: Endpoint reached', {
@@ -11276,19 +11289,34 @@ app.get('/api/website/test', (req, res) => {
 });
 
 // Debug middleware to catch any errors BEFORE auth
-app.post('/api/website/publish', (req, res, next) => {
-    console.log('🚀 WEBSITE PUBLISH: Request received at endpoint', {
-        method: req.method,
-        path: req.path,
-        hasBody: !!req.body,
-        bodyKeys: req.body ? Object.keys(req.body) : [],
-        headers: {
-            contentType: req.headers['content-type'],
-            cookie: !!req.headers.cookie
+app.post('/api/website/publish', 
+    // First middleware - just log that we reached here
+    (req, res, next) => {
+        console.log('🚀 WEBSITE PUBLISH: Request reached endpoint');
+        console.log('🚀 WEBSITE PUBLISH: Request details', {
+            method: req.method,
+            path: req.path,
+            hasBody: !!req.body,
+            bodyKeys: req.body ? Object.keys(req.body) : [],
+            headers: {
+                contentType: req.headers['content-type'],
+                cookie: !!req.headers.cookie
+            }
+        });
+        next();
+    }, 
+    // Second middleware - authentication with error handling
+    async (req, res, next) => {
+        console.log('🚀 WEBSITE PUBLISH: Starting authentication check');
+        try {
+            await isAuthenticated(req, res, next);
+        } catch (error) {
+            console.error('🔴 WEBSITE PUBLISH: Auth error:', error);
+            res.status(500).json({ error: 'Authentication failed', details: error.message });
         }
-    });
-    next();
-}, isAuthenticated, async (req, res) => {
+    },
+    // Main handler
+    async (req, res) => {
     console.log('🌐 WEBSITE PUBLISH: Passed authentication');
     
     try {
