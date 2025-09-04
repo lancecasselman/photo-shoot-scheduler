@@ -11255,6 +11255,13 @@ app.get('/auth.html', (req, res) => {
 // Publish or update a website
 app.post('/api/website/publish', isAuthenticated, async (req, res) => {
     try {
+        console.log('🌐 WEBSITE PUBLISH: Request received', {
+            sessionId: req.session?.id,
+            hasUser: !!req.session?.user,
+            userEmail: req.session?.user?.email,
+            userId: req.session?.user?.uid
+        });
+        
         const userId = req.session.user.uid;
         const { subdomain, websiteData, pages, metadata, theme } = req.body;
         
