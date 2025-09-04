@@ -26,33 +26,37 @@ class ProductionLogger {
         }) + '\n';
     }
 
-    writeToFile(filename, entry) {
+    async writeToFile(filename, entry) {
         const filePath = path.join(this.logDir, filename);
-        fs.appendFileSync(filePath, entry);
+        try {
+            await fs.promises.appendFile(filePath, entry);
+        } catch (error) {
+            console.error('Log file write error:', error);
+        }
     }
 
-    info(message, meta = {}) {
+    async info(message, meta = {}) {
         const entry = this.formatLogEntry('info', message, meta);
         console.log(message, meta);
         if (process.env.NODE_ENV === 'production') {
-            this.writeToFile('app.log', entry);
+            await this.writeToFile('app.log', entry);
         }
     }
 
-    warn(message, meta = {}) {
+    async warn(message, meta = {}) {
         const entry = this.formatLogEntry('warn', message, meta);
         console.warn(message, meta);
         if (process.env.NODE_ENV === 'production') {
-            this.writeToFile('app.log', entry);
+            await this.writeToFile('app.log', entry);
         }
     }
 
-    error(message, meta = {}) {
+    async error(message, meta = {}) {
         const entry = this.formatLogEntry('error', message, meta);
         console.error(message, meta);
         if (process.env.NODE_ENV === 'production') {
-            this.writeToFile('error.log', entry);
-            this.writeToFile('app.log', entry);
+            await this.writeToFile('error.log', entry);
+            await this.writeToFile('app.log', entry);
         }
     }
 

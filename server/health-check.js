@@ -92,12 +92,20 @@ class HealthCheck {
         try {
             const health = await this.getSystemHealth();
             const statusCode = health.overall === 'healthy' ? 200 : 503;
+            
+            // Log health check results for monitoring
+            if (health.overall === 'unhealthy') {
+                console.warn('Health check failed:', JSON.stringify(health, null, 2));
+            }
+            
             res.status(statusCode).json(health);
         } catch (error) {
+            console.error('Health check endpoint error:', error);
             res.status(500).json({
                 overall: 'unhealthy',
                 error: error.message,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
             });
         }
     }
