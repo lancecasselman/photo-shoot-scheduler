@@ -13,13 +13,17 @@ class HealthCheck {
     }
 
     async checkDatabase() {
+        let client;
         try {
-            const client = await this.pool.connect();
+            client = await this.pool.connect();
             await client.query('SELECT 1');
-            client.release();
             return { status: 'healthy', message: 'Database connection successful' };
         } catch (error) {
             return { status: 'unhealthy', message: `Database error: ${error.message}` };
+        } finally {
+            if (client) {
+                client.release();
+            }
         }
     }
 

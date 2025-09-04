@@ -74,6 +74,7 @@ async function verifyDeletionSystem() {
     console.error('❌ Verification failed:', error);
   } finally {
     await dbPool.end();
+  }ol.end();
   }
 }
 

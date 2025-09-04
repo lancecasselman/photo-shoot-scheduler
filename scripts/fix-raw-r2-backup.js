@@ -51,6 +51,40 @@ async function repairRawBackup() {
         console.log('3. Update database with R2 keys');
         
         // Check local uploads folder
+        const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+async function repairRawBackup() {
+    console.log('🔍 Checking raw files backup status...');
+    let client;
+    
+    try {
+        client = await pool.connect();
+        
+        // Get raw files missing R2 keys
+        const rawFilesResult = await client.query(`
+            SELECT id, session_id, filename, file_size_bytes
+            FROM session_files 
+            WHERE folder_type = 'raw' 
+            AND (r2_key IS NULL OR r2_key = '')
+            ORDER BY uploaded_at DESC
+        `);
+        
+        console.log(`📁 Found ${rawFilesResult.rows.length} raw files missing R2 backup`);
+        
+        if (rawFilesResult.rows.length === 0) {
+            console.log('✅ All raw files have R2 backup keys');
+            return;
+        }
+        
+        // Check local uploads directory
         const uploadsPath = path.join(process.cwd(), 'uploads');
         let foundLocalFiles = 0;
         
@@ -91,4 +125,5 @@ repairRawBackup().then(() => {
 }).catch(error => {
     console.error('💥 Backup check failed:', error);
     process.exit(1);
+});xit(1);
 });

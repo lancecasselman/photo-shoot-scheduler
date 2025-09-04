@@ -27,6 +27,26 @@ const r2Client = new S3Client({
 
 const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
 
+const { Pool } = require('pg');
+const { S3Client, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+require('dotenv').config();
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+const r2Client = new S3Client({
+    endpoint: process.env.R2_ENDPOINT,
+    region: 'auto',
+    credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY,
+        secretAccessKey: process.env.R2_SECRET_KEY
+    }
+});
+
+const bucketName = process.env.R2_BUCKET_NAME;
+
 async function repairR2Backup() {
     console.log('🚨 EMERGENCY R2 BACKUP REPAIR STARTING...');
     
@@ -68,7 +88,7 @@ async function repairR2Backup() {
         console.log(` R2 contains ${r2Objects.length} objects to match against`);
         
         let matchedCount = 0;
-        let unmatchedCount = 0;
+        let unmatchedCount = 0; 0;
         
         // Try to match database entries with R2 objects
         for (const dbFile of missingR2Result.rows) {
@@ -146,7 +166,7 @@ async function repairR2Backup() {
         throw error;
     } finally {
         if (client) client.release();
-        await pool.end();
+        await pool.end();d();
     }
 }
 
@@ -157,4 +177,5 @@ repairR2Backup().then(() => {
 }).catch(error => {
     console.error('💥 Repair script failed:', error);
     process.exit(1);
+});ss.exit(1);
 });

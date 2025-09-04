@@ -52,6 +52,28 @@ async function cleanupOrphanedFiles() {
         dbResult.rows.forEach(session => {
             let sessionFiles = [];
             
+            // Add photo filenames
+            if (session.photo_filenames && session.photo_filenames[0]) {
+                sessionFiles = sessionFiles.concat(session.photo_filenames.filter(f => f));
+            }
+            
+            // Add session file names
+            if (session.session_file_names && session.session_file_names[0]) {
+                sessionFiles = sessionFiles.concat(session.session_file_names.filter(f => f));
+            }
+            
+            sessionFiles.forEach(filename => {
+                if (filename) {
+                    trackedFiles.add(filename);
+                }
+            });
+            
+            sessionAnalysis.push({
+                sessionId: session.session_id,
+                clientName: session.client_name,
+                fileCount: sessionFiles.length
+            }); = [];
+            
             // Add files from session.photos
             if (session.photo_filenames && session.photo_filenames[0]) {
                 session.photo_filenames.forEach(filename => {
@@ -132,4 +154,10 @@ async function cleanupOrphanedFiles() {
 }
 
 // Run cleanup
-cleanupOrphanedFiles();
+cleanupOrphanedFiles().then(() => {
+    console.log('✅ Cleanup completed');
+    process.exit(0);
+}).catch(error => {
+    console.error('❌ Cleanup failed:', error);
+    process.exit(1);
+});pOrphanedFiles();
