@@ -4414,6 +4414,29 @@ async function initializeDatabase(retryCount = 0) {
             )
         `);
 
+        // Initialize published websites table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS published_websites (
+                id VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                subdomain VARCHAR(255) NOT NULL UNIQUE,
+                custom_domain VARCHAR(255) UNIQUE,
+                website_data JSONB NOT NULL,
+                pages JSONB DEFAULT '{}',
+                metadata JSONB DEFAULT '{}',
+                theme JSONB DEFAULT '{}',
+                is_published BOOLEAN DEFAULT true,
+                published_at TIMESTAMP DEFAULT NOW(),
+                last_updated TIMESTAMP DEFAULT NOW(),
+                analytics JSONB DEFAULT '{}',
+                ssl_enabled BOOLEAN DEFAULT true,
+                custom_domain_verified BOOLEAN DEFAULT false,
+                created_at TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+        console.log(' Website publishing system tables initialized');
+
         console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
