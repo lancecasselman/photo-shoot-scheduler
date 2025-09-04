@@ -11260,83 +11260,9 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
-// Simple direct test route - NO middleware at all
-app.post('/api/website/simple-test', (req, res) => {
-    console.log('🎯 SIMPLE TEST HIT');
-    res.json({ success: true, message: 'Simple test successful' });
-});
-
-// Test endpoint to verify middleware is working
-app.get('/api/website/test', (req, res) => {
-    console.log('🧪 WEBSITE TEST: Endpoint reached', {
-        hasSession: !!req.session,
-        hasUser: !!req.session?.user,
-        hasBody: !!req.body
-    });
-    res.json({ 
-        success: true, 
-        message: 'Test endpoint working',
-        session: !!req.session,
-        user: req.session?.user?.email 
-    });
-});
-
-// TEMPORARY: Simple publish endpoint for testing
-app.post('/api/website/publish', async (req, res) => {
-    console.log('🎯 PUBLISH ENDPOINT HIT!');
-    
-    try {
-        // Basic auth check
-        if (!req.session || !req.session.user) {
-            console.log('❌ No session/user');
-            return res.status(401).json({ error: 'Not authenticated' });
-        }
-        
-        console.log('✅ User authenticated:', req.session.user.email);
-        
-        // For now, just return success to test the endpoint
-        res.json({ 
-            success: true, 
-            message: 'Publish endpoint working',
-            user: req.session.user.email 
-        });
-    } catch (error) {
-        console.error('🔴 PUBLISH ERROR:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Original endpoint (commented out for now)
-/*
-app.post('/api/website/publish_ORIGINAL', 
-    // First middleware - just log that we reached here
-    (req, res, next) => {
-        console.log('🚀 WEBSITE PUBLISH: Request reached endpoint');
-        console.log('🚀 WEBSITE PUBLISH: Request details', {
-            method: req.method,
-            path: req.path,
-            hasBody: !!req.body,
-            bodyKeys: req.body ? Object.keys(req.body) : [],
-            headers: {
-                contentType: req.headers['content-type'],
-                cookie: !!req.headers.cookie
-            }
-        });
-        next();
-    }, 
-    // Second middleware - authentication with error handling
-    async (req, res, next) => {
-        console.log('🚀 WEBSITE PUBLISH: Starting authentication check');
-        try {
-            await isAuthenticated(req, res, next);
-        } catch (error) {
-            console.error('🔴 WEBSITE PUBLISH: Auth error:', error);
-            res.status(500).json({ error: 'Authentication failed', details: error.message });
-        }
-    },
-    // Main handler
-    async (req, res) => {
-    console.log('🌐 WEBSITE PUBLISH: Passed authentication');
+// Website Publishing - Saves website for later editing
+app.post('/api/website/publish', isAuthenticated, async (req, res) => {
+    console.log('🌐 WEBSITE PUBLISH: Publishing website');
     
     try {
         console.log('🌐 WEBSITE PUBLISH: Request received', {
@@ -11444,7 +11370,6 @@ app.post('/api/website/publish_ORIGINAL',
         });
     }
 });
-*/  // END OF COMMENTED OUT ORIGINAL PUBLISH ENDPOINT
 
 // Get published website data for editing
 app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
