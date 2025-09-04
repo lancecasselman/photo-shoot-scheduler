@@ -691,13 +691,10 @@
         function handleAuthClick(e) {
             e.preventDefault();
             
-            console.log('🚀 Launch button clicked - redirecting to secure app');
+            console.log('🚀 Launch button clicked - redirecting to login/signup');
             
-            // Set flag to prevent auth checks during redirect
-            sessionStorage.setItem('landingRedirect', 'true');
-            
-            // Direct redirect to secure app - let the app handle authentication
-            window.location.href = '/secure-app.html';
+            // Redirect to login page for proper authentication flow
+            window.location.href = '/secure-login.html';
         }
 
         // Initialize when page loads
