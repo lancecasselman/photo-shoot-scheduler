@@ -1402,7 +1402,7 @@ app.use(session({
         httpOnly: false,
         secure: false,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'none', // For Android compatibility
+        sameSite: 'lax', // Changed from 'none' to fix cookie issues
         path: '/',
         domain: undefined
     },
