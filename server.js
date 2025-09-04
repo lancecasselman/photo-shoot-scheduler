@@ -11286,9 +11286,30 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
+// Test route to verify publishing system is reachable
+app.get('/api/website/test-publish', (req, res) => {
+    console.log('✅ Test publish route hit');
+    res.json({ 
+        success: true, 
+        message: 'Publishing system is accessible',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Website Publishing - Saves website for later editing
-app.post('/api/website/publish', isAuthenticated, async (req, res) => {
-    console.log('🌐 WEBSITE PUBLISH: Publishing website');
+app.post('/api/website/publish', (req, res, next) => {
+    console.log('🚀 PUBLISH ROUTE HIT - Pre-auth check', {
+        method: req.method,
+        path: req.path,
+        hasBody: !!req.body,
+        bodySize: JSON.stringify(req.body || {}).length,
+        contentType: req.headers['content-type'],
+        hasSession: !!req.session,
+        sessionUser: req.session?.user?.email
+    });
+    next();
+}, isAuthenticated, async (req, res) => {
+    console.log('🌐 WEBSITE PUBLISH: Publishing website - PASSED AUTH');
     console.log('📝 Request body received:', {
         hasBody: !!req.body,
         bodyKeys: req.body ? Object.keys(req.body) : [],

@@ -1503,6 +1503,7 @@
         
         // Publish website function
         async function publishWebsite() {
+            console.log('🚀 publishWebsite() called');
             try {
                 // Save current page first
                 if (currentPage) {
@@ -1510,8 +1511,10 @@
                 }
                 
                 // Check if user is authenticated
+                console.log('📋 Checking authentication...');
                 const response = await fetch('/api/auth/status');
                 const authData = await response.json();
+                console.log('📋 Auth data:', authData);
                 
                 if (!authData.authenticated) {
                     showMessage('Please sign in to publish your website', 'error');
@@ -1520,8 +1523,22 @@
                 }
                 
                 // Get current published website data
+                console.log('📋 Fetching current website data...');
                 const websiteResponse = await fetch('/api/website/my-website');
+                console.log('📋 Website response status:', websiteResponse.status);
+                
+                if (!websiteResponse.ok) {
+                    console.error('❌ Failed to fetch website data:', websiteResponse.status, websiteResponse.statusText);
+                    if (websiteResponse.status === 401) {
+                        showMessage('Session expired. Please sign in again.', 'error');
+                        window.location.href = '/auth.html?return=' + encodeURIComponent(window.location.pathname);
+                        return;
+                    }
+                    throw new Error(`Failed to fetch website data: ${websiteResponse.statusText}`);
+                }
+                
                 const websiteData = await websiteResponse.json();
+                console.log('📋 Website data:', websiteData);
                 
                 // Create publish dialog
                 const dialog = document.createElement('div');
@@ -1851,8 +1868,14 @@
                         // Publish website
                         console.log('🌐 FRONTEND: Starting website publish request...', {
                             subdomain: subdomain,
-                            dataSize: JSON.stringify(publishData).length
+                            dataSize: JSON.stringify(publishData).length,
+                            url: '/api/website/publish'
                         });
+                        
+                        // Test that routes are accessible first
+                        const testResponse = await fetch('/api/website/test-publish');
+                        const testData = await testResponse.json();
+                        console.log('🧪 Route test:', testData);
                         
                         const publishResponse = await fetch('/api/website/publish', {
                             method: 'POST',
