@@ -11260,17 +11260,10 @@ app.get('/auth.html', (req, res) => {
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
 
-// Add a catch-all logger for all POST requests to /api/website/*
-app.use((req, res, next) => {
-    if (req.method === 'POST' && req.path.startsWith('/api/website')) {
-        console.log('📍 REQUEST INTERCEPTED:', {
-            method: req.method,
-            path: req.path,
-            hasBody: !!req.body,
-            contentType: req.headers['content-type']
-        });
-    }
-    next();
+// Simple direct test route - NO middleware at all
+app.post('/api/website/simple-test', (req, res) => {
+    console.log('🎯 SIMPLE TEST HIT');
+    res.json({ success: true, message: 'Simple test successful' });
 });
 
 // Test endpoint to verify middleware is working
