@@ -11289,6 +11289,13 @@ app.get('/auth.html', (req, res) => {
 // Website Publishing - Saves website for later editing
 app.post('/api/website/publish', isAuthenticated, async (req, res) => {
     console.log('🌐 WEBSITE PUBLISH: Publishing website');
+    console.log('📝 Request body received:', {
+        hasBody: !!req.body,
+        bodyKeys: req.body ? Object.keys(req.body) : [],
+        subdomain: req.body?.subdomain,
+        hasWebsiteData: !!req.body?.websiteData,
+        userId: req.session?.user?.uid
+    });
     
     try {
         console.log('🌐 WEBSITE PUBLISH: Request received', {
