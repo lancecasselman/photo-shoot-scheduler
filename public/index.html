@@ -25,6 +25,145 @@
             --error-red: #dc3545;
             --success-green: #28a745;
             --bg-secondary: #2d2d2d;
+            --primary-accent: #00D4AA;
+            --primary-accent-hover: #00BF9A;
+        }
+
+        /* Smart Page View States */
+        .marketing-view {
+            display: block;
+        }
+        
+        .dashboard-view {
+            display: none;
+            min-height: 100vh;
+            background: #0A0A0B;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .app-authenticated .marketing-view {
+            display: none;
+        }
+        
+        .app-authenticated .dashboard-view {
+            display: block;
+        }
+        
+        /* Dashboard Quick Styles */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #00D4AA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #dc3545, #ff6b7a);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        }
+        
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .session-card {
+            background: #1F1F28;
+            border: 1px solid #2A2A35;
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .session-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-accent);
+        }
+        
+        .session-client {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .session-type {
+            color: #B4B4B8;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .session-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #8A8A95;
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        
+        .auth-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-top: 3px solid var(--primary-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         * {
@@ -587,28 +726,36 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo editable" data-content-key="nav.logo">Photography Management System</div>
-            <ul class="nav-menu">
-                <li><a href="#home" class="nav-link">Home</a></li>
-                <li><a href="#features" class="nav-link">Features</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#pricing" class="nav-link">Pricing</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
-            </ul>
-            <a href="#" id="launchAppBtn" class="cta-button editable" data-content-key="nav.cta">Launch Application</a>
-            
-            <!-- High Z-Index Admin Edit Button -->
-            <div id="admin-edit-button" class="admin-edit-button" style="display: none;">
-                <button onclick="toggleEditMode()" class="edit-mode-btn" id="edit-mode-btn">
-                    <span class="edit-icon">✏️</span>
-                    <span class="edit-text">Edit Page</span>
-                </button>
+    <!-- Loading State (Shows First) -->
+    <div id="initialLoading" class="auth-loading">
+        <div class="spinner"></div>
+        <p>Loading your dashboard...</p>
+    </div>
+
+    <!-- Marketing View (Shows to visitors) -->
+    <div class="marketing-view" id="marketingView">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo editable" data-content-key="nav.logo">Photography Management System</div>
+                <ul class="nav-menu">
+                    <li><a href="#home" class="nav-link">Home</a></li>
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#pricing" class="nav-link">Pricing</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <a href="#" id="launchAppBtn" class="cta-button editable" data-content-key="nav.cta">Launch Application</a>
+                
+                <!-- High Z-Index Admin Edit Button -->
+                <div id="admin-edit-button" class="admin-edit-button" style="display: none;">
+                    <button onclick="toggleEditMode()" class="edit-mode-btn" id="edit-mode-btn">
+                        <span class="edit-icon">✏️</span>
+                        <span class="edit-text">Edit Page</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <!-- Hero Section -->
     <section id="home" class="hero">
@@ -1042,6 +1189,233 @@
             if (editButton) {
                 editButton.style.display = 'block';
             }
+        });
+    </script>
+
+    </div> <!-- End Marketing View -->
+
+    <!-- Dashboard View (Shows to authenticated users) -->
+    <div class="dashboard-view" id="dashboardView">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <div class="dashboard-title">Photography Dashboard</div>
+                    <p style="color: #B4B4B8; margin: 0;" id="welcomeMessage">Welcome back!</p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+
+            <div id="sessionsContainer">
+                <div class="loading-state" id="dashboardLoading">
+                    <div class="spinner"></div>
+                    <p>Loading your sessions...</p>
+                </div>
+                
+                <div id="sessionsContent" style="display: none;">
+                    <h3 style="color: var(--primary-accent); margin-bottom: 1rem;">Recent Sessions</h3>
+                    <div class="sessions-grid" id="sessionsGrid">
+                        <!-- Sessions will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="noSessions" style="display: none; text-align: center; padding: 3rem;">
+                    <h3 style="color: var(--text-muted);">No sessions yet</h3>
+                    <p style="color: #8A8A95;">Create your first photography session to get started!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Page JavaScript -->
+    <script>
+        let currentUser = null;
+        let isAuthChecking = false;
+
+        // Initialize the smart landing page
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🎯 Smart Landing Page: Initializing...');
+            
+            // Show loading initially
+            showInitialLoading();
+            
+            // Check authentication status
+            await checkAuthenticationStatus();
+        });
+
+        async function checkAuthenticationStatus() {
+            if (isAuthChecking) return;
+            isAuthChecking = true;
+
+            try {
+                console.log('🔍 Checking authentication status...');
+                
+                const response = await fetch('/api/auth/check', {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('📊 Auth check result:', data);
+
+                if (data.authenticated && data.user) {
+                    // User is authenticated - show dashboard
+                    currentUser = data.user;
+                    console.log('✅ User authenticated:', currentUser.email);
+                    await showDashboard();
+                } else {
+                    // User not authenticated - show marketing
+                    console.log('👤 User not authenticated - showing marketing page');
+                    showMarketing();
+                }
+            } catch (error) {
+                console.error('❌ Auth check failed:', error);
+                // On error, show marketing page
+                showMarketing();
+            } finally {
+                isAuthChecking = false;
+                hideInitialLoading();
+            }
+        }
+
+        function showInitialLoading() {
+            document.getElementById('initialLoading').style.display = 'flex';
+            document.getElementById('marketingView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'none';
+        }
+
+        function hideInitialLoading() {
+            document.getElementById('initialLoading').style.display = 'none';
+        }
+
+        function showMarketing() {
+            document.body.classList.remove('app-authenticated');
+            document.getElementById('marketingView').style.display = 'block';
+            document.getElementById('dashboardView').style.display = 'none';
+            console.log('📄 Showing marketing page');
+        }
+
+        async function showDashboard() {
+            document.body.classList.add('app-authenticated');
+            document.getElementById('marketingView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'block';
+            
+            // Update welcome message
+            const welcomeMsg = document.getElementById('welcomeMessage');
+            if (welcomeMsg && currentUser) {
+                welcomeMsg.textContent = `Welcome back, ${currentUser.email}!`;
+            }
+            
+            console.log('🎛️ Showing dashboard');
+            
+            // Load dashboard data
+            await loadDashboardData();
+        }
+
+        async function loadDashboardData() {
+            try {
+                document.getElementById('dashboardLoading').style.display = 'block';
+                document.getElementById('sessionsContent').style.display = 'none';
+                document.getElementById('noSessions').style.display = 'none';
+
+                console.log('📊 Loading sessions...');
+                const response = await fetch('/api/sessions', {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const sessions = await response.json();
+                    console.log('✅ Loaded', sessions.length, 'sessions');
+                    
+                    if (sessions.length > 0) {
+                        renderSessions(sessions.slice(0, 6)); // Show first 6 sessions
+                        document.getElementById('sessionsContent').style.display = 'block';
+                    } else {
+                        document.getElementById('noSessions').style.display = 'block';
+                    }
+                } else {
+                    console.error('❌ Failed to load sessions');
+                    document.getElementById('noSessions').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('❌ Error loading dashboard:', error);
+                document.getElementById('noSessions').style.display = 'block';
+            } finally {
+                document.getElementById('dashboardLoading').style.display = 'none';
+            }
+        }
+
+        function renderSessions(sessions) {
+            const grid = document.getElementById('sessionsGrid');
+            grid.innerHTML = '';
+
+            sessions.forEach(session => {
+                const sessionCard = document.createElement('div');
+                sessionCard.className = 'session-card';
+                
+                const sessionDate = new Date(session.dateTime).toLocaleDateString();
+                const sessionTime = new Date(session.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                sessionCard.innerHTML = `
+                    <div class="session-client">${session.clientName}</div>
+                    <div class="session-type">${session.sessionType}</div>
+                    <div class="session-details">
+                        <div><strong>Date:</strong> ${sessionDate}</div>
+                        <div><strong>Time:</strong> ${sessionTime}</div>
+                        <div><strong>Location:</strong> ${session.location}</div>
+                        <div><strong>Price:</strong> $${session.price}</div>
+                    </div>
+                `;
+                
+                sessionCard.addEventListener('click', () => {
+                    // Redirect to full app for detailed view
+                    window.location.href = '/secure-app.html';
+                });
+                
+                grid.appendChild(sessionCard);
+            });
+        }
+
+        async function handleLogout() {
+            try {
+                console.log('🚪 Logging out...');
+                
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    console.log('✅ Logout successful');
+                    currentUser = null;
+                    showMarketing();
+                } else {
+                    console.error('❌ Logout failed');
+                }
+            } catch (error) {
+                console.error('❌ Logout error:', error);
+            }
+        }
+
+        // Update existing launch app handlers to use authentication
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle launch app button clicks
+            const launchBtns = document.querySelectorAll('#launchAppBtn, #getStartedBtn');
+            launchBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (currentUser) {
+                        // Already authenticated, go to full app
+                        window.location.href = '/secure-app.html';
+                    } else {
+                        // Not authenticated, trigger auth flow
+                        console.log('🔐 Starting authentication...');
+                        window.location.href = '/secure-app.html';
+                    }
+                });
+            });
         });
     </script>
 </body>
