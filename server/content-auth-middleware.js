@@ -7,6 +7,7 @@ const admin = require('firebase-admin');
 
 // Admin email whitelist - only these emails can edit content
 const ADMIN_EMAILS = [
+  'lancecasselman@icloud.com',
   'lance@photomanagementsystem.com',
   'admin@photomanagementsystem.com',
   'support@photomanagementsystem.com'
