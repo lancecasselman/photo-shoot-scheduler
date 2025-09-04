@@ -11391,8 +11391,8 @@ app.post('/api/website/publish', (req, res, next) => {
                 JSON.stringify(metadata || {}), JSON.stringify(theme || {})]);
         }
         
-        // Update user's subdomain
-        await pool.query('UPDATE users SET subdomain = $1 WHERE id = $2', [subdomain, userId]);
+        // No need to update users table - subdomain is stored in published_websites table only
+        console.log('✅ Website published successfully:', { userId, subdomain, websiteId });
         
         res.json({
             success: true,
