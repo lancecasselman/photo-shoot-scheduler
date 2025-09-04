@@ -1305,10 +1305,6 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
     }
 });
 
-// Body parsing middleware (must be AFTER webhook routes but BEFORE other API routes)
-app.use(express.json({ limit: '100gb' }));
-app.use(express.urlencoded({ extended: true, limit: '100gb' }));
-
 // Production Security Middleware (AFTER webhooks to preserve raw body)
 if (process.env.NODE_ENV === 'production') {
     // Trust proxy for Replit/production deployment
@@ -1419,6 +1415,10 @@ app.use(session({
         return require('crypto').randomBytes(16).toString('hex');
     }
 }));
+
+// Body parsing middleware (MUST be after session but BEFORE all routes)
+app.use(express.json({ limit: '100gb' }));
+app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
 // CORS configuration for custom domains and Android app
 app.use((req, res, next) => {
