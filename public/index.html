@@ -997,6 +997,25 @@
         });
     </script>
     
+    <!-- Firebase Configuration for Admin Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbtb9c3YT1FH04wQJi8qO-ZXHZ5L8L8Zg",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        console.log('🔥 Firebase initialized for content editor');
+    </script>
+
     <!-- Content Editor for Admin Users -->
     <script src="/assets/content-editor.js"></script>
 </body>

@@ -38,8 +38,16 @@ class ContentEditor {
 
   async checkAdminAccess() {
     try {
-      // Check if user is authenticated with Firebase
+      // Wait for Firebase auth to be ready
       if (typeof firebase !== 'undefined' && firebase.auth) {
+        // Wait for auth state to be determined
+        await new Promise((resolve) => {
+          const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve(user);
+          });
+        });
+        
         const user = firebase.auth().currentUser;
         if (user) {
           this.currentUser = user;
@@ -51,7 +59,11 @@ class ContentEditor {
           this.authToken = idToken;
           
           console.log('🔐 CONTENT EDITOR: User authenticated:', user.email);
+        } else {
+          console.log('🔐 CONTENT EDITOR: No authenticated user found');
         }
+      } else {
+        console.log('🔐 CONTENT EDITOR: Firebase not available');
       }
     } catch (error) {
       console.error('⚠️ CONTENT EDITOR: Auth check failed:', error);
