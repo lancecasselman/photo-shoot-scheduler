@@ -11344,7 +11344,8 @@ app.post('/api/website/publish', isAuthenticated, async (req, res) => {
             success: true,
             websiteId,
             subdomain,
-            url: `https://${subdomain}.${req.hostname}`,
+            url: `/site/${subdomain}`,
+            fullUrl: `${req.protocol}://${req.get('host')}/site/${subdomain}`,
             message: 'Website published successfully!'
         });
         
@@ -11399,7 +11400,8 @@ app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
             theme: website.theme,
             isPublished: website.is_published,
             publishedAt: website.published_at,
-            url: `https://${website.subdomain}.${req.hostname}`
+            url: `/site/${website.subdomain}`,
+            fullUrl: `${req.protocol}://${req.get('host')}/site/${website.subdomain}`
         });
         
     } catch (error) {
