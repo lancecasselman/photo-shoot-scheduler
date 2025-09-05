@@ -11296,6 +11296,52 @@ app.get('/api/website/test-publish', (req, res) => {
     });
 });
 
+// Storage quota status endpoint
+app.get('/api/storage/quota-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        // Get current quota and usage
+        const quota = await storageSystem.getUserQuota(userId);
+        const usage = await storageSystem.calculateStorageUsage(userId);
+        
+        // Check if user can upload a 100MB file as test
+        const testUploadSize = 100 * 1024 * 1024; // 100MB
+        const uploadCheck = await storageSystem.canUpload(userId, testUploadSize, userEmail);
+        
+        res.json({
+            success: true,
+            userId: userId,
+            quota: {
+                totalGB: quota.total_quota_gb,
+                baseGB: quota.base_storage_gb,
+                purchasedTB: quota.purchased_tb,
+                status: quota.status
+            },
+            usage: {
+                totalGB: usage.totalGB,
+                totalBytes: usage.totalBytes,
+                totalFiles: usage.totalFiles,
+                galleryMB: (usage.galleryBytes / 1024 / 1024).toFixed(2),
+                rawMB: (usage.rawBytes / 1024 / 1024).toFixed(2)
+            },
+            canUpload100MB: uploadCheck.canUpload,
+            remainingGB: uploadCheck.remainingGB,
+            percentUsed: ((usage.totalGB / parseFloat(quota.total_quota_gb)) * 100).toFixed(1),
+            isNearLimit: uploadCheck.isNearLimit,
+            isAdmin: uploadCheck.isAdmin
+        });
+    } catch (error) {
+        console.error('Error checking storage quota status:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to check storage quota',
+            message: error.message 
+        });
+    }
+});
+
 // Website Publishing - Saves website for later editing
 app.post('/api/website/publish', (req, res, next) => {
     console.log('🚀 PUBLISH ROUTE HIT - Pre-auth check', {
