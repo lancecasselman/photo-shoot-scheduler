@@ -10325,7 +10325,11 @@ END:VCALENDAR`;
                 filteredClients = [...allClients];
                 
                 // Sort alphabetically by name
-                filteredClients.sort((a, b) => a.name.localeCompare(b.name));
+                filteredClients.sort((a, b) => {
+                    const nameA = a.client_name || a.clientName || a.name || '';
+                    const nameB = b.client_name || b.clientName || b.name || '';
+                    return nameA.localeCompare(nameB);
+                });
                 
                 renderClientList();
                 
@@ -10392,18 +10396,17 @@ END:VCALENDAR`;
                     const clientKey = session.clientName?.toLowerCase().trim();
                     if (clientKey && !clientsMap.has(clientKey)) {
                         clientsMap.set(clientKey, {
-                            name: session.clientName,
+                            clientName: session.clientName,
                             email: session.email || null,
-                            phone: session.phoneNumber || null,
-                            address: session.location || null,
-                            notes: `Imported from session: ${session.sessionType || 'Unknown'}`
+                            phoneNumber: session.phoneNumber || null,
+                            notes: `Imported from ${session.sessionType || 'Unknown'} session at ${session.location || 'Unknown location'}`,
+                            source: 'Session Import'
                         });
                     } else if (clientKey && clientsMap.has(clientKey)) {
                         // Update existing client entry with any additional info
                         const existing = clientsMap.get(clientKey);
                         if (!existing.email && session.email) existing.email = session.email;
-                        if (!existing.phone && session.phoneNumber) existing.phone = session.phoneNumber;
-                        if (!existing.address && session.location) existing.address = session.location;
+                        if (!existing.phoneNumber && session.phoneNumber) existing.phoneNumber = session.phoneNumber;
                     }
                 });
                 
@@ -10469,27 +10472,26 @@ END:VCALENDAR`;
             const clientsHTML = filteredClients.map(client => `
                 <div class="client-item" style="border-bottom: 1px solid #e0e0e0; padding: 20px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
                     <div class="client-info" style="flex: 1;">
-                        <h3 style="margin: 0 0 10px 0; color: #000000; font-size: 18px;">${client.name}</h3>
+                        <h3 style="margin: 0 0 10px 0; color: #000000; font-size: 18px;">${client.client_name || client.clientName || client.name}</h3>
                         <div class="client-contacts" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
                             ${client.email ? `
                                 <a href="mailto:${client.email}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
                                     <span>📧</span> ${client.email}
                                 </a>
                             ` : ''}
-                            ${client.phone ? `
-                                <a href="tel:${client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                                    <span>📱</span> ${client.phone}
+                            ${(client.phone_number || client.phoneNumber || client.phone) ? `
+                                <a href="tel:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                    <span>📱</span> ${client.phone_number || client.phoneNumber || client.phone}
                                 </a>
-                                <a href="sms:${client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                <a href="sms:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
                                     <span>💬</span> SMS
                                 </a>
                             ` : ''}
                         </div>
-                        ${client.address ? `<p style="margin: 5px 0; color: #666; font-size: 14px;">📍 ${client.address}</p>` : ''}
                         ${client.notes ? `<p style="margin: 5px 0; color: #666; font-size: 14px; font-style: italic;">📝 ${client.notes}</p>` : ''}
-                        ${client.session_count > 0 ? `
+                        ${(client.total_sessions || client.totalSessions) > 0 ? `
                             <p style="margin: 10px 0 0 0; color: var(--gold-muted); font-size: 14px; font-weight: 600;">
-                                📸 ${client.session_count} ${client.session_count === 1 ? 'session' : 'sessions'}
+                                📸 ${client.total_sessions || client.totalSessions} ${(client.total_sessions || client.totalSessions) === 1 ? 'session' : 'sessions'}
                             </p>
                         ` : ''}
                     </div>
@@ -10513,17 +10515,22 @@ END:VCALENDAR`;
             if (!searchTerm) {
                 filteredClients = [...allClients];
             } else {
-                filteredClients = allClients.filter(client => 
-                    client.name.toLowerCase().includes(searchTerm) ||
-                    (client.email && client.email.toLowerCase().includes(searchTerm)) ||
-                    (client.phone && client.phone.includes(searchTerm)) ||
-                    (client.address && client.address.toLowerCase().includes(searchTerm)) ||
-                    (client.notes && client.notes.toLowerCase().includes(searchTerm))
-                );
+                filteredClients = allClients.filter(client => {
+                    const name = (client.client_name || client.clientName || client.name || '').toLowerCase();
+                    const phone = client.phone_number || client.phoneNumber || client.phone || '';
+                    return name.includes(searchTerm) ||
+                        (client.email && client.email.toLowerCase().includes(searchTerm)) ||
+                        (phone && phone.includes(searchTerm)) ||
+                        (client.notes && client.notes.toLowerCase().includes(searchTerm));
+                });
             }
             
             // Sort alphabetically by name
-            filteredClients.sort((a, b) => a.name.localeCompare(b.name));
+            filteredClients.sort((a, b) => {
+                const nameA = a.client_name || a.clientName || a.name || '';
+                const nameB = b.client_name || b.clientName || b.name || '';
+                return nameA.localeCompare(nameB);
+            });
             
             renderClientList();
         }
@@ -10545,10 +10552,10 @@ END:VCALENDAR`;
 
             document.getElementById('clientModalTitle').textContent = 'Edit Client';
             document.getElementById('clientId').value = client.id;
-            document.getElementById('clientName').value = client.name;
+            document.getElementById('clientName').value = client.client_name || client.clientName || client.name || '';
             document.getElementById('clientEmail').value = client.email || '';
-            document.getElementById('clientPhone').value = client.phone || '';
-            document.getElementById('clientAddress').value = client.address || '';
+            document.getElementById('clientPhone').value = client.phone_number || client.phoneNumber || client.phone || '';
+            document.getElementById('clientAddress').value = '';
             document.getElementById('clientNotes').value = client.notes || '';
             document.getElementById('clientModal').style.display = 'flex';
         }
@@ -10558,10 +10565,9 @@ END:VCALENDAR`;
             
             const clientId = document.getElementById('clientId').value;
             const clientData = {
-                name: document.getElementById('clientName').value,
+                clientName: document.getElementById('clientName').value,
                 email: document.getElementById('clientEmail').value || null,
-                phone: document.getElementById('clientPhone').value || null,
-                address: document.getElementById('clientAddress').value || null,
+                phoneNumber: document.getElementById('clientPhone').value || null,
                 notes: document.getElementById('clientNotes').value || null
             };
 
