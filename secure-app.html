@@ -10328,9 +10328,126 @@ END:VCALENDAR`;
                 filteredClients.sort((a, b) => a.name.localeCompare(b.name));
                 
                 renderClientList();
+                
+                // Check if we need to migrate clients from sessions
+                if (allClients.length === 0) {
+                    checkAndMigrateClientsFromSessions();
+                }
             } catch (error) {
                 console.error('Error loading clients:', error);
                 showMessage('Failed to load clients', 'error');
+            }
+        }
+        
+        async function checkAndMigrateClientsFromSessions() {
+            try {
+                // Load all sessions
+                const sessionsResponse = await fetch('/api/sessions', {
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+                
+                if (!sessionsResponse.ok) {
+                    console.error('Failed to load sessions for migration');
+                    return;
+                }
+                
+                const sessions = await sessionsResponse.json();
+                
+                if (sessions.length > 0) {
+                    // Show migration prompt
+                    const migrate = confirm('We found ' + sessions.length + ' sessions but no clients in your database. Would you like to import your clients from your existing sessions?');
+                    
+                    if (migrate) {
+                        await migrateClientsFromSessions();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking for migration:', error);
+            }
+        }
+        
+        async function migrateClientsFromSessions() {
+            try {
+                showMessage('Importing clients from your sessions...', 'info');
+                
+                // Load all sessions
+                const sessionsResponse = await fetch('/api/sessions', {
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+                
+                if (!sessionsResponse.ok) {
+                    throw new Error('Failed to load sessions');
+                }
+                
+                const sessions = await sessionsResponse.json();
+                
+                // Extract unique clients from sessions
+                const clientsMap = new Map();
+                
+                sessions.forEach(session => {
+                    const clientKey = session.clientName?.toLowerCase().trim();
+                    if (clientKey && !clientsMap.has(clientKey)) {
+                        clientsMap.set(clientKey, {
+                            name: session.clientName,
+                            email: session.email || null,
+                            phone: session.phoneNumber || null,
+                            address: session.location || null,
+                            notes: `Imported from session: ${session.sessionType || 'Unknown'}`
+                        });
+                    } else if (clientKey && clientsMap.has(clientKey)) {
+                        // Update existing client entry with any additional info
+                        const existing = clientsMap.get(clientKey);
+                        if (!existing.email && session.email) existing.email = session.email;
+                        if (!existing.phone && session.phoneNumber) existing.phone = session.phoneNumber;
+                        if (!existing.address && session.location) existing.address = session.location;
+                    }
+                });
+                
+                // Create clients in database
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const [key, clientData] of clientsMap) {
+                    try {
+                        const response = await fetch('/api/clients', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${await getAuthToken()}`
+                            },
+                            body: JSON.stringify(clientData)
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            console.error('Failed to create client:', clientData.name);
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        console.error('Error creating client:', error);
+                    }
+                }
+                
+                // Show results
+                if (successCount > 0) {
+                    showMessage(`Successfully imported ${successCount} clients from your sessions!`, 'success');
+                    // Reload the client list
+                    await loadClientDatabase();
+                }
+                
+                if (errorCount > 0) {
+                    showMessage(`Note: ${errorCount} clients could not be imported`, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Error during migration:', error);
+                showMessage('Failed to import clients from sessions', 'error');
             }
         }
 
@@ -12832,9 +12949,14 @@ END:VCALENDAR`;
             <div class="client-database-container">
                 <!-- Add New Client Button -->
                 <div class="client-controls" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <button onclick="openAddClientModal()" class="btn-primary" style="background: var(--gold-muted); color: var(--bg-primary); padding: 12px 24px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 20px;">➕</span> Add New Client
-                    </button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="openAddClientModal()" class="btn-primary" style="background: var(--gold-muted); color: var(--bg-primary); padding: 12px 24px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">➕</span> Add New Client
+                        </button>
+                        <button onclick="migrateClientsFromSessions()" class="btn-secondary" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">📥</span> Import from Sessions
+                        </button>
+                    </div>
                     
                     <!-- Search Bar -->
                     <input type="text" id="clientDbSearch" placeholder="Search clients..." 
