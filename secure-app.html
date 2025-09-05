@@ -10490,44 +10490,91 @@ END:VCALENDAR`;
                 return;
             }
 
-            const clientsHTML = filteredClients.map(client => `
-                <div class="client-item" style="border-bottom: 1px solid #e0e0e0; padding: 20px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
-                    <div class="client-info" style="flex: 1;">
-                        <h3 style="margin: 0 0 10px 0; color: #000000; font-size: 18px;">${client.client_name || client.clientName || client.name}</h3>
-                        <div class="client-contacts" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
-                            ${client.email ? `
-                                <a href="mailto:${client.email}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                                    <span>📧</span> ${client.email}
-                                </a>
-                            ` : ''}
-                            ${(client.phone_number || client.phoneNumber || client.phone) ? `
-                                <a href="tel:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                                    <span>📱</span> ${client.phone_number || client.phoneNumber || client.phone}
-                                </a>
-                                <a href="sms:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                                    <span>💬</span> SMS
-                                </a>
-                            ` : ''}
-                        </div>
-                        ${client.notes ? `<p style="margin: 5px 0; color: #666; font-size: 14px; font-style: italic;">📝 ${client.notes}</p>` : ''}
-                        ${(client.total_sessions || client.totalSessions) > 0 ? `
-                            <p style="margin: 10px 0 0 0; color: var(--gold-muted); font-size: 14px; font-weight: 600;">
-                                📸 ${client.total_sessions || client.totalSessions} ${(client.total_sessions || client.totalSessions) === 1 ? 'session' : 'sessions'}
-                            </p>
-                        ` : ''}
-                    </div>
-                    <div class="client-actions" style="display: flex; gap: 10px;">
-                        <button onclick="editClient(${client.id})" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
-                            Edit
-                        </button>
-                        <button onclick="deleteClient(${client.id})" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
-                            Delete
-                        </button>
-                    </div>
+            // Excel-style table layout
+            const tableHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-bottom: 2px solid var(--gold-muted);">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000; border-right: 1px solid #dee2e6;">Name</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000; border-right: 1px solid #dee2e6;">Email</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000; border-right: 1px solid #dee2e6;">Phone</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000; border-right: 1px solid #dee2e6;">Sessions</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #000; border-right: 1px solid #dee2e6;">Notes</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #000;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filteredClients.map((client, index) => `
+                                <tr style="border-bottom: 1px solid #dee2e6; ${index % 2 === 0 ? 'background: #ffffff;' : 'background: #f8f9fa;'} transition: background 0.2s;" 
+                                    onmouseover="this.style.background='#fff3cd'" 
+                                    onmouseout="this.style.background='${index % 2 === 0 ? '#ffffff' : '#f8f9fa'}'">
+                                    <td style="padding: 12px; border-right: 1px solid #dee2e6; font-weight: 500; color: #000;">
+                                        ${client.client_name || client.clientName || client.name}
+                                    </td>
+                                    <td style="padding: 12px; border-right: 1px solid #dee2e6;">
+                                        ${client.email ? `
+                                            <a href="mailto:${client.email}" style="color: var(--gold-muted); text-decoration: none;">
+                                                ${client.email}
+                                            </a>
+                                        ` : '<span style="color: #999;">—</span>'}
+                                    </td>
+                                    <td style="padding: 12px; border-right: 1px solid #dee2e6;">
+                                        ${(client.phone_number || client.phoneNumber || client.phone) ? `
+                                            <div style="display: flex; gap: 10px; align-items: center;">
+                                                <a href="tel:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none;">
+                                                    ${client.phone_number || client.phoneNumber || client.phone}
+                                                </a>
+                                                <a href="sms:${client.phone_number || client.phoneNumber || client.phone}" 
+                                                   style="background: var(--gold-muted); color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; font-size: 12px;">
+                                                    SMS
+                                                </a>
+                                            </div>
+                                        ` : '<span style="color: #999;">—</span>'}
+                                    </td>
+                                    <td style="padding: 12px; border-right: 1px solid #dee2e6; text-align: center;">
+                                        ${(client.total_sessions || client.totalSessions) > 0 ? 
+                                            `<span style="background: var(--gold-muted); color: white; padding: 4px 12px; border-radius: 12px; font-weight: 600;">
+                                                ${client.total_sessions || client.totalSessions}
+                                            </span>` : 
+                                            '<span style="color: #999;">0</span>'}
+                                    </td>
+                                    <td style="padding: 12px; border-right: 1px solid #dee2e6; color: #666; font-size: 14px;">
+                                        ${client.notes ? client.notes.substring(0, 50) + (client.notes.length > 50 ? '...' : '') : '<span style="color: #999;">—</span>'}
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <button onclick="editClient('${client.id}')" 
+                                                    style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;"
+                                                    onmouseover="this.style.background='#5a6268'" 
+                                                    onmouseout="this.style.background='#6c757d'">
+                                                Edit
+                                            </button>
+                                            <button onclick="deleteClient('${client.id}')" 
+                                                    style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;"
+                                                    onmouseover="this.style.background='#c82333'" 
+                                                    onmouseout="this.style.background='#dc3545'">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
-            `).join('');
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #666; font-size: 14px;">
+                        Showing ${filteredClients.length} client${filteredClients.length !== 1 ? 's' : ''}
+                    </span>
+                    <button onclick="exportClientsToCSV()" 
+                            style="background: var(--gold-muted); color: var(--bg-primary); padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <span>📊</span> Export to CSV
+                    </button>
+                </div>
+            `;
 
-            listContainer.innerHTML = clientsHTML;
+            listContainer.innerHTML = tableHTML;
         }
 
         function filterClientDatabase() {
@@ -10641,6 +10688,46 @@ END:VCALENDAR`;
                 console.error('Error deleting client:', error);
                 showMessage('Failed to delete client', 'error');
             }
+        }
+
+        // Export clients to CSV
+        function exportClientsToCSV() {
+            if (filteredClients.length === 0) {
+                showMessage('No clients to export', 'warning');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = ['Name', 'Email', 'Phone', 'Sessions', 'Notes', 'Created Date'];
+            const rows = filteredClients.map(client => [
+                client.client_name || client.clientName || client.name || '',
+                client.email || '',
+                client.phone_number || client.phoneNumber || client.phone || '',
+                (client.total_sessions || client.totalSessions || 0).toString(),
+                (client.notes || '').replace(/,/g, ';'), // Replace commas in notes
+                new Date(client.created_at || Date.now()).toLocaleDateString()
+            ]);
+            
+            // Combine headers and rows
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+            
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `clients_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage('Client list exported successfully!', 'success');
         }
 
         // Client Selection for Sessions Functions
