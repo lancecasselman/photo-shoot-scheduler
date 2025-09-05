@@ -461,6 +461,28 @@ export const communityChallenges = pgTable("community_challenges", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Photographer clients database
+export const photographerClients = pgTable("photographer_clients", {
+  id: varchar("id").primaryKey().notNull(),
+  photographerId: varchar("photographer_id").notNull().references(() => users.id),
+  clientName: varchar("client_name").notNull(),
+  email: varchar("email"),
+  phoneNumber: varchar("phone_number"),
+  notes: text("notes"),
+  tags: jsonb("tags").default([]), // Array of tags like ["VIP", "Wedding", "Corporate"]
+  totalSessions: integer("total_sessions").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).default("0.00"),
+  lastSessionDate: timestamp("last_session_date"),
+  lastContactDate: timestamp("last_contact_date"),
+  source: varchar("source"), // How they found the photographer
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Photographer Clients type exports
+export type InsertPhotographerClient = typeof photographerClients.$inferInsert;
+export type PhotographerClient = typeof photographerClients.$inferSelect;
+
 // Community type exports
 export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;
 export type CommunityProfile = typeof communityProfiles.$inferSelect;

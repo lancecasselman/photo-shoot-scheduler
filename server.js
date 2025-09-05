@@ -5304,6 +5304,175 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== CLIENT DATABASE API ====================
+
+// Get all clients for a photographer
+app.get('/api/clients', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        
+        const result = await pool.query(
+            `SELECT * FROM photographer_clients 
+             WHERE photographer_id = $1 
+             ORDER BY LOWER(client_name) ASC`,
+            [photographerId]
+        );
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        res.status(500).json({ error: 'Failed to fetch clients' });
+    }
+});
+
+// Get single client
+app.get('/api/clients/:id', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        const clientId = req.params.id;
+        
+        const result = await pool.query(
+            'SELECT * FROM photographer_clients WHERE id = $1 AND photographer_id = $2',
+            [clientId, photographerId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Client not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error fetching client:', error);
+        res.status(500).json({ error: 'Failed to fetch client' });
+    }
+});
+
+// Create new client
+app.post('/api/clients', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        const { clientName, email, phoneNumber, notes, tags, source } = req.body;
+        
+        if (!clientName) {
+            return res.status(400).json({ error: 'Client name is required' });
+        }
+        
+        const clientId = uuidv4();
+        const result = await pool.query(
+            `INSERT INTO photographer_clients 
+             (id, photographer_id, client_name, email, phone_number, notes, tags, source)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [clientId, photographerId, clientName, email, phoneNumber, notes, tags || [], source]
+        );
+        
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Error creating client:', error);
+        res.status(500).json({ error: 'Failed to create client' });
+    }
+});
+
+// Update client
+app.put('/api/clients/:id', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        const clientId = req.params.id;
+        const { clientName, email, phoneNumber, notes, tags, source } = req.body;
+        
+        const result = await pool.query(
+            `UPDATE photographer_clients 
+             SET client_name = $1, email = $2, phone_number = $3, notes = $4, 
+                 tags = $5, source = $6, updated_at = NOW()
+             WHERE id = $7 AND photographer_id = $8
+             RETURNING *`,
+            [clientName, email, phoneNumber, notes, tags, source, clientId, photographerId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Client not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error updating client:', error);
+        res.status(500).json({ error: 'Failed to update client' });
+    }
+});
+
+// Delete client
+app.delete('/api/clients/:id', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        const clientId = req.params.id;
+        
+        const result = await pool.query(
+            'DELETE FROM photographer_clients WHERE id = $1 AND photographer_id = $2 RETURNING id',
+            [clientId, photographerId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Client not found' });
+        }
+        
+        res.json({ success: true, message: 'Client deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting client:', error);
+        res.status(500).json({ error: 'Failed to delete client' });
+    }
+});
+
+// Auto-populate clients from existing sessions
+app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        
+        // Get all unique clients from sessions
+        const sessionsResult = await pool.query(
+            `SELECT DISTINCT client_name, email, phone_number 
+             FROM photography_sessions 
+             WHERE user_id = $1 AND client_name IS NOT NULL`,
+            [photographerId]
+        );
+        
+        let addedCount = 0;
+        for (const session of sessionsResult.rows) {
+            // Check if client already exists
+            const existingClient = await pool.query(
+                `SELECT id FROM photographer_clients 
+                 WHERE photographer_id = $1 AND LOWER(client_name) = LOWER($2)`,
+                [photographerId, session.client_name]
+            );
+            
+            if (existingClient.rows.length === 0) {
+                // Add new client
+                const clientId = uuidv4();
+                await pool.query(
+                    `INSERT INTO photographer_clients 
+                     (id, photographer_id, client_name, email, phone_number, source)
+                     VALUES ($1, $2, $3, $4, $5, 'Imported from sessions')`,
+                    [clientId, photographerId, session.client_name, session.email, session.phone_number]
+                );
+                addedCount++;
+            }
+        }
+        
+        res.json({ 
+            success: true, 
+            message: `Added ${addedCount} new clients from existing sessions` 
+        });
+    } catch (error) {
+        console.error('Error auto-populating clients:', error);
+        res.status(500).json({ error: 'Failed to auto-populate clients' });
+    }
+});
+
 // Update session payment status (for deposits and invoices)
 app.post('/api/sessions/:id/update-payment-status', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;

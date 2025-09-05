@@ -5442,6 +5442,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('clientDatabase'); closeMobileMenu();">
+                            👥 Clients
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="#" class="nav-link" onclick="switchTab('goldenHour'); closeMobileMenu();">
                             Golden Hour Times
                         </a>
@@ -5613,9 +5618,33 @@
             <div class="collapsible-content" id="sessionFormContent">
             <form id="sessionForm">
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label for="clientName">Client Name</label>
-                        <input type="text" id="clientName" name="clientName" required placeholder="Enter client name">
+                    <!-- Client Selection with New/Existing Toggle -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Client Selection</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button type="button" id="existingClientBtn" onclick="toggleClientSelection('existing')" 
+                                    style="flex: 1; padding: 8px; background: var(--gold-muted); color: var(--bg-primary); border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                                Select Existing Client
+                            </button>
+                            <button type="button" id="newClientBtn" onclick="toggleClientSelection('new')" 
+                                    style="flex: 1; padding: 8px; background: #6c757d; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                                Add New Client
+                            </button>
+                        </div>
+                        
+                        <!-- Existing Client Dropdown -->
+                        <div id="existingClientSection" style="display: block;">
+                            <select id="clientSelect" name="clientSelect" onchange="updateClientInfo()" 
+                                    style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000;">
+                                <option value="">-- Select a Client --</option>
+                            </select>
+                        </div>
+                        
+                        <!-- New Client Name Input -->
+                        <div id="newClientSection" style="display: none;">
+                            <input type="text" id="clientName" name="clientName" placeholder="Enter client name" 
+                                   style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="sessionType">Session Type</label>
@@ -6761,12 +6790,68 @@ ${contract.contract_content}
             }
         }
 
+        window.toggleSessionForm = function() {
+            const content = document.getElementById('sessionFormContent');
+            const icon = document.getElementById('sessionFormIcon');
+            
+            if (content.style.display === 'none' || !content.style.display) {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+                // Load clients for dropdown when opening the form
+                loadClientsForDropdown();
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        }
+
         window.addSession = async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
+            let clientId = null;
+            let clientName = '';
+            
+            // Handle client selection/creation
+            if (clientSelectionMode === 'existing') {
+                clientId = formData.get('clientSelect');
+                if (clientId) {
+                    const selectElement = document.getElementById('clientSelect');
+                    clientName = selectElement.options[selectElement.selectedIndex].text;
+                }
+            } else {
+                clientName = formData.get('clientName');
+                // Create new client if needed
+                if (clientName) {
+                    try {
+                        const newClientResponse = await fetch('/api/clients', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${await getAuthToken()}`
+                            },
+                            body: JSON.stringify({
+                                name: clientName,
+                                email: formData.get('email'),
+                                phone: formData.get('phoneNumber'),
+                                address: formData.get('location'),
+                                notes: ''
+                            })
+                        });
+                        
+                        if (newClientResponse.ok) {
+                            const newClient = await newClientResponse.json();
+                            clientId = newClient.id;
+                        }
+                    } catch (error) {
+                        console.error('Error creating new client:', error);
+                    }
+                }
+            }
+            
             const sessionData = {
-                clientName: formData.get('clientName'),
+                clientName: clientName,
+                clientId: clientId, // Include client ID in session data
                 sessionType: formData.get('sessionType'),
                 dateTime: formData.get('dateTime'),
                 location: formData.get('location'),
@@ -10214,6 +10299,298 @@ END:VCALENDAR`;
             } else if (tabName === 'businessSetup') {
                 // Check Stripe Connect status when tab is opened
                 checkStripeConnectStatus();
+            } else if (tabName === 'clientDatabase') {
+                // Load clients when tab is opened
+                loadClientDatabase();
+            }
+        }
+
+        // Client Database Functions
+        let allClients = [];
+        let filteredClients = [];
+
+        async function loadClientDatabase() {
+            try {
+                const response = await fetch('/api/clients', {
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load clients');
+                }
+
+                allClients = await response.json();
+                filteredClients = [...allClients];
+                
+                // Sort alphabetically by name
+                filteredClients.sort((a, b) => a.name.localeCompare(b.name));
+                
+                renderClientList();
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                showMessage('Failed to load clients', 'error');
+            }
+        }
+
+        function renderClientList() {
+            const listContainer = document.getElementById('clientDatabaseList');
+            
+            if (filteredClients.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <p style="font-size: 18px; margin-bottom: 20px;">No clients found</p>
+                        <button onclick="openAddClientModal()" class="btn-primary" style="background: var(--gold-muted); color: var(--bg-primary); padding: 10px 20px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                            Add Your First Client
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const clientsHTML = filteredClients.map(client => `
+                <div class="client-item" style="border-bottom: 1px solid #e0e0e0; padding: 20px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                    <div class="client-info" style="flex: 1;">
+                        <h3 style="margin: 0 0 10px 0; color: #000000; font-size: 18px;">${client.name}</h3>
+                        <div class="client-contacts" style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px;">
+                            ${client.email ? `
+                                <a href="mailto:${client.email}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                    <span>📧</span> ${client.email}
+                                </a>
+                            ` : ''}
+                            ${client.phone ? `
+                                <a href="tel:${client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                    <span>📱</span> ${client.phone}
+                                </a>
+                                <a href="sms:${client.phone}" style="color: var(--gold-muted); text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                                    <span>💬</span> SMS
+                                </a>
+                            ` : ''}
+                        </div>
+                        ${client.address ? `<p style="margin: 5px 0; color: #666; font-size: 14px;">📍 ${client.address}</p>` : ''}
+                        ${client.notes ? `<p style="margin: 5px 0; color: #666; font-size: 14px; font-style: italic;">📝 ${client.notes}</p>` : ''}
+                        ${client.session_count > 0 ? `
+                            <p style="margin: 10px 0 0 0; color: var(--gold-muted); font-size: 14px; font-weight: 600;">
+                                📸 ${client.session_count} ${client.session_count === 1 ? 'session' : 'sessions'}
+                            </p>
+                        ` : ''}
+                    </div>
+                    <div class="client-actions" style="display: flex; gap: 10px;">
+                        <button onclick="editClient(${client.id})" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                            Edit
+                        </button>
+                        <button onclick="deleteClient(${client.id})" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            listContainer.innerHTML = clientsHTML;
+        }
+
+        function filterClientDatabase() {
+            const searchTerm = document.getElementById('clientDbSearch').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredClients = [...allClients];
+            } else {
+                filteredClients = allClients.filter(client => 
+                    client.name.toLowerCase().includes(searchTerm) ||
+                    (client.email && client.email.toLowerCase().includes(searchTerm)) ||
+                    (client.phone && client.phone.includes(searchTerm)) ||
+                    (client.address && client.address.toLowerCase().includes(searchTerm)) ||
+                    (client.notes && client.notes.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Sort alphabetically by name
+            filteredClients.sort((a, b) => a.name.localeCompare(b.name));
+            
+            renderClientList();
+        }
+
+        function openAddClientModal() {
+            document.getElementById('clientModalTitle').textContent = 'Add New Client';
+            document.getElementById('clientForm').reset();
+            document.getElementById('clientId').value = '';
+            document.getElementById('clientModal').style.display = 'flex';
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        async function editClient(clientId) {
+            const client = allClients.find(c => c.id === clientId);
+            if (!client) return;
+
+            document.getElementById('clientModalTitle').textContent = 'Edit Client';
+            document.getElementById('clientId').value = client.id;
+            document.getElementById('clientName').value = client.name;
+            document.getElementById('clientEmail').value = client.email || '';
+            document.getElementById('clientPhone').value = client.phone || '';
+            document.getElementById('clientAddress').value = client.address || '';
+            document.getElementById('clientNotes').value = client.notes || '';
+            document.getElementById('clientModal').style.display = 'flex';
+        }
+
+        async function saveClient(event) {
+            event.preventDefault();
+            
+            const clientId = document.getElementById('clientId').value;
+            const clientData = {
+                name: document.getElementById('clientName').value,
+                email: document.getElementById('clientEmail').value || null,
+                phone: document.getElementById('clientPhone').value || null,
+                address: document.getElementById('clientAddress').value || null,
+                notes: document.getElementById('clientNotes').value || null
+            };
+
+            try {
+                const url = clientId ? `/api/clients/${clientId}` : '/api/clients';
+                const method = clientId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    },
+                    body: JSON.stringify(clientData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save client');
+                }
+
+                showMessage(clientId ? 'Client updated successfully' : 'Client added successfully', 'success');
+                closeClientModal();
+                loadClientDatabase();
+            } catch (error) {
+                console.error('Error saving client:', error);
+                showMessage('Failed to save client', 'error');
+            }
+        }
+
+        async function deleteClient(clientId) {
+            if (!confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/clients/${clientId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete client');
+                }
+
+                showMessage('Client deleted successfully', 'success');
+                loadClientDatabase();
+            } catch (error) {
+                console.error('Error deleting client:', error);
+                showMessage('Failed to delete client', 'error');
+            }
+        }
+
+        // Client Selection for Sessions Functions
+        let clientSelectionMode = 'existing';
+        
+        function toggleClientSelection(mode) {
+            clientSelectionMode = mode;
+            const existingSection = document.getElementById('existingClientSection');
+            const newSection = document.getElementById('newClientSection');
+            const existingBtn = document.getElementById('existingClientBtn');
+            const newBtn = document.getElementById('newClientBtn');
+            
+            if (mode === 'existing') {
+                existingSection.style.display = 'block';
+                newSection.style.display = 'none';
+                existingBtn.style.background = 'var(--gold-muted)';
+                existingBtn.style.color = 'var(--bg-primary)';
+                newBtn.style.background = '#6c757d';
+                newBtn.style.color = 'white';
+                
+                // Clear the new client name field
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientName').removeAttribute('required');
+                document.getElementById('clientSelect').setAttribute('required', '');
+            } else {
+                existingSection.style.display = 'none';
+                newSection.style.display = 'block';
+                newBtn.style.background = 'var(--gold-muted)';
+                newBtn.style.color = 'var(--bg-primary)';
+                existingBtn.style.background = '#6c757d';
+                existingBtn.style.color = 'white';
+                
+                // Clear the select dropdown
+                document.getElementById('clientSelect').value = '';
+                document.getElementById('clientSelect').removeAttribute('required');
+                document.getElementById('clientName').setAttribute('required', '');
+            }
+        }
+        
+        async function loadClientsForDropdown() {
+            try {
+                const response = await fetch('/api/clients', {
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to load clients for dropdown');
+                    return;
+                }
+
+                const clients = await response.json();
+                const selectElement = document.getElementById('clientSelect');
+                
+                // Sort alphabetically by name
+                clients.sort((a, b) => a.name.localeCompare(b.name));
+                
+                // Clear existing options except the first one
+                selectElement.innerHTML = '<option value="">-- Select a Client --</option>';
+                
+                // Add clients to dropdown
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = client.name;
+                    option.dataset.email = client.email || '';
+                    option.dataset.phone = client.phone || '';
+                    selectElement.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading clients for dropdown:', error);
+            }
+        }
+        
+        function updateClientInfo() {
+            const selectElement = document.getElementById('clientSelect');
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                // Update phone and email fields with client's info
+                const emailField = document.getElementById('email');
+                const phoneField = document.getElementById('phoneNumber');
+                
+                if (emailField && selectedOption.dataset.email) {
+                    emailField.value = selectedOption.dataset.email;
+                }
+                if (phoneField && selectedOption.dataset.phone) {
+                    phoneField.value = selectedOption.dataset.phone;
+                }
+            } else {
+                // Clear fields if no client selected
+                document.getElementById('email').value = '';
+                document.getElementById('phoneNumber').value = '';
             }
         }
 
@@ -12444,6 +12821,90 @@ END:VCALENDAR`;
 
 
     </script>
+
+        <!-- Client Database Tab Content -->
+        <div id="clientDatabaseTab" class="tab-content">
+            <div class="content-header">
+                <h1>Client Database</h1>
+                <p>Manage and organize your client contacts</p>
+            </div>
+            
+            <div class="client-database-container">
+                <!-- Add New Client Button -->
+                <div class="client-controls" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <button onclick="openAddClientModal()" class="btn-primary" style="background: var(--gold-muted); color: var(--bg-primary); padding: 12px 24px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 20px;">➕</span> Add New Client
+                    </button>
+                    
+                    <!-- Search Bar -->
+                    <input type="text" id="clientDbSearch" placeholder="Search clients..." 
+                           oninput="filterClientDatabase()" 
+                           style="flex: 1; max-width: 400px; padding: 12px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000; font-size: 16px;">
+                </div>
+                
+                <!-- Client List -->
+                <div id="clientDatabaseList" class="client-list-container" style="background: var(--bg-elevated); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-soft);">
+                    <!-- Client items will be dynamically loaded here -->
+                    <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
+                        Loading clients...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Add/Edit Client Modal -->
+            <div id="clientModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                <div class="modal-content" style="background: var(--bg-elevated); border-radius: var(--border-radius); padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+                    <span class="close" onclick="closeClientModal()" style="position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #666;">&times;</span>
+                    
+                    <h2 id="clientModalTitle" style="margin-bottom: 20px; color: #000000;">Add New Client</h2>
+                    
+                    <form id="clientForm" onsubmit="saveClient(event)">
+                        <input type="hidden" id="clientId">
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #000000;">Name *</label>
+                            <input type="text" id="clientName" required 
+                                   style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000;">
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #000000;">Email</label>
+                            <input type="email" id="clientEmail" 
+                                   style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000;">
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #000000;">Phone</label>
+                            <input type="tel" id="clientPhone" 
+                                   style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000;">
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #000000;">Address</label>
+                            <textarea id="clientAddress" rows="3"
+                                      style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #000000;">Notes</label>
+                            <textarea id="clientNotes" rows="3"
+                                      style="width: 100%; padding: 10px; border: 2px solid var(--gold-muted); border-radius: var(--border-radius); background: var(--bg-primary); color: #000000; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <div class="form-actions" style="display: flex; gap: 15px; justify-content: flex-end;">
+                            <button type="button" onclick="closeClientModal()" 
+                                    style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    style="padding: 10px 20px; background: var(--gold-muted); color: var(--bg-primary); border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+                                Save Client
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- Golden Hour Times Tab Content -->
         <div id="goldenHourTab" class="tab-content">
