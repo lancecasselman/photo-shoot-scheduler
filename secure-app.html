@@ -10374,6 +10374,7 @@ END:VCALENDAR`;
         
         async function migrateClientsFromSessions() {
             try {
+                console.log('Starting client migration from sessions...');
                 showMessage('Importing clients from your sessions...', 'info');
                 
                 // Load all sessions
@@ -10384,38 +10385,52 @@ END:VCALENDAR`;
                 });
                 
                 if (!sessionsResponse.ok) {
+                    console.error('Failed to load sessions, status:', sessionsResponse.status);
                     throw new Error('Failed to load sessions');
                 }
                 
                 const sessions = await sessionsResponse.json();
+                console.log('Loaded sessions:', sessions.length, 'sessions');
+                console.log('Sample session data:', sessions[0]);
                 
                 // Extract unique clients from sessions
                 const clientsMap = new Map();
                 
                 sessions.forEach(session => {
-                    const clientKey = session.clientName?.toLowerCase().trim();
+                    // Check various possible field names for client name
+                    const clientName = session.clientName || session.client_name;
+                    const clientKey = clientName?.toLowerCase().trim();
+                    
                     if (clientKey && !clientsMap.has(clientKey)) {
-                        clientsMap.set(clientKey, {
-                            clientName: session.clientName,
+                        const clientData = {
+                            clientName: clientName,
                             email: session.email || null,
-                            phoneNumber: session.phoneNumber || null,
-                            notes: `Imported from ${session.sessionType || 'Unknown'} session at ${session.location || 'Unknown location'}`,
+                            phoneNumber: session.phoneNumber || session.phone_number || null,
+                            notes: `Imported from ${session.sessionType || session.session_type || 'Unknown'} session at ${session.location || 'Unknown location'}`,
                             source: 'Session Import'
-                        });
+                        };
+                        console.log('Adding client to map:', clientData);
+                        clientsMap.set(clientKey, clientData);
                     } else if (clientKey && clientsMap.has(clientKey)) {
                         // Update existing client entry with any additional info
                         const existing = clientsMap.get(clientKey);
                         if (!existing.email && session.email) existing.email = session.email;
-                        if (!existing.phoneNumber && session.phoneNumber) existing.phoneNumber = session.phoneNumber;
+                        if (!existing.phoneNumber && (session.phoneNumber || session.phone_number)) {
+                            existing.phoneNumber = session.phoneNumber || session.phone_number;
+                        }
                     }
                 });
+                
+                console.log('Unique clients found:', clientsMap.size);
                 
                 // Create clients in database
                 let successCount = 0;
                 let errorCount = 0;
+                const errors = [];
                 
                 for (const [key, clientData] of clientsMap) {
                     try {
+                        console.log('Creating client:', clientData);
                         const response = await fetch('/api/clients', {
                             method: 'POST',
                             headers: {
@@ -10426,14 +10441,19 @@ END:VCALENDAR`;
                         });
                         
                         if (response.ok) {
+                            const createdClient = await response.json();
+                            console.log('Successfully created client:', createdClient);
                             successCount++;
                         } else {
+                            const errorText = await response.text();
+                            console.error('Failed to create client:', clientData.clientName, 'Status:', response.status, 'Error:', errorText);
+                            errors.push(`${clientData.clientName}: ${errorText}`);
                             errorCount++;
-                            console.error('Failed to create client:', clientData.name);
                         }
                     } catch (error) {
                         errorCount++;
-                        console.error('Error creating client:', error);
+                        console.error('Error creating client:', clientData.clientName, error);
+                        errors.push(`${clientData.clientName}: ${error.message}`);
                     }
                 }
                 
@@ -10445,7 +10465,8 @@ END:VCALENDAR`;
                 }
                 
                 if (errorCount > 0) {
-                    showMessage(`Note: ${errorCount} clients could not be imported`, 'warning');
+                    console.error('Import errors:', errors);
+                    showMessage(`Note: ${errorCount} clients could not be imported. Check console for details.`, 'warning');
                 }
                 
             } catch (error) {
