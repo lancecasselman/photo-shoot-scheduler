@@ -2691,7 +2691,8 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
         const normalizedUser = normalizeUserForLance(req.user);
         const normalizedUserId = normalizedUser.uid;
         if (fileSize) {
-            const quotaCheck = await storageSystem.canUpload(normalizedUserId, fileSize);
+            const userEmail = normalizedUser.email || req.session?.user?.email;
+            const quotaCheck = await storageSystem.canUpload(normalizedUserId, fileSize, userEmail);
             if (!quotaCheck.canUpload) {
                 return res.status(413).json({ 
                     error: 'Storage quota exceeded',
@@ -2799,7 +2800,8 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         // QUOTA ENFORCEMENT: Check if user can upload this file
         const normalizedUser = normalizeUserForLance(req.user);
         const normalizedUserId = normalizedUser.uid;
-        const quotaCheck = await storageSystem.canUpload(normalizedUserId, file.size);
+        const userEmail = normalizedUser.email || req.session?.user?.email;
+        const quotaCheck = await storageSystem.canUpload(normalizedUserId, file.size, userEmail);
         if (!quotaCheck.canUpload) {
             return res.status(413).json({ 
                 error: 'Storage quota exceeded',
@@ -5417,7 +5419,8 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) =>
         console.log(` Total upload size: ${(totalUploadSize / 1024 / 1024).toFixed(2)}MB`);
         
         try {
-            const quotaCheck = await storageSystem.canUpload(userId, totalUploadSize);
+            const userEmail = normalizedUser.email || req.session?.user?.email;
+            const quotaCheck = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
             if (!quotaCheck.canUpload) {
                 console.log(`❌ Upload blocked - quota exceeded for user ${userId}`);
                 if (!res.headersSent) {
