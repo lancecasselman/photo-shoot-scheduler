@@ -10375,7 +10375,28 @@ END:VCALENDAR`;
         async function migrateClientsFromSessions() {
             try {
                 console.log('Starting client migration from sessions...');
-                showMessage('Importing clients from your sessions...', 'info');
+                showMessage('Checking for existing clients...', 'info');
+                
+                // First, load existing clients to avoid duplicates
+                const existingClientsResponse = await fetch('/api/clients', {
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`
+                    }
+                });
+                
+                const existingClients = existingClientsResponse.ok ? await existingClientsResponse.json() : [];
+                const existingClientKeys = new Set();
+                
+                // Build a set of existing client keys (combination of email and phone)
+                existingClients.forEach(client => {
+                    const email = (client.email || '').toLowerCase().trim();
+                    const phone = (client.phone_number || client.phoneNumber || '').replace(/\D/g, '');
+                    if (email || phone) {
+                        existingClientKeys.add(`${email}_${phone}`);
+                    }
+                });
+                
+                console.log('Found', existingClients.length, 'existing clients');
                 
                 // Load all sessions
                 const sessionsResponse = await fetch('/api/sessions', {
@@ -10391,17 +10412,25 @@ END:VCALENDAR`;
                 
                 const sessions = await sessionsResponse.json();
                 console.log('Loaded sessions:', sessions.length, 'sessions');
-                console.log('Sample session data:', sessions[0]);
                 
-                // Extract unique clients from sessions
+                // Extract unique clients from sessions that don't already exist
                 const clientsMap = new Map();
+                let skippedCount = 0;
                 
                 sessions.forEach(session => {
-                    // Check various possible field names for client name
                     const clientName = session.clientName || session.client_name;
-                    const clientKey = clientName?.toLowerCase().trim();
+                    const email = (session.email || '').toLowerCase().trim();
+                    const phone = (session.phoneNumber || session.phone_number || '').replace(/\D/g, '');
+                    const clientKey = `${email}_${phone}`;
                     
-                    if (clientKey && !clientsMap.has(clientKey)) {
+                    // Skip if client already exists in database
+                    if (existingClientKeys.has(clientKey)) {
+                        skippedCount++;
+                        console.log('Skipping existing client:', clientName);
+                        return;
+                    }
+                    
+                    if (clientName && !clientsMap.has(clientKey)) {
                         const clientData = {
                             clientName: clientName,
                             email: session.email || null,
@@ -10409,19 +10438,19 @@ END:VCALENDAR`;
                             notes: `Imported from ${session.sessionType || session.session_type || 'Unknown'} session at ${session.location || 'Unknown location'}`,
                             source: 'Session Import'
                         };
-                        console.log('Adding client to map:', clientData);
+                        console.log('Adding new client to import:', clientData);
                         clientsMap.set(clientKey, clientData);
-                    } else if (clientKey && clientsMap.has(clientKey)) {
-                        // Update existing client entry with any additional info
-                        const existing = clientsMap.get(clientKey);
-                        if (!existing.email && session.email) existing.email = session.email;
-                        if (!existing.phoneNumber && (session.phoneNumber || session.phone_number)) {
-                            existing.phoneNumber = session.phoneNumber || session.phone_number;
-                        }
                     }
                 });
                 
-                console.log('Unique clients found:', clientsMap.size);
+                console.log('New clients to import:', clientsMap.size);
+                console.log('Skipped existing clients:', skippedCount);
+                
+                if (clientsMap.size === 0) {
+                    showMessage('All clients already exist in the database', 'info');
+                    await loadClientDatabase();
+                    return;
+                }
                 
                 // Create clients in database
                 let successCount = 0;
