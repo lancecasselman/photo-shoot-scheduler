@@ -1,6 +1,6 @@
 import { db } from './db';
-import { users, sessions, photographySessions } from '../shared/schema';
-import { eq } from 'drizzle-orm';
+import { users, sessions, photographySessions, photographerClients } from '../shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import type { User, UpsertUser, PhotographySession, InsertPhotographySession } from '../shared/schema';
 
 export interface IStorage {
@@ -83,10 +83,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSession(insertSession: InsertPhotographySession): Promise<PhotographySession> {
+    // First create the session
     const [session] = await db
       .insert(photographySessions)
       .values(insertSession)
       .returning();
+    
+    // Automatically add client to the database if they don't exist
+    if (session.clientName && session.userId) {
+      try {
+        // Check if client already exists for this photographer
+        const existingClient = await db
+          .select()
+          .from(photographerClients)
+          .where(
+            and(
+              eq(photographerClients.photographerId, session.userId),
+              eq(photographerClients.clientName, session.clientName),
+              session.email ? eq(photographerClients.email, session.email) : sql`true`,
+              session.phoneNumber ? eq(photographerClients.phoneNumber, session.phoneNumber) : sql`true`
+            )
+          )
+          .limit(1);
+        
+        // If client doesn't exist, create them
+        if (existingClient.length === 0) {
+          await db.insert(photographerClients).values({
+            id: crypto.randomUUID(),
+            photographerId: session.userId,
+            clientName: session.clientName,
+            email: session.email || null,
+            phoneNumber: session.phoneNumber || null,
+            notes: `Automatically added from ${session.sessionType} session`,
+            source: 'Session Creation',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          console.log(`✅ Automatically added client ${session.clientName} to database`);
+        }
+      } catch (error) {
+        console.error('Error adding client automatically:', error);
+        // Don't fail the session creation if client creation fails
+      }
+    }
+    
     return session;
   }
 
