@@ -606,6 +606,17 @@ function createSessionCard(session) {
     galleryBtn.className = 'btn btn-warning';
     galleryBtn.textContent = ' Copy Gallery URL';
     galleryBtn.onclick = () => copyGalleryUrl(session.id);
+    
+    // View Gallery button for photographers to preview print ordering
+    const viewGalleryBtn = document.createElement('button');
+    viewGalleryBtn.className = 'btn btn-success';
+    viewGalleryBtn.textContent = '👁️ View Gallery';
+    viewGalleryBtn.onclick = () => {
+        window.open(`/sessions/${session.id}/gallery`, '_blank');
+    };
+    viewGalleryBtn.style.backgroundColor = '#28a745';
+    viewGalleryBtn.style.color = 'white';
+    viewGalleryBtn.style.marginBottom = '5px';
 
     // RAW Backup Upload Button
     const rawUploadBtn = document.createElement('button');
@@ -735,6 +746,7 @@ function createSessionCard(session) {
     actions.appendChild(calendarBtn);
     actions.appendChild(emailClientBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(viewGalleryBtn); // Add View Gallery button
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(depositBtn);
