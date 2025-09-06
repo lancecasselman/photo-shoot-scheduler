@@ -247,23 +247,25 @@
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: #48bb78;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
+            border: 2px solid white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             transition: all 0.3s ease;
-            z-index: 1001;
+            z-index: 10001;
+            box-shadow: 0 4px 20px rgba(72, 187, 120, 0.5);
         }
         
         .lightbox-order-btn:hover {
-            background: #38a169;
-            transform: translateX(-50%) scale(1.05);
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 6px 30px rgba(72, 187, 120, 0.7);
         }
         
         .back-btn {
