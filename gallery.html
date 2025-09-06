@@ -470,9 +470,15 @@
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Get session ID from URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            sessionId = urlParams.get('session');
+            // Get session ID from URL - handle both path and query parameter formats
+            const pathMatch = window.location.pathname.match(/\/sessions\/([^\/]+)\/gallery/);
+            if (pathMatch) {
+                sessionId = pathMatch[1];
+            } else {
+                // Fallback to query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                sessionId = urlParams.get('session');
+            }
             
             if (sessionId) {
                 loadSession();
