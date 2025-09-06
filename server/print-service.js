@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 class PrintServiceAPI {
   constructor() {
@@ -8,12 +8,13 @@ class PrintServiceAPI {
     this.editorKeyId = process.env.EDITOR_API_KEY_ID;
     this.editorKeySecret = process.env.EDITOR_API_KEY_SECRET;
     
-    // OAS API endpoints
-    this.oasBaseUrl = 'https://oasapi.baysphoto.com/api/v1';
-    this.sandboxUrl = 'https://sandbox.baysphoto.com/api/v1';
+    // WHCC (WhiteHouse Custom Color) API endpoints
+    // Using their studio/API endpoints
+    this.oasBaseUrl = process.env.OAS_API_URL || 'https://studio.whcc.com/api';
+    this.sandboxUrl = process.env.OAS_API_URL || 'https://studio.whcc.com/api/sandbox';
     
-    // Editor API endpoints
-    this.editorBaseUrl = 'https://editor.baysphoto.com/api/v1';
+    // Editor API endpoints for WHCC
+    this.editorBaseUrl = 'https://studio.whcc.com/editor/api';
     
     this.isSandbox = true; // Start in sandbox mode for testing
   }
@@ -280,10 +281,10 @@ const printService = new PrintServiceAPI();
 
 // Log initialization status
 if (printService.oasKey && printService.oasSecret) {
-  console.log('✅ Print Service: OAS API configured');
+  console.log('✅ Print Service: WHCC OAS API configured');
 }
 if (printService.editorKeyId && printService.editorKeySecret) {
-  console.log('✅ Print Service: Editor API configured');
+  console.log('✅ Print Service: WHCC Editor API configured');
 }
 
 module.exports = printService;

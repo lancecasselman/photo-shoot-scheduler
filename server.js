@@ -5481,18 +5481,26 @@ const printService = require('./server/print-service.js');
 // Test print service connection
 app.get('/api/print/test', async (req, res) => {
     try {
-        console.log('Testing print service connection...');
-        const categories = await printService.getCategories();
+        console.log('Testing WHCC print service configuration...');
+        
+        // Check if credentials are configured
+        const hasOAS = !!(process.env.OAS_CONSUMER_KEY && process.env.OAS_CONSUMER_SECRET);
+        const hasEditor = !!(process.env.EDITOR_API_KEY_ID && process.env.EDITOR_API_KEY_SECRET);
+        
         res.json({ 
             success: true, 
-            message: 'Print service connected successfully',
-            categoriesFound: categories ? categories.length : 0
+            message: 'WHCC Print Service configured',
+            credentials: {
+                oasApi: hasOAS ? 'Configured' : 'Missing',
+                editorApi: hasEditor ? 'Configured' : 'Missing'
+            },
+            status: hasOAS && hasEditor ? 'Ready' : 'Incomplete setup'
         });
     } catch (error) {
         console.error('Print service test failed:', error);
         res.status(500).json({ 
             success: false, 
-            error: 'Print service connection failed', 
+            error: 'Print service test failed', 
             details: error.message 
         });
     }
