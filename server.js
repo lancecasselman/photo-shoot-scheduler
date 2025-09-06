@@ -9027,23 +9027,112 @@ app.get('/gallery/:id', async (req, res) => {
                     </div>
                 </div>
 
-                <!-- Lightbox -->
-                <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+                <!-- Enhanced Lightbox with Print Ordering -->
+                <div id="lightbox" class="lightbox">
                     <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-                    <div class="lightbox-content">
+                    <div class="lightbox-content" onclick="event.stopPropagation()">
                         <img id="lightboxImage" src="">
+                        <div class="lightbox-controls">
+                            <button class="order-btn" onclick="orderPrint()">🛒 Order Print</button>
+                            <button class="download-btn" onclick="downloadCurrentPhoto()">📥 Download</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Print Options Modal -->
+                <div class="print-modal" id="printModal">
+                    <div class="print-modal-content">
+                        <h2>Select Print Options</h2>
+                        <img id="printPreview" style="width: 100%; max-height: 200px; object-fit: contain; margin: 20px 0; border-radius: 10px;">
+                        
+                        <h3>Size</h3>
+                        <div class="size-options">
+                            <div class="print-option" data-size="4x6" data-price="12.00">
+                                <span>4x6" - Perfect for albums</span>
+                                <strong>$12.00</strong>
+                            </div>
+                            <div class="print-option" data-size="5x7" data-price="15.00">
+                                <span>5x7" - Great for desk displays</span>
+                                <strong>$15.00</strong>
+                            </div>
+                            <div class="print-option" data-size="8x10" data-price="25.00">
+                                <span>8x10" - Ideal for wall display</span>
+                                <strong>$25.00</strong>
+                            </div>
+                            <div class="print-option" data-size="11x14" data-price="35.00">
+                                <span>11x14" - Statement piece</span>
+                                <strong>$35.00</strong>
+                            </div>
+                            <div class="print-option" data-size="16x20" data-price="55.00">
+                                <span>16x20" - Gallery-worthy</span>
+                                <strong>$55.00</strong>
+                            </div>
+                            <div class="print-option" data-size="20x30" data-price="95.00">
+                                <span>20x30" - Large format</span>
+                                <strong>$95.00</strong>
+                            </div>
+                        </div>
+                        
+                        <h3>Finish</h3>
+                        <div class="finish-options">
+                            <label>
+                                <input type="radio" name="finish" value="lustre" checked>
+                                <strong>Lustre</strong> - Most popular, fingerprint resistant
+                            </label>
+                            <label>
+                                <input type="radio" name="finish" value="glossy">
+                                <strong>Glossy</strong> - Vibrant colors, high shine
+                            </label>
+                            <label>
+                                <input type="radio" name="finish" value="matte">
+                                <strong>Matte</strong> - No glare, artistic look
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button onclick="closePrintModal()" class="modal-btn secondary">Cancel</button>
+                            <button onclick="addToCart()" class="modal-btn">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shopping Cart Icon -->
+                <div id="cartIcon" class="cart-icon" onclick="showCart()">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 2L6 9H3l3 13h12l3-13h-3l-3-7"/>
+                        <path d="M9 9h6"/>
+                    </svg>
+                    <span class="cart-count">0</span>
+                </div>
+                
+                <!-- Cart Modal -->
+                <div class="cart-modal" id="cartModal">
+                    <div class="cart-content">
+                        <h2>Shopping Cart</h2>
+                        <div id="cartItems"></div>
+                        <div id="cartTotal" style="font-size: 20px; font-weight: bold; margin-top: 20px; color: #d4af37;"></div>
+                        <button class="order-btn" onclick="checkout()" style="width: 100%; margin-top: 20px;">Proceed to Checkout</button>
+                        <button onclick="closeCart()" class="modal-btn secondary" style="width: 100%; margin-top: 10px;">Continue Shopping</button>
                     </div>
                 </div>
 
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
                 <script>
+                    // Initialize variables
+                    let currentImage = null;
+                    let cart = [];
+                    const sessionId = '${sessionId}';
+                    
                     function openLightbox(imageSrc) {
-                        document.getElementById('lightbox').style.display = 'block';
+                        currentImage = imageSrc;
+                        const lightbox = document.getElementById('lightbox');
                         document.getElementById('lightboxImage').src = imageSrc;
+                        lightbox.classList.add('active');
                     }
 
                     function closeLightbox() {
-                        document.getElementById('lightbox').style.display = 'none';
+                        const lightbox = document.getElementById('lightbox');
+                        lightbox.classList.remove('active');
                     }
 
                     function downloadPhoto(photoUrl, filename) {
@@ -9053,6 +9142,134 @@ app.get('/gallery/:id', async (req, res) => {
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+                    }
+                    
+                    function downloadCurrentPhoto() {
+                        if (!currentImage) return;
+                        const link = document.createElement('a');
+                        link.href = currentImage;
+                        link.download = 'photo.jpg';
+                        link.click();
+                    }
+                    
+                    // Print ordering functions
+                    function orderPrint() {
+                        if (!currentImage) return;
+                        document.getElementById('printPreview').src = currentImage;
+                        document.getElementById('printModal').classList.add('active');
+                    }
+                    
+                    function closePrintModal() {
+                        document.getElementById('printModal').classList.remove('active');
+                    }
+                    
+                    function addToCart() {
+                        const selectedSize = document.querySelector('.print-option.selected');
+                        if (!selectedSize) {
+                            alert('Please select a print size');
+                            return;
+                        }
+                        
+                        const selectedFinish = document.querySelector('input[name="finish"]:checked');
+                        
+                        const item = {
+                            photo: currentImage,
+                            size: selectedSize.dataset.size,
+                            price: parseFloat(selectedSize.dataset.price),
+                            finish: selectedFinish.value,
+                            quantity: 1
+                        };
+                        
+                        cart.push(item);
+                        localStorage.setItem('clientPrintCart', JSON.stringify(cart));
+                        
+                        updateCartDisplay();
+                        closePrintModal();
+                        alert('Added to cart!');
+                    }
+                    
+                    function updateCartDisplay() {
+                        const cartIcon = document.getElementById('cartIcon');
+                        const cartCount = cartIcon.querySelector('.cart-count');
+                        
+                        if (cart.length > 0) {
+                            cartIcon.classList.add('visible');
+                            cartCount.textContent = cart.length;
+                        } else {
+                            cartIcon.classList.remove('visible');
+                        }
+                    }
+                    
+                    function showCart() {
+                        const modal = document.getElementById('cartModal');
+                        const cartItems = document.getElementById('cartItems');
+                        const cartTotal = document.getElementById('cartTotal');
+                        
+                        if (cart.length === 0) {
+                            cartItems.innerHTML = '<p style="color: #999;">Your cart is empty</p>';
+                            cartTotal.textContent = '';
+                        } else {
+                            cartItems.innerHTML = cart.map((item, index) => `
+                                <div class="cart-item">
+                                    <img src="\${item.photo}" alt="Print">
+                                    <div style="flex: 1;">
+                                        <h4>\${item.size}" \${item.finish} Print</h4>
+                                        <p>$\${item.price.toFixed(2)}</p>
+                                    </div>
+                                    <button onclick="removeFromCart(\${index})" class="modal-btn secondary" style="padding: 5px 15px;">Remove</button>
+                                </div>
+                            `).join('');
+                            
+                            const total = cart.reduce((sum, item) => sum + item.price, 0);
+                            cartTotal.textContent = `Total: $\${total.toFixed(2)}`;
+                        }
+                        
+                        modal.classList.add('active');
+                    }
+                    
+                    function closeCart() {
+                        document.getElementById('cartModal').classList.remove('active');
+                    }
+                    
+                    function removeFromCart(index) {
+                        cart.splice(index, 1);
+                        localStorage.setItem('clientPrintCart', JSON.stringify(cart));
+                        updateCartDisplay();
+                        showCart();
+                    }
+                    
+                    async function checkout() {
+                        if (cart.length === 0) {
+                            alert('Your cart is empty');
+                            return;
+                        }
+                        
+                        try {
+                            const response = await fetch('/api/print/checkout', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    sessionId: sessionId,
+                                    items: cart,
+                                    isClient: true
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.checkoutUrl) {
+                                window.location.href = data.checkoutUrl;
+                            } else {
+                                alert('Checkout processing...');
+                                cart = [];
+                                localStorage.removeItem('clientPrintCart');
+                                updateCartDisplay();
+                                closeCart();
+                            }
+                        } catch (error) {
+                            console.error('Checkout error:', error);
+                            alert('Error processing checkout. Please try again.');
+                        }
                     }
 
                     async function downloadAllPhotos() {
@@ -9083,10 +9300,29 @@ app.get('/gallery/:id', async (req, res) => {
                         }
                     }
 
-                    // Close lightbox on Escape key
+                    // Add click handlers for print options
+                    document.addEventListener('click', function(e) {
+                        if (e.target.closest('.print-option')) {
+                            document.querySelectorAll('.print-option').forEach(opt => opt.classList.remove('selected'));
+                            e.target.closest('.print-option').classList.add('selected');
+                        }
+                    });
+                    
+                    // Load cart from localStorage on page load
+                    window.addEventListener('load', function() {
+                        const savedCart = localStorage.getItem('clientPrintCart');
+                        if (savedCart) {
+                            cart = JSON.parse(savedCart);
+                            updateCartDisplay();
+                        }
+                    });
+                    
+                    // Close modals on Escape key
                     document.addEventListener('keydown', function(e) {
                         if (e.key === 'Escape') {
                             closeLightbox();
+                            closePrintModal();
+                            closeCart();
                         }
                     });
                 </script>
