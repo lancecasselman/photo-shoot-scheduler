@@ -9629,7 +9629,7 @@ app.get('/gallery/:id', async (req, res) => {
                     
                     // Add animations
                     const style = document.createElement('style');
-                    style.textContent = `
+                    style.textContent = \`
                         @keyframes slideInRight {
                             from { transform: translateX(100%); opacity: 0; }
                             to { transform: translateX(0); opacity: 1; }
@@ -9638,7 +9638,7 @@ app.get('/gallery/:id', async (req, res) => {
                             from { transform: translateX(0); opacity: 1; }
                             to { transform: translateX(100%); opacity: 0; }
                         }
-                    `;
+                    \`;
                     document.head.appendChild(style);
                     
                     // Close modals on Escape key
