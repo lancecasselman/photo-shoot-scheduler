@@ -8470,14 +8470,15 @@ app.get('/gallery/:id', async (req, res) => {
 
         const photos = session.photos || [];
 
-        // Generate custom gallery HTML with black and gold design
+        // Generate modern, clean gallery HTML
         const galleryHtml = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title> Photo Gallery - ${session.clientName}</title>
+                <title>${session.clientName} - Photo Gallery</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 <style>
                     * {
                         margin: 0;
@@ -8486,141 +8487,221 @@ app.get('/gallery/:id', async (req, res) => {
                     }
 
                     body {
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                        background: #ffffff;
                         min-height: 100vh;
-                        padding: 20px;
-                        color: #ffffff;
+                        color: #1a1a1a;
+                        line-height: 1.6;
+                    }
+
+                    /* Header Section */
+                    .header {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 60px 20px;
+                        text-align: center;
+                        color: white;
+                        margin-bottom: 40px;
                     }
 
                     .gallery-container {
                         max-width: 1400px;
                         margin: 0 auto;
-                        background: rgba(42, 42, 42, 0.95);
-                        border-radius: 20px;
-                        padding: 40px;
-                        backdrop-filter: blur(15px);
-                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-                        border: 1px solid rgba(212, 175, 55, 0.2);
-                    }
-
-                    .gallery-header {
-                        text-align: center;
-                        margin-bottom: 40px;
-                        padding-bottom: 20px;
-                        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+                        padding: 0 20px 40px;
                     }
 
                     .gallery-header h1 {
-                        color: #d4af37;
-                        font-size: 3rem;
-                        margin-bottom: 15px;
-                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                        font-size: 2.5rem;
+                        margin-bottom: 10px;
                         font-weight: 700;
+                        letter-spacing: -0.02em;
                     }
 
                     .gallery-header p {
-                        color: #f4e4bc;
-                        font-size: 1.2rem;
-                        font-weight: 500;
+                        font-size: 1.1rem;
+                        opacity: 0.95;
+                        font-weight: 400;
                     }
 
+                    /* Gallery Stats */
+                    .gallery-stats {
+                        display: flex;
+                        justify-content: center;
+                        gap: 40px;
+                        margin: 30px 0;
+                        flex-wrap: wrap;
+                    }
+
+                    .stat {
+                        text-align: center;
+                    }
+
+                    .stat-value {
+                        font-size: 1.8rem;
+                        font-weight: 600;
+                        color: #667eea;
+                    }
+
+                    .stat-label {
+                        font-size: 0.9rem;
+                        color: #666;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                    }
+
+                    /* Photo Grid */
                     .photo-grid {
                         display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                        gap: 25px;
-                        margin-bottom: 40px;
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                        gap: 20px;
+                        margin: 40px 0;
                     }
 
                     .photo-item {
-                        background: rgba(30, 30, 30, 0.9);
-                        border-radius: 15px;
+                        background: white;
+                        border-radius: 12px;
                         overflow: hidden;
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-                        transition: all 0.3s ease;
-                        border: 1px solid rgba(212, 175, 55, 0.2);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        cursor: pointer;
+                        position: relative;
                     }
 
                     .photo-item:hover {
-                        transform: translateY(-8px);
-                        box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
-                        border-color: rgba(212, 175, 55, 0.5);
+                        transform: translateY(-4px);
+                        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
                     }
 
                     .photo-item img {
                         width: 100%;
-                        height: 220px;
+                        height: 250px;
                         object-fit: cover;
-                        cursor: pointer;
-                        transition: transform 0.3s ease;
+                        display: block;
                     }
 
-                    .photo-item:hover img {
-                        transform: scale(1.05);
-                    }
-
-                    .photo-controls {
-                        padding: 18px;
+                    .photo-overlay {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
                         display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        background: rgba(42, 42, 42, 0.8);
+                        align-items: flex-end;
+                        padding: 20px;
+                    }
+
+                    .photo-item:hover .photo-overlay {
+                        opacity: 1;
+                    }
+
+                    .photo-actions {
+                        display: flex;
+                        gap: 10px;
+                        width: 100%;
+                    }
+
+                    .photo-btn {
+                        flex: 1;
+                        padding: 8px 16px;
+                        background: white;
+                        color: #333;
+                        border: none;
+                        border-radius: 6px;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+
+                    .photo-btn:hover {
+                        background: #f0f0f0;
+                        transform: translateY(-1px);
+                    }
+
+                    .photo-btn.primary {
+                        background: #667eea;
+                        color: white;
+                    }
+
+                    .photo-btn.primary:hover {
+                        background: #5a67d8;
+                    }
+
+                    .photo-info {
+                        padding: 15px;
+                        background: white;
                     }
 
                     .photo-number {
-                        color: #d4af37;
+                        color: #666;
+                        font-size: 0.85rem;
+                        font-weight: 500;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                    }
+
+                    /* Action Buttons */
+                    .action-bar {
+                        position: sticky;
+                        top: 0;
+                        background: white;
+                        padding: 20px;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                        margin-bottom: 30px;
+                        border-radius: 12px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                        z-index: 10;
+                    }
+
+                    .action-buttons {
+                        display: flex;
+                        gap: 10px;
+                    }
+
+                    .action-btn {
+                        padding: 10px 20px;
+                        background: white;
+                        color: #333;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 8px;
                         font-size: 0.95rem;
-                        font-weight: 600;
-                    }
-
-                    .download-btn {
-                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-                        color: #1a1a1a;
-                        border: none;
-                        padding: 10px 18px;
-                        border-radius: 25px;
+                        font-weight: 500;
                         cursor: pointer;
-                        font-size: 0.9rem;
-                        font-weight: 700;
-                        transition: all 0.3s ease;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
+                        transition: all 0.2s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
                     }
 
-                    .download-btn:hover {
-                        background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+                    .action-btn:hover {
+                        border-color: #667eea;
+                        color: #667eea;
+                        transform: translateY(-1px);
+                    }
+
+                    .action-btn.primary {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                    }
+
+                    .action-btn.primary:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+                        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
                     }
 
-                    .bulk-actions {
-                        text-align: center;
-                        margin-top: 40px;
-                        padding-top: 30px;
-                        border-top: 2px solid rgba(212, 175, 55, 0.3);
+                    .photo-count {
+                        color: #666;
+                        font-size: 0.95rem;
                     }
 
-                    .bulk-download-btn {
-                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-                        color: #1a1a1a;
-                        border: none;
-                        padding: 18px 40px;
-                        border-radius: 30px;
-                        cursor: pointer;
-                        font-size: 1.2rem;
-                        font-weight: 700;
-                        transition: all 0.3s ease;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    }
-
-                    .bulk-download-btn:hover {
-                        background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
-                        transform: translateY(-4px);
-                        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4);
-                    }
-
-                    /* Enhanced Lightbox with Print Ordering */
+                    /* Modern Lightbox */
                     .lightbox {
                         display: none;
                         position: fixed;
@@ -8629,14 +8710,21 @@ app.get('/gallery/:id', async (req, res) => {
                         top: 0;
                         width: 100%;
                         height: 100%;
-                        background-color: rgba(0, 0, 0, 0.95);
+                        background-color: rgba(0, 0, 0, 0.9);
+                        backdrop-filter: blur(10px);
                         justify-content: center;
                         align-items: center;
                         padding: 20px;
+                        animation: fadeIn 0.3s ease;
                     }
 
                     .lightbox.active {
                         display: flex;
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
                     }
 
                     .lightbox-content {
@@ -8646,43 +8734,93 @@ app.get('/gallery/:id', async (req, res) => {
                         max-height: 90vh;
                         align-items: center;
                         gap: 20px;
+                        animation: slideUp 0.3s ease;
+                    }
+
+                    @keyframes slideUp {
+                        from { 
+                            opacity: 0;
+                            transform: translateY(20px);
+                        }
+                        to { 
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
                     }
 
                     .lightbox-content img {
                         max-width: 100%;
                         max-height: 70vh;
                         object-fit: contain;
-                        border-radius: 10px;
-                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                        border-radius: 8px;
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
                     }
 
                     .lightbox-controls {
                         display: flex;
-                        gap: 15px;
-                        background: rgba(30, 30, 30, 0.9);
-                        padding: 15px 25px;
-                        border-radius: 10px;
-                        border: 1px solid rgba(212, 175, 55, 0.3);
+                        gap: 12px;
+                        background: white;
+                        padding: 16px;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .lightbox-btn {
+                        padding: 10px 24px;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    .lightbox-btn.primary {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+
+                    .lightbox-btn.primary:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+                    }
+
+                    .lightbox-btn.secondary {
+                        background: #f5f5f5;
+                        color: #333;
+                    }
+
+                    .lightbox-btn.secondary:hover {
+                        background: #e8e8e8;
                     }
 
                     .lightbox-close {
                         position: absolute;
-                        top: 30px;
-                        right: 40px;
-                        color: #d4af37;
-                        font-size: 50px;
-                        font-weight: bold;
+                        top: 20px;
+                        right: 20px;
+                        width: 40px;
+                        height: 40px;
+                        background: white;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
                         cursor: pointer;
                         z-index: 1001;
-                        transition: all 0.3s ease;
+                        transition: all 0.2s ease;
+                        font-size: 24px;
+                        color: #333;
                     }
 
                     .lightbox-close:hover {
-                        color: #f4e4bc;
+                        background: #f0f0f0;
                         transform: scale(1.1);
                     }
 
-                    /* Print Modal Styles */
+                    /* Modern Print Modal */
                     .print-modal {
                         display: none;
                         position: fixed;
@@ -8690,7 +8828,8 @@ app.get('/gallery/:id', async (req, res) => {
                         left: 0;
                         right: 0;
                         bottom: 0;
-                        background: rgba(0, 0, 0, 0.9);
+                        background: rgba(0, 0, 0, 0.7);
+                        backdrop-filter: blur(5px);
                         z-index: 2000;
                         justify-content: center;
                         align-items: center;
@@ -8699,29 +8838,34 @@ app.get('/gallery/:id', async (req, res) => {
 
                     .print-modal.active {
                         display: flex;
+                        animation: fadeIn 0.3s ease;
                     }
 
                     .print-modal-content {
-                        background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+                        background: white;
                         width: 90%;
                         max-width: 600px;
-                        border-radius: 15px;
+                        border-radius: 16px;
                         padding: 30px;
                         max-height: 90vh;
                         overflow-y: auto;
-                        border: 1px solid rgba(212, 175, 55, 0.3);
-                        color: white;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                        animation: slideUp 0.3s ease;
                     }
 
                     .print-modal-content h2 {
-                        color: #d4af37;
-                        margin-bottom: 20px;
+                        color: #333;
+                        margin-bottom: 24px;
                         text-align: center;
+                        font-size: 1.8rem;
+                        font-weight: 600;
                     }
 
                     .print-modal-content h3 {
-                        color: #f4e4bc;
-                        margin: 20px 0 10px 0;
+                        color: #555;
+                        margin: 24px 0 12px 0;
+                        font-size: 1.1rem;
+                        font-weight: 600;
                     }
 
                     .size-options {
@@ -8731,57 +8875,78 @@ app.get('/gallery/:id', async (req, res) => {
                     }
 
                     .print-option {
-                        border: 2px solid rgba(212, 175, 55, 0.3);
+                        border: 2px solid #e0e0e0;
                         border-radius: 10px;
-                        padding: 15px;
+                        padding: 16px;
                         cursor: pointer;
-                        transition: all 0.3s ease;
+                        transition: all 0.2s ease;
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
-                        background: rgba(42, 42, 42, 0.5);
+                        background: white;
                     }
 
                     .print-option:hover {
-                        border-color: #d4af37;
-                        background: rgba(212, 175, 55, 0.1);
+                        border-color: #667eea;
+                        background: #f8f9ff;
                     }
 
                     .print-option.selected {
-                        border-color: #d4af37;
-                        background: rgba(212, 175, 55, 0.2);
+                        border-color: #667eea;
+                        background: #f0f2ff;
+                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                    }
+
+                    .print-option span {
+                        color: #555;
+                        font-size: 0.95rem;
                     }
 
                     .print-option strong {
-                        color: #d4af37;
+                        color: #667eea;
+                        font-size: 1.1rem;
+                        font-weight: 600;
                     }
 
                     .finish-options {
                         margin: 20px 0;
-                        padding: 15px;
-                        background: rgba(42, 42, 42, 0.5);
+                        padding: 16px;
+                        background: #f8f8f8;
                         border-radius: 10px;
-                        border: 1px solid rgba(212, 175, 55, 0.2);
                     }
 
                     .finish-options label {
-                        display: block;
-                        padding: 10px;
+                        display: flex;
+                        align-items: center;
+                        padding: 12px;
                         cursor: pointer;
-                        color: white;
+                        color: #333;
+                        border-radius: 8px;
+                        transition: background 0.2s;
+                    }
+
+                    .finish-options label:hover {
+                        background: white;
                     }
 
                     .finish-options input[type="radio"] {
-                        margin-right: 10px;
+                        margin-right: 12px;
+                        width: 18px;
+                        height: 18px;
                     }
 
-                    /* Shopping Cart Icon */
+                    .finish-options strong {
+                        color: #333;
+                        margin-right: 8px;
+                    }
+
+                    /* Modern Cart Icon */
                     .cart-icon {
                         position: fixed;
                         bottom: 30px;
                         right: 30px;
-                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-                        color: #1a1a1a;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
                         width: 60px;
                         height: 60px;
                         border-radius: 50%;
@@ -8789,37 +8954,46 @@ app.get('/gallery/:id', async (req, res) => {
                         align-items: center;
                         justify-content: center;
                         cursor: pointer;
-                        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+                        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
                         transition: all 0.3s ease;
                         z-index: 999;
                     }
 
                     .cart-icon.visible {
                         display: flex;
+                        animation: bounceIn 0.4s ease;
+                    }
+
+                    @keyframes bounceIn {
+                        0% { transform: scale(0); }
+                        60% { transform: scale(1.2); }
+                        100% { transform: scale(1); }
                     }
 
                     .cart-icon:hover {
                         transform: scale(1.1);
-                        box-shadow: 0 12px 35px rgba(212, 175, 55, 0.5);
+                        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
                     }
 
                     .cart-count {
                         position: absolute;
-                        top: -5px;
-                        right: -5px;
-                        background: #dc3545;
+                        top: -8px;
+                        right: -8px;
+                        background: #ff4757;
                         color: white;
-                        width: 24px;
+                        min-width: 24px;
                         height: 24px;
-                        border-radius: 50%;
+                        border-radius: 12px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-size: 12px;
-                        font-weight: bold;
+                        font-weight: 600;
+                        padding: 0 6px;
+                        border: 2px solid white;
                     }
 
-                    /* Cart Modal */
+                    /* Modern Cart Modal */
                     .cart-modal {
                         display: none;
                         position: fixed;
@@ -8827,7 +9001,8 @@ app.get('/gallery/:id', async (req, res) => {
                         left: 0;
                         right: 0;
                         bottom: 0;
-                        background: rgba(0, 0, 0, 0.9);
+                        background: rgba(0, 0, 0, 0.7);
+                        backdrop-filter: blur(5px);
                         z-index: 2000;
                         justify-content: center;
                         align-items: center;
@@ -8836,33 +9011,42 @@ app.get('/gallery/:id', async (req, res) => {
 
                     .cart-modal.active {
                         display: flex;
+                        animation: fadeIn 0.3s ease;
                     }
 
                     .cart-content {
-                        background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+                        background: white;
                         width: 90%;
                         max-width: 800px;
-                        border-radius: 15px;
+                        border-radius: 16px;
                         padding: 30px;
                         max-height: 90vh;
                         overflow-y: auto;
-                        border: 1px solid rgba(212, 175, 55, 0.3);
-                        color: white;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                        animation: slideUp 0.3s ease;
                     }
 
                     .cart-content h2 {
-                        color: #d4af37;
-                        margin-bottom: 20px;
+                        color: #333;
+                        margin-bottom: 24px;
+                        font-size: 1.8rem;
+                        font-weight: 600;
                     }
 
                     .cart-item {
                         display: flex;
                         gap: 20px;
-                        padding: 15px;
-                        border: 1px solid rgba(212, 175, 55, 0.2);
-                        border-radius: 10px;
-                        margin-bottom: 15px;
-                        background: rgba(42, 42, 42, 0.5);
+                        padding: 16px;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 12px;
+                        margin-bottom: 12px;
+                        background: #f8f8f8;
+                        transition: all 0.2s;
+                    }
+
+                    .cart-item:hover {
+                        background: white;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     }
 
                     .cart-item img {
@@ -8873,60 +9057,86 @@ app.get('/gallery/:id', async (req, res) => {
                     }
 
                     .cart-item h4 {
-                        color: #f4e4bc;
-                        margin: 0 0 5px 0;
+                        color: #333;
+                        margin: 0 0 8px 0;
+                        font-size: 1rem;
+                        font-weight: 500;
                     }
 
                     .cart-item p {
-                        color: #d4af37;
-                        margin: 5px 0;
+                        color: #667eea;
+                        margin: 4px 0;
+                        font-size: 1.1rem;
+                        font-weight: 600;
                     }
 
-                    .order-btn {
-                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-                        color: #1a1a1a;
+                    .btn {
                         border: none;
                         padding: 12px 24px;
-                        border-radius: 25px;
+                        border-radius: 8px;
                         cursor: pointer;
-                        font-size: 1rem;
-                        font-weight: 700;
-                        transition: all 0.3s ease;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
                     }
 
-                    .order-btn:hover {
-                        background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+                    .btn-primary {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+
+                    .btn-primary:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+                        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
                     }
 
-                    .modal-btn {
-                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-                        color: #1a1a1a;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 25px;
-                        cursor: pointer;
-                        font-weight: 700;
-                        transition: all 0.3s ease;
-                        flex: 1;
+                    .btn-secondary {
+                        background: #f5f5f5;
+                        color: #333;
                     }
 
-                    .modal-btn:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+                    .btn-secondary:hover {
+                        background: #e8e8e8;
                     }
 
-                    .modal-btn.secondary {
-                        background: rgba(42, 42, 42, 0.8);
-                        color: #d4af37;
-                        border: 1px solid rgba(212, 175, 55, 0.3);
+                    /* Responsive Design */
+                    @media (max-width: 768px) {
+                        .gallery-header h1 {
+                            font-size: 2rem;
+                        }
+                        
+                        .photo-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                            gap: 15px;
+                        }
+                        
+                        .action-bar {
+                            flex-direction: column;
+                            align-items: stretch;
+                        }
+                        
+                        .action-buttons {
+                            width: 100%;
+                            justify-content: center;
+                        }
                     }
 
-                    .modal-btn.secondary:hover {
-                        background: rgba(212, 175, 55, 0.1);
+                    @media (max-width: 480px) {
+                        .gallery-header h1 {
+                            font-size: 1.5rem;
+                        }
+                        
+                        .photo-grid {
+                            grid-template-columns: 1fr;
+                        }
+                        
+                        .gallery-stats {
+                            gap: 20px;
+                        }
                     }
 
                     @media (max-width: 768px) {
@@ -8993,48 +9203,106 @@ app.get('/gallery/:id', async (req, res) => {
                 </style>
             </head>
             <body>
-                <div class="gallery-container">
+                <!-- Header Section -->
+                <div class="header">
                     <div class="gallery-header">
-                        <h1> Photo Gallery</h1>
-                        <p>Client: <strong>${session.clientName}</strong> | Session: ${session.sessionType} | Date: ${new Date(session.dateTime).toLocaleDateString()}</p>
+                        <h1>${session.clientName}'s Gallery</h1>
+                        <p>${session.sessionType} • ${new Date(session.dateTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    </div>
+                </div>
+
+                <!-- Gallery Container -->
+                <div class="gallery-container">
+                    <!-- Gallery Stats -->
+                    <div class="gallery-stats">
+                        <div class="stat">
+                            <div class="stat-value">${photos.length}</div>
+                            <div class="stat-label">Photos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${session.duration || 0}</div>
+                            <div class="stat-label">Minutes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">HD</div>
+                            <div class="stat-label">Quality</div>
+                        </div>
                     </div>
 
+                    <!-- Action Bar -->
+                    <div class="action-bar">
+                        <div class="photo-count">${photos.length} photos available</div>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="selectAll()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <path d="M9 11l3 3L22 4"/>
+                                </svg>
+                                Select All
+                            </button>
+                            <button class="action-btn primary" onclick="downloadAllPhotos()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Photo Grid -->
                     <div class="photo-grid" id="photoGrid">
                         ${photos.map((photo, index) => {
                             // Use optimized version for display, local path for download
                             const displayUrl = photo.displayPath ? `/uploads/optimized_${photo.filename}` : `/uploads/${photo.filename}`;
                             const downloadUrl = `/uploads/${photo.filename}`;
-                            const originalSizeMB = photo.originalSize ? (photo.originalSize / 1024 / 1024).toFixed(1) : 'Unknown';
 
                             return `
-                            <div class="photo-item">
-                                <img src="${displayUrl}" alt="Photo ${index + 1}" onclick="openLightbox('${displayUrl}')">
-                                <div class="photo-controls">
-                                    <span class="photo-number">Photo ${index + 1} (${originalSizeMB}MB)</span>
-                                    <button class="download-btn" onclick="downloadPhoto('${downloadUrl}', '${photo.originalName || photo.filename}')">
-                                        Download Original
-                                    </button>
+                            <div class="photo-item" onclick="openLightbox('${displayUrl}')">
+                                <img src="${displayUrl}" alt="Photo ${index + 1}">
+                                <div class="photo-overlay">
+                                    <div class="photo-actions">
+                                        <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('${displayUrl}', ${index})">
+                                            Quick Order
+                                        </button>
+                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('${downloadUrl}', '${photo.originalName || photo.filename}')">
+                                            Download
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="photo-info">
+                                    <span class="photo-number">Photo ${index + 1}</span>
                                 </div>
                             </div>
                             `;
                         }).join('')}
                     </div>
 
-                    <div class="bulk-actions">
-                        <button class="bulk-download-btn" onclick="downloadAllPhotos()">
-                             Download All Photos (ZIP)
-                        </button>
-                    </div>
                 </div>
 
-                <!-- Enhanced Lightbox with Print Ordering -->
-                <div id="lightbox" class="lightbox">
-                    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+                <!-- Modern Lightbox -->
+                <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+                    <span class="lightbox-close" onclick="closeLightbox()">×</span>
                     <div class="lightbox-content" onclick="event.stopPropagation()">
                         <img id="lightboxImage" src="">
                         <div class="lightbox-controls">
-                            <button class="order-btn" onclick="orderPrint()">🛒 Order Print</button>
-                            <button class="download-btn" onclick="downloadCurrentPhoto()">📥 Download</button>
+                            <button class="lightbox-btn primary" onclick="orderPrint()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="21" r="1"/>
+                                    <circle cx="20" cy="21" r="1"/>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                </svg>
+                                Order Print
+                            </button>
+                            <button class="lightbox-btn secondary" onclick="downloadCurrentPhoto()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -9090,8 +9358,8 @@ app.get('/gallery/:id', async (req, res) => {
                         </div>
                         
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button onclick="closePrintModal()" class="modal-btn secondary">Cancel</button>
-                            <button onclick="addToCart()" class="modal-btn">Add to Cart</button>
+                            <button onclick="closePrintModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                            <button onclick="addToCart()" class="btn btn-primary" style="flex: 1;">Add to Cart</button>
                         </div>
                     </div>
                 </div>
@@ -9111,8 +9379,8 @@ app.get('/gallery/:id', async (req, res) => {
                         <h2>Shopping Cart</h2>
                         <div id="cartItems"></div>
                         <div id="cartTotal" style="font-size: 20px; font-weight: bold; margin-top: 20px; color: #d4af37;"></div>
-                        <button class="order-btn" onclick="checkout()" style="width: 100%; margin-top: 20px;">Proceed to Checkout</button>
-                        <button onclick="closeCart()" class="modal-btn secondary" style="width: 100%; margin-top: 10px;">Continue Shopping</button>
+                        <button class="btn btn-primary" onclick="checkout()" style="width: 100%; margin-top: 20px;">Proceed to Checkout</button>
+                        <button onclick="closeCart()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">Continue Shopping</button>
                     </div>
                 </div>
 
@@ -9216,7 +9484,7 @@ app.get('/gallery/:id', async (req, res) => {
                                         '<h4>' + item.size + '" ' + item.finish + ' Print</h4>' +
                                         '<p>$' + item.price.toFixed(2) + '</p>' +
                                     '</div>' +
-                                    '<button onclick="removeFromCart(' + index + ')" class="modal-btn secondary" style="padding: 5px 15px;">Remove</button>' +
+                                    '<button onclick="removeFromCart(' + index + ')" class="btn btn-secondary" style="padding: 5px 15px;">Remove</button>' +
                                 '</div>'
                             ).join('');
                             
@@ -9308,6 +9576,48 @@ app.get('/gallery/:id', async (req, res) => {
                         }
                     });
                     
+                    // Quick add to cart function
+                    function quickAddToCart(imageSrc, photoIndex) {
+                        // Default to 8x10 Lustre for quick add
+                        const item = {
+                            photo: imageSrc,
+                            size: '8x10',
+                            price: 25.00,
+                            finish: 'lustre',
+                            quantity: 1
+                        };
+                        
+                        cart.push(item);
+                        localStorage.setItem('clientPrintCart', JSON.stringify(cart));
+                        updateCartDisplay();
+                        
+                        // Show a nice notification
+                        const notification = document.createElement('div');
+                        notification.className = 'notification';
+                        notification.textContent = '✓ Added to cart (8x10" Lustre)';
+                        notification.style.cssText = 'position: fixed; bottom: 100px; right: 30px; background: #667eea; color: white; padding: 16px 24px; border-radius: 8px; animation: slideInRight 0.3s ease; z-index: 1000;';
+                        document.body.appendChild(notification);
+                        
+                        setTimeout(() => {
+                            notification.style.animation = 'slideOutRight 0.3s ease';
+                            setTimeout(() => document.body.removeChild(notification), 300);
+                        }, 2000);
+                    }
+                    
+                    // Select all function
+                    function selectAll() {
+                        // Add visual feedback for select all
+                        const items = document.querySelectorAll('.photo-item');
+                        items.forEach(item => {
+                            item.style.boxShadow = '0 0 0 3px #667eea';
+                        });
+                        setTimeout(() => {
+                            items.forEach(item => {
+                                item.style.boxShadow = '';
+                            });
+                        }, 1000);
+                    }
+                    
                     // Load cart from localStorage on page load
                     window.addEventListener('load', function() {
                         const savedCart = localStorage.getItem('clientPrintCart');
@@ -9316,6 +9626,20 @@ app.get('/gallery/:id', async (req, res) => {
                             updateCartDisplay();
                         }
                     });
+                    
+                    // Add animations
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes slideInRight {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                        @keyframes slideOutRight {
+                            from { transform: translateX(0); opacity: 1; }
+                            to { transform: translateX(100%); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
                     
                     // Close modals on Escape key
                     document.addEventListener('keydown', function(e) {
