@@ -5473,6 +5473,31 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== PRINT SERVICE API ====================
+
+// Initialize print service
+const printService = require('./server/print-service.js');
+
+// Test print service connection
+app.get('/api/print/test', async (req, res) => {
+    try {
+        console.log('Testing print service connection...');
+        const categories = await printService.getCategories();
+        res.json({ 
+            success: true, 
+            message: 'Print service connected successfully',
+            categoriesFound: categories ? categories.length : 0
+        });
+    } catch (error) {
+        console.error('Print service test failed:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Print service connection failed', 
+            details: error.message 
+        });
+    }
+});
+
 // Update session payment status (for deposits and invoices)
 app.post('/api/sessions/:id/update-payment-status', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;

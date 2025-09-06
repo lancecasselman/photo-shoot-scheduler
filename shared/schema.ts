@@ -479,9 +479,77 @@ export const photographerClients = pgTable("photographer_clients", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Print orders table for gallery print purchases
+export const printOrders = pgTable("print_orders", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id),
+  photographerId: varchar("photographer_id").notNull().references(() => users.id),
+  clientEmail: varchar("client_email").notNull(),
+  clientName: varchar("client_name").notNull(),
+  orderStatus: varchar("order_status").default("pending"), // pending, processing, shipped, delivered, cancelled
+  oasOrderId: varchar("oas_order_id"), // Order ID from OAS API
+  editorProjectId: varchar("editor_project_id"), // Project ID from Editor API
+  items: jsonb("items").default([]), // Array of order items with product details
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0.00"),
+  tax: decimal("tax", { precision: 10, scale: 2 }).default("0.00"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).default("0.00"),
+  shippingAddress: jsonb("shipping_address"), // Address object
+  billingAddress: jsonb("billing_address"), // Address object
+  paymentStatus: varchar("payment_status").default("pending"), // pending, paid, failed, refunded
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  photographerProfit: decimal("photographer_profit", { precision: 10, scale: 2 }).default("0.00"),
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).default("0.00"),
+  trackingNumber: varchar("tracking_number"),
+  shippedAt: timestamp("shipped_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Print products catalog (cached from API)
+export const printProducts = pgTable("print_products", {
+  id: varchar("id").primaryKey().notNull(),
+  oasProductId: varchar("oas_product_id").unique().notNull(),
+  categoryId: varchar("category_id"),
+  categoryName: varchar("category_name"),
+  productName: varchar("product_name").notNull(),
+  productDescription: text("product_description"),
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+  photographerPrice: decimal("photographer_price", { precision: 10, scale: 2 }), // Custom pricing
+  sizes: jsonb("sizes").default([]), // Available sizes with pricing
+  options: jsonb("options").default([]), // Product options (paper type, finish, etc)
+  thumbnail: varchar("thumbnail"),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  metadata: jsonb("metadata").default({}), // Additional product info from API
+  lastSyncedAt: timestamp("last_synced_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Shopping cart for print orders
+export const printCarts = pgTable("print_carts", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull(),
+  clientEmail: varchar("client_email"),
+  items: jsonb("items").default([]), // Cart items
+  expiresAt: timestamp("expires_at"), // Cart expiration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Photographer Clients type exports
 export type InsertPhotographerClient = typeof photographerClients.$inferInsert;
 export type PhotographerClient = typeof photographerClients.$inferSelect;
+
+// Print Service type exports
+export type InsertPrintOrder = typeof printOrders.$inferInsert;
+export type PrintOrder = typeof printOrders.$inferSelect;
+export type InsertPrintProduct = typeof printProducts.$inferInsert;
+export type PrintProduct = typeof printProducts.$inferSelect;
+export type InsertPrintCart = typeof printCarts.$inferInsert;
+export type PrintCart = typeof printCarts.$inferSelect;
 
 // Community type exports
 export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;
