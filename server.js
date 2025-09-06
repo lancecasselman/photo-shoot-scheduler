@@ -10841,7 +10841,7 @@ app.get('/api/payments/scheduler-status', isAuthenticated, (req, res) => {
     }
 });
 
-// Serve gallery page (legacy endpoint for backward compatibility)
+// Serve gallery page with print ordering
 app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));
 });
