@@ -9254,19 +9254,37 @@ app.get('/gallery/:id', async (req, res) => {
                     <!-- Photo Grid -->
                     <div class="photo-grid" id="photoGrid">
                         ${photos.map((photo, index) => {
-                            // Use optimized version for display, local path for download
-                            const displayUrl = photo.displayPath ? `/uploads/optimized_${photo.filename}` : `/uploads/${photo.filename}`;
-                            const downloadUrl = `/uploads/${photo.filename}`;
+                            // Handle different photo data structures
+                            let displayUrl, downloadUrl, filename;
+                            
+                            if (typeof photo === 'string') {
+                                // Simple string filename
+                                displayUrl = `/uploads/${photo}`;
+                                downloadUrl = `/uploads/${photo}`;
+                                filename = photo;
+                            } else if (photo.filename) {
+                                // Object with filename property
+                                const baseFilename = photo.filename.includes('/') ? 
+                                    photo.filename.split('/').pop() : photo.filename;
+                                displayUrl = photo.displayPath ? `/uploads/optimized_${baseFilename}` : `/uploads/${baseFilename}`;
+                                downloadUrl = `/uploads/${baseFilename}`;
+                                filename = photo.originalName || baseFilename;
+                            } else {
+                                // Fallback
+                                displayUrl = '';
+                                downloadUrl = '';
+                                filename = `Photo ${index + 1}`;
+                            }
 
                             return `
                             <div class="photo-item" onclick="openLightbox('${displayUrl}')">
-                                <img src="${displayUrl}" alt="Photo ${index + 1}">
+                                <img src="${displayUrl}" alt="Photo ${index + 1}" onerror="this.src='/placeholder-image.jpg'">
                                 <div class="photo-overlay">
                                     <div class="photo-actions">
                                         <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('${displayUrl}', ${index})">
                                             Quick Order
                                         </button>
-                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('${downloadUrl}', '${photo.originalName || photo.filename}')">
+                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('${downloadUrl}', '${filename}')">
                                             Download
                                         </button>
                                     </div>
