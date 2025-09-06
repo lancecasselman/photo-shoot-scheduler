@@ -10843,6 +10843,12 @@ app.get('/api/payments/scheduler-status', isAuthenticated, (req, res) => {
 
 // Serve gallery page with print ordering
 app.get('/sessions/:id/gallery', (req, res) => {
+    // Force no-cache to ensure updates are shown
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
     res.sendFile(path.join(__dirname, 'gallery.html'));
 });
 
