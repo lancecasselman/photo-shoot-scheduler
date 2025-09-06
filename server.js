@@ -9209,19 +9209,19 @@ app.get('/gallery/:id', async (req, res) => {
                             cartItems.innerHTML = '<p style="color: #999;">Your cart is empty</p>';
                             cartTotal.textContent = '';
                         } else {
-                            cartItems.innerHTML = cart.map((item, index) => `
-                                <div class="cart-item">
-                                    <img src="\${item.photo}" alt="Print">
-                                    <div style="flex: 1;">
-                                        <h4>\${item.size}" \${item.finish} Print</h4>
-                                        <p>$\${item.price.toFixed(2)}</p>
-                                    </div>
-                                    <button onclick="removeFromCart(\${index})" class="modal-btn secondary" style="padding: 5px 15px;">Remove</button>
-                                </div>
-                            `).join('');
+                            cartItems.innerHTML = cart.map((item, index) => 
+                                '<div class="cart-item">' +
+                                    '<img src="' + item.photo + '" alt="Print">' +
+                                    '<div style="flex: 1;">' +
+                                        '<h4>' + item.size + '" ' + item.finish + ' Print</h4>' +
+                                        '<p>$' + item.price.toFixed(2) + '</p>' +
+                                    '</div>' +
+                                    '<button onclick="removeFromCart(' + index + ')" class="modal-btn secondary" style="padding: 5px 15px;">Remove</button>' +
+                                '</div>'
+                            ).join('');
                             
                             const total = cart.reduce((sum, item) => sum + item.price, 0);
-                            cartTotal.textContent = `Total: $\${total.toFixed(2)}`;
+                            cartTotal.textContent = 'Total: $' + total.toFixed(2);
                         }
                         
                         modal.classList.add('active');
