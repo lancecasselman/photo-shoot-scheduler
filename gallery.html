@@ -242,6 +242,30 @@
             border-radius: 50%;
         }
         
+        .lightbox-order-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .lightbox-order-btn:hover {
+            background: #38a169;
+            transform: translateX(-50%) scale(1.05);
+        }
+        
         .back-btn {
             background: #667eea;
             color: white;
@@ -427,6 +451,13 @@
     <div id="lightbox" class="lightbox">
         <span class="lightbox-close" onclick="closeLightbox()">×</span>
         <img id="lightboxImage" src="" alt="Full size photo">
+        <button class="lightbox-order-btn" onclick="orderPrintFromLightbox()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                <path d="M9 2L6 9H3l3 13h12l3-13h-3l-3-7"/>
+                <path d="M9 9h6"/>
+            </svg>
+            Order Print
+        </button>
     </div>
     
     <script>
@@ -738,12 +769,29 @@
             setTimeout(() => toast.remove(), 2000);
         }
 
+        let currentLightboxPhotoUrl = null;
+        let currentLightboxPhotoIndex = null;
+        
         function openLightbox(imageUrl) {
             const lightbox = document.getElementById('lightbox');
             const lightboxImage = document.getElementById('lightboxImage');
             
+            // Find the photo index
+            const photos = session.photos || [];
+            const photoIndex = photos.findIndex(p => p.url === imageUrl);
+            
+            currentLightboxPhotoUrl = imageUrl;
+            currentLightboxPhotoIndex = photoIndex;
+            
             lightboxImage.src = imageUrl;
             lightbox.classList.add('active');
+        }
+        
+        function orderPrintFromLightbox() {
+            if (currentLightboxPhotoUrl && currentLightboxPhotoIndex !== null) {
+                closeLightbox();
+                orderPrint(currentLightboxPhotoUrl, currentLightboxPhotoIndex);
+            }
         }
 
         function closeLightbox() {
