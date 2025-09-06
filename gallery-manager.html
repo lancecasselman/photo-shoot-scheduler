@@ -4,17 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Manager</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --warm-white: #FEFDFB;
-            --beige: #F5F1EB;
-            --sage: #9CAF88;
-            --muted-gold: #C4962D;
-            --soft-brown: #8B7355;
-            --deep-charcoal: #2C2C2C;
-            --font-serif: 'Cormorant Garamond', serif;
-            --font-sans: 'Quicksand', sans-serif;
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --background: #ffffff;
+            --surface: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         * {
@@ -24,79 +26,87 @@
         }
 
         body {
-            font-family: var(--font-sans);
-            background: linear-gradient(135deg, var(--warm-white) 0%, var(--beige) 100%);
-            color: var(--deep-charcoal);
+            font-family: var(--font-primary);
+            background: var(--surface);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
+            line-height: 1.6;
         }
 
         .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(44, 44, 44, 0.1);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px var(--shadow);
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: white;
         }
 
         .header h1 {
-            font-family: var(--font-serif);
-            font-size: 2.2em;
-            font-weight: 600;
-            color: var(--deep-charcoal);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
         }
 
         .folder-type {
-            background: linear-gradient(135deg, var(--muted-gold), #f4e4bc);
-            color: var(--deep-charcoal);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
             padding: 8px 20px;
             border-radius: 25px;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.9em;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.05em;
         }
 
         .toolbar {
-            background: white;
+            background: var(--background);
             padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(44, 44, 44, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
             margin-bottom: 30px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
             align-items: center;
         }
 
         .btn {
-            background: linear-gradient(135deg, var(--muted-gold), #f4e4bc);
-            color: var(--deep-charcoal);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.95em;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
+            transition: all 0.2s ease;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.3);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, var(--sage), #b8c7a3);
-            color: white;
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
         .btn-danger {
@@ -118,11 +128,11 @@
         }
 
         .file-card {
-            background: white;
-            border-radius: 20px;
+            background: var(--background);
+            border-radius: 12px;
             padding: 0;
-            box-shadow: 0 15px 35px rgba(44, 44, 44, 0.08);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
             position: relative;
         }
