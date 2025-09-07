@@ -1613,7 +1613,11 @@
                     }
                 }
                 
-                const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
+                // Use the stable public URL for client access
+                const publicDomain = window.location.hostname.includes('replit.dev') 
+                    ? `https://${window.location.hostname.split('-00-')[0]}.replit.app`
+                    : window.location.origin;
+                const clientGalleryUrl = `${publicDomain}/gallery/${galleryToken}`;
                 const subject = `Your Photography Gallery - ${clientName}`;
                 const body = `Hi ${clientName},
 
@@ -1679,7 +1683,11 @@ Lance - The Legacy Photography`;
                     }
                 }
                 
-                const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
+                // Use the stable public URL for client access
+                const publicDomain = window.location.hostname.includes('replit.dev') 
+                    ? `https://${window.location.hostname.split('-00-')[0]}.replit.app`
+                    : window.location.origin;
+                const clientGalleryUrl = `${publicDomain}/gallery/${galleryToken}`;
                 const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
                 
                 const smsUrl = `sms:${clientPhoneNumber}?body=${encodeURIComponent(message)}`;
