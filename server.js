@@ -8509,6 +8509,11 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Test gallery page
+app.get('/test-gallery', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-gallery.html'));
+});
+
 // Serve client gallery page with modern design
 app.get('/gallery/:id', async (req, res) => {
     const idOrToken = req.params.id;

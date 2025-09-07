@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .gallery-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        .gallery-link:hover {
+            transform: translateY(-2px);
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .token {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Gallery Test Links</h1>
+        
+        <div class="info">
+            <h3>John Casselman's Gallery</h3>
+            <p>Session with Unsplash test photos (external URLs)</p>
+            <p>Token: <span class="token">dda7ad42-1613-4bac-9fe0-7b38d10dba80</span></p>
+            <a href="/gallery/dda7ad42-1613-4bac-9fe0-7b38d10dba80" target="_blank" class="gallery-link">
+                Open Gallery →
+            </a>
+        </div>
+
+        <div class="info">
+            <h3>Test Gallery Structure</h3>
+            <p>This session contains photos with the following structure:</p>
+            <pre style="background: #f1f3f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
+[
+  {
+    "url": "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
+    "filename": "wedding-photo-1.jpg"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800",
+    "filename": "wedding-photo-2.jpg"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800",
+    "filename": "wedding-photo-3.jpg"
+  }
+]</pre>
+        </div>
+
+        <div class="info">
+            <h3>Features to Test:</h3>
+            <ul>
+                <li>✅ Photos display correctly from external URLs</li>
+                <li>✅ Quick Order buttons appear on hover</li>
+                <li>✅ Download functionality works</li>
+                <li>✅ Lightbox opens when clicking photos</li>
+                <li>✅ Shopping cart icon appears when items added</li>
+                <li>✅ Print size selection modal</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
