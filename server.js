@@ -8451,10 +8451,32 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Serve client gallery page with custom black and gold design
+// Serve client gallery page with modern design
 app.get('/gallery/:id', async (req, res) => {
-    const sessionId = req.params.id;
-    const accessToken = req.query.access;
+    const idOrToken = req.params.id;
+    let sessionId = idOrToken;
+    let accessToken = req.query.access;
+    
+    // Check if this is a token-only URL (shorter than UUID)
+    if (!accessToken && idOrToken && idOrToken.length < 36) {
+        try {
+            // Find the session with this access token
+            const client = await pool.connect();
+            const result = await client.query(
+                'SELECT id FROM photography_sessions WHERE gallery_access_token = $1',
+                [idOrToken]
+            );
+            client.release();
+            
+            if (result.rows.length > 0) {
+                // This is a token, not a session ID
+                sessionId = result.rows[0].id;
+                accessToken = idOrToken;
+            }
+        } catch (error) {
+            console.error('Error finding gallery by token:', error);
+        }
+    }
 
     try {
         // Verify access first
