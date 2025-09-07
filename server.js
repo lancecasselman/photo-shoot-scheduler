@@ -9524,7 +9524,7 @@ app.get('/gallery/:id', async (req, res) => {
                     // Initialize variables
                     let currentImage = null;
                     let cart = [];
-                    const sessionId = '${sessionId}';
+                    const sessionId = '${session.id}';
                     
                     function openLightbox(imageSrc) {
                         currentImage = imageSrc;
@@ -9854,8 +9854,8 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
 });
 
 // Verify gallery access (API endpoint for client gallery)
-app.get('/api/gallery/:id/verify', async (req, res) => {
-    const galleryToken = req.params.id;
+app.get('/api/gallery/:token/verify', async (req, res) => {
+    const galleryToken = req.params.token;
     
     console.log('🔒 BULLETPROOF API VERIFY:', {
         token: galleryToken,
@@ -9924,8 +9924,8 @@ app.get('/api/gallery/:id/verify', async (req, res) => {
 
 // Get photos for gallery (client endpoint)
 // BULLETPROOF API PHOTOS - Replaces R2 complexity with verified database photos
-app.get('/api/gallery/:id/photos', async (req, res) => {
-    const galleryToken = req.params.id;
+app.get('/api/gallery/:token/photos', async (req, res) => {
+    const galleryToken = req.params.token;
     
     console.log('🔒 BULLETPROOF API PHOTOS:', {
         token: galleryToken,
