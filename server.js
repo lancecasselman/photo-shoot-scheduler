@@ -9351,6 +9351,7 @@ app.get('/gallery/:id', async (req, res) => {
                             // Handle different photo data structures
                             let displayUrl, downloadUrl, filename;
                             
+                            
                             if (typeof photo === 'string') {
                                 // Simple string filename or URL
                                 if (photo.startsWith('http')) {
@@ -9363,21 +9364,35 @@ app.get('/gallery/:id', async (req, res) => {
                                     filename = photo;
                                 }
                             } else if (photo.url) {
-                                // Object with url property (from database)
+                                // Object with url property (from database) - External URLs
                                 displayUrl = photo.url;
                                 downloadUrl = photo.url;
                                 filename = photo.filename || `Photo_${index + 1}.jpg`;
+                            } else if (photo.originalPath || photo.displayPath) {
+                                // Uploaded photos with path information
+                                displayUrl = photo.displayPath || photo.originalPath;
+                                downloadUrl = photo.originalPath || photo.displayPath;
+                                filename = photo.originalName || photo.filename || `Photo_${index + 1}.jpg`;
                             } else if (photo.filename) {
-                                // Object with filename property
+                                // Object with filename property (various formats)
                                 const baseFilename = photo.filename.includes('/') ? 
                                     photo.filename.split('/').pop() : photo.filename;
-                                displayUrl = photo.displayPath ? `/uploads/optimized_${baseFilename}` : `/uploads/${baseFilename}`;
-                                downloadUrl = `/uploads/${baseFilename}`;
+                                
+                                // Check if it's a timestamped upload (like lance's photo)
+                                if (photo.filename.includes('-') && photo.size) {
+                                    displayUrl = `/uploads/${photo.filename}`;
+                                    downloadUrl = `/uploads/${photo.filename}`;
+                                } else {
+                                    // Emily Thompson's case - simple filenames
+                                    displayUrl = `/uploads/${baseFilename}`;
+                                    downloadUrl = `/uploads/${baseFilename}`;
+                                }
                                 filename = photo.originalName || baseFilename;
                             } else {
-                                // Fallback
-                                displayUrl = '';
-                                downloadUrl = '';
+                                // Fallback - create placeholder
+                                console.error('Unknown photo structure:', photo);
+                                displayUrl = '/placeholder-image.jpg';
+                                downloadUrl = '/placeholder-image.jpg';
                                 filename = `Photo ${index + 1}`;
                             }
 
