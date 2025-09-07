@@ -8515,6 +8515,13 @@ app.get('/gallery/:id', async (req, res) => {
     let sessionId = idOrToken;
     let accessToken = req.query.access;
     
+    console.log('🖼️ GALLERY ACCESS DEBUG:', {
+        url: req.url,
+        idOrToken,
+        queryAccessToken: accessToken,
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+    });
+    
     // Check if this is a token-only URL (UUID format: 36 chars with dashes)
     if (!accessToken && idOrToken) {
         // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -8525,7 +8532,7 @@ app.get('/gallery/:id', async (req, res) => {
                 // First check if this is a gallery access token
                 const client = await pool.connect();
                 const result = await client.query(
-                    'SELECT id FROM photography_sessions WHERE gallery_access_token = $1',
+                    'SELECT id, client_name, jsonb_array_length(photos) as photo_count FROM photography_sessions WHERE gallery_access_token = $1',
                     [idOrToken]
                 );
                 client.release();
@@ -8534,13 +8541,17 @@ app.get('/gallery/:id', async (req, res) => {
                     // This is a gallery access token, not a session ID
                     sessionId = result.rows[0].id;
                     accessToken = idOrToken;
-                    console.log(`Gallery accessed via token: ${accessToken} for session: ${sessionId}`);
+                    console.log(`✅ Gallery found via token: ${accessToken}`);
+                    console.log(`   Session: ${sessionId}`);
+                    console.log(`   Client: ${result.rows[0].client_name}`);
+                    console.log(`   Photos: ${result.rows[0].photo_count}`);
                 } else {
+                    console.log(`⚠️ No gallery found for token: ${idOrToken}`);
                     // It might be a session ID, keep original value
                     sessionId = idOrToken;
                 }
             } catch (error) {
-                console.error('Error finding gallery by token:', error);
+                console.error('❌ Error finding gallery by token:', error);
             }
         }
     }
@@ -8557,7 +8568,21 @@ app.get('/gallery/:id', async (req, res) => {
             return res.status(403).send('<h1>Access denied</h1><p>Invalid gallery access token.</p>');
         }
 
+        console.log(`📸 Serving gallery for ${session.clientName}:`, {
+            sessionId,
+            token: accessToken,
+            photoCount: session.photos?.length || 0,
+            firstPhoto: session.photos?.[0]?.url || session.photos?.[0]?.filename || 'none'
+        });
+
         const photos = session.photos || [];
+
+        // Set cache-busting headers to prevent showing stale data
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
 
         // Generate modern, clean gallery HTML
         const galleryHtml = `
