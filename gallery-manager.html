@@ -1570,7 +1570,7 @@
             document.body.appendChild(modal);
             
             // Add global functions for the modal
-            window.sendViaEmail = function() {
+            window.sendViaEmail = async function() {
                 if (!clientEmail) {
                     alert('Client email not available. Please add email to session details first.');
                     closeModal();
@@ -1578,11 +1578,38 @@
                 }
                 
                 // Get the gallery access token from the session
-                const galleryToken = sessions.find(s => s.id === sessionId)?.gallery_access_token;
+                const currentSession = sessions.find(s => s.id === sessionId);
+                let galleryToken = currentSession?.gallery_access_token;
+                
+                // If no gallery token exists, create one first
                 if (!galleryToken) {
-                    alert('Gallery access token not found. Please create a gallery first using the "Create Gallery" button.');
-                    closeModal();
-                    return;
+                    try {
+                        const response = await fetch(`/api/sessions/${sessionId}/create-gallery`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            galleryToken = data.accessToken;
+                            // Update the local session data
+                            if (currentSession) {
+                                currentSession.gallery_access_token = galleryToken;
+                            }
+                        } else {
+                            alert('Failed to create gallery. Please try again.');
+                            closeModal();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error creating gallery:', error);
+                        alert('Failed to create gallery. Please try again.');
+                        closeModal();
+                        return;
+                    }
                 }
                 
                 const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
@@ -1609,7 +1636,7 @@ Lance - The Legacy Photography`;
                 closeModal();
             };
             
-            window.sendViaSMS = function() {
+            window.sendViaSMS = async function() {
                 if (!clientPhoneNumber) {
                     alert('Client phone number not available. Please add phone number to session details first.');
                     closeModal();
@@ -1617,11 +1644,38 @@ Lance - The Legacy Photography`;
                 }
                 
                 // Get the gallery access token from the session
-                const galleryToken = sessions.find(s => s.id === sessionId)?.gallery_access_token;
+                const currentSession = sessions.find(s => s.id === sessionId);
+                let galleryToken = currentSession?.gallery_access_token;
+                
+                // If no gallery token exists, create one first
                 if (!galleryToken) {
-                    alert('Gallery access token not found. Please create a gallery first using the "Create Gallery" button.');
-                    closeModal();
-                    return;
+                    try {
+                        const response = await fetch(`/api/sessions/${sessionId}/create-gallery`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            galleryToken = data.accessToken;
+                            // Update the local session data
+                            if (currentSession) {
+                                currentSession.gallery_access_token = galleryToken;
+                            }
+                        } else {
+                            alert('Failed to create gallery. Please try again.');
+                            closeModal();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error creating gallery:', error);
+                        alert('Failed to create gallery. Please try again.');
+                        closeModal();
+                        return;
+                    }
                 }
                 
                 const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
