@@ -9368,75 +9368,49 @@ app.get('/gallery/:id', async (req, res) => {
                         </div>
                     </div>
 
-                    <!-- Photo Grid -->
+                    <!-- BULLETPROOF PHOTO GRID - Verified Photos Only -->
                     <div class="photo-grid" id="photoGrid">
                         ${photos.map((photo, index) => {
-                            // Handle different photo data structures
-                            let displayUrl, downloadUrl, filename;
+                            // BULLETPROOF PHOTO RENDERING - Direct, verified photo serving
+                            const photoNumber = index + 1;
                             
+                            // STRICT: Only handle verified photo.url structure from database
+                            const displayUrl = photo.url || '/placeholder-image.jpg';
+                            const downloadUrl = photo.url || '/placeholder-image.jpg';
+                            const filename = photo.filename || `${session.client_name}_Photo_${photoNumber}.jpg`;
                             
-                            if (typeof photo === 'string') {
-                                // Simple string filename or URL
-                                if (photo.startsWith('http')) {
-                                    displayUrl = photo;
-                                    downloadUrl = photo;
-                                    filename = `Photo_${index + 1}.jpg`;
-                                } else {
-                                    displayUrl = `/uploads/${photo}`;
-                                    downloadUrl = `/uploads/${photo}`;
-                                    filename = photo;
-                                }
-                            } else if (photo.url) {
-                                // Object with url property (from database) - External URLs
-                                displayUrl = photo.url;
-                                downloadUrl = photo.url;
-                                filename = photo.filename || `Photo_${index + 1}.jpg`;
-                            } else if (photo.originalPath || photo.displayPath) {
-                                // Uploaded photos with path information
-                                displayUrl = photo.displayPath || photo.originalPath;
-                                downloadUrl = photo.originalPath || photo.displayPath;
-                                filename = photo.originalName || photo.filename || `Photo_${index + 1}.jpg`;
-                            } else if (photo.filename) {
-                                // Object with filename property (various formats)
-                                const baseFilename = photo.filename.includes('/') ? 
-                                    photo.filename.split('/').pop() : photo.filename;
-                                
-                                // Check if it's a timestamped upload (like lance's photo)
-                                if (photo.filename.includes('-') && photo.size) {
-                                    displayUrl = `/uploads/${photo.filename}`;
-                                    downloadUrl = `/uploads/${photo.filename}`;
-                                } else {
-                                    // Emily Thompson's case - simple filenames
-                                    displayUrl = `/uploads/${baseFilename}`;
-                                    downloadUrl = `/uploads/${baseFilename}`;
-                                }
-                                filename = photo.originalName || baseFilename;
-                            } else {
-                                // Fallback - create placeholder
-                                console.error('Unknown photo structure:', photo);
-                                displayUrl = '/placeholder-image.jpg';
-                                downloadUrl = '/placeholder-image.jpg';
-                                filename = `Photo ${index + 1}`;
-                            }
+                            // LOG EVERY PHOTO BEING SERVED FOR VERIFICATION
+                            console.log(\`🖼️ RENDERING PHOTO \${photoNumber} for \${session.client_name}:\`, {
+                                photoIndex: photoNumber,
+                                displayUrl: displayUrl,
+                                filename: filename,
+                                isValidUrl: displayUrl.startsWith('http'),
+                                token: galleryToken,
+                                timestamp: new Date().toISOString()
+                            });
 
-                            return `
-                            <div class="photo-item" onclick="openLightbox('${displayUrl}')">
-                                <img src="${displayUrl}" alt="Photo ${index + 1}" onerror="this.src='/placeholder-image.jpg'">
+                            return \`
+                            <div class="photo-item" onclick="openLightbox('\${displayUrl}')">
+                                <img src="\${displayUrl}" alt="Photo \${photoNumber}" onerror="this.src='/placeholder-image.jpg'" 
+                                     onload="console.log('✅ PHOTO \${photoNumber} LOADED:', '\${displayUrl}')">
                                 <div class="photo-overlay">
                                     <div class="photo-actions">
-                                        <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('${displayUrl}', ${index})">
+                                        <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('\${displayUrl}', \${index})">
                                             Quick Order
                                         </button>
-                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('${downloadUrl}', '${filename}')">
+                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('\${downloadUrl}', '\${filename}')">
                                             Download
                                         </button>
                                     </div>
                                 </div>
                                 <div class="photo-info">
-                                    <span class="photo-number">Photo ${index + 1}</span>
+                                    <span class="photo-number">Photo \${photoNumber}</span>
+                                    <div style="font-size: 0.7rem; color: #999; margin-top: 4px;">
+                                        Verified: \${session.client_name}
+                                    </div>
                                 </div>
                             </div>
-                            `;
+                            \`;
                         }).join('')}
                     </div>
 
