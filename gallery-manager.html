@@ -1578,6 +1578,13 @@
                     return;
                 }
                 
+                console.log('📧 SENDING GALLERY EMAIL:', {
+                    sessionId,
+                    clientName,
+                    clientEmail,
+                    sessionData
+                });
+                
                 // Get the gallery access token from the session data
                 let galleryToken = sessionData?.gallery_access_token || sessionData?.galleryAccessToken;
                 
