@@ -1577,7 +1577,15 @@
                     return;
                 }
                 
-                const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
+                // Get the gallery access token from the session
+                const galleryToken = sessions.find(s => s.id === sessionId)?.gallery_access_token;
+                if (!galleryToken) {
+                    alert('Gallery access token not found. Please create a gallery first using the "Create Gallery" button.');
+                    closeModal();
+                    return;
+                }
+                
+                const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
                 const subject = `Your Photography Gallery - ${clientName}`;
                 const body = `Hi ${clientName},
 
@@ -1608,7 +1616,15 @@ Lance - The Legacy Photography`;
                     return;
                 }
                 
-                const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
+                // Get the gallery access token from the session
+                const galleryToken = sessions.find(s => s.id === sessionId)?.gallery_access_token;
+                if (!galleryToken) {
+                    alert('Gallery access token not found. Please create a gallery first using the "Create Gallery" button.');
+                    closeModal();
+                    return;
+                }
+                
+                const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
                 const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
                 
                 const smsUrl = `sms:${clientPhoneNumber}?body=${encodeURIComponent(message)}`;

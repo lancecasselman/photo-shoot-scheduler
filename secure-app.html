@@ -7547,7 +7547,14 @@ ${contract.contract_content}
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
+            // Get the gallery access token from the session
+            const galleryToken = session.gallery_access_token;
+            if (!galleryToken) {
+                alert('Gallery access token not found. Please create a gallery first.');
+                return;
+            }
+            
+            const clientGalleryUrl = `${window.location.origin}/gallery/${galleryToken}`;
             const subject = `Your Photography Gallery - ${session.sessionType} Session`;
             const body = `Hi ${session.clientName},
 
