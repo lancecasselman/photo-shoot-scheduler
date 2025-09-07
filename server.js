@@ -9380,7 +9380,7 @@ app.get('/gallery/:id', async (req, res) => {
                             const filename = photo.filename || `${session.client_name}_Photo_${photoNumber}.jpg`;
                             
                             // LOG EVERY PHOTO BEING SERVED FOR VERIFICATION
-                            console.log(\`🖼️ RENDERING PHOTO \${photoNumber} for \${session.client_name}:\`, {
+                            console.log(`🖼️ RENDERING PHOTO ${photoNumber} for ${session.client_name}:`, {
                                 photoIndex: photoNumber,
                                 displayUrl: displayUrl,
                                 filename: filename,
@@ -9389,28 +9389,28 @@ app.get('/gallery/:id', async (req, res) => {
                                 timestamp: new Date().toISOString()
                             });
 
-                            return \`
-                            <div class="photo-item" onclick="openLightbox('\${displayUrl}')">
-                                <img src="\${displayUrl}" alt="Photo \${photoNumber}" onerror="this.src='/placeholder-image.jpg'" 
-                                     onload="console.log('✅ PHOTO \${photoNumber} LOADED:', '\${displayUrl}')">
+                            return `
+                            <div class="photo-item" onclick="openLightbox('${displayUrl}')">
+                                <img src="${displayUrl}" alt="Photo ${photoNumber}" onerror="this.src='/placeholder-image.jpg'" 
+                                     onload="console.log('✅ PHOTO ${photoNumber} LOADED:', '${displayUrl}')">
                                 <div class="photo-overlay">
                                     <div class="photo-actions">
-                                        <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('\${displayUrl}', \${index})">
+                                        <button class="photo-btn primary" onclick="event.stopPropagation(); quickAddToCart('${displayUrl}', ${index})">
                                             Quick Order
                                         </button>
-                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('\${downloadUrl}', '\${filename}')">
+                                        <button class="photo-btn" onclick="event.stopPropagation(); downloadPhoto('${downloadUrl}', '${filename}')">
                                             Download
                                         </button>
                                     </div>
                                 </div>
                                 <div class="photo-info">
-                                    <span class="photo-number">Photo \${photoNumber}</span>
+                                    <span class="photo-number">Photo ${photoNumber}</span>
                                     <div style="font-size: 0.7rem; color: #999; margin-top: 4px;">
-                                        Verified: \${session.client_name}
+                                        Verified: ${session.client_name}
                                     </div>
                                 </div>
                             </div>
-                            \`;
+                            `;
                         }).join('')}
                     </div>
 
