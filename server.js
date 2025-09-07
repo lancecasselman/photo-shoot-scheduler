@@ -8509,73 +8509,76 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Serve client gallery page with modern design
+// BULLETPROOF CLIENT GALLERY SYSTEM - Guarantees correct photo delivery
 app.get('/gallery/:id', async (req, res) => {
-    const idOrToken = req.params.id;
-    let sessionId = idOrToken;
-    let accessToken = req.query.access;
+    const galleryToken = req.params.id;
     
-    console.log('🖼️ GALLERY ACCESS DEBUG:', {
-        url: req.url,
-        idOrToken,
-        queryAccessToken: accessToken,
+    console.log('🔒 BULLETPROOF GALLERY ACCESS:', {
+        token: galleryToken,
+        timestamp: new Date().toISOString(),
         userAgent: req.headers['user-agent']?.substring(0, 50)
     });
-    
-    // Check if this is a token-only URL (UUID format: 36 chars with dashes)
-    if (!accessToken && idOrToken) {
-        // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrToken);
-        
-        if (isUUID) {
-            try {
-                // First check if this is a gallery access token
-                const client = await pool.connect();
-                const result = await client.query(
-                    'SELECT id, client_name, jsonb_array_length(photos) as photo_count FROM photography_sessions WHERE gallery_access_token = $1',
-                    [idOrToken]
-                );
-                client.release();
-                
-                if (result.rows.length > 0) {
-                    // This is a gallery access token, not a session ID
-                    sessionId = result.rows[0].id;
-                    accessToken = idOrToken;
-                    console.log(`✅ Gallery found via token: ${accessToken}`);
-                    console.log(`   Session: ${sessionId}`);
-                    console.log(`   Client: ${result.rows[0].client_name}`);
-                    console.log(`   Photos: ${result.rows[0].photo_count}`);
-                } else {
-                    console.log(`⚠️ No gallery found for token: ${idOrToken}`);
-                    // It might be a session ID, keep original value
-                    sessionId = idOrToken;
-                }
-            } catch (error) {
-                console.error('❌ Error finding gallery by token:', error);
-            }
-        }
-    }
 
     try {
-        // Verify access first
-        const session = await getSessionById(sessionId);
+        // STEP 1: Direct token lookup with photo verification
+        const client = await pool.connect();
+        const galleryQuery = await client.query(`
+            SELECT 
+                id, 
+                client_name, 
+                session_type,
+                date_time,
+                photos,
+                gallery_access_token,
+                jsonb_array_length(photos) as photo_count
+            FROM photography_sessions 
+            WHERE gallery_access_token = $1 
+            AND photos IS NOT NULL 
+            AND jsonb_array_length(photos) > 0
+        `, [galleryToken]);
+        client.release();
 
-        if (!session) {
-            return res.status(404).send('<h1>Gallery not found</h1>');
+        // STEP 2: Strict validation - no photos = no gallery
+        if (galleryQuery.rows.length === 0) {
+            console.log('❌ GALLERY BLOCKED: No session found or no photos available for token:', galleryToken);
+            return res.status(404).send(`
+                <h1>Gallery Not Available</h1>
+                <p>This gallery link is either invalid or the photos are not ready yet.</p>
+                <p>Please contact your photographer if you believe this is an error.</p>
+            `);
         }
 
-        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
-            return res.status(403).send('<h1>Access denied</h1><p>Invalid gallery access token.</p>');
-        }
-
-        console.log(`📸 Serving gallery for ${session.clientName}:`, {
-            sessionId,
-            token: accessToken,
-            photoCount: session.photos?.length || 0,
-            firstPhoto: session.photos?.[0]?.url || session.photos?.[0]?.filename || 'none'
-        });
-
+        const session = galleryQuery.rows[0];
         const photos = session.photos || [];
+
+        // STEP 3: Final photo verification - double-check photos exist
+        if (!photos || photos.length === 0) {
+            console.log('❌ GALLERY BLOCKED: Session found but NO PHOTOS available:', {
+                sessionId: session.id,
+                clientName: session.client_name,
+                token: galleryToken
+            });
+            return res.status(404).send(`
+                <h1>Photos Not Ready</h1>
+                <p>Hi ${session.client_name}, your photos are not available yet.</p>
+                <p>Your photographer will notify you when they're ready for viewing.</p>
+            `);
+        }
+
+        // STEP 4: Log exact photos being served for verification
+        console.log('✅ SERVING VERIFIED GALLERY:', {
+            sessionId: session.id,
+            clientName: session.client_name,
+            sessionType: session.session_type,
+            photoCount: photos.length,
+            photosBeingServed: photos.map((photo, index) => ({
+                index: index + 1,
+                url: photo.url || 'unknown',
+                filename: photo.filename || 'unknown'
+            })),
+            token: galleryToken,
+            timestamp: new Date().toISOString()
+        });
 
         // Set cache-busting headers to prevent showing stale data
         res.set({
