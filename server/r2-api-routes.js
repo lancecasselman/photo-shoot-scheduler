@@ -644,44 +644,118 @@ function createR2Routes() {
   });
 
   /**
+   * 🔒 BULLETPROOF PREVIEW ENDPOINT - Only serves verified database photos
    * GET /api/r2/preview/:sessionId/:filename
-   * Get image preview from R2 storage (converted to JPEG for browser compatibility)
    */
   router.get('/preview/:sessionId/:filename', async (req, res) => {
     try {
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId, filename } = req.params;
-      const { size } = req.query; // Optional size parameter: small, medium, large
+      const { size } = req.query;
       
-      console.log(`🖼️ Preview request: ${filename} for session ${sessionId} (size: ${size || 'medium'})`);
+      console.log('🔒 BULLETPROOF PREVIEW REQUEST:', {
+        userId: userId,
+        sessionId: sessionId,
+        filename: filename,
+        size: size || 'medium',
+        timestamp: new Date().toISOString()
+      });
       
-      // Map size parameter to thumbnail suffix
+      // BULLETPROOF VERIFICATION: Check if this photo exists in verified database
+      const client = await pool.connect();
+      const sessionQuery = await client.query(`
+        SELECT 
+          id, 
+          client_name, 
+          photos,
+          user_id
+        FROM photography_sessions 
+        WHERE id = $1 
+        AND user_id = $2
+        AND photos IS NOT NULL 
+        AND jsonb_array_length(photos) > 0
+      `, [sessionId, userId]);
+      client.release();
+      
+      if (sessionQuery.rows.length === 0) {
+        console.log('❌ BULLETPROOF PREVIEW BLOCKED: No session or no verified photos:', {
+          sessionId: sessionId,
+          userId: userId,
+          filename: filename
+        });
+        return res.status(404).json({ error: 'Preview not available - photos not verified' });
+      }
+      
+      const session = sessionQuery.rows[0];
+      const photos = session.photos || [];
+      
+      // STRICT VERIFICATION: Only serve files that exist in verified photos array
+      const verifiedPhoto = photos.find(photo => 
+        photo.filename === filename || 
+        photo.url === filename ||
+        photo.url.includes(filename)
+      );
+      
+      if (!verifiedPhoto) {
+        console.log('❌ BULLETPROOF PREVIEW BLOCKED: Photo not in verified list:', {
+          sessionId: sessionId,
+          clientName: session.client_name,
+          requestedFilename: filename,
+          verifiedPhotos: photos.map(p => p.filename || p.url),
+          userId: userId
+        });
+        return res.status(404).json({ error: 'Preview not available - photo not verified' });
+      }
+      
+      console.log('✅ BULLETPROOF PREVIEW VERIFIED:', {
+        sessionId: sessionId,
+        clientName: session.client_name,
+        verifiedFilename: verifiedPhoto.filename,
+        verifiedUrl: verifiedPhoto.url,
+        userId: userId
+      });
+      
+      // For verified external URLs (like Unsplash), redirect or proxy
+      if (verifiedPhoto.url && verifiedPhoto.url.startsWith('http')) {
+        console.log('✅ VERIFIED EXTERNAL URL - redirecting to:', verifiedPhoto.url);
+        return res.redirect(verifiedPhoto.url);
+      }
+      
+      // For verified R2 files, continue with thumbnail processing
       const thumbnailSize = size === 'small' ? '_sm' : 
                            size === 'large' ? '_lg' : '_md';
       
-      // Try to get pre-generated thumbnail first (only for image files)
       if (r2Manager.isImageFile(filename)) {
         const thumbnailResult = await r2Manager.getThumbnail(userId, sessionId, filename, thumbnailSize);
         
         if (thumbnailResult.success) {
           res.setHeader('Content-Type', 'image/jpeg');
-          res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          res.setHeader('X-Verified-Client', session.client_name);
           res.setHeader('X-Thumbnail-Size', thumbnailSize);
           res.send(thumbnailResult.buffer);
-          console.log(` Served thumbnail ${thumbnailSize} for ${filename}`);
+          console.log('✅ SERVED VERIFIED THUMBNAIL:', {
+            filename: filename,
+            size: thumbnailSize,
+            clientName: session.client_name
+          });
           return;
         }
-        console.log(` Thumbnail not available for ${filename}, using fallback processing`);
       }
       
-      // Fallback: Get original file and process if needed
+      // Fallback: Verify and serve original file
       const downloadResult = await r2Manager.downloadFile(userId, sessionId, filename);
       
       if (!downloadResult.success) {
-        return res.status(404).json({ error: 'File not found' });
+        console.log('❌ BULLETPROOF PREVIEW: R2 file not found after verification:', {
+          sessionId: sessionId,
+          filename: filename,
+          clientName: session.client_name
+        });
+        return res.status(404).json({ error: 'Verified file not accessible in storage' });
       }
       
-      // Process image files with Sharp as fallback
+      // Process and serve verified file
       if (r2Manager.isImageFile(filename)) {
         const sharp = require('sharp');
         const maxSize = size === 'small' ? 150 : size === 'large' ? 800 : 400;
@@ -694,26 +768,36 @@ function createR2Routes() {
           
           res.setHeader('Content-Type', 'image/jpeg');
           res.setHeader('Cache-Control', 'public, max-age=3600');
-          res.setHeader('X-Processed', 'fallback');
+          res.setHeader('X-Verified-Client', session.client_name);
+          res.setHeader('X-Processed', 'bulletproof-verified');
           res.send(processedBuffer);
-          console.log(` Processed ${filename} with fallback Sharp processing`);
+          console.log('✅ SERVED VERIFIED PROCESSED IMAGE:', {
+            filename: filename,
+            clientName: session.client_name,
+            size: maxSize
+          });
         } catch (sharpError) {
-          console.warn(` Sharp processing failed for ${filename}, serving original`);
+          console.warn('⚠️ Sharp processing failed for verified file:', sharpError.message);
           res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
           res.setHeader('Cache-Control', 'public, max-age=3600');
+          res.setHeader('X-Verified-Client', session.client_name);
           res.send(downloadResult.buffer);
         }
       } else {
-        // For non-image files, return original
+        // Serve verified non-image file
         res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
         res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('X-Verified-Client', session.client_name);
         res.send(downloadResult.buffer);
-        console.log(` Served original ${filename} (non-image file)`);
+        console.log('✅ SERVED VERIFIED NON-IMAGE FILE:', {
+          filename: filename,
+          clientName: session.client_name
+        });
       }
       
     } catch (error) {
-      console.error('Preview error:', error);
-      res.status(500).json({ error: 'Preview failed', message: error.message });
+      console.error('❌ BULLETPROOF PREVIEW ERROR:', error);
+      res.status(500).json({ error: 'Preview failed - security verification error', message: error.message });
     }
   });
 
