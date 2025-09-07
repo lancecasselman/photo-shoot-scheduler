@@ -5304,6 +5304,64 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Create gallery access token for a session
+app.post('/api/sessions/:id/create-gallery', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+
+    try {
+        // First check if the session exists and belongs to the user
+        const sessionResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const session = sessionResult.rows[0];
+
+        // If gallery token already exists, return it
+        if (session.gallery_access_token) {
+            return res.json({ 
+                accessToken: session.gallery_access_token,
+                message: 'Gallery already exists' 
+            });
+        }
+
+        // Generate a new gallery access token
+        const accessToken = uuidv4();
+        const galleryCreatedAt = new Date();
+        const galleryExpiresAt = new Date(galleryCreatedAt);
+        galleryExpiresAt.setMonth(galleryExpiresAt.getMonth() + 6); // 6 months expiry
+
+        // Update the session with the gallery access token
+        const updateResult = await pool.query(
+            `UPDATE photography_sessions 
+             SET gallery_access_token = $1, 
+                 gallery_created_at = $2, 
+                 gallery_expires_at = $3,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4
+             RETURNING *`,
+            [accessToken, galleryCreatedAt, galleryExpiresAt, sessionId]
+        );
+
+        console.log(`Created gallery for session ${sessionId} with token ${accessToken}`);
+        
+        res.json({ 
+            accessToken: accessToken,
+            message: 'Gallery created successfully',
+            session: updateResult.rows[0]
+        });
+    } catch (error) {
+        console.error('Error creating gallery:', error);
+        res.status(500).json({ error: 'Failed to create gallery' });
+    }
+});
+
 // ==================== CLIENT DATABASE API ====================
 
 // Get all clients for a photographer
