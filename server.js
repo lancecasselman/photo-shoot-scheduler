@@ -8515,24 +8515,33 @@ app.get('/gallery/:id', async (req, res) => {
     let sessionId = idOrToken;
     let accessToken = req.query.access;
     
-    // Check if this is a token-only URL (shorter than UUID)
-    if (!accessToken && idOrToken && idOrToken.length < 36) {
-        try {
-            // Find the session with this access token
-            const client = await pool.connect();
-            const result = await client.query(
-                'SELECT id FROM photography_sessions WHERE gallery_access_token = $1',
-                [idOrToken]
-            );
-            client.release();
-            
-            if (result.rows.length > 0) {
-                // This is a token, not a session ID
-                sessionId = result.rows[0].id;
-                accessToken = idOrToken;
+    // Check if this is a token-only URL (UUID format: 36 chars with dashes)
+    if (!accessToken && idOrToken) {
+        // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrToken);
+        
+        if (isUUID) {
+            try {
+                // First check if this is a gallery access token
+                const client = await pool.connect();
+                const result = await client.query(
+                    'SELECT id FROM photography_sessions WHERE gallery_access_token = $1',
+                    [idOrToken]
+                );
+                client.release();
+                
+                if (result.rows.length > 0) {
+                    // This is a gallery access token, not a session ID
+                    sessionId = result.rows[0].id;
+                    accessToken = idOrToken;
+                    console.log(`Gallery accessed via token: ${accessToken} for session: ${sessionId}`);
+                } else {
+                    // It might be a session ID, keep original value
+                    sessionId = idOrToken;
+                }
+            } catch (error) {
+                console.error('Error finding gallery by token:', error);
             }
-        } catch (error) {
-            console.error('Error finding gallery by token:', error);
         }
     }
 
@@ -9338,10 +9347,21 @@ app.get('/gallery/:id', async (req, res) => {
                             let displayUrl, downloadUrl, filename;
                             
                             if (typeof photo === 'string') {
-                                // Simple string filename
-                                displayUrl = `/uploads/${photo}`;
-                                downloadUrl = `/uploads/${photo}`;
-                                filename = photo;
+                                // Simple string filename or URL
+                                if (photo.startsWith('http')) {
+                                    displayUrl = photo;
+                                    downloadUrl = photo;
+                                    filename = `Photo_${index + 1}.jpg`;
+                                } else {
+                                    displayUrl = `/uploads/${photo}`;
+                                    downloadUrl = `/uploads/${photo}`;
+                                    filename = photo;
+                                }
+                            } else if (photo.url) {
+                                // Object with url property (from database)
+                                displayUrl = photo.url;
+                                downloadUrl = photo.url;
+                                filename = photo.filename || `Photo_${index + 1}.jpg`;
                             } else if (photo.filename) {
                                 // Object with filename property
                                 const baseFilename = photo.filename.includes('/') ? 
