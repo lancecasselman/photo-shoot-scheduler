@@ -9923,79 +9923,68 @@ app.get('/api/gallery/:id/verify', async (req, res) => {
 });
 
 // Get photos for gallery (client endpoint)
+// BULLETPROOF API PHOTOS - Replaces R2 complexity with verified database photos
 app.get('/api/gallery/:id/photos', async (req, res) => {
-    const sessionId = req.params.id;
-    const accessToken = req.query.access;
+    const galleryToken = req.params.id;
+    
+    console.log('🔒 BULLETPROOF API PHOTOS:', {
+        token: galleryToken,
+        timestamp: new Date().toISOString()
+    });
 
     try {
-        const session = await getSessionById(sessionId);
+        // BULLETPROOF: Direct token lookup with photo verification
+        const client = await pool.connect();
+        const galleryQuery = await client.query(`
+            SELECT 
+                id, 
+                client_name, 
+                session_type,
+                photos,
+                gallery_access_token,
+                jsonb_array_length(photos) as photo_count
+            FROM photography_sessions 
+            WHERE gallery_access_token = $1 
+            AND photos IS NOT NULL 
+            AND jsonb_array_length(photos) > 0
+        `, [galleryToken]);
+        client.release();
 
-        if (!session) {
-            return res.status(404).json({ error: 'Gallery not found' });
+        // STRICT: No photos = no gallery
+        if (galleryQuery.rows.length === 0) {
+            console.log('❌ API PHOTOS BLOCKED: No verified photos for token:', galleryToken);
+            return res.status(404).json({ error: 'Gallery not available - photos not ready' });
         }
 
-        // Allow access without token - galleries are public by session ID
-        // Token is optional for backwards compatibility
-        if (accessToken && session.galleryAccessToken && session.galleryAccessToken !== accessToken) {
-            return res.status(403).json({ error: 'Invalid access token' });
-        }
+        const session = galleryQuery.rows[0];
+        const photos = session.photos || [];
 
-        // Get the Firebase UID from session_files table to properly locate R2 files
-        let firebaseUserId = null;
-        try {
-            const client = await pool.connect();
-            const fileUserResult = await client.query(
-                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
-                [sessionId]
-            );
-            client.release();
-            if (fileUserResult.rows.length > 0) {
-                firebaseUserId = fileUserResult.rows[0].user_id;
-            }
-        } catch (dbError) {
-            console.error('Error getting Firebase UID:', dbError);
-        }
-
-        // List files directly from R2 using the S3 API
-        const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
-        const userIdForR2 = firebaseUserId || session.userId;
-        const prefix = `photographer-${userIdForR2}/session-${sessionId}/gallery/`;
-        const listCommand = new ListObjectsV2Command({
-            Bucket: 'photoappr2token',
-            Prefix: prefix
-        });
-        
-        let galleryPhotos = [];
-        try {
-            const listResponse = await r2FileManager.s3Client.send(listCommand);
-            const r2Files = listResponse.Contents || [];
-            
-            console.log(`Found ${r2Files.length} files in R2 with prefix ${prefix}`);
-            
-            galleryPhotos = r2Files.map(file => {
-                const filename = file.Key.split('/').pop();
-                return {
-                    filename: filename,
-                    displayName: filename,
-                    url: `/api/gallery/${sessionId}/photo/${encodeURIComponent(filename)}`,
-                    size: file.Size,
-                    folderType: 'gallery'
-                };
+        // FINAL VERIFICATION: Double-check photos exist
+        if (!photos || photos.length === 0) {
+            console.log('❌ API PHOTOS BLOCKED: Session found but NO PHOTOS:', {
+                sessionId: session.id,
+                clientName: session.client_name,
+                token: galleryToken
             });
-        } catch (r2Error) {
-            console.error('Error listing R2 files directly:', r2Error);
+            return res.status(404).json({ error: 'Photos not ready yet' });
         }
-        
-        console.log(`Found ${galleryPhotos.length} photos in R2 gallery for session ${sessionId}`);
 
-        // No expiration check - galleries never expire
+        // LOG VERIFIED PHOTOS BEING SERVED
+        console.log('✅ API PHOTOS SUCCESS:', {
+            sessionId: session.id,
+            clientName: session.client_name,
+            sessionType: session.session_type,
+            photoCount: photos.length,
+            verifiedPhotos: photos.map(p => p.url || p.filename),
+            token: galleryToken
+        });
 
         res.json({
-            photos: galleryPhotos || [],
-            totalPhotos: galleryPhotos.length
+            photos: photos,
+            totalPhotos: photos.length
         });
     } catch (error) {
-        console.error('Error getting gallery photos:', error);
+        console.error('❌ API PHOTOS ERROR:', error);
         res.status(500).json({ error: 'Failed to get gallery photos' });
     }
 });

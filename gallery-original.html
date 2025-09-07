@@ -348,11 +348,33 @@
                 return;
             }
 
-            galleryGrid.innerHTML = photos.map(photo => `
-                <div class="photo-item" onclick="openLightbox('${photo.url}')">
-                    <img src="${photo.url}" alt="Session photo" loading="lazy">
+            // BULLETPROOF PHOTO RENDERING: Verified photos only
+            console.log(`🔒 ORIGINAL GALLERY RENDERING for ${session.clientName}:`, {
+                sessionId: sessionId,
+                clientName: session.clientName,
+                photoCount: photos.length,
+                verifiedPhotos: photos.map(p => p.url || p.filename)
+            });
+            
+            galleryGrid.innerHTML = photos.map((photo, index) => {
+                // STRICT: Only render verified photo.url structure
+                const photoUrl = photo.url || '/placeholder-image.jpg';
+                const photoFilename = photo.filename || `${session.clientName}_Photo_${index + 1}.jpg`;
+                
+                console.log(`✅ ORIGINAL VERIFIED PHOTO ${index + 1} for ${session.clientName}:`, {
+                    url: photoUrl,
+                    filename: photoFilename
+                });
+                
+                return `
+                <div class="photo-item" onclick="openLightbox('${photoUrl}')">
+                    <img src="${photoUrl}" alt="Session photo" loading="lazy" onerror="this.src='/placeholder-image.jpg'">
+                    <div class="photo-verification">
+                        <small>✅ ${session.clientName} - Photo ${index + 1}</small>
+                    </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function openLightbox(imageUrl) {

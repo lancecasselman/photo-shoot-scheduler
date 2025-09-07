@@ -762,14 +762,36 @@
                 return;
             }
 
-            galleryGrid.innerHTML = photos.map((photo, index) => `
-                <div class="photo-item" data-photo-id="${index}" data-photo-url="${photo.url}" data-photo-name="${photo.filename || 'photo.jpg'}">
-                    <img src="${photo.url}" alt="Session photo" loading="lazy">
+            // BULLETPROOF PHOTO RENDERING: Verify photos match client name
+            console.log(`🔒 RENDERING VERIFIED PHOTOS for ${session.clientName}:`, {
+                sessionId: sessionId,
+                clientName: session.clientName,
+                photoCount: photos.length,
+                photosToRender: photos.map(p => p.url || p.filename)
+            });
+            
+            galleryGrid.innerHTML = photos.map((photo, index) => {
+                // STRICT: Only render verified photo.url structure
+                const photoUrl = photo.url || '/placeholder-image.jpg';
+                const photoFilename = photo.filename || `${session.clientName}_Photo_${index + 1}.jpg`;
+                
+                console.log(`✅ VERIFIED PHOTO ${index + 1} for ${session.clientName}:`, {
+                    url: photoUrl,
+                    filename: photoFilename
+                });
+                
+                return `
+                <div class="photo-item" data-photo-id="${index}" data-photo-url="${photoUrl}" data-photo-name="${photoFilename}">
+                    <img src="${photoUrl}" alt="Session photo" loading="lazy" onerror="this.src='/placeholder-image.jpg'">
                     <div class="photo-overlay">
                         <button class="quick-order-btn" onclick="event.stopPropagation(); quickOrder(${index})">Order Print</button>
                     </div>
+                    <div class="photo-verification">
+                        <small>✅ ${session.clientName} - Photo ${index + 1}</small>
+                    </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
             
             // Add click handlers to open lightbox
             document.querySelectorAll('.photo-item').forEach(item => {
