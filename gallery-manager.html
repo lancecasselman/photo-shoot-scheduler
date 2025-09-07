@@ -692,6 +692,7 @@
         let clientName = '';
         let clientEmail = '';
         let clientPhoneNumber = '';
+        let sessionData = null; // Store the loaded session data
         let files = [];
         let uploadQueue = [];
         let isUploading = false;
@@ -709,7 +710,7 @@
                 });
                 
                 if (response.ok) {
-                    const sessionData = await response.json();
+                    sessionData = await response.json(); // Store in global variable
                     console.log('Session data loaded:', sessionData);
                     
                     // Update client info from session data
@@ -1577,9 +1578,8 @@
                     return;
                 }
                 
-                // Get the gallery access token from the session
-                const currentSession = sessions.find(s => s.id === sessionId);
-                let galleryToken = currentSession?.gallery_access_token;
+                // Get the gallery access token from the session data
+                let galleryToken = sessionData?.gallery_access_token || sessionData?.galleryAccessToken;
                 
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
@@ -1596,8 +1596,9 @@
                             const data = await response.json();
                             galleryToken = data.accessToken;
                             // Update the local session data
-                            if (currentSession) {
-                                currentSession.gallery_access_token = galleryToken;
+                            if (sessionData) {
+                                sessionData.gallery_access_token = galleryToken;
+                                sessionData.galleryAccessToken = galleryToken;
                             }
                         } else {
                             alert('Failed to create gallery. Please try again.');
@@ -1643,9 +1644,8 @@ Lance - The Legacy Photography`;
                     return;
                 }
                 
-                // Get the gallery access token from the session
-                const currentSession = sessions.find(s => s.id === sessionId);
-                let galleryToken = currentSession?.gallery_access_token;
+                // Get the gallery access token from the session data
+                let galleryToken = sessionData?.gallery_access_token || sessionData?.galleryAccessToken;
                 
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
@@ -1662,8 +1662,9 @@ Lance - The Legacy Photography`;
                             const data = await response.json();
                             galleryToken = data.accessToken;
                             // Update the local session data
-                            if (currentSession) {
-                                currentSession.gallery_access_token = galleryToken;
+                            if (sessionData) {
+                                sessionData.gallery_access_token = galleryToken;
+                                sessionData.galleryAccessToken = galleryToken;
                             }
                         } else {
                             alert('Failed to create gallery. Please try again.');
