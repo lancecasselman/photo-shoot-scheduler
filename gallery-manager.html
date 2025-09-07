@@ -1614,10 +1614,7 @@
                 }
                 
                 // Use the stable public URL for client access
-                const publicDomain = window.location.hostname.includes('replit.dev') 
-                    ? `https://${window.location.hostname.split('-00-')[0]}.replit.app`
-                    : window.location.origin;
-                const clientGalleryUrl = `${publicDomain}/gallery/${galleryToken}`;
+                const clientGalleryUrl = `https://workspace.lancecasselman.repl.co/gallery/${galleryToken}`;
                 const subject = `Your Photography Gallery - ${clientName}`;
                 const body = `Hi ${clientName},
 
@@ -1684,10 +1681,7 @@ Lance - The Legacy Photography`;
                 }
                 
                 // Use the stable public URL for client access
-                const publicDomain = window.location.hostname.includes('replit.dev') 
-                    ? `https://${window.location.hostname.split('-00-')[0]}.replit.app`
-                    : window.location.origin;
-                const clientGalleryUrl = `${publicDomain}/gallery/${galleryToken}`;
+                const clientGalleryUrl = `https://workspace.lancecasselman.repl.co/gallery/${galleryToken}`;
                 const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
                 
                 const smsUrl = `sms:${clientPhoneNumber}?body=${encodeURIComponent(message)}`;
