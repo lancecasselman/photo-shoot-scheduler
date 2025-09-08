@@ -8593,6 +8593,50 @@ app.get('/gallery/:id', async (req, res) => {
     }
 });
 
+// Public gallery photo serving route (no authentication required)
+app.get('/gallery/:token/photo/:filename', async (req, res) => {
+    const { token, filename } = req.params;
+    
+    try {
+        // Verify gallery token exists and get session info
+        const client = await pool.connect();
+        const galleryQuery = await client.query(`
+            SELECT id, user_id FROM photography_sessions 
+            WHERE gallery_access_token = $1 
+            AND photos IS NOT NULL 
+            AND jsonb_array_length(photos) > 0
+        `, [token]);
+        client.release();
+
+        if (galleryQuery.rows.length === 0) {
+            return res.status(404).send('Gallery not found');
+        }
+
+        const session = galleryQuery.rows[0];
+        
+        // Use R2FileManager to download and serve the file
+        const fileResult = await r2FileManager.downloadFile(session.user_id, session.id, filename);
+        
+        if (!fileResult.success) {
+            return res.status(404).send('Photo not found');
+        }
+
+        // Set appropriate headers for image serving
+        res.set({
+            'Content-Type': fileResult.contentType || 'image/jpeg',
+            'Content-Length': fileResult.buffer.length,
+            'Cache-Control': 'public, max-age=31536000', // 1 year cache
+            'Content-Disposition': `inline; filename="${fileResult.filename}"`
+        });
+
+        res.send(fileResult.buffer);
+
+    } catch (error) {
+        console.error('Error serving gallery photo:', error);
+        res.status(500).send('Error loading photo');
+    }
+});
+
 // Generate and store gallery access token
 app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
