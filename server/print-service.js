@@ -181,11 +181,14 @@ class PrintServiceAPI {
     const products = [];
     
     try {
-      // WHCC catalog has Categories array with Products nested inside
+      // WHCC catalog has Categories array with ProductList nested inside
       if (catalog.Categories && Array.isArray(catalog.Categories)) {
         catalog.Categories.forEach(category => {
-          if (category.Products && Array.isArray(category.Products)) {
-            category.Products.forEach(product => {
+          // Check for ProductList (the actual field name in WHCC catalog)
+          const productList = category.ProductList || category.Products || [];
+          
+          if (Array.isArray(productList) && productList.length > 0) {
+            productList.forEach(product => {
               // Extract key product attributes
               const baseProduct = {
                 id: `whcc_${product.ProductUID || Math.random()}`,
