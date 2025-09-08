@@ -497,6 +497,11 @@
             font-size: 11px;
             font-weight: bold;
         }
+        
+        /* Hide mobile nav on desktop by default */
+        .mobile-nav {
+            display: none;
+        }
 
         /* Responsive */
         @media (max-width: 1024px) {
@@ -549,19 +554,31 @@
                 flex-direction: column;
             }
             
+            /* Hide desktop navigation on mobile */
+            .mobile-nav {
+                display: flex !important;
+            }
+            
             .product-panel,
             .options-panel {
                 width: 100%;
                 max-width: 100%;
                 position: fixed;
-                bottom: 0;
+                bottom: 60px;
                 left: 0;
                 right: 0;
-                height: 70vh;
-                transform: translateY(100%);
+                height: calc(85vh - 60px);
+                transform: translateY(calc(100% + 60px));
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-                transition: transform 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 34;
+                background: white;
+            }
+            
+            .product-panel.open,
+            .options-panel.open {
+                transform: translateY(0);
             }
             
             .panel-open .product-panel,
@@ -634,20 +651,73 @@
             
             /* Mobile panel toggle */
             .panel-toggle {
-                bottom: 20px;
-                top: auto;
+                display: none;
             }
             
-            .toggle-products {
-                left: 20px;
-                bottom: 20px;
-                top: auto;
+            /* Mobile bottom navigation bar */
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: white;
+                border-top: 1px solid #e2e8f0;
+                justify-content: space-around;
+                align-items: center;
+                z-index: 35;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
             }
             
-            .toggle-options {
-                right: 20px;
-                bottom: 20px;
-                top: auto;
+            .mobile-nav-btn {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px;
+                background: none;
+                border: none;
+                color: #718096;
+                cursor: pointer;
+                flex: 1;
+                height: 100%;
+                transition: all 0.2s;
+                position: relative;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .mobile-nav-btn.active {
+                color: #4299e1;
+            }
+            
+            .mobile-nav-btn:active {
+                transform: scale(0.95);
+                background: rgba(66, 153, 225, 0.05);
+            }
+            
+            .mobile-nav-icon {
+                font-size: 24px;
+                margin-bottom: 2px;
+            }
+            
+            .mobile-nav-label {
+                font-size: 11px;
+                font-weight: 600;
+            }
+            
+            .cart-badge-nav {
+                position: absolute;
+                top: 8px;
+                right: calc(50% - 16px);
+                background: #f56565;
+                color: white;
+                font-size: 10px;
+                padding: 2px 5px;
+                border-radius: 10px;
+                min-width: 16px;
+                text-align: center;
+                font-weight: bold;
             }
             
             /* Adjust cart icon for mobile */
@@ -1339,29 +1409,89 @@
         }
 
         function setupMobilePanels() {
-            // Add mobile panel toggle buttons if they don't exist
-            if (!document.querySelector('.toggle-products')) {
-                const toggleProducts = document.createElement('div');
-                toggleProducts.className = 'panel-toggle toggle-products';
-                toggleProducts.innerHTML = '📦';
-                toggleProducts.addEventListener('click', () => {
-                    document.body.classList.toggle('panel-open');
-                    document.querySelector('.product-panel').style.transform = 
-                        document.body.classList.contains('panel-open') ? 'translateY(0)' : 'translateY(100%)';
+            // Create mobile navigation bar if it doesn't exist
+            if (!document.querySelector('.mobile-nav')) {
+                const mobileNav = document.createElement('div');
+                mobileNav.className = 'mobile-nav';
+                mobileNav.innerHTML = `
+                    <button class="mobile-nav-btn active" data-panel="preview">
+                        <span class="mobile-nav-icon">🖼️</span>
+                        <span class="mobile-nav-label">Preview</span>
+                    </button>
+                    <button class="mobile-nav-btn" data-panel="products">
+                        <span class="mobile-nav-icon">📦</span>
+                        <span class="mobile-nav-label">Products</span>
+                    </button>
+                    <button class="mobile-nav-btn" data-panel="options">
+                        <span class="mobile-nav-icon">⚙️</span>
+                        <span class="mobile-nav-label">Options</span>
+                    </button>
+                    <button class="mobile-nav-btn" data-panel="cart">
+                        <span class="mobile-nav-icon">🛒</span>
+                        <span class="mobile-nav-label">Cart</span>
+                    </button>
+                `;
+                document.body.appendChild(mobileNav);
+                
+                // Handle mobile nav clicks
+                mobileNav.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const panel = e.currentTarget.dataset.panel;
+                        
+                        // Update active state
+                        mobileNav.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        
+                        // Handle panel transitions
+                        const productPanel = document.querySelector('.product-panel');
+                        const optionsPanel = document.querySelector('.options-panel');
+                        
+                        // Close all panels first with smooth animation
+                        productPanel.classList.remove('open');
+                        optionsPanel.classList.remove('open');
+                        productPanel.style.transform = 'translateY(calc(100% + 60px))';
+                        optionsPanel.style.transform = 'translateY(calc(100% + 60px))';
+                        
+                        // Open selected panel after a brief delay
+                        setTimeout(() => {
+                            switch(panel) {
+                                case 'products':
+                                    productPanel.classList.add('open');
+                                    productPanel.style.transform = 'translateY(0)';
+                                    break;
+                                case 'options':
+                                    optionsPanel.classList.add('open');
+                                    optionsPanel.style.transform = 'translateY(0)';
+                                    break;
+                                case 'cart':
+                                    viewCart();
+                                    break;
+                                case 'preview':
+                                    // All panels already closed, just showing preview
+                                    break;
+                            }
+                        }, panel === 'preview' ? 0 : 100);
+                    });
                 });
-                document.body.appendChild(toggleProducts);
-            }
-            
-            if (!document.querySelector('.toggle-options')) {
-                const toggleOptions = document.createElement('div');
-                toggleOptions.className = 'panel-toggle toggle-options';
-                toggleOptions.innerHTML = '⚙️';
-                toggleOptions.addEventListener('click', () => {
-                    document.body.classList.toggle('panel-open');
-                    document.querySelector('.options-panel').style.transform = 
-                        document.body.classList.contains('panel-open') ? 'translateY(0)' : 'translateY(100%)';
-                });
-                document.body.appendChild(toggleOptions);
+                
+                // Update cart badge function
+                window.updateMobileCartBadge = () => {
+                    const cartBtn = mobileNav.querySelector('[data-panel="cart"]');
+                    if (!cartBtn) return;
+                    
+                    let badge = cartBtn.querySelector('.cart-badge-nav');
+                    
+                    if (cart.length > 0) {
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'cart-badge-nav';
+                            cartBtn.appendChild(badge);
+                        }
+                        badge.textContent = cart.length;
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                };
             }
             
             // Add swipe-to-close for mobile panels
@@ -1392,8 +1522,14 @@
                     
                     if (diff > 100) {
                         // Close panel if dragged down more than 100px
-                        panel.style.transform = 'translateY(100%)';
+                        panel.classList.remove('open');
+                        panel.style.transform = 'translateY(calc(100% + 60px))';
                         document.body.classList.remove('panel-open');
+                        
+                        // Update nav active state
+                        const navBtns = document.querySelectorAll('.mobile-nav-btn');
+                        navBtns.forEach(btn => btn.classList.remove('active'));
+                        document.querySelector('[data-panel="preview"]')?.classList.add('active');
                     } else {
                         // Snap back to open position
                         panel.style.transform = 'translateY(0)';
