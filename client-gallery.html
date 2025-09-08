@@ -419,6 +419,13 @@
             try {
                 console.log('🛒 Starting purchase for photo:', filename);
                 
+                // Fetch real WHCC print products
+                const productsResponse = await fetch('/api/print/products');
+                const productsData = await productsResponse.json();
+                const products = productsData.products || [];
+                
+                console.log('🖨️ Loaded print products:', products);
+                
                 // Show purchase options modal
                 const modal = document.createElement('div');
                 modal.style.cssText = `
@@ -434,28 +441,22 @@
                     z-index: 1000;
                 `;
                 
+                // Generate product options from real WHCC data
+                const productOptionsHTML = products.map(product => `
+                    <button class="print-option" data-product-id="${product.id}" data-size="${product.name}" data-price="${product.price}" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-weight: 600; margin-bottom: 5px;">${product.name}</div>
+                        <div style="color: #666; font-size: 14px;">$${product.price}</div>
+                        ${product.description ? `<div style="color: #999; font-size: 12px; margin-top: 3px;">${product.description}</div>` : ''}
+                    </button>
+                `).join('');
+                
                 modal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; text-align: center;">
+                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: center;">
                         <h3 style="margin-bottom: 20px; color: #2d3748;">Purchase ${filename}</h3>
-                        <p style="margin-bottom: 25px; color: #666;">Choose your print options:</p>
+                        <p style="margin-bottom: 25px; color: #666;">Choose from professional WhiteHouse Custom Color print options:</p>
                         
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                            <button class="print-option" data-size="4x6" data-price="5.99" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">4"×6"</div>
-                                <div style="color: #666; font-size: 14px;">$5.99</div>
-                            </button>
-                            <button class="print-option" data-size="5x7" data-price="8.99" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">5"×7"</div>
-                                <div style="color: #666; font-size: 14px;">$8.99</div>
-                            </button>
-                            <button class="print-option" data-size="8x10" data-price="12.99" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">8"×10"</div>
-                                <div style="color: #666; font-size: 14px;">$12.99</div>
-                            </button>
-                            <button class="print-option" data-size="digital" data-price="15.99" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">Digital</div>
-                                <div style="color: #666; font-size: 14px;">$15.99</div>
-                            </button>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                            ${productOptionsHTML}
                         </div>
                         
                         <div style="display: flex; gap: 15px; justify-content: center;">
@@ -481,6 +482,7 @@
                         option.style.background = '#f0fff4';
                         
                         selectedOption = {
+                            productId: option.dataset.productId,
                             size: option.dataset.size,
                             price: option.dataset.price
                         };
@@ -509,6 +511,7 @@
                             body: JSON.stringify({
                                 galleryToken,
                                 filename,
+                                productId: selectedOption.productId,
                                 size: selectedOption.size,
                                 price: selectedOption.price,
                                 clientName: sessionData.clientName,

@@ -5534,7 +5534,8 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
 // ==================== PRINT SERVICE API ====================
 
 // Initialize print service
-const printService = require('./server/print-service.js');
+const PrintServiceAPI = require('./server/print-service.js');
+const printService = new PrintServiceAPI();
 
 // Test print service connection
 app.get('/api/print/test', async (req, res) => {
@@ -5560,6 +5561,104 @@ app.get('/api/print/test', async (req, res) => {
             success: false, 
             error: 'Print service test failed', 
             details: error.message 
+        });
+    }
+});
+
+// Get WHCC print products
+app.get('/api/print/products', async (req, res) => {
+    try {
+        console.log('🖨️ Fetching WHCC print products...');
+        const products = await printService.getProducts();
+        
+        // Filter for common print products and format for gallery
+        const galleryProducts = products.filter(product => {
+            const name = product.name?.toLowerCase() || '';
+            return name.includes('print') || name.includes('photo') || name.includes('digital');
+        }).map(product => ({
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price || product.basePrice || 0,
+            category: product.category,
+            sizes: product.sizes || []
+        }));
+        
+        console.log(`✅ Found ${galleryProducts.length} gallery-suitable products`);
+        res.json({ 
+            success: true, 
+            products: galleryProducts 
+        });
+    } catch (error) {
+        console.error('❌ Error fetching WHCC products:', error);
+        
+        // Fallback to basic options if WHCC API is not available
+        const fallbackProducts = [
+            { id: 'print_4x6', name: '4"×6" Print', price: 5.99, category: 'prints' },
+            { id: 'print_5x7', name: '5"×7" Print', price: 8.99, category: 'prints' },
+            { id: 'print_8x10', name: '8"×10" Print', price: 12.99, category: 'prints' },
+            { id: 'digital_download', name: 'Digital Download', price: 15.99, category: 'digital' }
+        ];
+        
+        res.json({ 
+            success: true, 
+            products: fallbackProducts,
+            note: 'Using fallback products - WHCC API not available'
+        });
+    }
+});
+
+// Create print order
+app.post('/api/print/order', async (req, res) => {
+    try {
+        const { galleryToken, filename, productId, size, price, clientName, sessionId } = req.body;
+        
+        console.log('🛒 Creating print order:', { galleryToken, filename, productId, clientName });
+        
+        // Verify gallery access
+        const sessionResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE gallery_access_token = $1',
+            [galleryToken]
+        );
+        
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+        
+        const session = sessionResult.rows[0];
+        
+        // Create order record (you might want to store this in a database)
+        const orderData = {
+            galleryToken,
+            sessionId: session.id,
+            clientName: session.client_name,
+            filename,
+            productId,
+            size,
+            price: parseFloat(price),
+            status: 'pending',
+            createdAt: new Date()
+        };
+        
+        // For now, we'll just return success. In production, you'd:
+        // 1. Create order in database
+        // 2. Process payment via Stripe
+        // 3. Submit order to WHCC
+        
+        console.log('✅ Print order created:', orderData);
+        
+        res.json({ 
+            success: true, 
+            message: 'Order added to cart',
+            orderId: `order_${Date.now()}`,
+            // In production, you'd redirect to a proper checkout
+            checkoutUrl: `/checkout?order=${orderData.orderId}` 
+        });
+    } catch (error) {
+        console.error('❌ Error creating print order:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to create print order' 
         });
     }
 });
