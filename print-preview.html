@@ -623,10 +623,33 @@
             }
             
             .room-selector {
-                padding: 10px;
-                gap: 10px;
+                position: fixed !important;
+                bottom: 70px !important;
+                left: 10px !important;
+                right: 10px !important;
+                padding: 8px;
+                gap: 6px;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                background: rgba(255, 255, 255, 0.98);
+                border-radius: 30px;
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+                z-index: 30 !important;
+                display: flex;
+                justify-content: flex-start;
+                scrollbar-width: none;
+                transform: translateX(0) !important;
+            }
+            
+            .room-selector::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .room-btn {
+                padding: 8px 14px;
+                font-size: 12px;
+                flex-shrink: 0;
+                white-space: nowrap;
             }
             
             /* Mobile-friendly sliders */
