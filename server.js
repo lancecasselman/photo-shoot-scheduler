@@ -8511,6 +8511,7 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
 
 // BULLETPROOF CLIENT GALLERY SYSTEM - Guarantees correct photo delivery
 app.get('/gallery/:id', async (req, res) => {
+    // Gallery access via direct token: /gallery/{galleryAccessToken}
     const galleryToken = req.params.id;
     
     console.log('🔒 BULLETPROOF GALLERY ACCESS:', {
@@ -9836,7 +9837,7 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
             baseUrl = `https://${host}`;
         }
 
-        const galleryUrl = `${baseUrl}/gallery/${sessionId}?access=${accessToken}`;
+        const galleryUrl = `${baseUrl}/gallery/${accessToken}`;
 
         console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
         console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
@@ -10091,7 +10092,7 @@ app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (
             baseUrl = `${req.protocol}://${host}`;
         }
 
-        const galleryUrl = `${baseUrl}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
 
         console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
 
