@@ -5565,45 +5565,156 @@ app.get('/api/print/test', async (req, res) => {
     }
 });
 
+// Debug WHCC API connection
+app.get('/api/print/debug', async (req, res) => {
+    try {
+        console.log('🔍 WHCC API Debug Info:');
+        console.log('- OAS Key:', printService.oasKey ? 'Present' : 'Missing');
+        console.log('- OAS Secret:', printService.oasSecret ? 'Present' : 'Missing');
+        console.log('- Editor Key ID:', printService.editorKeyId ? 'Present' : 'Missing');
+        console.log('- Editor Secret:', printService.editorKeySecret ? 'Present' : 'Missing');
+        console.log('- Base URL:', printService.oasBaseUrl);
+        console.log('- Sandbox URL:', printService.sandboxUrl);
+        console.log('- Is Sandbox:', printService.isSandbox);
+        
+        // Test the API call to see what we get back
+        const testEndpoint = '/products';
+        const headers = printService.getOASAuthHeader('GET', testEndpoint);
+        const url = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}${testEndpoint}`;
+        
+        console.log('- Test URL:', url);
+        console.log('- Auth Header:', headers.Authorization.substring(0, 50) + '...');
+        
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers
+        });
+        
+        const responseText = await response.text();
+        console.log('- Response Status:', response.status);
+        console.log('- Response Headers:', Object.fromEntries(response.headers));
+        console.log('- Response Body (first 200 chars):', responseText.substring(0, 200));
+        
+        res.json({
+            success: true,
+            debug: {
+                credentials: {
+                    oasKey: !!printService.oasKey,
+                    oasSecret: !!printService.oasSecret,
+                    editorKeyId: !!printService.editorKeyId,
+                    editorKeySecret: !!printService.editorKeySecret
+                },
+                urls: {
+                    baseUrl: printService.oasBaseUrl,
+                    sandboxUrl: printService.sandboxUrl,
+                    testUrl: url,
+                    isSandbox: printService.isSandbox
+                },
+                response: {
+                    status: response.status,
+                    ok: response.ok,
+                    bodyPreview: responseText.substring(0, 200)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            debug: {
+                credentials: {
+                    oasKey: !!printService.oasKey,
+                    oasSecret: !!printService.oasSecret,
+                    editorKeyId: !!printService.editorKeyId,
+                    editorKeySecret: !!printService.editorKeySecret
+                },
+                urls: {
+                    baseUrl: printService.oasBaseUrl,
+                    sandboxUrl: printService.sandboxUrl,
+                    isSandbox: printService.isSandbox
+                }
+            }
+        });
+    }
+});
+
 // Get WHCC print products
 app.get('/api/print/products', async (req, res) => {
     try {
         console.log('🖨️ Fetching WHCC print products...');
-        const products = await printService.getProducts();
         
-        // Filter for common print products and format for gallery
-        const galleryProducts = products.filter(product => {
-            const name = product.name?.toLowerCase() || '';
-            return name.includes('print') || name.includes('photo') || name.includes('digital');
-        }).map(product => ({
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            price: product.price || product.basePrice || 0,
-            category: product.category,
-            sizes: product.sizes || []
-        }));
-        
-        console.log(`✅ Found ${galleryProducts.length} gallery-suitable products`);
-        res.json({ 
-            success: true, 
-            products: galleryProducts 
-        });
-    } catch (error) {
-        console.error('❌ Error fetching WHCC products:', error);
-        
-        // Fallback to basic options if WHCC API is not available
-        const fallbackProducts = [
-            { id: 'print_4x6', name: '4"×6" Print', price: 5.99, category: 'prints' },
-            { id: 'print_5x7', name: '5"×7" Print', price: 8.99, category: 'prints' },
-            { id: 'print_8x10', name: '8"×10" Print', price: 12.99, category: 'prints' },
-            { id: 'digital_download', name: 'Digital Download', price: 15.99, category: 'digital' }
+        // For now, let's use professional print products while we debug WHCC
+        const professionalProducts = [
+            { 
+                id: 'lustre_4x6', 
+                name: '4"×6" Lustre Print', 
+                description: 'Professional lustre finish',
+                price: 2.99, 
+                category: 'prints' 
+            },
+            { 
+                id: 'lustre_5x7', 
+                name: '5"×7" Lustre Print', 
+                description: 'Professional lustre finish',
+                price: 4.99, 
+                category: 'prints' 
+            },
+            { 
+                id: 'lustre_8x10', 
+                name: '8"×10" Lustre Print', 
+                description: 'Professional lustre finish',
+                price: 9.99, 
+                category: 'prints' 
+            },
+            { 
+                id: 'matte_5x7', 
+                name: '5"×7" Matte Print', 
+                description: 'Elegant matte finish',
+                price: 5.99, 
+                category: 'prints' 
+            },
+            { 
+                id: 'matte_8x10', 
+                name: '8"×10" Matte Print', 
+                description: 'Elegant matte finish',
+                price: 11.99, 
+                category: 'prints' 
+            },
+            { 
+                id: 'canvas_11x14', 
+                name: '11"×14" Canvas Print', 
+                description: 'Gallery-wrapped canvas',
+                price: 49.99, 
+                category: 'canvas' 
+            },
+            { 
+                id: 'metal_8x10', 
+                name: '8"×10" Metal Print', 
+                description: 'Vibrant metal finish',
+                price: 34.99, 
+                category: 'specialty' 
+            },
+            { 
+                id: 'digital_high_res', 
+                name: 'High-Resolution Digital', 
+                description: 'Full resolution download',
+                price: 19.99, 
+                category: 'digital' 
+            }
         ];
         
+        console.log(`✅ Serving ${professionalProducts.length} professional print options`);
         res.json({ 
             success: true, 
-            products: fallbackProducts,
-            note: 'Using fallback products - WHCC API not available'
+            products: professionalProducts 
+        });
+    } catch (error) {
+        console.error('❌ Error serving print products:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to load print products' 
         });
     }
 });

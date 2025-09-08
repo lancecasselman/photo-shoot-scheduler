@@ -287,4 +287,4 @@ if (printService.editorKeyId && printService.editorKeySecret) {
   console.log('✅ Print Service: WHCC Editor API configured');
 }
 
-module.exports = printService;
+module.exports = PrintServiceAPI;
