@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .gallery-actions {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .photo-count {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .download-all-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .download-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .photo-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .photo-wrapper {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+        }
+
+        .photo-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .photo-card:hover .photo-wrapper img {
+            transform: scale(1.05);
+        }
+
+        .photo-info {
+            padding: 15px;
+        }
+
+        .photo-filename {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .download-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .empty-gallery {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-gallery h2 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .empty-gallery p {
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .gallery-actions {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="galleryTitle">Loading Gallery...</h1>
+            <p id="gallerySubtitle">Please wait while we load your photos</p>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading your photo gallery...</p>
+        </div>
+
+        <div id="errorContainer" class="error" style="display: none;">
+            <h2>Gallery Access Error</h2>
+            <p id="errorMessage">Unable to access this gallery. Please check your link and try again.</p>
+        </div>
+
+        <div id="galleryActions" class="gallery-actions" style="display: none;">
+            <div class="photo-count" id="photoCount">0 photos</div>
+            <button class="download-all-btn" onclick="downloadAllPhotos()">
+                📥 Download All Photos
+            </button>
+        </div>
+
+        <div id="galleryGrid" class="gallery-grid"></div>
+
+        <div id="emptyGallery" class="empty-gallery" style="display: none;">
+            <h2>No Photos Available</h2>
+            <p>This gallery doesn't have any photos available yet. Please check back later.</p>
+        </div>
+    </div>
+
+    <script>
+        // Extract gallery token from URL path
+        const pathParts = window.location.pathname.split('/');
+        const galleryToken = pathParts[pathParts.length - 1];
+        
+        let sessionData = null;
+        let photos = [];
+
+        // Initialize gallery on page load
+        document.addEventListener('DOMContentLoaded', loadGallery);
+
+        async function loadGallery() {
+            try {
+                console.log('🔒 Loading gallery with token:', galleryToken);
+
+                // Verify gallery access and get session info
+                const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
+                if (!verifyResponse.ok) {
+                    const error = await verifyResponse.json();
+                    throw new Error(error.error || 'Gallery access denied');
+                }
+
+                sessionData = await verifyResponse.json();
+                console.log('✅ Session data loaded:', sessionData);
+
+                // Update page title and header
+                document.getElementById('galleryTitle').textContent = `${sessionData.clientName}'s Gallery`;
+                document.getElementById('gallerySubtitle').textContent = sessionData.sessionType;
+                document.title = `${sessionData.clientName}'s Photo Gallery`;
+
+                // Load photos
+                const photosResponse = await fetch(`/api/gallery/${galleryToken}/photos`);
+                if (!photosResponse.ok) {
+                    throw new Error('Failed to load photos');
+                }
+
+                const photosData = await photosResponse.json();
+                photos = photosData.photos || [];
+
+                // Hide loading and show gallery
+                document.getElementById('loadingContainer').style.display = 'none';
+
+                if (photos.length === 0) {
+                    showEmptyGallery();
+                } else {
+                    renderGallery();
+                }
+
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                showError(error.message);
+            }
+        }
+
+        function renderGallery() {
+            const galleryGrid = document.getElementById('galleryGrid');
+            const galleryActions = document.getElementById('galleryActions');
+            const photoCount = document.getElementById('photoCount');
+
+            // Update photo count and show actions
+            photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
+            galleryActions.style.display = 'flex';
+
+            // Generate photo cards
+            galleryGrid.innerHTML = photos.map((photo, index) => {
+                const photoUrl = photo.url || photo.filename;
+                const filename = photo.filename || `photo-${index + 1}.jpg`;
+                
+                return `
+                    <div class="photo-card" onclick="openLightbox(${index})">
+                        <div class="photo-wrapper">
+                            <img src="${photoUrl}" alt="${filename}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4='">
+                        </div>
+                        <div class="photo-info">
+                            <div class="photo-filename">${filename}</div>
+                            <div class="photo-actions">
+                                <button class="download-btn" onclick="event.stopPropagation(); downloadPhoto('${photoUrl}', '${filename}')">
+                                    📥 Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log(`✅ Rendered ${photos.length} photos for ${sessionData.clientName}`);
+        }
+
+        function showEmptyGallery() {
+            document.getElementById('emptyGallery').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorContainer').style.display = 'block';
+        }
+
+        async function downloadPhoto(url, filename) {
+            try {
+                console.log('📥 Downloading photo:', filename);
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                console.log('✅ Photo downloaded:', filename);
+            } catch (error) {
+                console.error('❌ Download failed:', error);
+                alert('Download failed. Please try again.');
+            }
+        }
+
+        async function downloadAllPhotos() {
+            if (photos.length === 0) return;
+            
+            console.log('📥 Starting bulk download of', photos.length, 'photos');
+            
+            for (let i = 0; i < photos.length; i++) {
+                const photo = photos[i];
+                const photoUrl = photo.url || photo.filename;
+                const filename = photo.filename || `photo-${i + 1}.jpg`;
+                
+                try {
+                    await downloadPhoto(photoUrl, filename);
+                    // Small delay between downloads to avoid overwhelming the browser
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`❌ Failed to download ${filename}:`, error);
+                }
+            }
+            
+            console.log('✅ Bulk download completed');
+        }
+
+        function openLightbox(index) {
+            // Simple lightbox implementation
+            const photo = photos[index];
+            const photoUrl = photo.url || photo.filename;
+            const filename = photo.filename || `photo-${index + 1}.jpg`;
+            
+            const lightbox = document.createElement('div');
+            lightbox.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                cursor: pointer;
+            `;
+            
+            lightbox.innerHTML = `
+                <div style="max-width: 90%; max-height: 90%; text-align: center;">
+                    <img src="${photoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    <div style="color: white; margin-top: 20px; font-size: 18px;">${filename}</div>
+                    <div style="color: #ccc; margin-top: 10px;">Click anywhere to close</div>
+                </div>
+            `;
+            
+            lightbox.onclick = () => document.body.removeChild(lightbox);
+            document.body.appendChild(lightbox);
+        }
+    </script>
+</body>
+</html>
