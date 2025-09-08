@@ -184,10 +184,13 @@
         }
 
         .print-display {
-            position: relative;
+            position: absolute;
             z-index: 10;
             transition: all 0.3s ease;
             cursor: move;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%);
         }
 
         .print-frame {
@@ -983,14 +986,59 @@
         let galleryToken = '';
         let originalPhotoData = null;
 
-        // Room backgrounds (we'll use gradients for now, can add real images later)
-        const roomBackgrounds = {
-            living: 'linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 50%, #d0d0d0 100%)',
-            bedroom: 'linear-gradient(to bottom, #faf8f5 0%, #f0e8dc 50%, #e5d5c0 100%)',
-            office: 'linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #2c3e50 100%)',
-            gallery: 'linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%)',
-            kitchen: 'linear-gradient(to bottom, #fafafa 0%, #f0f0f0 50%, #e0e0e0 100%)'
+        // Room configurations with realistic dimensions and scale references
+        const roomConfigs = {
+            living: {
+                background: 'linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 50%, #d0d0d0 100%)',
+                wallWidth: 144, // 12 feet in inches
+                displayName: 'Living Room',
+                description: '12ft wall, above sofa',
+                // Position where print should appear (as percentage of container)
+                printPosition: { x: 50, y: 35 },
+                // Reference objects for scale (like furniture)
+                referenceHeight: 30, // Typical sofa back height in inches
+                referencePosition: 65 // Where reference sits (% from top)
+            },
+            bedroom: {
+                background: 'linear-gradient(to bottom, #faf8f5 0%, #f0e8dc 50%, #e5d5c0 100%)',
+                wallWidth: 120, // 10 feet in inches
+                displayName: 'Bedroom',
+                description: '10ft wall, above bed',
+                printPosition: { x: 50, y: 30 },
+                referenceHeight: 24, // Typical headboard height in inches
+                referencePosition: 60
+            },
+            office: {
+                background: 'linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #2c3e50 100%)',
+                wallWidth: 96, // 8 feet in inches
+                displayName: 'Office',
+                description: '8ft wall, above desk',
+                printPosition: { x: 50, y: 35 },
+                referenceHeight: 30, // Typical desk height in inches
+                referencePosition: 70
+            },
+            gallery: {
+                background: 'linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%)',
+                wallWidth: 180, // 15 feet in inches (gallery wall)
+                displayName: 'Gallery Wall',
+                description: '15ft gallery wall',
+                printPosition: { x: 50, y: 40 },
+                referenceHeight: 60, // Eye level reference line in inches
+                referencePosition: 50
+            },
+            kitchen: {
+                background: 'linear-gradient(to bottom, #fafafa 0%, #f0f0f0 50%, #e0e0e0 100%)',
+                wallWidth: 72, // 6 feet in inches
+                displayName: 'Kitchen',
+                description: '6ft wall space',
+                printPosition: { x: 50, y: 35 },
+                referenceHeight: 36, // Counter height in inches
+                referencePosition: 65
+            }
         };
+        
+        // Current room configuration
+        let currentRoom = 'living';
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', async () => {
@@ -1264,11 +1312,68 @@
             const printDisplay = document.getElementById('printDisplay');
             const [width, height] = size.split('x').map(Number);
             
-            // Scale to reasonable display size (max 400px wide)
-            const scale = Math.min(400 / width, 500 / height, 20);
+            // Get current room configuration
+            const roomConfig = roomConfigs[currentRoom];
             
-            printDisplay.style.width = `${width * scale}px`;
-            printDisplay.style.height = `${height * scale}px`;
+            // Calculate scale based on room wall width
+            // We want the preview container to represent the wall width
+            const previewContainer = document.querySelector('.preview-area');
+            const containerWidth = previewContainer ? previewContainer.offsetWidth : 800;
+            
+            // Calculate pixels per inch for this room
+            // Container width represents the full wall width
+            const pixelsPerInch = containerWidth / roomConfig.wallWidth;
+            
+            // Apply realistic scaling
+            const displayWidth = width * pixelsPerInch;
+            const displayHeight = height * pixelsPerInch;
+            
+            // Set the print display size
+            printDisplay.style.width = `${displayWidth}px`;
+            printDisplay.style.height = `${displayHeight}px`;
+            
+            // Position the print at the configured location
+            printDisplay.style.left = `${roomConfig.printPosition.x}%`;
+            printDisplay.style.top = `${roomConfig.printPosition.y}%`;
+            printDisplay.style.transform = `translate(-50%, -50%)`;
+            
+            // Add room info display
+            updateRoomInfo(size, roomConfig);
+        }
+        
+        function updateRoomInfo(printSize, roomConfig) {
+            // Create or update room info display
+            let infoDisplay = document.getElementById('roomInfoDisplay');
+            if (!infoDisplay) {
+                infoDisplay = document.createElement('div');
+                infoDisplay.id = 'roomInfoDisplay';
+                infoDisplay.style.cssText = `
+                    position: absolute;
+                    bottom: 70px;
+                    left: 20px;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 10px 15px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                    font-size: 13px;
+                    color: #2d3748;
+                    z-index: 10;
+                `;
+                document.querySelector('.preview-area').appendChild(infoDisplay);
+            }
+            
+            const [width, height] = printSize.split('x').map(Number);
+            const wallFeet = Math.floor(roomConfig.wallWidth / 12);
+            const wallInches = roomConfig.wallWidth % 12;
+            
+            infoDisplay.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 5px;">${roomConfig.displayName}</div>
+                <div style="font-size: 11px; color: #718096;">
+                    Wall: ${wallFeet}'${wallInches > 0 ? wallInches + '"' : ''} wide<br>
+                    Print: ${width}" × ${height}"<br>
+                    ${roomConfig.description}
+                </div>
+            `;
         }
 
         function applyPrintStyle(product) {
@@ -1337,7 +1442,21 @@
 
         function setRoomBackground(room) {
             const roomBackground = document.getElementById('roomBackground');
-            roomBackground.style.background = roomBackgrounds[room];
+            const roomConfig = roomConfigs[room];
+            
+            // Update current room
+            currentRoom = room;
+            
+            // Set background
+            roomBackground.style.background = roomConfig.background;
+            
+            // Add reference elements for scale
+            addReferenceElements(roomConfig);
+            
+            // Update print size if one is selected
+            if (currentSize) {
+                updatePrintSize(currentSize);
+            }
             
             // Update active button
             document.querySelectorAll('.room-btn').forEach(btn => {
@@ -1346,6 +1465,64 @@
                     btn.classList.add('active');
                 }
             });
+        }
+        
+        function addReferenceElements(roomConfig) {
+            // Remove existing reference elements
+            const existingRef = document.getElementById('referenceElement');
+            if (existingRef) existingRef.remove();
+            
+            // Create reference element (furniture silhouette)
+            const referenceElement = document.createElement('div');
+            referenceElement.id = 'referenceElement';
+            
+            // Calculate reference height in pixels
+            const previewContainer = document.querySelector('.preview-area');
+            const containerWidth = previewContainer ? previewContainer.offsetWidth : 800;
+            const pixelsPerInch = containerWidth / roomConfig.wallWidth;
+            const refHeightPx = roomConfig.referenceHeight * pixelsPerInch;
+            
+            // Style based on room type
+            let refContent = '';
+            let refWidth = '60%';
+            
+            switch(currentRoom) {
+                case 'living':
+                    refContent = '<div style="width: 100%; height: 100%; background: linear-gradient(to bottom, #8b8b8b 0%, #6b6b6b 100%); border-radius: 8px 8px 0 0;"></div>';
+                    break;
+                case 'bedroom':
+                    refContent = '<div style="width: 100%; height: 100%; background: linear-gradient(to bottom, #9b8b7b 0%, #7b6b5b 100%); border-radius: 4px 4px 0 0;"></div>';
+                    refWidth = '70%';
+                    break;
+                case 'office':
+                    refContent = '<div style="width: 100%; height: 100%; background: linear-gradient(to bottom, #4a5568 0%, #2d3748 100%);"></div>';
+                    refWidth = '50%';
+                    break;
+                case 'gallery':
+                    // Just a reference line for eye level
+                    refContent = '<div style="width: 100%; height: 2px; background: rgba(200, 200, 200, 0.3);"></div>';
+                    refWidth = '100%';
+                    break;
+                case 'kitchen':
+                    refContent = '<div style="width: 100%; height: 100%; background: linear-gradient(to bottom, #e0e0e0 0%, #d0d0d0 100%);"></div>';
+                    refWidth = '65%';
+                    break;
+            }
+            
+            referenceElement.style.cssText = `
+                position: absolute;
+                bottom: ${100 - roomConfig.referencePosition}%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: ${refWidth};
+                height: ${refHeightPx}px;
+                opacity: 0.3;
+                pointer-events: none;
+                z-index: 1;
+            `;
+            referenceElement.innerHTML = refContent;
+            
+            document.getElementById('roomBackground').appendChild(referenceElement);
         }
 
         function setupEventListeners() {
