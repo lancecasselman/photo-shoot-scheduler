@@ -332,26 +332,32 @@
         
         async function loadGallery() {
             try {
-                // Access token is now optional - galleries are accessible by session ID
-                const accessParam = accessToken ? `?access=${accessToken}` : '';
+                // Extract gallery token from URL - sessionId IS the gallery access token
+                const galleryToken = sessionId;
                 
-                // Verify gallery access via API
-                const verifyResponse = await fetch(`/api/gallery/${sessionId}/verify${accessParam}`);
+                console.log('🔒 CLIENT GALLERY: Loading with token:', galleryToken);
+                
+                // Verify gallery access via API using the correct token format
+                const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
                 if (!verifyResponse.ok) {
                     const error = await verifyResponse.json();
+                    console.error('❌ Gallery verification failed:', error);
                     throw new Error(error.error || 'Gallery access denied');
                 }
                 
                 sessionData = await verifyResponse.json();
+                console.log('✅ CLIENT GALLERY: Session data loaded:', sessionData);
                 
                 // Update page title and subtitle
                 document.getElementById('galleryTitle').textContent = `${sessionData.clientName}'s Gallery`;
                 document.getElementById('gallerySubtitle').textContent = sessionData.sessionType;
                 document.title = `${sessionData.clientName}'s Photo Gallery`;
                 
-                // Load photos from API
-                const photosResponse = await fetch(`/api/gallery/${sessionId}/photos${accessParam}`);
+                // Load photos from API using the correct token format
+                const photosResponse = await fetch(`/api/gallery/${galleryToken}/photos`);
                 if (!photosResponse.ok) {
+                    const error = await photosResponse.json();
+                    console.error('❌ Photos loading failed:', error);
                     throw new Error('Failed to load photos');
                 }
                 
