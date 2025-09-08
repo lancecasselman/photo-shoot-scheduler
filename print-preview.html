@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Preview - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1a1a1a;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .preview-container {
+            display: flex;
+            height: 100vh;
+            background: #f8f9fa;
+        }
+
+        /* Left Panel - Product Selection */
+        .product-panel {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Product Categories */
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .category-tab {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            background: white;
+            color: #4a5568;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-tab:hover {
+            background: #f7fafc;
+        }
+
+        .category-tab.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+
+        /* Product Options */
+        .product-option {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .product-option:hover {
+            border-color: #cbd5e0;
+            background: #f7fafc;
+        }
+
+        .product-option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            color: #48bb78;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .product-description {
+            color: #718096;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* Size Grid */
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .size-option {
+            padding: 10px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .size-option:hover {
+            background: #f7fafc;
+        }
+
+        .size-option.selected {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+
+        .size-dimension {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .size-price {
+            font-size: 11px;
+            margin-top: 2px;
+            opacity: 0.8;
+        }
+
+        /* Center - Room Preview */
+        .preview-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .room-background {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .room-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .print-display {
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s ease;
+            cursor: move;
+        }
+
+        .print-frame {
+            position: relative;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .print-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Canvas wrap effect */
+        .canvas-wrap {
+            border: 20px solid #f4f4f4;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Metal print effect */
+        .metal-print {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metal-print::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+            animation: metalSheen 3s infinite;
+        }
+
+        @keyframes metalSheen {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* Acrylic print effect */
+        .acrylic-print {
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(2px);
+        }
+
+        /* Framed print */
+        .framed-print {
+            padding: 15px;
+            background: #2d3748;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .framed-print.white-frame {
+            background: #ffffff;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.2),
+                inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Room selector */
+        .room-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 25px;
+            background: #f7fafc;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .room-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .room-btn.active {
+            background: #4299e1;
+            color: white;
+        }
+
+        /* Crop controls */
+        .crop-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .crop-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .crop-slider label {
+            font-size: 13px;
+            color: #4a5568;
+            min-width: 40px;
+        }
+
+        .crop-slider input[type="range"] {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .crop-value {
+            font-size: 13px;
+            color: #2d3748;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Right Panel - Options & Cart */
+        .options-panel {
+            width: 320px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Quantity selector */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #f7fafc;
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            padding: 6px;
+            font-size: 16px;
+        }
+
+        /* Price display */
+        .price-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .price-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .price-amount {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .price-breakdown {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 13px;
+        }
+
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Cart badge */
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f56565;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .product-panel,
+            .options-panel {
+                position: absolute;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+                z-index: 30;
+            }
+
+            .options-panel {
+                transform: translateX(100%);
+                right: 0;
+                left: auto;
+            }
+
+            .panel-open .product-panel,
+            .panel-open .options-panel {
+                transform: translateX(0);
+            }
+
+            .panel-toggle {
+                position: absolute;
+                top: 20px;
+                z-index: 40;
+                width: 40px;
+                height: 40px;
+                background: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                cursor: pointer;
+            }
+
+            .toggle-products {
+                left: 20px;
+            }
+
+            .toggle-options {
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <!-- Product Selection Panel -->
+        <div class="product-panel">
+            <div class="panel-section">
+                <h3 class="section-title">Product Type</h3>
+                <div class="category-tabs" id="categoryTabs">
+                    <button class="category-tab active" data-category="all">All</button>
+                    <button class="category-tab" data-category="prints">Prints</button>
+                    <button class="category-tab" data-category="canvas">Canvas</button>
+                    <button class="category-tab" data-category="metal">Metal</button>
+                    <button class="category-tab" data-category="acrylic">Acrylic</button>
+                    <button class="category-tab" data-category="framed">Framed</button>
+                </div>
+                <div id="productList" class="product-list">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="section-title">Size</h3>
+                <div class="size-grid" id="sizeGrid">
+                    <!-- Sizes will be loaded based on product -->
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="section-title">Display Options</h3>
+                <div id="displayOptions">
+                    <!-- Options will be loaded based on product -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Preview Area -->
+        <div class="preview-area">
+            <div class="room-background" id="roomBackground">
+                <img src="" alt="Room" class="room-image" id="roomImage" style="display: none;">
+                <div class="print-display" id="printDisplay">
+                    <div class="print-frame" id="printFrame">
+                        <img src="" alt="Your Photo" class="print-image" id="printImage">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Selector -->
+            <div class="room-selector">
+                <button class="room-btn active" data-room="living">Living Room</button>
+                <button class="room-btn" data-room="bedroom">Bedroom</button>
+                <button class="room-btn" data-room="office">Office</button>
+                <button class="room-btn" data-room="gallery">Gallery</button>
+                <button class="room-btn" data-room="kitchen">Kitchen</button>
+            </div>
+
+            <!-- Crop Controls -->
+            <div class="crop-controls">
+                <div class="crop-slider">
+                    <label>Zoom:</label>
+                    <input type="range" id="zoomSlider" min="50" max="150" value="100">
+                    <span class="crop-value" id="zoomValue">100%</span>
+                </div>
+                <div class="crop-slider" style="margin-top: 10px;">
+                    <label>X:</label>
+                    <input type="range" id="xSlider" min="-50" max="50" value="0">
+                    <span class="crop-value" id="xValue">0</span>
+                </div>
+                <div class="crop-slider" style="margin-top: 10px;">
+                    <label>Y:</label>
+                    <input type="range" id="ySlider" min="-50" max="50" value="0">
+                    <span class="crop-value" id="yValue">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Options & Cart Panel -->
+        <div class="options-panel">
+            <div class="panel-section">
+                <h3 class="section-title">Quantity</h3>
+                <div class="quantity-selector">
+                    <button class="quantity-btn" onclick="updateQuantity(-1)">−</button>
+                    <input type="number" class="quantity-input" id="quantity" value="1" min="1" max="99">
+                    <button class="quantity-btn" onclick="updateQuantity(1)">+</button>
+                </div>
+            </div>
+
+            <div class="price-display">
+                <div class="price-label">Total Price</div>
+                <div class="price-amount" id="totalPrice">$0.00</div>
+                <div class="price-breakdown">
+                    <div class="price-line">
+                        <span>Item Price:</span>
+                        <span id="itemPrice">$0.00</span>
+                    </div>
+                    <div class="price-line">
+                        <span>Quantity:</span>
+                        <span id="quantityDisplay">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="viewCart()">
+                    View Cart
+                    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+                </button>
+                <button class="btn btn-primary" onclick="addToCart()">
+                    Add to Cart
+                </button>
+            </div>
+
+            <div class="panel-section" style="margin-top: 30px;">
+                <h3 class="section-title">Selected Options</h3>
+                <div id="selectedSummary" style="font-size: 13px; color: #4a5568; line-height: 1.6;">
+                    <!-- Summary will appear here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Mobile Panel Toggles -->
+        <button class="panel-toggle toggle-products" onclick="togglePanel('products')">☰</button>
+        <button class="panel-toggle toggle-options" onclick="togglePanel('options')">🛒</button>
+    </div>
+
+    <script>
+        // Initialize preview system
+        let currentProduct = null;
+        let currentSize = null;
+        let currentOptions = {};
+        let cart = [];
+        let products = [];
+        let photoUrl = '';
+        let galleryToken = '';
+        let originalPhotoData = null;
+
+        // Room backgrounds (we'll use gradients for now, can add real images later)
+        const roomBackgrounds = {
+            living: 'linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 50%, #d0d0d0 100%)',
+            bedroom: 'linear-gradient(to bottom, #faf8f5 0%, #f0e8dc 50%, #e5d5c0 100%)',
+            office: 'linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #2c3e50 100%)',
+            gallery: 'linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%)',
+            kitchen: 'linear-gradient(to bottom, #fafafa 0%, #f0f0f0 50%, #e0e0e0 100%)'
+        };
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Get photo URL from query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            photoUrl = urlParams.get('photo') || '';
+            galleryToken = urlParams.get('token') || '';
+            const filename = urlParams.get('filename') || 'photo.jpg';
+
+            if (!photoUrl) {
+                alert('No photo selected');
+                window.close();
+                return;
+            }
+
+            // Load the photo
+            document.getElementById('printImage').src = photoUrl;
+            
+            // Load products from WHCC
+            await loadProducts();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize room background
+            setRoomBackground('living');
+        });
+
+        async function loadProducts() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const response = await fetch('/api/print/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.products;
+                    displayProducts('all');
+                } else {
+                    console.error('Failed to load products');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        function displayProducts(category) {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+
+            const filteredProducts = category === 'all' 
+                ? products 
+                : products.filter(p => p.category === category);
+
+            filteredProducts.forEach((product, index) => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-option';
+                productDiv.innerHTML = `
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price.toFixed(2)}</div>
+                    ${product.description ? `<div class="product-description">${product.description}</div>` : ''}
+                `;
+                
+                productDiv.onclick = () => selectProduct(product);
+                productList.appendChild(productDiv);
+            });
+        }
+
+        function selectProduct(product) {
+            currentProduct = product;
+            
+            // Update UI
+            document.querySelectorAll('.product-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Load sizes for this product
+            loadSizesForProduct(product);
+            
+            // Load display options
+            loadDisplayOptions(product);
+            
+            // Apply print style
+            applyPrintStyle(product);
+            
+            // Update price
+            updatePrice();
+            
+            // Update summary
+            updateSummary();
+        }
+
+        function loadSizesForProduct(product) {
+            const sizeGrid = document.getElementById('sizeGrid');
+            sizeGrid.innerHTML = '';
+
+            // Get sizes from product dimensions or use defaults
+            const sizes = product.dimensions ? 
+                [`${product.dimensions.width}x${product.dimensions.height}`] :
+                ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'];
+
+            sizes.forEach(size => {
+                const sizeDiv = document.createElement('div');
+                sizeDiv.className = 'size-option';
+                sizeDiv.innerHTML = `
+                    <div class="size-dimension">${size}</div>
+                    <div class="size-price">+$${calculateSizePrice(size)}</div>
+                `;
+                sizeDiv.onclick = () => selectSize(size);
+                sizeGrid.appendChild(sizeDiv);
+            });
+        }
+
+        function calculateSizePrice(size) {
+            // Calculate additional cost based on size
+            const [width, height] = size.split('x').map(Number);
+            const area = width * height;
+            
+            if (area <= 80) return 0;
+            if (area <= 154) return 5;
+            if (area <= 320) return 15;
+            if (area <= 480) return 25;
+            if (area <= 720) return 40;
+            return 60;
+        }
+
+        function loadDisplayOptions(product) {
+            const optionsDiv = document.getElementById('displayOptions');
+            optionsDiv.innerHTML = '';
+
+            if (product.attributes && product.attributes.length > 0) {
+                product.attributes.forEach(attr => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'product-option';
+                    optionDiv.style.marginBottom = '8px';
+                    optionDiv.innerHTML = `
+                        <div style="font-size: 13px; color: #2d3748;">${attr.name}</div>
+                        <div style="font-size: 11px; color: #718096;">${attr.category}</div>
+                    `;
+                    optionDiv.onclick = () => selectOption(attr);
+                    optionsDiv.appendChild(optionDiv);
+                });
+            }
+        }
+
+        function selectSize(size) {
+            currentSize = size;
+            
+            // Update UI
+            document.querySelectorAll('.size-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Update print display size
+            updatePrintSize(size);
+            
+            // Update price
+            updatePrice();
+            
+            // Update summary
+            updateSummary();
+        }
+
+        function selectOption(option) {
+            currentOptions[option.category] = option;
+            
+            // Toggle selection
+            if (event.currentTarget.classList.contains('selected')) {
+                event.currentTarget.classList.remove('selected');
+                delete currentOptions[option.category];
+            } else {
+                event.currentTarget.classList.add('selected');
+            }
+            
+            // Update display based on options
+            applyPrintStyle(currentProduct);
+            
+            // Update price
+            updatePrice();
+            
+            // Update summary
+            updateSummary();
+        }
+
+        function updatePrintSize(size) {
+            const printDisplay = document.getElementById('printDisplay');
+            const [width, height] = size.split('x').map(Number);
+            
+            // Scale to reasonable display size (max 400px wide)
+            const scale = Math.min(400 / width, 500 / height, 20);
+            
+            printDisplay.style.width = `${width * scale}px`;
+            printDisplay.style.height = `${height * scale}px`;
+        }
+
+        function applyPrintStyle(product) {
+            const printFrame = document.getElementById('printFrame');
+            
+            // Remove all style classes
+            printFrame.className = 'print-frame';
+            
+            // Apply style based on product category
+            if (product.category === 'canvas') {
+                printFrame.classList.add('canvas-wrap');
+            } else if (product.category === 'metal') {
+                printFrame.classList.add('metal-print');
+            } else if (product.category === 'acrylic') {
+                printFrame.classList.add('acrylic-print');
+            } else if (product.category === 'framed') {
+                printFrame.classList.add('framed-print');
+                // Check for frame color option
+                if (currentOptions['Frame Color']?.name?.includes('White')) {
+                    printFrame.classList.add('white-frame');
+                }
+            }
+        }
+
+        function setRoomBackground(room) {
+            const roomBackground = document.getElementById('roomBackground');
+            roomBackground.style.background = roomBackgrounds[room];
+            
+            // Update active button
+            document.querySelectorAll('.room-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.room === room) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    displayProducts(e.target.dataset.category);
+                });
+            });
+
+            // Room buttons
+            document.querySelectorAll('.room-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    setRoomBackground(e.target.dataset.room);
+                });
+            });
+
+            // Crop controls
+            const zoomSlider = document.getElementById('zoomSlider');
+            const xSlider = document.getElementById('xSlider');
+            const ySlider = document.getElementById('ySlider');
+
+            zoomSlider.addEventListener('input', updateCrop);
+            xSlider.addEventListener('input', updateCrop);
+            ySlider.addEventListener('input', updateCrop);
+
+            // Quantity input
+            document.getElementById('quantity').addEventListener('change', updatePrice);
+        }
+
+        function updateCrop() {
+            const zoom = document.getElementById('zoomSlider').value;
+            const x = document.getElementById('xSlider').value;
+            const y = document.getElementById('ySlider').value;
+
+            document.getElementById('zoomValue').textContent = zoom + '%';
+            document.getElementById('xValue').textContent = x;
+            document.getElementById('yValue').textContent = y;
+
+            const printImage = document.getElementById('printImage');
+            printImage.style.transform = `scale(${zoom/100}) translate(${x}px, ${y}px)`;
+        }
+
+        function updateQuantity(change) {
+            const quantityInput = document.getElementById('quantity');
+            let quantity = parseInt(quantityInput.value) + change;
+            quantity = Math.max(1, Math.min(99, quantity));
+            quantityInput.value = quantity;
+            updatePrice();
+        }
+
+        function updatePrice() {
+            if (!currentProduct) return;
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const basePrice = currentProduct.price;
+            const sizePrice = currentSize ? calculateSizePrice(currentSize) : 0;
+            
+            const itemPrice = basePrice + sizePrice;
+            const totalPrice = itemPrice * quantity;
+
+            document.getElementById('itemPrice').textContent = `$${itemPrice.toFixed(2)}`;
+            document.getElementById('quantityDisplay').textContent = quantity;
+            document.getElementById('totalPrice').textContent = `$${totalPrice.toFixed(2)}`;
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('selectedSummary');
+            let summaryHtml = '';
+
+            if (currentProduct) {
+                summaryHtml += `<div><strong>Product:</strong> ${currentProduct.name}</div>`;
+            }
+            if (currentSize) {
+                summaryHtml += `<div><strong>Size:</strong> ${currentSize}</div>`;
+            }
+            
+            Object.values(currentOptions).forEach(option => {
+                summaryHtml += `<div><strong>${option.category}:</strong> ${option.name}</div>`;
+            });
+
+            summary.innerHTML = summaryHtml || '<div style="color: #a0aec0;">No selections made yet</div>';
+        }
+
+        function addToCart() {
+            if (!currentProduct || !currentSize) {
+                alert('Please select a product and size');
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const cartItem = {
+                product: currentProduct,
+                size: currentSize,
+                options: { ...currentOptions },
+                quantity: quantity,
+                photoUrl: photoUrl,
+                cropSettings: {
+                    zoom: document.getElementById('zoomSlider').value,
+                    x: document.getElementById('xSlider').value,
+                    y: document.getElementById('ySlider').value
+                }
+            };
+
+            cart.push(cartItem);
+            
+            // Update cart badge
+            const cartBadge = document.getElementById('cartBadge');
+            cartBadge.style.display = 'block';
+            cartBadge.textContent = cart.length;
+
+            alert(`Added to cart: ${currentProduct.name} (${currentSize})`);
+        }
+
+        function viewCart() {
+            // Store cart in session storage
+            sessionStorage.setItem('printCart', JSON.stringify(cart));
+            // Redirect to cart/checkout page
+            window.location.href = `/print-checkout?token=${galleryToken}`;
+        }
+
+        function togglePanel(panel) {
+            document.querySelector('.preview-container').classList.toggle('panel-open');
+        }
+    </script>
+</body>
+</html>
