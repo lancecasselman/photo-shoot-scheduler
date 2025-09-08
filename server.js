@@ -8509,9 +8509,8 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// BULLETPROOF CLIENT GALLERY SYSTEM - Guarantees correct photo delivery
+// BULLETPROOF CLIENT GALLERY SYSTEM - Serves clean client gallery
 app.get('/gallery/:id', async (req, res) => {
-    // Gallery access via direct token: /gallery/{galleryAccessToken}
     const galleryToken = req.params.id;
     
     console.log('🔒 BULLETPROOF GALLERY ACCESS:', {
@@ -8521,7 +8520,7 @@ app.get('/gallery/:id', async (req, res) => {
     });
 
     try {
-        // STEP 1: Direct token lookup with photo verification
+        // Verify gallery token exists and has photos
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
@@ -8539,7 +8538,6 @@ app.get('/gallery/:id', async (req, res) => {
         `, [galleryToken]);
         client.release();
 
-        // STEP 2: Strict validation - no photos = no gallery
         if (galleryQuery.rows.length === 0) {
             console.log('❌ GALLERY BLOCKED: No session found or no photos available for token:', galleryToken);
             return res.status(404).send(`
@@ -8552,7 +8550,6 @@ app.get('/gallery/:id', async (req, res) => {
         const session = galleryQuery.rows[0];
         const photos = session.photos || [];
 
-        // STEP 3: Final photo verification - double-check photos exist
         if (!photos || photos.length === 0) {
             console.log('❌ GALLERY BLOCKED: Session found but NO PHOTOS available:', {
                 sessionId: session.id,
@@ -8566,7 +8563,6 @@ app.get('/gallery/:id', async (req, res) => {
             `);
         }
 
-        // STEP 4: Log exact photos being served for verification
         console.log('✅ SERVING VERIFIED GALLERY:', {
             sessionId: session.id,
             clientName: session.client_name,
@@ -8581,21 +8577,21 @@ app.get('/gallery/:id', async (req, res) => {
             timestamp: new Date().toISOString()
         });
 
-        // Set cache-busting headers to prevent showing stale data
+        // Set cache-busting headers
         res.set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0'
         });
 
-        // Generate modern, clean gallery HTML
-        const galleryHtml = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${session.clientName} - Photo Gallery</title>
+        // Serve the clean client gallery page
+        res.sendFile(path.join(__dirname, 'client-gallery.html'));
+
+    } catch (error) {
+        console.error('Error serving gallery:', error);
+        res.status(500).send('<h1>Error loading gallery</h1>');
+    }
+});
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 <style>
                     * {
