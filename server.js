@@ -5748,58 +5748,345 @@ app.get('/api/print/products', async (req, res) => {
     }
 });
 
-// Create print order
-app.post('/api/print/order', async (req, res) => {
+// Calculate shipping for print order
+app.post('/api/print/calculate-shipping', async (req, res) => {
     try {
-        const { galleryToken, filename, productId, size, price, clientName, sessionId } = req.body;
+        const { items, shipping } = req.body;
         
-        console.log('🛒 Creating print order:', { galleryToken, filename, productId, clientName });
+        console.log('📦 Calculating shipping for print order...');
         
-        // Verify gallery access
-        const sessionResult = await pool.query(
-            'SELECT * FROM photography_sessions WHERE gallery_access_token = $1',
-            [galleryToken]
-        );
-        
-        if (sessionResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Gallery not found' });
-        }
-        
-        const session = sessionResult.rows[0];
-        
-        // Create order record (you might want to store this in a database)
-        const orderData = {
-            galleryToken,
-            sessionId: session.id,
-            clientName: session.client_name,
-            filename,
-            productId,
-            size,
-            price: parseFloat(price),
-            status: 'pending',
-            createdAt: new Date()
-        };
-        
-        // For now, we'll just return success. In production, you'd:
-        // 1. Create order in database
-        // 2. Process payment via Stripe
-        // 3. Submit order to WHCC
-        
-        console.log('✅ Print order created:', orderData);
-        
-        res.json({ 
-            success: true, 
-            message: 'Order added to cart',
-            orderId: `order_${Date.now()}`,
-            // In production, you'd redirect to a proper checkout
-            checkoutUrl: `/checkout?order=${orderData.orderId}` 
+        const result = await printService.calculateShipping({
+            items,
+            shipping
         });
+        
+        res.json(result);
     } catch (error) {
-        console.error('❌ Error creating print order:', error);
+        console.error('❌ Error calculating shipping:', error);
         res.status(500).json({ 
             success: false, 
-            error: 'Failed to create print order' 
+            error: 'Failed to calculate shipping',
+            methods: [
+                { name: 'Standard', cost: 9.99, days: '5-7' },
+                { name: 'Express', cost: 19.99, days: '2-3' }
+            ]
         });
+    }
+});
+
+// Create Stripe payment intent for print order
+app.post('/api/print/create-payment-intent', async (req, res) => {
+    try {
+        const { items, shipping, shippingMethod, galleryToken } = req.body;
+        
+        // For gallery orders, verify access
+        if (galleryToken) {
+            const sessionResult = await pool.query(
+                'SELECT * FROM photography_sessions WHERE gallery_access_token = $1',
+                [galleryToken]
+            );
+            
+            if (sessionResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Gallery not found' });
+            }
+        }
+        
+        // Calculate order total
+        let subtotal = 0;
+        items.forEach(item => {
+            subtotal += item.price * item.quantity;
+        });
+        
+        // Get shipping cost
+        const shippingCost = shippingMethod?.cost || 9.99;
+        
+        // Calculate tax (example: 8.5% sales tax)
+        const tax = (subtotal + shippingCost) * 0.085;
+        
+        // Total in cents for Stripe
+        const totalCents = Math.round((subtotal + shippingCost + tax) * 100);
+        
+        console.log('💳 Creating payment intent:', {
+            subtotal,
+            shipping: shippingCost,
+            tax,
+            total: totalCents / 100
+        });
+        
+        // Create Stripe payment intent
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: totalCents,
+            currency: 'usd',
+            metadata: {
+                type: 'print_order',
+                itemCount: items.length.toString(),
+                galleryToken: galleryToken || ''
+            },
+            automatic_payment_methods: {
+                enabled: true
+            }
+        });
+        
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            amount: totalCents / 100,
+            breakdown: {
+                subtotal,
+                shipping: shippingCost,
+                tax,
+                total: totalCents / 100
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating payment intent:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create payment intent'
+        });
+    }
+});
+
+// Create print order after successful payment
+app.post('/api/print/create-order', async (req, res) => {
+    try {
+        const { 
+            paymentIntentId,
+            items, 
+            customer, 
+            shipping, 
+            shippingMethod,
+            comments,
+            galleryToken 
+        } = req.body;
+        
+        // Verify payment was successful
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status !== 'succeeded') {
+            throw new Error('Payment not completed');
+        }
+        
+        // Get session info if gallery order
+        let sessionId = null;
+        let userId = null;
+        
+        if (galleryToken) {
+            const sessionResult = await pool.query(
+                'SELECT * FROM photography_sessions WHERE gallery_access_token = $1',
+                [galleryToken]
+            );
+            
+            if (sessionResult.rows.length > 0) {
+                sessionId = sessionResult.rows[0].id;
+                userId = sessionResult.rows[0].user_id;
+            }
+        }
+        
+        // Generate unique order ID
+        const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Prepare image URLs (convert R2 URLs to public accessible URLs)
+        const itemsWithImages = await Promise.all(items.map(async (item) => {
+            // Get public URL for the image
+            const publicUrl = await r2FileManager.getPublicUrl(item.imagePath);
+            
+            return {
+                ...item,
+                imageUrl: publicUrl,
+                fileName: item.fileName || path.basename(item.imagePath)
+            };
+        }));
+        
+        console.log('📦 Creating WHCC order:', orderId);
+        
+        // Create order in WHCC
+        const whccResult = await printService.createOrder({
+            orderId,
+            customer,
+            shipping,
+            shippingMethod: shippingMethod.name,
+            items: itemsWithImages,
+            comments
+        });
+        
+        // Save order to database
+        await pool.query(`
+            INSERT INTO print_orders (
+                id, user_id, session_id, whcc_order_id, reference,
+                status, total, items, customer_info,
+                shipping_info, payment_intent_id,
+                created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+        `, [
+            orderId,
+            userId,
+            sessionId,
+            whccResult.orderId,
+            whccResult.reference,
+            whccResult.status,
+            paymentIntent.amount / 100,
+            JSON.stringify(items),
+            JSON.stringify(customer),
+            JSON.stringify(shipping),
+            paymentIntentId
+        ]);
+        
+        res.json({
+            success: true,
+            orderId,
+            whccOrderId: whccResult.orderId,
+            status: whccResult.status,
+            confirmationUrl: whccResult.confirmationUrl,
+            estimatedShipping: whccResult.estimatedShipping
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating print order:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to create print order'
+        });
+    }
+});
+
+// Submit order for production
+app.post('/api/print/submit-order', async (req, res) => {
+    try {
+        const { whccOrderId, userId } = req.body;
+        
+        // Verify order exists
+        const orderCheck = await pool.query(
+            'SELECT * FROM print_orders WHERE whcc_order_id = $1',
+            [whccOrderId]
+        );
+        
+        if (orderCheck.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+        
+        console.log('🚀 Submitting order for production:', whccOrderId);
+        
+        // Submit to WHCC for production
+        const result = await printService.submitOrder(whccOrderId);
+        
+        // Update order status in database
+        await pool.query(
+            'UPDATE print_orders SET status = $1, production_date = $2 WHERE whcc_order_id = $3',
+            [result.status, result.productionDate, whccOrderId]
+        );
+        
+        res.json({
+            success: true,
+            ...result
+        });
+        
+    } catch (error) {
+        console.error('❌ Error submitting order:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to submit order for production'
+        });
+    }
+});
+
+// Get order status
+app.get('/api/print/order-status/:orderId', async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        
+        // Get order from database
+        const orderResult = await pool.query(
+            'SELECT * FROM print_orders WHERE id = $1 OR whcc_order_id = $1',
+            [orderId]
+        );
+        
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+        
+        const order = orderResult.rows[0];
+        
+        // Get latest status from WHCC
+        if (order.whcc_order_id) {
+            const whccStatus = await printService.getOrderStatus(order.whcc_order_id);
+            
+            // Update database with latest status
+            if (whccStatus.trackingNumber && !order.tracking_number) {
+                await pool.query(
+                    'UPDATE print_orders SET tracking_number = $1, ship_date = $2, status = $3 WHERE id = $4',
+                    [whccStatus.trackingNumber, whccStatus.shipDate, whccStatus.status, order.id]
+                );
+            }
+            
+            res.json({
+                success: true,
+                orderId: order.id,
+                status: whccStatus.status || order.status,
+                trackingNumber: whccStatus.trackingNumber || order.tracking_number,
+                shipDate: whccStatus.shipDate || order.ship_date,
+                items: JSON.parse(order.items),
+                total: order.total
+            });
+        } else {
+            res.json({
+                success: true,
+                orderId: order.id,
+                status: order.status,
+                trackingNumber: order.tracking_number,
+                shipDate: order.ship_date,
+                items: JSON.parse(order.items),
+                total: order.total
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error getting order status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get order status'
+        });
+    }
+});
+
+// Webhook endpoint for WHCC order status updates
+app.post('/api/webhooks/whcc', async (req, res) => {
+    try {
+        const event = req.body;
+        
+        console.log('🔔 WHCC webhook received:', event.type);
+        
+        // Handle different event types
+        switch (event.type) {
+            case 'order.accepted':
+            case 'order.rejected':
+            case 'order.shipped':
+            case 'order.cancelled':
+                await pool.query(
+                    'UPDATE print_orders SET status = $1, updated_at = NOW() WHERE whcc_order_id = $2',
+                    [event.data.status, event.data.orderId]
+                );
+                
+                if (event.data.trackingNumber) {
+                    await pool.query(
+                        'UPDATE print_orders SET tracking_number = $1 WHERE whcc_order_id = $2',
+                        [event.data.trackingNumber, event.data.orderId]
+                    );
+                }
+                break;
+        }
+        
+        res.json({ received: true });
+        
+    } catch (error) {
+        console.error('❌ Error processing WHCC webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
     }
 });
 

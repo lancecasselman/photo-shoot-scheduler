@@ -515,6 +515,253 @@ class PrintServiceAPI {
       throw error;
     }
   }
+
+  // Create a print order in WHCC system
+  async createOrder(orderData) {
+    try {
+      const token = await this.getWHCCAccessToken();
+      
+      // Format order for WHCC OrderImport API
+      const whccOrder = {
+        Reference: orderData.orderId, // Our internal order ID
+        ClientInfo: {
+          FirstName: orderData.customer.firstName,
+          LastName: orderData.customer.lastName,
+          Email: orderData.customer.email,
+          Phone: orderData.customer.phone || '',
+          Address1: orderData.shipping.address1,
+          Address2: orderData.shipping.address2 || '',
+          City: orderData.shipping.city,
+          State: orderData.shipping.state,
+          Zip: orderData.shipping.zip,
+          Country: orderData.shipping.country || 'US'
+        },
+        Items: orderData.items.map(item => ({
+          ProductUID: item.productUID,
+          Quantity: item.quantity,
+          LayoutUID: 0, // Default layout
+          Attributes: item.attributes || [],
+          Assets: [{
+            AssetPath: item.imageUrl,
+            PrintedFileName: item.fileName || 'print.jpg',
+            ImageHash: item.imageHash || '',
+            DP2NodeID: item.nodeId || 10000
+          }]
+        })),
+        ShippingMethod: orderData.shippingMethod || 'Standard',
+        PaymentMethod: 'Prepaid', // We handle payment via Stripe
+        Comments: orderData.comments || ''
+      };
+      
+      console.log('📦 Creating WHCC order:', {
+        reference: whccOrder.Reference,
+        itemCount: whccOrder.Items.length
+      });
+      
+      const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/OrderImport`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(whccOrder)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ WHCC order creation failed:', errorText);
+        throw new Error(`Failed to create order: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ WHCC order created:', result);
+      
+      return {
+        success: true,
+        orderId: result.OrderID,
+        reference: result.Reference,
+        status: result.Status,
+        confirmationUrl: result.ConfirmationUrl,
+        estimatedShipping: result.EstimatedShipDate,
+        total: result.Total
+      };
+      
+    } catch (error) {
+      console.error('❌ Error creating WHCC order:', error);
+      throw error;
+    }
+  }
+  
+  // Submit order for production
+  async submitOrder(whccOrderId) {
+    try {
+      const token = await this.getWHCCAccessToken();
+      
+      console.log('🚀 Submitting WHCC order for production:', whccOrderId);
+      
+      const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/OrderImport/Submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          OrderID: whccOrderId,
+          ConfirmProduction: true
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ WHCC order submission failed:', errorText);
+        throw new Error(`Failed to submit order: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ WHCC order submitted for production:', result);
+      
+      return {
+        success: true,
+        orderId: result.OrderID,
+        status: result.Status,
+        productionDate: result.ProductionDate,
+        trackingNumber: result.TrackingNumber
+      };
+      
+    } catch (error) {
+      console.error('❌ Error submitting WHCC order:', error);
+      throw error;
+    }
+  }
+  
+  // Get order status from WHCC
+  async getOrderStatus(whccOrderId) {
+    try {
+      const token = await this.getWHCCAccessToken();
+      
+      const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Orders/${whccOrderId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get order status: ${response.status}`);
+      }
+      
+      const order = await response.json();
+      
+      return {
+        success: true,
+        orderId: order.OrderID,
+        status: order.Status,
+        trackingNumber: order.TrackingNumber,
+        shipDate: order.ShipDate,
+        items: order.Items
+      };
+      
+    } catch (error) {
+      console.error('❌ Error getting WHCC order status:', error);
+      throw error;
+    }
+  }
+  
+  // Register webhook for order status updates
+  async registerWebhook(webhookUrl) {
+    try {
+      const token = await this.getWHCCAccessToken();
+      
+      const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Webhooks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Url: webhookUrl,
+          Events: [
+            'order.created',
+            'order.submitted',
+            'order.accepted',
+            'order.rejected',
+            'order.shipped',
+            'order.cancelled'
+          ],
+          Active: true
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Webhook registration failed:', errorText);
+        throw new Error(`Failed to register webhook: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Webhook registered:', result);
+      
+      return {
+        success: true,
+        webhookId: result.WebhookID,
+        url: result.Url
+      };
+      
+    } catch (error) {
+      console.error('❌ Error registering webhook:', error);
+      throw error;
+    }
+  }
+  
+  // Calculate shipping costs
+  async calculateShipping(orderData) {
+    try {
+      const token = await this.getWHCCAccessToken();
+      
+      const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Shipping/Calculate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Items: orderData.items.map(item => ({
+            ProductUID: item.productUID,
+            Quantity: item.quantity
+          })),
+          ShipTo: {
+            City: orderData.shipping.city,
+            State: orderData.shipping.state,
+            Zip: orderData.shipping.zip,
+            Country: orderData.shipping.country || 'US'
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to calculate shipping: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      return {
+        success: true,
+        methods: result.ShippingMethods || []
+      };
+      
+    } catch (error) {
+      console.error('❌ Error calculating shipping:', error);
+      // Return default shipping options if API fails
+      return {
+        success: false,
+        methods: [
+          { name: 'Standard', cost: 9.99, days: '5-7' },
+          { name: 'Express', cost: 19.99, days: '2-3' },
+          { name: 'Overnight', cost: 39.99, days: '1' }
+        ]
+      };
+    }
+  }
 }
 
 // Initialize and export singleton instance

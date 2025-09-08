@@ -482,26 +482,36 @@ export const photographerClients = pgTable("photographer_clients", {
 // Print orders table for gallery print purchases
 export const printOrders = pgTable("print_orders", {
   id: varchar("id").primaryKey().notNull(),
-  sessionId: varchar("session_id").notNull().references(() => photographySessions.id),
-  photographerId: varchar("photographer_id").notNull().references(() => users.id),
-  clientEmail: varchar("client_email").notNull(),
-  clientName: varchar("client_name").notNull(),
+  userId: varchar("user_id").references(() => users.id), // User ID for photographer orders
+  sessionId: varchar("session_id").references(() => photographySessions.id), // Session ID for gallery orders
+  photographerId: varchar("photographer_id").references(() => users.id),
+  clientEmail: varchar("client_email"),
+  clientName: varchar("client_name"),
   orderStatus: varchar("order_status").default("pending"), // pending, processing, shipped, delivered, cancelled
-  oasOrderId: varchar("oas_order_id"), // Order ID from OAS API
+  status: varchar("status").default("pending"), // WHCC status
+  whccOrderId: varchar("whcc_order_id"), // WHCC Order ID
+  oasOrderId: varchar("oas_order_id"), // Order ID from OAS API (legacy)
   editorProjectId: varchar("editor_project_id"), // Project ID from Editor API
+  reference: varchar("reference"), // Our reference number for WHCC
   items: jsonb("items").default([]), // Array of order items with product details
+  customerInfo: jsonb("customer_info"), // Customer details object
+  shippingInfo: jsonb("shipping_info"), // Shipping details object
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0.00"),
   tax: decimal("tax", { precision: 10, scale: 2 }).default("0.00"),
+  total: decimal("total", { precision: 10, scale: 2 }).default("0.00"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).default("0.00"),
   shippingAddress: jsonb("shipping_address"), // Address object
   billingAddress: jsonb("billing_address"), // Address object
   paymentStatus: varchar("payment_status").default("pending"), // pending, paid, failed, refunded
-  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  paymentIntentId: varchar("payment_intent_id"), // Stripe payment intent
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"), // Legacy field
   photographerProfit: decimal("photographer_profit", { precision: 10, scale: 2 }).default("0.00"),
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).default("0.00"),
   trackingNumber: varchar("tracking_number"),
-  shippedAt: timestamp("shipped_at"),
+  productionDate: timestamp("production_date"), // When order goes to production
+  shipDate: timestamp("ship_date"), // When order was shipped
+  shippedAt: timestamp("shipped_at"), // Legacy field
   deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
