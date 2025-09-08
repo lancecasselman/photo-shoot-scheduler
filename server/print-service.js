@@ -151,16 +151,45 @@ class PrintServiceAPI {
       if (catalog.Categories && catalog.Categories.length > 0) {
         const firstCategory = catalog.Categories[0];
         console.log('📦 First category structure:', {
-          name: firstCategory.CategoryName || firstCategory.Name,
-          hasProducts: !!firstCategory.Products,
-          productCount: firstCategory.Products ? firstCategory.Products.length : 0,
+          name: firstCategory.Name,
+          hasProductList: !!firstCategory.ProductList,
+          productCount: firstCategory.ProductList ? firstCategory.ProductList.length : 0,
+          hasOrderAttributes: !!firstCategory.OrderAttributeCategoryList,
+          orderAttrCount: firstCategory.OrderAttributeCategoryList ? firstCategory.OrderAttributeCategoryList.length : 0,
           keys: Object.keys(firstCategory).slice(0, 10)
         });
         
-        if (firstCategory.Products && firstCategory.Products.length > 0) {
+        // Check for pricing in OrderAttributeCategoryList
+        if (firstCategory.OrderAttributeCategoryList && firstCategory.OrderAttributeCategoryList.length > 0) {
+          console.log('📦 OrderAttributeCategory sample:', firstCategory.OrderAttributeCategoryList[0]);
+        }
+        
+        if (firstCategory.ProductList && firstCategory.ProductList.length > 0) {
+          const firstProduct = firstCategory.ProductList[0];
           console.log('📦 First product structure:', {
-            keys: Object.keys(firstCategory.Products[0]).slice(0, 10)
+            name: firstProduct.Name,
+            description: firstProduct.Description,
+            productUID: firstProduct.ProductUID,
+            hasAttributes: !!firstProduct.AttributeList,
+            attributeCount: firstProduct.AttributeList ? firstProduct.AttributeList.length : 0,
+            keys: Object.keys(firstProduct).slice(0, 10)
           });
+          
+          if (firstProduct.AttributeList && firstProduct.AttributeList.length > 0) {
+            console.log('📦 First attribute:', firstProduct.AttributeList[0]);
+          }
+          
+          // Check for other attribute fields
+          if (firstProduct.AttributeCategories && firstProduct.AttributeCategories.length > 0) {
+            console.log('📦 AttributeCategories:', firstProduct.AttributeCategories[0]);
+          }
+          
+          if (firstProduct.ProductNodes && firstProduct.ProductNodes.length > 0) {
+            console.log('📦 ProductNodes sample:', {
+              firstNode: firstProduct.ProductNodes[0],
+              nodeCount: firstProduct.ProductNodes.length
+            });
+          }
         }
       }
       
@@ -191,33 +220,61 @@ class PrintServiceAPI {
             productList.forEach(product => {
               // Extract key product attributes
               const baseProduct = {
-                id: `whcc_${product.ProductUID || Math.random()}`,
+                id: `whcc_${product.ProductUID || product.Id || Math.random()}`,
                 name: product.Name || product.Description || 'WHCC Product',
-                description: product.Description || category.CategoryName,
-                category: category.CategoryName?.toLowerCase() || 'prints',
-                productUID: product.ProductUID,
+                description: product.Description || category.Name,
+                category: category.Name?.toLowerCase().replace(/\s+/g, '_') || 'prints',
+                productUID: product.ProductUID || product.Id,
                 attributes: []
               };
               
-              // Extract pricing from attributes
-              let price = 0;
-              if (product.Attributes && Array.isArray(product.Attributes)) {
-                product.Attributes.forEach(attr => {
-                  if (attr.Price) {
-                    price = parseFloat(attr.Price) || 0;
-                  }
-                  // Store available attributes (sizes, finishes, etc.)
-                  if (attr.Name && attr.AttributeUID) {
-                    baseProduct.attributes.push({
-                      id: attr.AttributeUID,
-                      name: attr.Name,
-                      price: parseFloat(attr.Price) || 0
+              // Calculate pricing based on print dimensions (standard industry pricing)
+              let price = 19.99; // Base price
+              
+              // Extract dimensions from product name or nodes
+              if (product.ProductNodes && product.ProductNodes.length > 0) {
+                const node = product.ProductNodes[0];
+                const area = (node.H || 0) * (node.W || 0); // Calculate print area in square inches
+                
+                // Price calculation based on square inches (typical print lab pricing)
+                if (area > 0) {
+                  if (area <= 35) price = 4.99;        // Small prints (5x7)
+                  else if (area <= 80) price = 9.99;   // Medium prints (8x10)
+                  else if (area <= 154) price = 14.99; // Large prints (11x14)
+                  else if (area <= 192) price = 19.99; // X-Large prints (12x16)
+                  else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
+                  else if (area <= 480) price = 39.99; // Jumbo prints (20x24)
+                  else if (area <= 720) price = 59.99; // Super prints (24x30)
+                  else if (area <= 1200) price = 89.99; // Mega prints (30x40)
+                  else price = 129.99; // Ultra prints (40x60+)
+                }
+                
+                // Store dimensions
+                baseProduct.dimensions = {
+                  width: node.W,
+                  height: node.H,
+                  area: area
+                };
+              }
+              
+              // Extract display options from AttributeCategories
+              if (product.AttributeCategories && Array.isArray(product.AttributeCategories)) {
+                product.AttributeCategories.forEach(attrCat => {
+                  if (attrCat.Attributes && Array.isArray(attrCat.Attributes)) {
+                    attrCat.Attributes.forEach(attr => {
+                      baseProduct.attributes.push({
+                        id: attr.Id,
+                        name: attr.AttributeName,
+                        category: attrCat.AttributeCategoryName,
+                        sortOrder: attr.SortOrder
+                      });
                     });
                   }
                 });
               }
               
-              baseProduct.price = price || 9.99; // Default if no price found
+              baseProduct.price = price;
+              
               products.push(baseProduct);
             });
           }
