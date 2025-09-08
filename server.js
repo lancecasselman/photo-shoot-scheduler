@@ -5577,25 +5577,51 @@ app.get('/api/print/debug', async (req, res) => {
         console.log('- Sandbox URL:', printService.sandboxUrl);
         console.log('- Is Sandbox:', printService.isSandbox);
         
-        // Test the Editor API call instead
-        const testEndpoint = '/products';
-        const headers = printService.getEditorAuthHeader();
-        const url = `${printService.editorBaseUrl}${testEndpoint}`;
+        // Test common WHCC API endpoint patterns
+        const testEndpoints = ['/api/products', '/api/v1/products', '/v1/products', '/catalog/products', '/products'];
+        const results = [];
         
-        console.log('- Test URL:', url);
-        console.log('- Auth Headers:', Object.keys(headers));
-        console.log('- X-API-Key:', headers['X-API-Key'] ? 'Present' : 'Missing');
+        for (const endpoint of testEndpoints) {
+            try {
+                const headers = printService.getOASAuthHeader('GET', endpoint);
+                const url = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}${endpoint}`;
+                
+                console.log(`- Testing endpoint: ${url}`);
+                
+                const fetch = (await import('node-fetch')).default;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers
+                });
+                
+                const responseText = await response.text();
+                console.log(`- ${endpoint}: ${response.status} (${response.ok ? 'OK' : 'Error'})`);
+                
+                results.push({
+                    endpoint,
+                    url,
+                    status: response.status,
+                    ok: response.ok,
+                    contentType: response.headers.get('content-type'),
+                    bodyPreview: responseText.substring(0, 100)
+                });
+                
+                // If we get a good response, break
+                if (response.ok && !responseText.includes('<!DOCTYPE html>')) {
+                    console.log(`✅ Found working endpoint: ${endpoint}`);
+                    break;
+                }
+            } catch (error) {
+                console.log(`- ${endpoint}: Error - ${error.message}`);
+                results.push({
+                    endpoint,
+                    status: 'ERROR',
+                    error: error.message
+                });
+            }
+        }
         
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch(url, {
-            method: 'GET',
-            headers
-        });
-        
-        const responseText = await response.text();
-        console.log('- Response Status:', response.status);
-        console.log('- Response Headers:', Object.fromEntries(response.headers));
-        console.log('- Response Body (first 200 chars):', responseText.substring(0, 200));
+        // Results will be populated by the endpoint testing loop above
         
         res.json({
             success: true,
@@ -5608,15 +5634,11 @@ app.get('/api/print/debug', async (req, res) => {
                 },
                 urls: {
                     oasBaseUrl: printService.oasBaseUrl,
+                    sandboxUrl: printService.sandboxUrl,
                     editorBaseUrl: printService.editorBaseUrl,
-                    testUrl: url,
-                    apiType: 'Editor API'
+                    apiType: 'OAS API - Endpoint Testing'
                 },
-                response: {
-                    status: response.status,
-                    ok: response.ok,
-                    bodyPreview: responseText.substring(0, 200)
-                }
+                endpointTests: results
             }
         });
     } catch (error) {
