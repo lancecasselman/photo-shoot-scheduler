@@ -61,40 +61,56 @@ class PrintServiceAPI {
   // Authenticate and get access token for WHCC Order Submit API
   async getAccessToken() {
     try {
-      console.log('🔐 Getting WHCC access token...');
+      console.log('🔐 Getting WHCC access token using Order Submit API...');
       
-      // WHCC authentication endpoint (typically /oauth/token or /auth/token)
-      const authEndpoint = '/oauth/token';
+      // WHCC Access Token endpoint - simpler than OAuth
+      const authEndpoint = '/api/AccessToken';
       const authUrl = `${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}${authEndpoint}`;
       
       console.log(`- Auth URL: ${authUrl}`);
+      console.log(`- Consumer Key: ${this.oasKey ? this.oasKey.substring(0, 8) + '...' : 'NOT SET'}`);
+      console.log(`- Consumer Secret: ${this.oasSecret ? 'SET' : 'NOT SET'}`);
       
-      const authHeaders = this.getOASAuthHeader('POST', authEndpoint);
-      authHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
-      
-      const authBody = new URLSearchParams({
-        'grant_type': 'client_credentials'
+      // Build query parameters for GET request
+      const params = new URLSearchParams({
+        'grant_type': 'consumer_credentials',
+        'consumer_key': this.oasKey,
+        'consumer_secret': this.oasSecret
       });
       
-      const response = await fetch(authUrl, {
-        method: 'POST',
-        headers: authHeaders,
-        body: authBody.toString()
+      console.log(`- Full request URL: ${authUrl}?${params.toString().substring(0, 100)}...`);
+      
+      const response = await fetch(`${authUrl}?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log(`- Response status: ${response.status}`);
+      console.log(`- Response headers:`, response.headers.get('content-type'));
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.log(`❌ Auth failed: ${response.status} - ${errorText.substring(0, 200)}`);
-        throw new Error(`WHCC authentication failed: ${response.status}`);
+        console.log(`❌ Auth failed: ${response.status}`);
+        console.log(`- Error response: ${errorText.substring(0, 500)}`);
+        throw new Error(`WHCC authentication failed: ${response.status} - ${errorText.substring(0, 100)}`);
       }
       
       const authData = await response.json();
-      console.log('✅ Got access token');
+      console.log('✅ Got access token:', {
+        clientId: authData.ClientId,
+        consumerKey: authData.ConsumerKey,
+        effectiveDate: authData.EffectiveDate,
+        expirationDate: authData.ExpirationDate,
+        tokenLength: authData.Token ? authData.Token.length : 0
+      });
       
-      return authData.access_token;
+      return authData.Token;
     } catch (error) {
       console.error('❌ WHCC authentication error:', error.message);
-      throw new Error(`Failed to authenticate with WHCC: ${error.message}`);
+      console.error('- Full error:', error);
+      throw error;
     }
   }
 
@@ -106,51 +122,51 @@ class PrintServiceAPI {
       // First, get access token
       const accessToken = await this.getAccessToken();
       
-      // Try common product catalog endpoints
-      const catalogEndpoints = [
-        '/api/catalog',
-        '/catalog',
-        '/api/products',
-        '/products',
-        '/api/v1/catalog',
-        '/v1/catalog'
-      ];
+      // WHCC catalog endpoint as per documentation
+      const catalogEndpoint = '/api/catalog';
+      const catalogUrl = `${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}${catalogEndpoint}`;
       
-      for (const endpoint of catalogEndpoints) {
-        try {
-          const catalogUrl = `${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}${endpoint}`;
-          console.log(`- Testing catalog endpoint: ${catalogUrl}`);
-          
-          const headers = {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          };
-          
-          const response = await fetch(catalogUrl, {
-            method: 'GET',
-            headers
+      console.log(`- Fetching catalog from: ${catalogUrl}`);
+      
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      };
+      
+      const response = await fetch(catalogUrl, {
+        method: 'GET',
+        headers
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log(`❌ Catalog fetch failed: ${response.status} - ${errorText.substring(0, 200)}`);
+        throw new Error(`Failed to fetch WHCC catalog: ${response.status}`);
+      }
+      
+      const catalog = await response.json();
+      console.log(`✅ Got WHCC catalog with ${catalog.Categories ? catalog.Categories.length : 0} categories`);
+      
+      // Log first category structure to understand format
+      if (catalog.Categories && catalog.Categories.length > 0) {
+        const firstCategory = catalog.Categories[0];
+        console.log('📦 First category structure:', {
+          name: firstCategory.CategoryName || firstCategory.Name,
+          hasProducts: !!firstCategory.Products,
+          productCount: firstCategory.Products ? firstCategory.Products.length : 0,
+          keys: Object.keys(firstCategory).slice(0, 10)
+        });
+        
+        if (firstCategory.Products && firstCategory.Products.length > 0) {
+          console.log('📦 First product structure:', {
+            keys: Object.keys(firstCategory.Products[0]).slice(0, 10)
           });
-          
-          if (response.ok) {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              const catalog = await response.json();
-              console.log(`✅ Found product catalog at ${endpoint}`);
-              console.log(`📦 Catalog contains:`, Object.keys(catalog));
-              
-              // Transform WHCC catalog to our format
-              return this.transformWHCCCatalog(catalog);
-            }
-          } else {
-            console.log(`- ${endpoint}: ${response.status} (${response.statusText})`);
-          }
-        } catch (error) {
-          console.log(`- ${endpoint}: Error - ${error.message}`);
         }
       }
       
-      throw new Error('Could not find WHCC product catalog at any endpoint');
+      // Transform WHCC catalog to our format
+      return this.transformWHCCCatalog(catalog);
+      
     } catch (error) {
       console.error('❌ WHCC catalog error:', error.message);
       
@@ -165,30 +181,54 @@ class PrintServiceAPI {
     const products = [];
     
     try {
-      // WHCC catalogs typically have products nested in categories
-      const categories = catalog.categories || catalog.products || catalog;
-      
-      if (Array.isArray(categories)) {
-        categories.forEach(category => {
-          if (category.products && Array.isArray(category.products)) {
-            category.products.forEach(product => {
-              products.push(this.formatWHCCProduct(product, category.name));
-            });
-          }
-        });
-      } else if (typeof categories === 'object') {
-        Object.keys(categories).forEach(categoryName => {
-          const categoryProducts = categories[categoryName];
-          if (Array.isArray(categoryProducts)) {
-            categoryProducts.forEach(product => {
-              products.push(this.formatWHCCProduct(product, categoryName));
+      // WHCC catalog has Categories array with Products nested inside
+      if (catalog.Categories && Array.isArray(catalog.Categories)) {
+        catalog.Categories.forEach(category => {
+          if (category.Products && Array.isArray(category.Products)) {
+            category.Products.forEach(product => {
+              // Extract key product attributes
+              const baseProduct = {
+                id: `whcc_${product.ProductUID || Math.random()}`,
+                name: product.Name || product.Description || 'WHCC Product',
+                description: product.Description || category.CategoryName,
+                category: category.CategoryName?.toLowerCase() || 'prints',
+                productUID: product.ProductUID,
+                attributes: []
+              };
+              
+              // Extract pricing from attributes
+              let price = 0;
+              if (product.Attributes && Array.isArray(product.Attributes)) {
+                product.Attributes.forEach(attr => {
+                  if (attr.Price) {
+                    price = parseFloat(attr.Price) || 0;
+                  }
+                  // Store available attributes (sizes, finishes, etc.)
+                  if (attr.Name && attr.AttributeUID) {
+                    baseProduct.attributes.push({
+                      id: attr.AttributeUID,
+                      name: attr.Name,
+                      price: parseFloat(attr.Price) || 0
+                    });
+                  }
+                });
+              }
+              
+              baseProduct.price = price || 9.99; // Default if no price found
+              products.push(baseProduct);
             });
           }
         });
       }
       
-      console.log(`✅ Transformed ${products.length} WHCC products`);
-      return products;
+      // If we got products, return them, otherwise use fallback
+      if (products.length > 0) {
+        console.log(`✅ Transformed ${products.length} WHCC products from catalog`);
+        return products.slice(0, 20); // Return first 20 products for gallery display
+      } else {
+        console.log('⚠️ No products found in WHCC catalog structure');
+        return this.getProfessionalFallbackProducts();
+      }
     } catch (error) {
       console.error('❌ Error transforming WHCC catalog:', error);
       return this.getProfessionalFallbackProducts();

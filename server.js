@@ -5668,7 +5668,19 @@ app.get('/api/print/products', async (req, res) => {
     try {
         console.log('🖨️ Fetching WHCC print products...');
         
-        // For now, let's use professional print products while we debug WHCC
+        // Try to get products from WHCC API with new authentication
+        const products = await printService.getProducts();
+        
+        console.log(`✅ Serving ${products.length} print options`);
+        
+        res.json({ 
+            success: true, 
+            products: products
+        });
+    } catch (error) {
+        console.error('❌ Failed to fetch print products:', error);
+        
+        // Return fallback products if WHCC fails
         const professionalProducts = [
             { 
                 id: 'lustre_4x6', 
@@ -5732,12 +5744,6 @@ app.get('/api/print/products', async (req, res) => {
         res.json({ 
             success: true, 
             products: professionalProducts 
-        });
-    } catch (error) {
-        console.error('❌ Error serving print products:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to load print products' 
         });
     }
 });
