@@ -388,9 +388,9 @@
             galleryActions.style.display = 'flex';
             
             // BULLETPROOF PHOTO RENDERING: Only verified database photos
-            console.log(`🔒 CLIENT GALLERY RENDERING for ${galleryData.clientName}:`, {
+            console.log(`🔒 CLIENT GALLERY RENDERING for ${sessionData.clientName}:`, {
                 sessionId: sessionId,
-                clientName: galleryData.clientName,
+                clientName: sessionData.clientName,
                 photoCount: photos.length,
                 verifiedPhotos: photos.map(p => p.url || p.filename)
             });
