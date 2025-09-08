@@ -557,6 +557,7 @@
                     <button class="category-tab" data-category="metal">Metal</button>
                     <button class="category-tab" data-category="acrylic">Acrylic</button>
                     <button class="category-tab" data-category="framed">Framed</button>
+                    <button class="category-tab" data-category="specialty">Specialty</button>
                 </div>
                 <div id="productList" class="product-list">
                     <!-- Products will be loaded here -->
@@ -729,7 +730,10 @@
                 
                 if (data.success) {
                     products = data.products;
+                    // Categorize products based on their names/types
+                    categorizeProducts();
                     displayProducts('all');
+                    console.log(`Loaded ${products.length} WHCC products`);
                 } else {
                     console.error('Failed to load products');
                 }
@@ -740,6 +744,51 @@
             }
         }
 
+        function categorizeProducts() {
+            // Auto-categorize products based on their names
+            products.forEach(product => {
+                const name = product.name.toLowerCase();
+                
+                if (name.includes('canvas') || name.includes('gallery wrap')) {
+                    product.category = 'canvas';
+                } else if (name.includes('metal') || name.includes('aluminum')) {
+                    product.category = 'metal';
+                } else if (name.includes('acrylic') || name.includes('glass')) {
+                    product.category = 'acrylic';
+                } else if (name.includes('frame') || name.includes('matted')) {
+                    product.category = 'framed';
+                } else if (name.includes('print') || name.includes('lustre') || name.includes('matte')) {
+                    product.category = 'prints';
+                } else {
+                    product.category = 'specialty';
+                }
+            });
+        }
+
+        function updateCategoryTabs() {
+            // Count products in each category
+            const categoryCounts = {
+                all: products.length,
+                prints: products.filter(p => p.category === 'prints').length,
+                canvas: products.filter(p => p.category === 'canvas').length,
+                metal: products.filter(p => p.category === 'metal').length,
+                acrylic: products.filter(p => p.category === 'acrylic').length,
+                framed: products.filter(p => p.category === 'framed').length,
+                specialty: products.filter(p => p.category === 'specialty').length
+            };
+
+            // Update tab labels with counts
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                const category = tab.dataset.category;
+                const count = categoryCounts[category] || 0;
+                if (count > 0 && category !== 'all') {
+                    tab.textContent = `${tab.textContent.split('(')[0].trim()} (${count})`;
+                } else if (category === 'all') {
+                    tab.textContent = `All (${count})`;
+                }
+            });
+        }
+
         function displayProducts(category) {
             const productList = document.getElementById('productList');
             productList.innerHTML = '';
@@ -748,7 +797,17 @@
                 ? products 
                 : products.filter(p => p.category === category);
 
-            filteredProducts.forEach((product, index) => {
+            // Show product count
+            const countDiv = document.createElement('div');
+            countDiv.style.cssText = 'padding: 10px; background: #f0f8ff; border-radius: 6px; margin-bottom: 10px; font-size: 13px; color: #4a5568;';
+            countDiv.innerHTML = `Showing <strong>${filteredProducts.length}</strong> of <strong>${products.length}</strong> WHCC products`;
+            productList.appendChild(countDiv);
+
+            // Display first 50 products with scroll for more
+            const displayCount = Math.min(50, filteredProducts.length);
+            
+            for (let i = 0; i < displayCount; i++) {
+                const product = filteredProducts[i];
                 const productDiv = document.createElement('div');
                 productDiv.className = 'product-option';
                 productDiv.innerHTML = `
@@ -759,7 +818,29 @@
                 
                 productDiv.onclick = () => selectProduct(product);
                 productList.appendChild(productDiv);
-            });
+            }
+
+            if (filteredProducts.length > 50) {
+                const loadMoreDiv = document.createElement('div');
+                loadMoreDiv.style.cssText = 'padding: 12px; background: #4299e1; color: white; text-align: center; border-radius: 6px; cursor: pointer; margin-top: 10px;';
+                loadMoreDiv.textContent = `Load ${filteredProducts.length - 50} more products`;
+                loadMoreDiv.onclick = () => {
+                    for (let i = 50; i < filteredProducts.length; i++) {
+                        const product = filteredProducts[i];
+                        const productDiv = document.createElement('div');
+                        productDiv.className = 'product-option';
+                        productDiv.innerHTML = `
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">$${product.price.toFixed(2)}</div>
+                            ${product.description ? `<div class="product-description">${product.description}</div>` : ''}
+                        `;
+                        productDiv.onclick = () => selectProduct(product);
+                        productList.insertBefore(productDiv, loadMoreDiv);
+                    }
+                    loadMoreDiv.remove();
+                };
+                productList.appendChild(loadMoreDiv);
+            }
         }
 
         function selectProduct(product) {
@@ -893,6 +974,7 @@
 
         function applyPrintStyle(product) {
             const printFrame = document.getElementById('printFrame');
+            const printDisplay = document.getElementById('printDisplay');
             
             // Remove all style classes
             printFrame.className = 'print-frame';
@@ -900,16 +982,57 @@
             // Apply style based on product category
             if (product.category === 'canvas') {
                 printFrame.classList.add('canvas-wrap');
+                // Add canvas texture effect
+                printFrame.style.position = 'relative';
+                if (!document.getElementById('canvasTexture')) {
+                    const texture = document.createElement('div');
+                    texture.id = 'canvasTexture';
+                    texture.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: repeating-linear-gradient(
+                            0deg,
+                            transparent,
+                            transparent 2px,
+                            rgba(255,255,255,0.03) 2px,
+                            rgba(255,255,255,0.03) 4px
+                        ),
+                        repeating-linear-gradient(
+                            90deg,
+                            transparent,
+                            transparent 2px,
+                            rgba(0,0,0,0.03) 2px,
+                            rgba(0,0,0,0.03) 4px
+                        );
+                        pointer-events: none;
+                        z-index: 2;
+                    `;
+                    printFrame.appendChild(texture);
+                }
             } else if (product.category === 'metal') {
                 printFrame.classList.add('metal-print');
+                // Enhanced metallic effect
+                printDisplay.style.filter = 'contrast(1.1) saturate(1.2)';
             } else if (product.category === 'acrylic') {
                 printFrame.classList.add('acrylic-print');
+                // Add glass-like depth
+                printDisplay.style.transform = 'translateZ(20px)';
+                printDisplay.style.transformStyle = 'preserve-3d';
             } else if (product.category === 'framed') {
                 printFrame.classList.add('framed-print');
                 // Check for frame color option
                 if (currentOptions['Frame Color']?.name?.includes('White')) {
                     printFrame.classList.add('white-frame');
                 }
+            } else {
+                // Remove any texture overlays
+                const texture = document.getElementById('canvasTexture');
+                if (texture) texture.remove();
+                printDisplay.style.filter = '';
+                printDisplay.style.transform = '';
             }
         }
 
@@ -927,6 +1050,9 @@
         }
 
         function setupEventListeners() {
+            // Update category tabs with product counts
+            updateCategoryTabs();
+            
             // Category tabs
             document.querySelectorAll('.category-tab').forEach(tab => {
                 tab.addEventListener('click', (e) => {
