@@ -419,54 +419,26 @@
             try {
                 console.log('🛒 Starting purchase for photo:', filename);
                 
-                // Fetch real WHCC print products
-                const productsResponse = await fetch('/api/print/products');
-                const productsData = await productsResponse.json();
-                const products = productsData.products || [];
+                // Get the photo URL
+                const photo = photos[index];
+                const photoUrl = photo.url || photo.filename;
                 
-                console.log('🖨️ Loaded print products:', products);
+                // Open the new print preview window
+                const previewUrl = `/print-preview.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&token=${galleryToken}`;
                 
-                // Show purchase options modal
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.8);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000;
-                `;
+                // Open in a new window with specific dimensions for the preview experience
+                const previewWindow = window.open(
+                    previewUrl,
+                    'PrintPreview',
+                    'width=1400,height=900,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,status=yes'
+                );
                 
-                // Generate product options from real WHCC data
-                const productOptionsHTML = products.map(product => `
-                    <button class="print-option" data-product-id="${product.id}" data-size="${product.name}" data-price="${product.price}" style="padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s ease;">
-                        <div style="font-weight: 600; margin-bottom: 5px;">${product.name}</div>
-                        <div style="color: #666; font-size: 14px;">$${product.price}</div>
-                        ${product.description ? `<div style="color: #999; font-size: 12px; margin-top: 3px;">${product.description}</div>` : ''}
-                    </button>
-                `).join('');
+                if (!previewWindow) {
+                    // Fallback if popup is blocked
+                    window.location.href = previewUrl;
+                }
                 
-                modal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: center;">
-                        <h3 style="margin-bottom: 20px; color: #2d3748;">Purchase ${filename}</h3>
-                        <p style="margin-bottom: 25px; color: #666;">Choose from professional WhiteHouse Custom Color print options:</p>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                            ${productOptionsHTML}
-                        </div>
-                        
-                        <div style="display: flex; gap: 15px; justify-content: center;">
-                            <button id="cancelPurchase" style="padding: 12px 25px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 8px; cursor: pointer;">Cancel</button>
-                            <button id="proceedPurchase" disabled style="padding: 12px 25px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; opacity: 0.5;">Add to Cart</button>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
+                return;
                 
                 let selectedOption = null;
                 
