@@ -13277,6 +13277,11 @@ app.get('/print-preview.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'print-preview.html'));
 });
 
+// Serve print checkout page (no authentication required for gallery clients)
+app.get('/print-checkout.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'print-checkout.html'));
+});
+
 // Serve public assets under /assets path
 app.use('/assets', express.static(path.join(__dirname, 'public')));
 

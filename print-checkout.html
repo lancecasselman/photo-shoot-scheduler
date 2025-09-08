@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Order Checkout - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .checkout-header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .checkout-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .checkout-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .checkout-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .cart-section {
+            border-right: 1px solid #e2e8f0;
+            padding-right: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .cart-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .item-specs {
+            font-size: 14px;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        .item-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #48bb78;
+        }
+
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #f7fafc;
+        }
+
+        .quantity-value {
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .remove-btn {
+            color: #e53e3e;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .summary-section {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .customer-info {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .order-summary {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .summary-line.total {
+            padding-top: 15px;
+            border-top: 2px solid #e2e8f0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 60px;
+            color: #718096;
+        }
+
+        .empty-cart-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .shipping-options {
+            margin-top: 20px;
+        }
+
+        .shipping-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shipping-option:hover {
+            background: #f7fafc;
+        }
+
+        .shipping-option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .shipping-radio {
+            margin-right: 12px;
+        }
+
+        .shipping-details {
+            flex: 1;
+        }
+
+        .shipping-name {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .shipping-time {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .shipping-price {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .payment-method {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-method:hover {
+            border-color: #cbd5e0;
+        }
+
+        .payment-method.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .payment-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .payment-label {
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-content {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-section {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+                padding-right: 0;
+                padding-bottom: 30px;
+            }
+
+            .summary-section {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <div class="checkout-header">
+            <h1>🛒 Checkout</h1>
+            <p>Complete your WHCC print order</p>
+        </div>
+
+        <div class="checkout-content">
+            <div class="cart-section">
+                <h2 class="section-title">
+                    <span>📦</span>
+                    Order Items
+                </h2>
+                
+                <div class="cart-items" id="cartItems">
+                    <!-- Cart items will be loaded here -->
+                </div>
+
+                <div class="empty-cart" id="emptyCart" style="display: none;">
+                    <div class="empty-cart-icon">🛒</div>
+                    <h3>Your cart is empty</h3>
+                    <p>Add some beautiful prints to get started!</p>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <div class="customer-info">
+                    <h3 class="section-title">Customer Information</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" id="customerName" placeholder="John Doe" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="customerEmail" placeholder="john@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-input" id="customerPhone" placeholder="(555) 123-4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Shipping Address</label>
+                        <input type="text" class="form-input" id="shippingAddress" placeholder="123 Main St" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">City, State ZIP</label>
+                        <input type="text" class="form-input" id="cityStateZip" placeholder="New York, NY 10001" required>
+                    </div>
+                </div>
+
+                <div class="shipping-options">
+                    <h3 class="section-title">Shipping Method</h3>
+                    
+                    <div class="shipping-option selected" data-price="9.99">
+                        <input type="radio" class="shipping-radio" name="shipping" checked>
+                        <div class="shipping-details">
+                            <div class="shipping-name">Standard Shipping</div>
+                            <div class="shipping-time">5-7 business days</div>
+                        </div>
+                        <div class="shipping-price">$9.99</div>
+                    </div>
+                    
+                    <div class="shipping-option" data-price="19.99">
+                        <input type="radio" class="shipping-radio" name="shipping">
+                        <div class="shipping-details">
+                            <div class="shipping-name">Express Shipping</div>
+                            <div class="shipping-time">2-3 business days</div>
+                        </div>
+                        <div class="shipping-price">$19.99</div>
+                    </div>
+                    
+                    <div class="shipping-option" data-price="39.99">
+                        <input type="radio" class="shipping-radio" name="shipping">
+                        <div class="shipping-details">
+                            <div class="shipping-name">Overnight Shipping</div>
+                            <div class="shipping-time">Next business day</div>
+                        </div>
+                        <div class="shipping-price">$39.99</div>
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <h3 class="section-title">Order Summary</h3>
+                    
+                    <div class="summary-line">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-line">
+                        <span>Shipping:</span>
+                        <span id="shippingCost">$9.99</span>
+                    </div>
+                    
+                    <div class="summary-line">
+                        <span>Tax (est.):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-line total">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+
+                <button class="checkout-btn" id="checkoutBtn" onclick="processCheckout()">
+                    Process Order with Stripe
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let shippingRate = 9.99;
+
+        // Load cart from session storage
+        window.addEventListener('DOMContentLoaded', () => {
+            const cartData = sessionStorage.getItem('printCart');
+            if (cartData) {
+                cart = JSON.parse(cartData);
+            }
+            
+            displayCart();
+            updateSummary();
+            
+            // Setup shipping option handlers
+            document.querySelectorAll('.shipping-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.shipping-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.querySelector('.shipping-radio').checked = false;
+                    });
+                    
+                    option.classList.add('selected');
+                    option.querySelector('.shipping-radio').checked = true;
+                    shippingRate = parseFloat(option.dataset.price);
+                    updateSummary();
+                });
+            });
+        });
+
+        function displayCart() {
+            const cartItems = document.getElementById('cartItems');
+            const emptyCart = document.getElementById('emptyCart');
+            
+            if (cart.length === 0) {
+                cartItems.style.display = 'none';
+                emptyCart.style.display = 'block';
+                document.getElementById('checkoutBtn').disabled = true;
+                return;
+            }
+            
+            cartItems.style.display = 'flex';
+            emptyCart.style.display = 'none';
+            cartItems.innerHTML = '';
+            
+            cart.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'cart-item';
+                
+                const basePrice = item.product.price;
+                const sizePrice = item.size ? calculateSizePrice(item.size) : 0;
+                const itemPrice = basePrice + sizePrice;
+                const totalPrice = itemPrice * item.quantity;
+                
+                itemDiv.innerHTML = `
+                    <img src="${item.photoUrl}" alt="Print" class="item-image">
+                    <div class="item-details">
+                        <div class="item-name">${item.product.name}</div>
+                        <div class="item-specs">
+                            Size: ${item.size}<br>
+                            ${item.product.category ? `Type: ${item.product.category}<br>` : ''}
+                            Crop: ${item.cropSettings.zoom}% zoom
+                        </div>
+                        <div class="item-quantity">
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">−</button>
+                            <span class="quantity-value">${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item-price">$${totalPrice.toFixed(2)}</div>
+                        <div class="remove-btn" onclick="removeItem(${index})">Remove</div>
+                    </div>
+                `;
+                
+                cartItems.appendChild(itemDiv);
+            });
+        }
+
+        function calculateSizePrice(size) {
+            const [width, height] = size.split('x').map(Number);
+            const area = width * height;
+            
+            if (area <= 80) return 0;
+            if (area <= 154) return 5;
+            if (area <= 320) return 15;
+            if (area <= 480) return 25;
+            if (area <= 720) return 40;
+            return 60;
+        }
+
+        function updateQuantity(index, change) {
+            cart[index].quantity = Math.max(1, cart[index].quantity + change);
+            sessionStorage.setItem('printCart', JSON.stringify(cart));
+            displayCart();
+            updateSummary();
+        }
+
+        function removeItem(index) {
+            if (confirm('Remove this item from your cart?')) {
+                cart.splice(index, 1);
+                sessionStorage.setItem('printCart', JSON.stringify(cart));
+                displayCart();
+                updateSummary();
+            }
+        }
+
+        function updateSummary() {
+            let subtotal = 0;
+            
+            cart.forEach(item => {
+                const basePrice = item.product.price;
+                const sizePrice = item.size ? calculateSizePrice(item.size) : 0;
+                const itemPrice = basePrice + sizePrice;
+                subtotal += itemPrice * item.quantity;
+            });
+            
+            const tax = subtotal * 0.08; // 8% tax estimate
+            const total = subtotal + shippingRate + tax;
+            
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('shippingCost').textContent = `$${shippingRate.toFixed(2)}`;
+            document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+        }
+
+        async function processCheckout() {
+            const customerName = document.getElementById('customerName').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const shippingAddress = document.getElementById('shippingAddress').value;
+            const cityStateZip = document.getElementById('cityStateZip').value;
+            
+            if (!customerName || !customerEmail || !shippingAddress || !cityStateZip) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (cart.length === 0) {
+                alert('Your cart is empty');
+                return;
+            }
+            
+            // Prepare order data
+            const orderData = {
+                cart: cart,
+                customer: {
+                    name: customerName,
+                    email: customerEmail,
+                    phone: customerPhone,
+                    address: shippingAddress,
+                    cityStateZip: cityStateZip
+                },
+                shipping: shippingRate,
+                total: parseFloat(document.getElementById('total').textContent.replace('$', ''))
+            };
+            
+            try {
+                // Call API to create Stripe checkout session
+                const response = await fetch('/api/print/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.checkoutUrl) {
+                        // Redirect to Stripe checkout
+                        window.location.href = result.checkoutUrl;
+                    } else {
+                        alert('Checkout session created successfully! Order ID: ' + result.orderId);
+                        // Clear cart
+                        sessionStorage.removeItem('printCart');
+                        window.location.href = '/checkout-success';
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.message || 'Failed to process checkout'));
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Failed to process checkout. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
