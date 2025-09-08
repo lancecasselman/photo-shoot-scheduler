@@ -5577,13 +5577,14 @@ app.get('/api/print/debug', async (req, res) => {
         console.log('- Sandbox URL:', printService.sandboxUrl);
         console.log('- Is Sandbox:', printService.isSandbox);
         
-        // Test the API call to see what we get back
+        // Test the Editor API call instead
         const testEndpoint = '/products';
-        const headers = printService.getOASAuthHeader('GET', testEndpoint);
-        const url = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}${testEndpoint}`;
+        const headers = printService.getEditorAuthHeader();
+        const url = `${printService.editorBaseUrl}${testEndpoint}`;
         
         console.log('- Test URL:', url);
-        console.log('- Auth Header:', headers.Authorization.substring(0, 50) + '...');
+        console.log('- Auth Headers:', Object.keys(headers));
+        console.log('- X-API-Key:', headers['X-API-Key'] ? 'Present' : 'Missing');
         
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
@@ -5606,10 +5607,10 @@ app.get('/api/print/debug', async (req, res) => {
                     editorKeySecret: !!printService.editorKeySecret
                 },
                 urls: {
-                    baseUrl: printService.oasBaseUrl,
-                    sandboxUrl: printService.sandboxUrl,
+                    oasBaseUrl: printService.oasBaseUrl,
+                    editorBaseUrl: printService.editorBaseUrl,
                     testUrl: url,
-                    isSandbox: printService.isSandbox
+                    apiType: 'Editor API'
                 },
                 response: {
                     status: response.status,
