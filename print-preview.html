@@ -542,6 +542,235 @@
                 right: 20px;
             }
         }
+        
+        /* Mobile styles for phones */
+        @media (max-width: 768px) {
+            .preview-container {
+                flex-direction: column;
+            }
+            
+            .product-panel,
+            .options-panel {
+                width: 100%;
+                max-width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 70vh;
+                transform: translateY(100%);
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+            }
+            
+            .panel-open .product-panel,
+            .panel-open .options-panel {
+                transform: translateY(0);
+            }
+            
+            .preview-main {
+                height: 50vh;
+                width: 100%;
+            }
+            
+            .room-container {
+                height: 100%;
+                padding: 10px;
+            }
+            
+            .print-frame {
+                max-width: 180px;
+                max-height: 220px;
+            }
+            
+            /* Mobile-friendly touch targets (44px minimum) */
+            .category-tab {
+                padding: 12px 16px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+            
+            .size-btn {
+                min-height: 44px;
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .room-option {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .room-selector {
+                padding: 10px;
+                gap: 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Mobile-friendly sliders */
+            .crop-slider {
+                height: 40px;
+            }
+            
+            .crop-slider::-webkit-slider-thumb {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .crop-slider::-moz-range-thumb {
+                width: 32px;
+                height: 32px;
+            }
+            
+            /* Mobile-friendly buttons */
+            .crop-btn, .cart-btn {
+                width: 100%;
+                padding: 16px;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            
+            /* Mobile panel toggle */
+            .panel-toggle {
+                bottom: 20px;
+                top: auto;
+            }
+            
+            .toggle-products {
+                left: 20px;
+                bottom: 20px;
+                top: auto;
+            }
+            
+            .toggle-options {
+                right: 20px;
+                bottom: 20px;
+                top: auto;
+            }
+            
+            /* Adjust cart icon for mobile */
+            .cart-icon {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+                font-size: 20px;
+            }
+            
+            /* Mobile product list */
+            .product-list {
+                max-height: calc(70vh - 200px);
+                padding-bottom: 20px;
+            }
+            
+            .product-option {
+                padding: 14px;
+                margin-bottom: 12px;
+                font-size: 14px;
+            }
+            
+            /* Mobile options panel */
+            .option-group {
+                margin-bottom: 20px;
+            }
+            
+            .option-label {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+            
+            /* Pull handle for mobile panels */
+            .product-panel::before,
+            .options-panel::before {
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: #cbd5e0;
+                border-radius: 2px;
+            }
+        }
+        
+        /* Extra small mobile */
+        @media (max-width: 480px) {
+            .print-frame {
+                max-width: 140px;
+                max-height: 180px;
+            }
+            
+            .room-selector {
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+            }
+            
+            .category-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 10px;
+                scrollbar-width: none;
+            }
+            
+            .category-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .category-tab {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+            
+            .panel-section {
+                padding: 15px;
+            }
+            
+            .section-title {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            
+            .product-panel,
+            .options-panel {
+                padding: 15px;
+            }
+        }
+        
+        /* Touch-friendly hover states */
+        @media (hover: none) and (pointer: coarse) {
+            .product-option:hover,
+            .category-tab:hover,
+            .size-btn:hover,
+            .room-option:hover {
+                background: inherit;
+            }
+            
+            .product-option:active {
+                background: #f0f4f8;
+                transform: scale(0.98);
+            }
+            
+            .category-tab:active {
+                transform: scale(0.95);
+            }
+            
+            .size-btn:active {
+                transform: scale(0.95);
+            }
+            
+            .room-option:active {
+                transform: scale(0.95);
+            }
+            
+            .crop-btn:active,
+            .cart-btn:active {
+                transform: scale(0.98);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1053,23 +1282,38 @@
             // Update category tabs with product counts
             updateCategoryTabs();
             
+            // Detect mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
             // Category tabs
             document.querySelectorAll('.category-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
+                const handleClick = (e) => {
+                    e.preventDefault();
                     document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
                     e.target.classList.add('active');
                     displayProducts(e.target.dataset.category);
-                });
+                };
+                
+                tab.addEventListener('click', handleClick);
+                if (isMobile) {
+                    tab.addEventListener('touchend', handleClick);
+                }
             });
 
             // Room buttons
             document.querySelectorAll('.room-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                const handleClick = (e) => {
+                    e.preventDefault();
                     setRoomBackground(e.target.dataset.room);
-                });
+                };
+                
+                btn.addEventListener('click', handleClick);
+                if (isMobile) {
+                    btn.addEventListener('touchend', handleClick);
+                }
             });
 
-            // Crop controls
+            // Crop controls - mobile-friendly
             const zoomSlider = document.getElementById('zoomSlider');
             const xSlider = document.getElementById('xSlider');
             const ySlider = document.getElementById('ySlider');
@@ -1077,11 +1321,90 @@
             zoomSlider.addEventListener('input', updateCrop);
             xSlider.addEventListener('input', updateCrop);
             ySlider.addEventListener('input', updateCrop);
+            
+            // Touch events for sliders
+            if (isMobile) {
+                [zoomSlider, xSlider, ySlider].forEach(slider => {
+                    slider.addEventListener('touchmove', updateCrop);
+                });
+            }
 
             // Quantity input
             document.getElementById('quantity').addEventListener('change', updatePrice);
+            
+            // Mobile panel toggles
+            if (isMobile || window.innerWidth <= 1024) {
+                setupMobilePanels();
+            }
         }
 
+        function setupMobilePanels() {
+            // Add mobile panel toggle buttons if they don't exist
+            if (!document.querySelector('.toggle-products')) {
+                const toggleProducts = document.createElement('div');
+                toggleProducts.className = 'panel-toggle toggle-products';
+                toggleProducts.innerHTML = '📦';
+                toggleProducts.addEventListener('click', () => {
+                    document.body.classList.toggle('panel-open');
+                    document.querySelector('.product-panel').style.transform = 
+                        document.body.classList.contains('panel-open') ? 'translateY(0)' : 'translateY(100%)';
+                });
+                document.body.appendChild(toggleProducts);
+            }
+            
+            if (!document.querySelector('.toggle-options')) {
+                const toggleOptions = document.createElement('div');
+                toggleOptions.className = 'panel-toggle toggle-options';
+                toggleOptions.innerHTML = '⚙️';
+                toggleOptions.addEventListener('click', () => {
+                    document.body.classList.toggle('panel-open');
+                    document.querySelector('.options-panel').style.transform = 
+                        document.body.classList.contains('panel-open') ? 'translateY(0)' : 'translateY(100%)';
+                });
+                document.body.appendChild(toggleOptions);
+            }
+            
+            // Add swipe-to-close for mobile panels
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+            
+            const panels = document.querySelectorAll('.product-panel, .options-panel');
+            panels.forEach(panel => {
+                panel.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    isDragging = true;
+                });
+                
+                panel.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentY = e.touches[0].clientY;
+                    const diff = currentY - startY;
+                    
+                    if (diff > 0) {
+                        panel.style.transform = `translateY(${diff}px)`;
+                    }
+                });
+                
+                panel.addEventListener('touchend', () => {
+                    isDragging = false;
+                    const diff = currentY - startY;
+                    
+                    if (diff > 100) {
+                        // Close panel if dragged down more than 100px
+                        panel.style.transform = 'translateY(100%)';
+                        document.body.classList.remove('panel-open');
+                    } else {
+                        // Snap back to open position
+                        panel.style.transform = 'translateY(0)';
+                    }
+                    
+                    startY = 0;
+                    currentY = 0;
+                });
+            });
+        }
+        
         function updateCrop() {
             const zoom = document.getElementById('zoomSlider').value;
             const x = document.getElementById('xSlider').value;
