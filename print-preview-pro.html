@@ -622,10 +622,10 @@
                     const printWidth = width * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     const printHeight = height * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     
-                    // Position print centered above sofa with more room for larger prints
-                    // Adjust sofa position lower to accommodate up to 45" tall prints
-                    const sofaTop = canvas.height * 0.65; // Move sofa lower for more wall space
-                    const hangingGap = 8 * pixelsPerInch; // 8 inches above sofa (standard gallery height)
+                    // Position print centered above sofa with maximum room for larger prints
+                    // Move sofa much lower to create gallery-style wall space
+                    const sofaTop = canvas.height * 0.75; // Sofa at 3/4 height for maximum wall space
+                    const hangingGap = 6 * pixelsPerInch; // 6 inches above sofa for more room
                     
                     // Center horizontally and position vertically with room for large prints
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
