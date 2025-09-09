@@ -470,43 +470,123 @@
     <script src="/js/print-mockup.js"></script>
     
     <script>
-        // Define SimpleMockup as a fallback or wait for the PrintMockupGenerator to be available
-        (function() {
+        // Global variables
+        let mockup = null;
+        let currentSettings = {
+            room: 'living',
+            product: 'canvas',
+            size: '16x20',
+            frame: 'none',
+            crop: { zoom: 100, x: 0, y: 0 }
+        };
         
-        // Legacy SimpleMockup wrapper for compatibility
-        class SimpleMockup {
-            constructor(canvas) {
-                this.canvas = canvas;
-                this.ctx = canvas.getContext('2d');
-                // Create the actual generator with proper scaling
-                this.generator = new PrintMockupGenerator(canvas.id);
-                this.printImage = null;
+        // Simple mockup implementation that works directly
+        class DirectMockup {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
                 this.roomImage = null;
+                this.printImage = null;
+                this.roomScenes = {
+                    living: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1600&h=900&fit=crop',
+                    bedroom: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1600&h=900&fit=crop',
+                    office: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&h=900&fit=crop',
+                    gallery: 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1600&h=900&fit=crop',
+                    dining: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1600&h=900&fit=crop'
+                };
             }
-
-            async loadRoom(roomName) {
-                // Delegate to PrintMockupGenerator's loadScene
-                return this.generator.loadScene(roomName);
-            }
-
-            async loadPrint(imageUrl) {
-                // Delegate to PrintMockupGenerator's loadPrintImage
-                return this.generator.loadPrintImage(imageUrl);
-            }
-
-            render(options) {
-                // Delegate to PrintMockupGenerator's render method with proper options
-                return this.generator.render({
-                    sceneName: options.room,
-                    printSize: options.size,
-                    productType: options.product,
-                    frameStyle: options.frame,
-                    cropSettings: options.crop,
-                    showSizeIndicator: true
+            
+            async loadScene(sceneName) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        this.roomImage = img;
+                        this.canvas.width = 1200;
+                        this.canvas.height = 800;
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = this.roomScenes[sceneName];
                 });
             }
-
-            getFrameColor(frame) {
+            
+            async loadPrintImage(imageUrl) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        this.printImage = img;
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = imageUrl;
+                });
+            }
+            
+            render(options) {
+                if (!this.roomImage) return;
+                
+                // Clear and draw room
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(this.roomImage, 0, 0, this.canvas.width, this.canvas.height);
+                
+                if (!this.printImage) return;
+                
+                // Calculate print position
+                const [width, height] = options.printSize.split('x').map(Number);
+                const scale = Math.sqrt((width * height) / 320) * 0.8;
+                const printWidth = width * 10 * scale;
+                const printHeight = height * 10 * scale;
+                const x = (this.canvas.width - printWidth) / 2;
+                const y = (this.canvas.height - printHeight) / 2 - 50;
+                
+                // Draw shadow
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowOffsetX = 10;
+                this.ctx.shadowOffsetY = 10;
+                
+                // Draw frame if not canvas
+                if (options.frameStyle !== 'none' && options.productType !== 'canvas') {
+                    const frameColors = {
+                        black: '#1a1a1a',
+                        white: '#ffffff',
+                        wood: '#8B4513',
+                        gold: '#FFD700'
+                    };
+                    const frameWidth = 15 * scale;
+                    this.ctx.fillStyle = frameColors[options.frameStyle] || '#000';
+                    this.ctx.fillRect(x - frameWidth, y - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
+                }
+                
+                // Draw white background
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(x, y, printWidth, printHeight);
+                
+                // Draw print
+                this.ctx.drawImage(this.printImage, x, y, printWidth, printHeight);
+                
+                // Reset shadow
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.shadowBlur = 0;
+                
+                // Add size label
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                this.ctx.font = '14px sans-serif';
+                this.ctx.fillText(`${options.printSize}" ${options.productType}`, x, y + printHeight + 30);
+            }
+        }
+        
+        // Wait for everything to load
+        window.addEventListener('DOMContentLoaded', function() {
+            // Use simple direct mockup
+            mockup = new DirectMockup('mockupCanvas');
+            console.log('DirectMockup initialized');
+            initialize();
+        });
+        
+        function getFrameColor(frame) {
                 const colors = {
                     black: '#1a1a1a',
                     white: '#ffffff',
@@ -540,25 +620,13 @@
                 this.ctx.restore();
             }
         }
+        
+        // Create a simple fallback if PrintMockupGenerator isn't available
+        if (typeof window.PrintMockupGenerator === 'undefined') {
+            window.PrintMockupGenerator = SimpleMockup;
+        }
 
         }
-        
-        // Close the initializeApp function and set up the main script
-        let mockup;
-        
-        // Wait for everything to load
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Initialize the actual PrintMockupGenerator with proper scaling
-            mockup = new window.PrintMockupGenerator('mockupCanvas');
-        
-        // Current settings
-        let currentSettings = {
-            room: 'living',
-            product: 'canvas',
-            size: '16x20',
-            frame: 'none',
-            crop: { zoom: 100, x: 0, y: 0 }
-        };
 
         // Get parameters from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -582,6 +650,7 @@
 
         // Initialize
         async function initialize() {
+            console.log('Initialize called, mockup:', mockup);
             if (!mockup) {
                 console.error('Mockup generator not initialized');
                 return;
@@ -589,11 +658,16 @@
             document.getElementById('loadingOverlay').style.display = 'flex';
             
             try {
+                console.log('Loading scene:', currentSettings.room);
                 await mockup.loadScene(currentSettings.room);
+                console.log('Loading photo:', photoUrl);
                 await mockup.loadPrintImage(photoUrl);
+                console.log('Calling updatePreview');
                 updatePreview();
             } catch (error) {
                 console.error('Error loading images:', error);
+                // Try to show something even if there's an error
+                updatePreview();
             } finally {
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
@@ -601,14 +675,26 @@
 
         // Update preview
         function updatePreview() {
-            mockup.render({
-                sceneName: currentSettings.room,
-                printSize: currentSettings.size,
-                productType: currentSettings.product,
-                frameStyle: currentSettings.frame,
-                cropSettings: currentSettings.crop,
-                showSizeIndicator: true
-            });
+            console.log('updatePreview called, mockup:', mockup);
+            if (!mockup) {
+                console.error('No mockup available for rendering');
+                return;
+            }
+            
+            try {
+                mockup.render({
+                    sceneName: currentSettings.room,
+                    printSize: currentSettings.size,
+                    productType: currentSettings.product,
+                    frameStyle: currentSettings.frame,
+                    cropSettings: currentSettings.crop,
+                    showSizeIndicator: true
+                });
+                console.log('Render called successfully');
+            } catch (error) {
+                console.error('Error rendering:', error);
+            }
+            
             updatePrice();
         }
 
