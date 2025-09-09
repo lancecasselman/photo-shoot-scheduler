@@ -509,14 +509,27 @@
                     ctx.drawImage(loadedRoomImage, 0, 0, canvas.width, canvas.height);
                 }
                 
-                // Draw print
+                // Draw print with accurate real-world scaling
                 if (loadedPrintImage) {
                     const [width, height] = currentSettings.size.split('x').map(Number);
-                    const scale = Math.sqrt((width * height) / 320) * 0.8 * (currentSettings.crop.zoom / 100);
-                    const printWidth = width * 10 * scale;
-                    const printHeight = height * 10 * scale;
-                    const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 3;
-                    const y = (canvas.height - printHeight) / 2 - 50 + currentSettings.crop.y * 3;
+                    
+                    // Room calibration: Standard sofa is 84" wide
+                    // The sofa in image takes up approximately 600px of 1200px canvas width
+                    const sofaWidthInches = 84;
+                    const sofaWidthPixels = 600;
+                    const pixelsPerInch = sofaWidthPixels / sofaWidthInches;
+                    
+                    // Calculate actual print dimensions in pixels
+                    const printWidth = width * pixelsPerInch * (currentSettings.crop.zoom / 100);
+                    const printHeight = height * pixelsPerInch * (currentSettings.crop.zoom / 100);
+                    
+                    // Position print centered above sofa
+                    // Standard hanging height is 8-12 inches above furniture
+                    const sofaTop = canvas.height * 0.55; // Sofa back position
+                    const hangingGap = 10 * pixelsPerInch; // 10 inches above sofa
+                    
+                    const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
+                    const y = sofaTop - printHeight - hangingGap + currentSettings.crop.y * 2;
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -548,10 +561,50 @@
                     ctx.shadowColor = 'transparent';
                     ctx.shadowBlur = 0;
                     
-                    // Add size label
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    ctx.font = '14px sans-serif';
-                    ctx.fillText(`${currentSettings.size}" ${currentSettings.product}`, x, y + printHeight + 30);
+                    // Add dimension indicators
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    
+                    // Horizontal dimension line
+                    const dimY = y + printHeight + 25;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 10, dimY);
+                    ctx.lineTo(x + printWidth + 10, dimY);
+                    ctx.stroke();
+                    
+                    // Vertical dimension line
+                    const dimX = x + printWidth + 25;
+                    ctx.beginPath();
+                    ctx.moveTo(dimX, y - 10);
+                    ctx.lineTo(dimX, y + printHeight + 10);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([]);
+                    
+                    // Add size labels with actual dimensions
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${width}"`, x + printWidth / 2, dimY + 20);
+                    
+                    ctx.save();
+                    ctx.translate(dimX + 20, y + printHeight / 2);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillText(`${height}"`, 0, 0);
+                    ctx.restore();
+                    
+                    // Add product type label
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.font = '12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, y - 15);
+                    
+                    // Add scale reference (sofa width)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.font = 'italic 11px sans-serif';
+                    const sofaStartX = (canvas.width - sofaWidthPixels) / 2;
+                    ctx.fillText('7ft sofa for scale', canvas.width / 2, canvas.height - 20);
                 }
                 
                 updatePrice();
