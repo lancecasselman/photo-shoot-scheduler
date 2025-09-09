@@ -610,13 +610,15 @@
                 if (loadedPrintImage) {
                     const [width, height] = currentSettings.size.split('x').map(Number);
                     
-                    // Room calibration: Standard sofa is 84" wide
-                    // The sofa in image takes up approximately 600px of 1200px canvas width
+                    // Room calibration: Standard sofa is 84" wide (7 feet)
+                    // The sofa in the image takes up approximately 850px of 1200px canvas width
+                    // This gives us a more realistic scale
                     const sofaWidthInches = 84;
-                    const sofaWidthPixels = 600;
+                    const sofaWidthPixels = 850;
                     const pixelsPerInch = sofaWidthPixels / sofaWidthInches;
                     
                     // Calculate actual print dimensions in pixels
+                    // pixelsPerInch is about 10.1, so a 16x20" print = 161x202 pixels
                     const printWidth = width * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     const printHeight = height * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     
@@ -642,7 +644,8 @@
                             wood: '#8B4513',
                             gold: '#FFD700'
                         };
-                        const frameWidth = 15 * scale;
+                        // Frame width proportional to print size
+                        const frameWidth = Math.min(printWidth, printHeight) * 0.08; // 8% of smallest dimension
                         ctx.fillStyle = frameColors[currentSettings.frame] || '#000';
                         ctx.fillRect(x - frameWidth, y - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
                     }
