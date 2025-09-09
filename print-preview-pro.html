@@ -488,7 +488,7 @@
         </div>
 
         <div class="canvas-container">
-            <canvas id="mockupCanvas" width="1200" height="800"></canvas>
+            <canvas id="mockupCanvas" width="800" height="1200"></canvas>
         </div>
     </div>
 
@@ -697,10 +697,10 @@
                     const printAspectRatio = width / height;
                     
                     // Room calibration: Standard sofa is 84" wide (7 feet)
-                    // The sofa in the image takes up approximately 850px of 1200px canvas width
-                    // This gives us a more realistic scale
+                    // In vertical orientation, sofa takes up approximately 600px of 800px canvas width
+                    // This gives us a more realistic scale for portrait mode
                     const sofaWidthInches = 84;
-                    const sofaWidthPixels = 850;
+                    const sofaWidthPixels = 600;
                     const pixelsPerInch = sofaWidthPixels / sofaWidthInches;
                     
                     // Calculate actual print dimensions in pixels
@@ -714,22 +714,22 @@
                     // Center horizontally
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     
-                    // Dynamic positioning based on print size
-                    // Adjust position to ensure all sizes have proper spacing
-                    const minTopMargin = 40; // Reduced to 40px to give more room for large prints
+                    // Dynamic positioning for vertical canvas orientation
+                    // Adjust position to ensure all sizes have proper spacing in portrait mode
+                    const minTopMargin = 100; // More top margin for vertical layout
                     
                     // Smart center positioning based on print size
-                    // Larger prints need to be positioned higher to maintain sofa clearance
+                    // In vertical mode, center prints in the upper-middle area
                     const isLargePrint = height >= 36; // 30×40, 30×45, 24×36 are considered large
-                    const idealCenterY = isLargePrint ? canvas.height * 0.28 : canvas.height * 0.32;
+                    const idealCenterY = isLargePrint ? canvas.height * 0.35 : canvas.height * 0.40;
                     
                     // Calculate position ensuring top margin is respected
                     const idealY = idealCenterY - (printHeight / 2);
                     const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
                     
-                    // Ensure proper spacing above sofa
-                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image (520px)
-                    const minGapAboveSofa = 100; // Increased to 100px for better visual separation
+                    // Ensure proper spacing above sofa in vertical orientation
+                    const sofaTop = canvas.height * 0.70; // Sofa positioned lower in vertical canvas (840px)
+                    const minGapAboveSofa = 120; // Generous gap for vertical display
                     const maxY = sofaTop - printHeight - minGapAboveSofa;
                     const finalY = Math.min(adjustedY, maxY);
                     
@@ -831,11 +831,11 @@
                     ctx.textAlign = 'center';
                     ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, finalY - 15);
                     
-                    // Add scale reference (sofa width)
+                    // Add scale reference (sofa width) for vertical orientation
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.font = 'italic 11px sans-serif';
                     const sofaStartX = (canvas.width - sofaWidthPixels) / 2;
-                    ctx.fillText('7ft sofa for scale', canvas.width / 2, canvas.height - 20);
+                    ctx.fillText('7ft sofa for scale', canvas.width / 2, canvas.height - 40);
                 }
                 
                 updatePrice();
