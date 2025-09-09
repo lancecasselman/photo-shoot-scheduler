@@ -740,12 +740,14 @@
                     const idealY = idealCenterY - (printHeight / 2);
                     const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
                     
-                    // Ensure proper spacing above sofa - exactly 50 inches
+                    // Set exactly 50 inches from top of couch to TOP of print
                     const sofaTop = canvas.height * 0.65; // Where sofa appears in image
-                    const gapInInches = 50; // 50 inches above the couch as requested
-                    const minGapAboveSofa = gapInInches * pixelsPerInch; // Convert to pixels (50 * 10.1 = ~505px)
-                    const maxY = sofaTop - printHeight - minGapAboveSofa;
-                    const finalY = Math.min(adjustedY, maxY);
+                    const gapInInches = 50; // 50 inches from couch top to print top
+                    const gapInPixels = gapInInches * pixelsPerInch; // Convert to pixels
+                    
+                    // Position print so its TOP is 50 inches above the couch
+                    const printTopY = sofaTop - gapInPixels;
+                    const finalY = printTopY;
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
