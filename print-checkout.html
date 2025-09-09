@@ -32,6 +32,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .checkout-header h1 {
@@ -42,6 +43,29 @@
         .checkout-header p {
             font-size: 16px;
             opacity: 0.9;
+        }
+        
+        .back-to-gallery {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-to-gallery:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-50%) translateX(-2px);
         }
 
         .checkout-content {
@@ -352,6 +376,9 @@
 <body>
     <div class="checkout-container">
         <div class="checkout-header">
+            <a href="#" class="back-to-gallery" id="backToGalleryBtn">
+                ← Back to Gallery
+            </a>
             <h1>🛒 Checkout</h1>
             <p>Complete your WHCC print order</p>
         </div>
@@ -469,12 +496,31 @@
     <script>
         let cart = [];
         let shippingRate = 9.99;
+        let galleryToken = null;
+        
+        // Get gallery token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        galleryToken = urlParams.get('token');
+        
+        // Validate gallery access
+        if (!galleryToken) {
+            alert('Invalid gallery access. Please access checkout through your gallery.');
+            window.location.href = '/';
+        }
 
-        // Load cart from session storage
+        // Load cart from localStorage (not sessionStorage) and filter by gallery
         window.addEventListener('DOMContentLoaded', () => {
-            const cartData = sessionStorage.getItem('printCart');
+            // Set up back to gallery button
+            const backBtn = document.getElementById('backToGalleryBtn');
+            if (backBtn) {
+                backBtn.href = `/client-gallery.html?token=${galleryToken}`;
+            }
+            
+            const cartData = localStorage.getItem('printCart');
             if (cartData) {
-                cart = JSON.parse(cartData);
+                const allCartItems = JSON.parse(cartData);
+                // Filter cart items to only show those from current gallery
+                cart = allCartItems.filter(item => item.galleryToken === galleryToken);
             }
             
             displayCart();
@@ -504,6 +550,23 @@
                 cartItems.style.display = 'none';
                 emptyCart.style.display = 'block';
                 document.getElementById('checkoutBtn').disabled = true;
+                // Show back to gallery button
+                emptyCart.innerHTML = `
+                    <p>Your cart is empty</p>
+                    <button onclick="window.location.href='/client-gallery.html?token=${galleryToken}'" style="
+                        margin-top: 20px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 30px;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">
+                        Back to Gallery
+                    </button>
+                `;
                 return;
             }
             
@@ -559,7 +622,10 @@
 
         function updateQuantity(index, change) {
             cart[index].quantity = Math.max(1, cart[index].quantity + change);
-            sessionStorage.setItem('printCart', JSON.stringify(cart));
+            // Update localStorage with proper gallery filtering
+            const allCartItems = JSON.parse(localStorage.getItem('printCart') || '[]');
+            const otherGalleryItems = allCartItems.filter(item => item.galleryToken !== galleryToken);
+            localStorage.setItem('printCart', JSON.stringify([...otherGalleryItems, ...cart]));
             displayCart();
             updateSummary();
         }
@@ -567,7 +633,10 @@
         function removeItem(index) {
             if (confirm('Remove this item from your cart?')) {
                 cart.splice(index, 1);
-                sessionStorage.setItem('printCart', JSON.stringify(cart));
+                // Update localStorage with proper gallery filtering
+                const allCartItems = JSON.parse(localStorage.getItem('printCart') || '[]');
+                const otherGalleryItems = allCartItems.filter(item => item.galleryToken !== galleryToken);
+                localStorage.setItem('printCart', JSON.stringify([...otherGalleryItems, ...cart]));
                 displayCart();
                 updateSummary();
             }
@@ -609,9 +678,10 @@
                 return;
             }
             
-            // Prepare order data
+            // Prepare order data with gallery token
             const orderData = {
                 cart: cart,
+                galleryToken: galleryToken,
                 customer: {
                     name: customerName,
                     email: customerEmail,
