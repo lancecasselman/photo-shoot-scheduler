@@ -689,12 +689,19 @@
                     });
                 }
                 
+                // Set canvas dimensions to match room image for proper aspect ratio
+                if (loadedRoomImage) {
+                    // Use room's natural dimensions to avoid distortion
+                    canvas.width = loadedRoomImage.width;
+                    canvas.height = loadedRoomImage.height;
+                }
+                
                 // Clear canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw room
+                // Draw room without distortion
                 if (loadedRoomImage) {
-                    ctx.drawImage(loadedRoomImage, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(loadedRoomImage, 0, 0);
                 }
                 
                 // Draw print with accurate real-world scaling and proper cropping
@@ -703,10 +710,10 @@
                     const printAspectRatio = width / height;
                     
                     // Room calibration: Standard sofa is 84" wide (7 feet)
-                    // In vertical orientation, sofa takes up approximately 600px of 800px canvas width
-                    // This gives us a more realistic scale for portrait mode
+                    // The sofa in the room image takes up approximately 850px width
+                    // This gives us a more realistic scale
                     const sofaWidthInches = 84;
-                    const sofaWidthPixels = 600;
+                    const sofaWidthPixels = 850;
                     const pixelsPerInch = sofaWidthPixels / sofaWidthInches;
                     
                     // Calculate actual print dimensions in pixels
@@ -720,22 +727,22 @@
                     // Center horizontally
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     
-                    // Dynamic positioning for vertical canvas orientation
-                    // Adjust position to ensure all sizes have proper spacing in portrait mode
-                    const minTopMargin = 100; // More top margin for vertical layout
+                    // Dynamic positioning based on print size
+                    // Adjust position to ensure all sizes have proper spacing
+                    const minTopMargin = 40; // Minimum space from top
                     
                     // Smart center positioning based on print size
-                    // In vertical mode, center prints in the upper-middle area
+                    // Larger prints need to be positioned higher to maintain sofa clearance
                     const isLargePrint = height >= 36; // 30×40, 30×45, 24×36 are considered large
-                    const idealCenterY = isLargePrint ? canvas.height * 0.35 : canvas.height * 0.40;
+                    const idealCenterY = isLargePrint ? canvas.height * 0.28 : canvas.height * 0.32;
                     
                     // Calculate position ensuring top margin is respected
                     const idealY = idealCenterY - (printHeight / 2);
                     const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
                     
-                    // Ensure proper spacing above sofa in vertical orientation
-                    const sofaTop = canvas.height * 0.70; // Sofa positioned lower in vertical canvas (840px)
-                    const minGapAboveSofa = 120; // Generous gap for vertical display
+                    // Ensure proper spacing above sofa
+                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image
+                    const minGapAboveSofa = 100; // Minimum gap for visual separation
                     const maxY = sofaTop - printHeight - minGapAboveSofa;
                     const finalY = Math.min(adjustedY, maxY);
                     
