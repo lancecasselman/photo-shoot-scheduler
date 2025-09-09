@@ -61,6 +61,10 @@
             }
             
             .product-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            .paper-selector {
                 grid-template-columns: 1fr !important;
             }
             
@@ -167,6 +171,35 @@
         }
 
         .size-option.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .paper-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .paper-option {
+            padding: 12px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .paper-option:hover {
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .paper-option.selected {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border-color: transparent;
@@ -351,22 +384,43 @@
             <div class="section">
                 <h3 class="section-title">Product Type</h3>
                 <div class="product-grid" id="productGrid">
-                    <div class="product-card selected" data-product="canvas">Canvas Wrap</div>
-                    <div class="product-card" data-product="framed">Framed Print</div>
+                    <div class="product-card selected" data-product="photographic">Photographic Print</div>
+                    <div class="product-card" data-product="fineart">Fine Art Print</div>
+                    <div class="product-card" data-product="canvas">Canvas Wrap</div>
                     <div class="product-card" data-product="metal">Metal Print</div>
-                    <div class="product-card" data-product="acrylic">Acrylic Mount</div>
+                    <div class="product-card" data-product="acrylic">Acrylic Print</div>
+                    <div class="product-card" data-product="bamboo">Bamboo Panel</div>
+                    <div class="product-card" data-product="framed">Framed Print</div>
+                </div>
+            </div>
+
+            <div class="section" id="paperSection" style="display: block;">
+                <h3 class="section-title">Paper Type</h3>
+                <div class="paper-selector">
+                    <div class="paper-option selected" data-paper="lustre">Lustre</div>
+                    <div class="paper-option" data-paper="glossy">Glossy</div>
+                    <div class="paper-option" data-paper="matte">Deep Matte</div>
+                    <div class="paper-option" data-paper="metallic">Metallic</div>
                 </div>
             </div>
 
             <div class="section">
                 <h3 class="section-title">Print Size</h3>
-                <div class="size-grid">
+                <div class="size-grid" id="sizeGrid">
+                    <div class="size-option" data-size="4x6">4×6"</div>
+                    <div class="size-option" data-size="5x7">5×7"</div>
                     <div class="size-option" data-size="8x10">8×10"</div>
+                    <div class="size-option" data-size="8x12">8×12"</div>
                     <div class="size-option" data-size="11x14">11×14"</div>
+                    <div class="size-option" data-size="12x18">12×18"</div>
                     <div class="size-option selected" data-size="16x20">16×20"</div>
+                    <div class="size-option" data-size="16x24">16×24"</div>
                     <div class="size-option" data-size="20x24">20×24"</div>
+                    <div class="size-option" data-size="20x30">20×30"</div>
                     <div class="size-option" data-size="24x30">24×30"</div>
+                    <div class="size-option" data-size="24x36">24×36"</div>
                     <div class="size-option" data-size="30x40">30×40"</div>
+                    <div class="size-option" data-size="30x45">30×45"</div>
                 </div>
             </div>
 
@@ -445,18 +499,61 @@
         
         // Current settings
         let currentSettings = {
-            product: 'canvas',
+            product: 'photographic',
+            paper: 'lustre',
             size: '16x20',
             frame: 'none',
             crop: { zoom: 100, x: 0, y: 0 }
         };
         
-        // Pricing data
+        // WHCC-based pricing structure (approximate)
         const pricing = {
-            canvas: { '8x10': 45, '11x14': 65, '16x20': 89, '20x24': 125, '24x30': 165, '30x40': 225 },
-            framed: { '8x10': 65, '11x14': 85, '16x20': 119, '20x24': 165, '24x30': 215, '30x40': 295 },
-            metal: { '8x10': 75, '11x14': 105, '16x20': 149, '20x24': 195, '24x30': 265, '30x40': 365 },
-            acrylic: { '8x10': 95, '11x14': 135, '16x20': 189, '20x24': 255, '24x30': 345, '30x40': 465 }
+            photographic: {
+                '4x6': 3, '5x7': 5, '8x10': 12, '8x12': 14, '11x14': 22, '12x18': 28,
+                '16x20': 42, '16x24': 48, '20x24': 58, '20x30': 72, '24x30': 85,
+                '24x36': 98, '30x40': 145, '30x45': 165
+            },
+            fineart: {
+                '8x10': 18, '8x12': 22, '11x14': 35, '12x18': 42,
+                '16x20': 65, '16x24': 75, '20x24': 88, '20x30': 105,
+                '24x30': 125, '24x36': 145, '30x40': 195, '30x45': 225
+            },
+            canvas: {
+                '8x10': 55, '11x14': 75, '12x18': 85, '16x20': 115, '16x24': 135,
+                '20x24': 155, '20x30': 185, '24x30': 215, '24x36': 245,
+                '30x40': 325, '30x45': 365
+            },
+            metal: {
+                '8x10': 65, '8x12': 75, '11x14': 95, '12x18': 105,
+                '16x20': 145, '16x24': 165, '20x24': 185, '20x30': 225,
+                '24x30': 265, '24x36': 305, '30x40': 385, '30x45': 445
+            },
+            acrylic: {
+                '8x10': 85, '8x12': 95, '11x14': 125, '12x18': 145,
+                '16x20': 195, '16x24': 225, '20x24': 265, '20x30': 315,
+                '24x30': 365, '24x36': 425, '30x40': 525
+            },
+            bamboo: {
+                '5x5': 35, '8x8': 55, '8x10': 65, '11x14': 85, '12x12': 75,
+                '16x16': 115, '16x20': 125, '20x20': 145, '20x24': 165,
+                '24x24': 195, '24x30': 225, '30x30': 265, '30x40': 325
+            },
+            framed: {
+                '8x10': 75, '8x12': 85, '11x14': 105, '12x18': 125,
+                '16x20': 165, '16x24': 185, '20x24': 215, '20x30': 255,
+                '24x30': 295, '24x36': 345, '30x40': 425
+            }
+        };
+        
+        // Product-specific size availability
+        const productSizes = {
+            photographic: ['4x6', '5x7', '8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
+            fineart: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
+            canvas: ['8x10', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
+            metal: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
+            acrylic: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40'],
+            bamboo: ['5x5', '8x8', '8x10', '11x14', '12x12', '16x16', '16x20', '20x20', '20x24', '24x24', '24x30', '30x30', '30x40'],
+            framed: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40']
         };
         
         // Living room background - Clean, minimalist
@@ -624,6 +721,31 @@
                 return;
             }
             
+            // Function to update available sizes based on product
+            function updateAvailableSizes() {
+                const availableSizes = productSizes[currentSettings.product];
+                const sizeGrid = document.getElementById('sizeGrid');
+                
+                // Update each size option
+                document.querySelectorAll('.size-option').forEach(option => {
+                    const size = option.dataset.size;
+                    if (availableSizes.includes(size)) {
+                        option.style.display = 'block';
+                        option.classList.remove('disabled');
+                    } else {
+                        option.style.display = 'none';
+                        option.classList.add('disabled');
+                    }
+                });
+                
+                // If current size not available for product, select first available
+                if (!availableSizes.includes(currentSettings.size)) {
+                    currentSettings.size = availableSizes.includes('16x20') ? '16x20' : availableSizes[0];
+                    document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
+                    document.querySelector(`.size-option[data-size="${currentSettings.size}"]`)?.classList.add('selected');
+                }
+            }
+            
             // Product selector
             document.querySelectorAll('.product-card').forEach(card => {
                 card.addEventListener('click', async function() {
@@ -631,18 +753,45 @@
                     this.classList.add('selected');
                     currentSettings.product = this.dataset.product;
                     
+                    // Handle paper section visibility
+                    const paperSection = document.getElementById('paperSection');
+                    if (this.dataset.product === 'photographic') {
+                        paperSection.style.display = 'block';
+                    } else if (this.dataset.product === 'fineart') {
+                        paperSection.style.display = 'block';
+                        // Update paper options for fine art
+                        document.querySelectorAll('.paper-option').forEach(p => {
+                            if (p.dataset.paper === 'lustre' || p.dataset.paper === 'glossy') {
+                                p.textContent = p.dataset.paper === 'lustre' ? 'Smooth Matte' : 'Torchon';
+                                p.dataset.paper = p.dataset.paper === 'lustre' ? 'smooth' : 'torchon';
+                            }
+                        });
+                    } else {
+                        paperSection.style.display = 'none';
+                    }
+                    
                     // Handle frame section visibility
                     const frameSection = document.getElementById('frameSection');
-                    if (this.dataset.product === 'canvas') {
-                        frameSection.style.display = 'none';
-                        currentSettings.frame = 'none';
-                    } else if (this.dataset.product === 'framed') {
+                    if (this.dataset.product === 'framed') {
                         frameSection.style.display = 'block';
                     } else {
                         frameSection.style.display = 'none';
                         currentSettings.frame = 'none';
                     }
                     
+                    // Update available sizes for this product
+                    updateAvailableSizes();
+                    
+                    await updatePreview();
+                });
+            });
+            
+            // Paper selector
+            document.querySelectorAll('.paper-option').forEach(option => {
+                option.addEventListener('click', async function() {
+                    document.querySelectorAll('.paper-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    currentSettings.paper = this.dataset.paper;
                     await updatePreview();
                 });
             });
@@ -687,8 +836,29 @@
                 await updatePreview();
             });
             
-            // Hide frame section initially for canvas
+            // Initialize paper selector if available
+            if (document.querySelectorAll('.paper-option').length === 0 && document.getElementById('paperSection')) {
+                // Paper options not yet created, let's ensure they exist
+                const paperSection = document.getElementById('paperSection');
+                if (!paperSection.querySelector('.paper-selector')) {
+                    paperSection.innerHTML = `
+                        <h3 class="section-title">Paper Type</h3>
+                        <div class="paper-selector">
+                            <div class="paper-option selected" data-paper="lustre">Lustre</div>
+                            <div class="paper-option" data-paper="glossy">Glossy</div>
+                            <div class="paper-option" data-paper="matte">Deep Matte</div>
+                            <div class="paper-option" data-paper="metallic">Metallic</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Setup initial visibility
             document.getElementById('frameSection').style.display = 'none';
+            document.getElementById('paperSection').style.display = 'block'; // Show for default photographic
+            
+            // Update available sizes for initial product
+            updateAvailableSizes();
             
             // Initial preview
             updatePreview();
