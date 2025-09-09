@@ -1,4 +1,5 @@
-import Perspective from 'perspectivejs';
+// Use global Perspective if available (loaded via script tag)
+const Perspective = window.Perspective || window.PerspectiveTransform;
 
 class PrintMockupGenerator {
     constructor(canvasId) {
@@ -403,5 +404,10 @@ class PrintMockupGenerator {
     }
 }
 
+// Make it available globally for both module and script usage
 window.PrintMockupGenerator = PrintMockupGenerator;
-export default PrintMockupGenerator;
+
+// Export for module usage if available
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PrintMockupGenerator;
+}

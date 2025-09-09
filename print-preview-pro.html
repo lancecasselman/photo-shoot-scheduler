@@ -463,132 +463,47 @@
         <p style="margin-top: 20px; color: #4a5568;">Generating realistic preview...</p>
     </div>
 
+    <!-- Load Perspective.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/perspective-transform@1.1.3/dist/perspective-transform.min.js"></script>
+    
+    <!-- Load our mockup generator as a regular script -->
+    <script src="/js/print-mockup.js"></script>
+    
     <script>
-        // Mock Perspective.js implementation for now
+        // Define SimpleMockup as a fallback or wait for the PrintMockupGenerator to be available
+        (function() {
+        
+        // Legacy SimpleMockup wrapper for compatibility
         class SimpleMockup {
             constructor(canvas) {
                 this.canvas = canvas;
                 this.ctx = canvas.getContext('2d');
-                this.roomImages = {
-                    living: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop',
-                    bedroom: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&h=800&fit=crop',
-                    office: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=800&fit=crop',
-                    gallery: 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1200&h=800&fit=crop',
-                    dining: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&h=800&fit=crop'
-                };
+                // Create the actual generator with proper scaling
+                this.generator = new PrintMockupGenerator(canvas.id);
                 this.printImage = null;
                 this.roomImage = null;
             }
 
             async loadRoom(roomName) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        this.roomImage = img;
-                        resolve();
-                    };
-                    img.onerror = reject;
-                    img.src = this.roomImages[roomName];
-                });
+                // Delegate to PrintMockupGenerator's loadScene
+                return this.generator.loadScene(roomName);
             }
 
             async loadPrint(imageUrl) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        this.printImage = img;
-                        resolve();
-                    };
-                    img.onerror = reject;
-                    img.src = imageUrl;
-                });
+                // Delegate to PrintMockupGenerator's loadPrintImage
+                return this.generator.loadPrintImage(imageUrl);
             }
 
             render(options) {
-                const { size, product, frame, crop } = options;
-                
-                // Clear canvas
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw room background
-                if (this.roomImage) {
-                    this.ctx.drawImage(this.roomImage, 0, 0, this.canvas.width, this.canvas.height);
-                }
-                
-                // Calculate print dimensions
-                const [width, height] = size.split('x').map(Number);
-                const aspectRatio = width / height;
-                
-                // Define print area on canvas (centered)
-                const maxWidth = this.canvas.width * 0.3;
-                const maxHeight = this.canvas.height * 0.4;
-                
-                let printWidth, printHeight;
-                if (aspectRatio > maxWidth / maxHeight) {
-                    printWidth = maxWidth;
-                    printHeight = maxWidth / aspectRatio;
-                } else {
-                    printHeight = maxHeight;
-                    printWidth = maxHeight * aspectRatio;
-                }
-                
-                // Scale based on actual size
-                const scaleFactor = Math.sqrt((width * height) / 320) * 0.8;
-                printWidth *= scaleFactor;
-                printHeight *= scaleFactor;
-                
-                // Center position
-                const x = (this.canvas.width - printWidth) / 2;
-                const y = (this.canvas.height - printHeight) / 2 - 50;
-                
-                // Draw frame if selected
-                if (frame !== 'none') {
-                    const frameWidth = 15 * scaleFactor;
-                    this.ctx.fillStyle = this.getFrameColor(frame);
-                    this.ctx.fillRect(x - frameWidth, y - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
-                    
-                    // Add shadow
-                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                    this.ctx.shadowBlur = 20;
-                    this.ctx.shadowOffsetX = 10;
-                    this.ctx.shadowOffsetY = 10;
-                }
-                
-                // Draw white mat/background
-                this.ctx.fillStyle = 'white';
-                this.ctx.fillRect(x, y, printWidth, printHeight);
-                
-                // Draw print image with crop
-                if (this.printImage) {
-                    this.ctx.save();
-                    this.ctx.rect(x, y, printWidth, printHeight);
-                    this.ctx.clip();
-                    
-                    const zoom = crop.zoom / 100;
-                    const offsetX = crop.x * 2;
-                    const offsetY = crop.y * 2;
-                    
-                    const imgWidth = printWidth * zoom;
-                    const imgHeight = printHeight * zoom;
-                    const imgX = x + (printWidth - imgWidth) / 2 + offsetX;
-                    const imgY = y + (printHeight - imgHeight) / 2 + offsetY;
-                    
-                    this.ctx.drawImage(this.printImage, imgX, imgY, imgWidth, imgHeight);
-                    this.ctx.restore();
-                }
-                
-                // Add canvas texture for canvas products
-                if (product === 'canvas') {
-                    this.addCanvasTexture(x, y, printWidth, printHeight);
-                }
-                
-                // Reset shadow
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.shadowBlur = 0;
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 0;
+                // Delegate to PrintMockupGenerator's render method with proper options
+                return this.generator.render({
+                    sceneName: options.room,
+                    printSize: options.size,
+                    productType: options.product,
+                    frameStyle: options.frame,
+                    cropSettings: options.crop,
+                    showSizeIndicator: true
+                });
             }
 
             getFrameColor(frame) {
@@ -626,9 +541,15 @@
             }
         }
 
-        // Initialize mockup generator
-        const canvas = document.getElementById('mockupCanvas');
-        const mockup = new SimpleMockup(canvas);
+        }
+        
+        // Close the initializeApp function and set up the main script
+        let mockup;
+        
+        // Wait for everything to load
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Initialize the actual PrintMockupGenerator with proper scaling
+            mockup = new window.PrintMockupGenerator('mockupCanvas');
         
         // Current settings
         let currentSettings = {
@@ -661,11 +582,15 @@
 
         // Initialize
         async function initialize() {
+            if (!mockup) {
+                console.error('Mockup generator not initialized');
+                return;
+            }
             document.getElementById('loadingOverlay').style.display = 'flex';
             
             try {
-                await mockup.loadRoom(currentSettings.room);
-                await mockup.loadPrint(photoUrl);
+                await mockup.loadScene(currentSettings.room);
+                await mockup.loadPrintImage(photoUrl);
                 updatePreview();
             } catch (error) {
                 console.error('Error loading images:', error);
@@ -676,7 +601,14 @@
 
         // Update preview
         function updatePreview() {
-            mockup.render(currentSettings);
+            mockup.render({
+                sceneName: currentSettings.room,
+                printSize: currentSettings.size,
+                productType: currentSettings.product,
+                frameStyle: currentSettings.frame,
+                cropSettings: currentSettings.crop,
+                showSizeIndicator: true
+            });
             updatePrice();
         }
 
@@ -722,7 +654,7 @@
                 currentSettings.room = this.dataset.room;
                 
                 document.getElementById('loadingOverlay').style.display = 'flex';
-                await mockup.loadRoom(currentSettings.room);
+                await mockup.loadScene(currentSettings.room);
                 updatePreview();
                 document.getElementById('loadingOverlay').style.display = 'none';
             });
@@ -874,8 +806,13 @@
             }, 5000);
         }
 
-        // Initialize on load
-        initialize();
+        // Initialize on load after mockup is ready
+        if (mockup) {
+            initialize();
+        } else {
+            console.error('Waiting for PrintMockupGenerator to load...');
+            setTimeout(initialize, 500);
+        }
     </script>
 
     <style>
