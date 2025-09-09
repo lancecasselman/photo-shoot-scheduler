@@ -19,15 +19,16 @@
 
         .preview-container {
             display: flex;
-            height: 100vh;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .control-panel {
-            width: 380px;
+            width: 100%;
             background: white;
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
             padding: 30px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .canvas-container {
@@ -37,6 +38,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            min-height: 60vh;
         }
         
         /* Mobile Styles */
