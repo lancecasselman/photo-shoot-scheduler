@@ -506,7 +506,7 @@
             paper: 'lustre',
             size: '16x20',
             frame: 'none',
-            crop: { zoom: 100, x: 0, y: 0 }
+            crop: { x: 0, y: 0 }
         };
         
         // WHCC-based pricing structure (approximate)
@@ -667,7 +667,11 @@
                     loadedPrintImage = new Image();
                     loadedPrintImage.crossOrigin = 'anonymous';
                     await new Promise((resolve, reject) => {
-                        loadedPrintImage.onload = resolve;
+                        loadedPrintImage.onload = () => {
+                            resolve();
+                            // Update crop preview as soon as image loads
+                            updateCropPreview();
+                        };
                         loadedPrintImage.onerror = reject;
                         loadedPrintImage.src = photoUrl;
                     });
@@ -913,6 +917,15 @@
                     document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
                     this.classList.add('selected');
                     currentSettings.size = this.dataset.size;
+                    
+                    // Reset crop position when changing sizes to prevent out-of-bounds issues
+                    currentSettings.crop.x = 0;
+                    currentSettings.crop.y = 0;
+                    document.getElementById('xSlider').value = 0;
+                    document.getElementById('ySlider').value = 0;
+                    document.getElementById('xValue').textContent = '0';
+                    document.getElementById('yValue').textContent = '0';
+                    
                     await updatePreview();
                 });
             });
