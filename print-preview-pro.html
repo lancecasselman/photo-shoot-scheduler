@@ -437,14 +437,17 @@
 
             <div class="section">
                 <h3 class="section-title">Crop & Position</h3>
-                <div class="crop-controls">
-                    <div class="slider-group">
-                        <div class="slider-label">
-                            <span>Zoom</span>
-                            <span id="zoomValue">100%</span>
-                        </div>
-                        <input type="range" class="slider" id="zoomSlider" min="50" max="200" value="100">
+                
+                <!-- Visual Crop Preview -->
+                <div class="crop-preview-container" style="margin-bottom: 20px;">
+                    <canvas id="cropPreview" width="280" height="200" style="width: 100%; height: auto; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;"></canvas>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #64748b;">
+                        <span id="cropRatio">16:20 aspect ratio</span>
+                        <span>Move sliders to adjust</span>
                     </div>
+                </div>
+                
+                <div class="crop-controls">
                     <div class="slider-group">
                         <div class="slider-label">
                             <span>Horizontal</span>
@@ -460,7 +463,7 @@
                         <input type="range" class="slider" id="ySlider" min="-100" max="100" value="0">
                     </div>
                     <button onclick="resetCrop()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
-                        Reset Position
+                        Center Image
                     </button>
                 </div>
             </div>
@@ -568,6 +571,78 @@
             document.getElementById('priceAmount').textContent = `$${price}.00`;
         }
         
+        // Update crop preview
+        function updateCropPreview() {
+            const cropCanvas = document.getElementById('cropPreview');
+            if (!cropCanvas || !loadedPrintImage) return;
+            
+            const ctx = cropCanvas.getContext('2d');
+            const [width, height] = currentSettings.size.split('x').map(Number);
+            const printAspectRatio = width / height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+            
+            // Draw the entire image scaled down
+            const scale = Math.min(cropCanvas.width / loadedPrintImage.width, 
+                                  cropCanvas.height / loadedPrintImage.height) * 0.8;
+            const imgDisplayWidth = loadedPrintImage.width * scale;
+            const imgDisplayHeight = loadedPrintImage.height * scale;
+            const imgX = (cropCanvas.width - imgDisplayWidth) / 2;
+            const imgY = (cropCanvas.height - imgDisplayHeight) / 2;
+            
+            // Draw image with reduced opacity
+            ctx.globalAlpha = 0.3;
+            ctx.drawImage(loadedPrintImage, imgX, imgY, imgDisplayWidth, imgDisplayHeight);
+            ctx.globalAlpha = 1;
+            
+            // Calculate crop area
+            const imgAspectRatio = loadedPrintImage.width / loadedPrintImage.height;
+            let cropX = imgX, cropY = imgY, cropWidth = imgDisplayWidth, cropHeight = imgDisplayHeight;
+            
+            if (imgAspectRatio > printAspectRatio) {
+                // Image wider than print - crop width
+                cropWidth = imgDisplayHeight * printAspectRatio;
+                cropX = imgX + (imgDisplayWidth - cropWidth) / 2 + (currentSettings.crop.x * imgDisplayWidth / 100);
+                cropX = Math.max(imgX, Math.min(imgX + imgDisplayWidth - cropWidth, cropX));
+            } else {
+                // Image taller than print - crop height
+                cropHeight = imgDisplayWidth / printAspectRatio;
+                cropY = imgY + (imgDisplayHeight - cropHeight) / 2 + (currentSettings.crop.y * imgDisplayHeight / 100);
+                cropY = Math.max(imgY, Math.min(imgY + imgDisplayHeight - cropHeight, cropY));
+            }
+            
+            // Draw crop area with full opacity
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(cropX, cropY, cropWidth, cropHeight);
+            ctx.clip();
+            ctx.drawImage(loadedPrintImage, imgX, imgY, imgDisplayWidth, imgDisplayHeight);
+            ctx.restore();
+            
+            // Draw crop border
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(cropX, cropY, cropWidth, cropHeight);
+            ctx.setLineDash([]);
+            
+            // Draw corner handles
+            const handleSize = 8;
+            ctx.fillStyle = '#3b82f6';
+            // Top-left
+            ctx.fillRect(cropX - handleSize/2, cropY - handleSize/2, handleSize, handleSize);
+            // Top-right
+            ctx.fillRect(cropX + cropWidth - handleSize/2, cropY - handleSize/2, handleSize, handleSize);
+            // Bottom-left
+            ctx.fillRect(cropX - handleSize/2, cropY + cropHeight - handleSize/2, handleSize, handleSize);
+            // Bottom-right
+            ctx.fillRect(cropX + cropWidth - handleSize/2, cropY + cropHeight - handleSize/2, handleSize, handleSize);
+            
+            // Update aspect ratio text
+            document.getElementById('cropRatio').textContent = `${width}:${height} aspect ratio`;
+        }
+        
         // Load and draw mockup
         async function updatePreview() {
             const canvas = document.getElementById('mockupCanvas');
@@ -606,9 +681,10 @@
                     ctx.drawImage(loadedRoomImage, 0, 0, canvas.width, canvas.height);
                 }
                 
-                // Draw print with accurate real-world scaling
+                // Draw print with accurate real-world scaling and proper cropping
                 if (loadedPrintImage) {
                     const [width, height] = currentSettings.size.split('x').map(Number);
+                    const printAspectRatio = width / height;
                     
                     // Room calibration: Standard sofa is 84" wide (7 feet)
                     // The sofa in the image takes up approximately 850px of 1200px canvas width
@@ -619,8 +695,8 @@
                     
                     // Calculate actual print dimensions in pixels
                     // pixelsPerInch is about 10.1, so a 16x20" print = 161x202 pixels
-                    const printWidth = width * pixelsPerInch * (currentSettings.crop.zoom / 100);
-                    const printHeight = height * pixelsPerInch * (currentSettings.crop.zoom / 100);
+                    const printWidth = width * pixelsPerInch;
+                    const printHeight = height * pixelsPerInch;
                     
                     // Position print centered above sofa with maximum room for larger prints
                     // Move sofa much lower to create gallery-style wall space
@@ -659,8 +735,34 @@
                     ctx.fillStyle = 'white';
                     ctx.fillRect(x, adjustedY, printWidth, printHeight);
                     
-                    // Draw print
-                    ctx.drawImage(loadedPrintImage, x, adjustedY, printWidth, printHeight);
+                    // Calculate crop area based on print aspect ratio
+                    const imgWidth = loadedPrintImage.width;
+                    const imgHeight = loadedPrintImage.height;
+                    const imgAspectRatio = imgWidth / imgHeight;
+                    
+                    let sourceX = 0, sourceY = 0, sourceWidth = imgWidth, sourceHeight = imgHeight;
+                    
+                    // Determine crop area to match print aspect ratio
+                    if (imgAspectRatio > printAspectRatio) {
+                        // Image is wider than print - crop width
+                        sourceWidth = imgHeight * printAspectRatio;
+                        sourceX = (imgWidth - sourceWidth) / 2 + (currentSettings.crop.x * imgWidth / 100);
+                        
+                        // Ensure crop stays within bounds
+                        sourceX = Math.max(0, Math.min(imgWidth - sourceWidth, sourceX));
+                    } else {
+                        // Image is taller than print - crop height
+                        sourceHeight = imgWidth / printAspectRatio;
+                        sourceY = (imgHeight - sourceHeight) / 2 + (currentSettings.crop.y * imgHeight / 100);
+                        
+                        // Ensure crop stays within bounds
+                        sourceY = Math.max(0, Math.min(imgHeight - sourceHeight, sourceY));
+                    }
+                    
+                    // Draw cropped print
+                    ctx.drawImage(loadedPrintImage, 
+                        sourceX, sourceY, sourceWidth, sourceHeight,  // Source (crop area)
+                        x, adjustedY, printWidth, printHeight);        // Destination (print size)
                     
                     // Reset shadow
                     ctx.shadowColor = 'transparent';
@@ -713,6 +815,7 @@
                 }
                 
                 updatePrice();
+                updateCropPreview();
             } catch (error) {
                 console.error('Error updating preview:', error);
             } finally {
@@ -826,12 +929,6 @@
             });
             
             // Crop controls
-            document.getElementById('zoomSlider').addEventListener('input', async function() {
-                currentSettings.crop.zoom = this.value;
-                document.getElementById('zoomValue').textContent = this.value + '%';
-                await updatePreview();
-            });
-            
             document.getElementById('xSlider').addEventListener('input', async function() {
                 currentSettings.crop.x = parseInt(this.value);
                 document.getElementById('xValue').textContent = this.value;
@@ -874,13 +971,12 @@
         
         // Reset crop
         function resetCrop() {
-            document.getElementById('zoomSlider').value = 100;
             document.getElementById('xSlider').value = 0;
             document.getElementById('ySlider').value = 0;
             
-            currentSettings.crop = { zoom: 100, x: 0, y: 0 };
+            currentSettings.crop.x = 0;
+            currentSettings.crop.y = 0;
             
-            document.getElementById('zoomValue').textContent = '100%';
             document.getElementById('xValue').textContent = '0';
             document.getElementById('yValue').textContent = '0';
             
