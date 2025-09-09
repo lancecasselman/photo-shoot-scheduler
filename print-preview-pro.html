@@ -450,17 +450,17 @@
                 <div class="crop-controls">
                     <div class="slider-group">
                         <div class="slider-label">
-                            <span>Horizontal</span>
+                            <span>Move Left ← → Right</span>
                             <span id="xValue">0</span>
                         </div>
-                        <input type="range" class="slider" id="xSlider" min="-100" max="100" value="0">
+                        <input type="range" class="slider" id="xSlider" min="-100" max="100" value="0" step="5">
                     </div>
                     <div class="slider-group">
                         <div class="slider-label">
-                            <span>Vertical</span>
+                            <span>Move Up ↑ ↓ Down</span>
                             <span id="yValue">0</span>
                         </div>
-                        <input type="range" class="slider" id="ySlider" min="-100" max="100" value="0">
+                        <input type="range" class="slider" id="ySlider" min="-100" max="100" value="0" step="5">
                     </div>
                     <button onclick="resetCrop()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
                         Center Image
@@ -603,13 +603,15 @@
             if (imgAspectRatio > printAspectRatio) {
                 // Image wider than print - crop width
                 cropWidth = imgDisplayHeight * printAspectRatio;
-                cropX = imgX + (imgDisplayWidth - cropWidth) / 2 + (currentSettings.crop.x * imgDisplayWidth / 100);
-                cropX = Math.max(imgX, Math.min(imgX + imgDisplayWidth - cropWidth, cropX));
+                const maxOffset = imgDisplayWidth - cropWidth;
+                cropX = imgX + (imgDisplayWidth - cropWidth) / 2 + (currentSettings.crop.x * maxOffset / 200);
+                cropX = Math.max(imgX, Math.min(imgX + maxOffset, cropX));
             } else {
                 // Image taller than print - crop height
                 cropHeight = imgDisplayWidth / printAspectRatio;
-                cropY = imgY + (imgDisplayHeight - cropHeight) / 2 + (currentSettings.crop.y * imgDisplayHeight / 100);
-                cropY = Math.max(imgY, Math.min(imgY + imgDisplayHeight - cropHeight, cropY));
+                const maxOffset = imgDisplayHeight - cropHeight;
+                cropY = imgY + (imgDisplayHeight - cropHeight) / 2 + (currentSettings.crop.y * maxOffset / 200);
+                cropY = Math.max(imgY, Math.min(imgY + maxOffset, cropY));
             }
             
             // Draw crop area with full opacity
@@ -750,17 +752,19 @@
                     if (imgAspectRatio > printAspectRatio) {
                         // Image is wider than print - crop width
                         sourceWidth = imgHeight * printAspectRatio;
-                        sourceX = (imgWidth - sourceWidth) / 2 + (currentSettings.crop.x * imgWidth / 100);
+                        const maxOffset = imgWidth - sourceWidth;
+                        sourceX = (imgWidth - sourceWidth) / 2 + (currentSettings.crop.x * maxOffset / 200);
                         
                         // Ensure crop stays within bounds
-                        sourceX = Math.max(0, Math.min(imgWidth - sourceWidth, sourceX));
+                        sourceX = Math.max(0, Math.min(maxOffset, sourceX));
                     } else {
                         // Image is taller than print - crop height
                         sourceHeight = imgWidth / printAspectRatio;
-                        sourceY = (imgHeight - sourceHeight) / 2 + (currentSettings.crop.y * imgHeight / 100);
+                        const maxOffset = imgHeight - sourceHeight;
+                        sourceY = (imgHeight - sourceHeight) / 2 + (currentSettings.crop.y * maxOffset / 200);
                         
                         // Ensure crop stays within bounds
-                        sourceY = Math.max(0, Math.min(imgHeight - sourceHeight, sourceY));
+                        sourceY = Math.max(0, Math.min(maxOffset, sourceY));
                     }
                     
                     // Draw cropped print
