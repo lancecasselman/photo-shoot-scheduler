@@ -528,6 +528,28 @@
                 opacity: 0;
             }
         }
+        
+        @keyframes scaleIn {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes scaleOut {
+            from {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+        }
 
         /* Responsive */
         @media (max-width: 1024px) {
@@ -1389,14 +1411,18 @@
             });
             event.currentTarget.classList.add('selected');
             
-            // Update print display size
+            // Update print display size and crop
             updatePrintSize(size);
+            updateCropAspectRatio(size);
             
             // Update price
             updatePrice();
             
             // Update summary
             updateSummary();
+            
+            // Show size info overlay
+            showSizeInfo(size);
         }
 
         function selectOption(option) {
@@ -1422,6 +1448,7 @@
 
         function updatePrintSize(size) {
             const printDisplay = document.getElementById('printDisplay');
+            const printFrame = document.getElementById('printFrame');
             const [width, height] = size.split('x').map(Number);
             
             // Get current room configuration
@@ -1465,6 +1492,10 @@
             printDisplay.style.width = `${displayWidth}px`;
             printDisplay.style.height = `${displayHeight}px`;
             
+            // Also update the frame size to match
+            printFrame.style.width = `${displayWidth}px`;
+            printFrame.style.height = `${displayHeight}px`;
+            
             // Position the print - adjust for mobile
             if (isMobile) {
                 printDisplay.style.left = '50%';
@@ -1476,13 +1507,11 @@
                 printDisplay.style.transform = `translate(-50%, -50%)`;
             }
             
-            // Add room info display (only on desktop)
-            if (!isMobile) {
-                updateRoomInfo(size, roomConfig);
-            }
+            // Add room info display with actual dimensions
+            updateRoomInfo(size, roomConfig, displayWidth, displayHeight);
         }
         
-        function updateRoomInfo(printSize, roomConfig) {
+        function updateRoomInfo(printSize, roomConfig, displayWidth, displayHeight) {
             // Create or update room info display
             let infoDisplay = document.getElementById('roomInfoDisplay');
             if (!infoDisplay) {
@@ -1507,14 +1536,124 @@
             const wallFeet = Math.floor(roomConfig.wallWidth / 12);
             const wallInches = roomConfig.wallWidth % 12;
             
+            // Calculate aspect ratio
+            const aspectRatio = (width / height).toFixed(2);
+            
             infoDisplay.innerHTML = `
                 <div style="font-weight: 600; margin-bottom: 5px;">${roomConfig.displayName}</div>
                 <div style="font-size: 11px; color: #718096;">
                     Wall: ${wallFeet}'${wallInches > 0 ? wallInches + '"' : ''} wide<br>
-                    Print: ${width}" × ${height}"<br>
+                    Print: ${width}" × ${height}" (${aspectRatio}:1 ratio)<br>
+                    Display: ${Math.round(displayWidth)}px × ${Math.round(displayHeight)}px<br>
                     ${roomConfig.description}
                 </div>
             `;
+        }
+        
+        function updateCropAspectRatio(size) {
+            const [width, height] = size.split('x').map(Number);
+            const aspectRatio = width / height;
+            
+            const printImage = document.getElementById('printImage');
+            const printFrame = document.getElementById('printFrame');
+            
+            // Update crop container to match aspect ratio
+            const cropControls = document.querySelector('.crop-controls');
+            if (cropControls) {
+                // Add visual indicator for aspect ratio
+                let ratioIndicator = document.getElementById('aspectRatioIndicator');
+                if (!ratioIndicator) {
+                    ratioIndicator = document.createElement('div');
+                    ratioIndicator.id = 'aspectRatioIndicator';
+                    ratioIndicator.style.cssText = `
+                        background: rgba(59, 130, 246, 0.1);
+                        border: 2px solid #3b82f6;
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        margin-bottom: 15px;
+                        font-size: 13px;
+                        color: #1e40af;
+                        text-align: center;
+                    `;
+                    cropControls.insertBefore(ratioIndicator, cropControls.firstChild);
+                }
+                
+                ratioIndicator.innerHTML = `
+                    <strong>Crop Aspect Ratio:</strong> ${width}:${height}
+                    <br>
+                    <span style="font-size: 11px; color: #64748b;">
+                        Adjust zoom and position to fit your image
+                    </span>
+                `;
+            }
+            
+            // Update the image container to show crop guides
+            if (printFrame) {
+                printFrame.style.overflow = 'hidden';
+                printFrame.style.position = 'relative';
+                
+                // Add crop guide overlay
+                let cropGuide = document.getElementById('cropGuideOverlay');
+                if (!cropGuide) {
+                    cropGuide = document.createElement('div');
+                    cropGuide.id = 'cropGuideOverlay';
+                    cropGuide.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        pointer-events: none;
+                        z-index: 100;
+                        border: 2px dashed rgba(255, 255, 255, 0.5);
+                        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+                    `;
+                    printFrame.appendChild(cropGuide);
+                }
+            }
+        }
+        
+        function showSizeInfo(size) {
+            const [width, height] = size.split('x').map(Number);
+            
+            // Create a temporary info overlay
+            const sizeOverlay = document.createElement('div');
+            sizeOverlay.className = 'size-info-overlay';
+            sizeOverlay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                font-size: 16px;
+                text-align: center;
+                animation: scaleIn 0.3s ease;
+            `;
+            
+            sizeOverlay.innerHTML = `
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">
+                    ${width}" × ${height}"
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    Selected Print Size
+                </div>
+                <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+                    ${currentProduct ? currentProduct.name : 'Print'}
+                </div>
+            `;
+            
+            document.body.appendChild(sizeOverlay);
+            
+            // Auto-remove after 2 seconds
+            setTimeout(() => {
+                sizeOverlay.style.animation = 'scaleOut 0.3s ease';
+                setTimeout(() => sizeOverlay.remove(), 300);
+            }, 2000);
         }
 
         function applyPrintStyle(product) {
@@ -1870,6 +2009,17 @@
 
             const printImage = document.getElementById('printImage');
             printImage.style.transform = `scale(${zoom/100}) translate(${x}px, ${y}px)`;
+            
+            // Update crop guide overlay if it exists
+            const cropGuide = document.getElementById('cropGuideOverlay');
+            if (cropGuide && zoom != 100) {
+                // Adjust guide border color based on zoom level
+                const opacity = Math.min(0.8, (zoom - 100) / 100);
+                cropGuide.style.borderColor = `rgba(255, 100, 100, ${0.3 + opacity})`;
+            }
+            
+            // Update summary to reflect crop settings
+            updateSummary();
         }
 
         function updateQuantity(change) {
@@ -1900,17 +2050,80 @@
             let summaryHtml = '';
 
             if (currentProduct) {
-                summaryHtml += `<div><strong>Product:</strong> ${currentProduct.name}</div>`;
-            }
-            if (currentSize) {
-                summaryHtml += `<div><strong>Size:</strong> ${currentSize}</div>`;
+                summaryHtml += `<div style="margin-bottom: 8px;">
+                    <strong style="color: #4a5568;">Product:</strong> 
+                    <span style="color: #2d3748;">${currentProduct.name}</span>
+                </div>`;
             }
             
+            if (currentSize) {
+                const [width, height] = currentSize.split('x').map(Number);
+                const aspectRatio = (width / height).toFixed(2);
+                summaryHtml += `<div style="margin-bottom: 8px;">
+                    <strong style="color: #4a5568;">Size:</strong> 
+                    <span style="color: #2d3748; font-weight: 600;">${currentSize}"</span>
+                    <span style="color: #718096; font-size: 11px;"> (${aspectRatio}:1)</span>
+                </div>`;
+                
+                // Add crop settings if available
+                const zoom = document.getElementById('zoomSlider')?.value || 100;
+                const x = document.getElementById('xSlider')?.value || 0;
+                const y = document.getElementById('ySlider')?.value || 0;
+                
+                if (zoom != 100 || x != 0 || y != 0) {
+                    summaryHtml += `<div style="margin-bottom: 8px; padding-left: 10px; border-left: 3px solid #e2e8f0;">
+                        <div style="color: #64748b; font-size: 12px; margin-bottom: 4px;">
+                            <strong>Crop Settings:</strong>
+                        </div>
+                        <div style="font-size: 11px; color: #94a3b8;">
+                            Zoom: ${zoom}% | Position: (${x}, ${y})
+                        </div>
+                    </div>`;
+                }
+            }
+            
+            // Add room display info
+            if (currentRoom) {
+                const roomConfig = roomConfigs[currentRoom];
+                summaryHtml += `<div style="margin-bottom: 8px;">
+                    <strong style="color: #4a5568;">Room:</strong> 
+                    <span style="color: #2d3748;">${roomConfig.displayName}</span>
+                </div>`;
+            }
+            
+            // Add selected options
             Object.values(currentOptions).forEach(option => {
-                summaryHtml += `<div><strong>${option.category}:</strong> ${option.name}</div>`;
+                summaryHtml += `<div style="margin-bottom: 6px; padding-left: 10px;">
+                    <strong style="color: #64748b; font-size: 12px;">${option.category}:</strong> 
+                    <span style="color: #475569; font-size: 12px;">${option.name}</span>
+                </div>`;
             });
+            
+            // Add pricing summary
+            if (currentProduct && currentSize) {
+                const quantity = parseInt(document.getElementById('quantity')?.value || 1);
+                const basePrice = currentProduct.price || 0;
+                const sizePrice = calculateSizePrice(currentSize);
+                const itemPrice = basePrice + sizePrice;
+                const totalPrice = itemPrice * quantity;
+                
+                summaryHtml += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #64748b; font-size: 12px;">Item Price:</span>
+                        <span style="color: #2d3748; font-weight: 500;">$${itemPrice.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="color: #64748b; font-size: 12px;">Quantity:</span>
+                        <span style="color: #2d3748;">×${quantity}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+                        <span style="color: #1a202c; font-weight: 600;">Total:</span>
+                        <span style="color: #1a202c; font-weight: 600; font-size: 16px;">$${totalPrice.toFixed(2)}</span>
+                    </div>
+                </div>`;
+            }
 
-            summary.innerHTML = summaryHtml || '<div style="color: #a0aec0;">No selections made yet</div>';
+            summary.innerHTML = summaryHtml || '<div style="color: #a0aec0; text-align: center; padding: 20px;">No selections made yet</div>';
         }
 
         function addToCart() {
