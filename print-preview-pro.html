@@ -711,17 +711,21 @@
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     
                     // Dynamic positioning based on print size
-                    // Smaller prints can be positioned higher, larger prints need more room
-                    const minTopMargin = 60; // Minimum 60px from top for all prints
-                    const idealCenterY = canvas.height * 0.32; // Ideal center at 32% for medium prints
+                    // Adjust position to ensure all sizes have proper spacing
+                    const minTopMargin = 40; // Reduced to 40px to give more room for large prints
+                    
+                    // Smart center positioning based on print size
+                    // Larger prints need to be positioned higher to maintain sofa clearance
+                    const isLargePrint = height >= 36; // 30×40, 30×45, 24×36 are considered large
+                    const idealCenterY = isLargePrint ? canvas.height * 0.28 : canvas.height * 0.32;
                     
                     // Calculate position ensuring top margin is respected
                     const idealY = idealCenterY - (printHeight / 2);
                     const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
                     
-                    // For very large prints (30×40), ensure they don't go too low either
-                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image
-                    const minGapAboveSofa = 80; // Minimum 80px above sofa
+                    // Ensure proper spacing above sofa
+                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image (520px)
+                    const minGapAboveSofa = 100; // Increased to 100px for better visual separation
                     const maxY = sofaTop - printHeight - minGapAboveSofa;
                     const finalY = Math.min(adjustedY, maxY);
                     
