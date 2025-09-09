@@ -60,16 +60,6 @@
                 min-height: 50vh;
             }
             
-            .room-selector {
-                flex-wrap: wrap;
-                padding: 15px !important;
-            }
-            
-            .room-btn {
-                font-size: 12px !important;
-                padding: 10px !important;
-            }
-            
             .product-grid {
                 grid-template-columns: 1fr !important;
             }
@@ -96,15 +86,6 @@
             #mockupCanvas {
                 max-height: 40vh !important;
             }
-            
-            .room-selector {
-                gap: 8px !important;
-            }
-            
-            .room-btn {
-                flex: 1 1 45%;
-                margin-bottom: 8px;
-            }
         }
 
         #mockupCanvas {
@@ -113,61 +94,6 @@
             border-radius: 16px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
             background: white;
-        }
-
-        .room-selector {
-            display: flex;
-            gap: 12px;
-            margin-top: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            max-width: 800px;
-        }
-
-        .room-btn {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 14px;
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .room-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 0;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s ease;
-            z-index: -1;
-        }
-
-        .room-btn:hover::before {
-            width: 100%;
-        }
-
-        .room-btn:hover {
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .room-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .section {
@@ -502,14 +428,6 @@
 
         <div class="canvas-container">
             <canvas id="mockupCanvas" width="1200" height="800"></canvas>
-            
-            <div class="room-selector">
-                <button class="room-btn active" data-room="living">Living Room</button>
-                <button class="room-btn" data-room="bedroom">Bedroom</button>
-                <button class="room-btn" data-room="office">Office</button>
-                <button class="room-btn" data-room="gallery">Gallery</button>
-                <button class="room-btn" data-room="dining">Dining</button>
-            </div>
         </div>
     </div>
 
@@ -527,7 +445,6 @@
         
         // Current settings
         let currentSettings = {
-            room: 'living',
             product: 'canvas',
             size: '16x20',
             frame: 'none',
@@ -542,14 +459,8 @@
             acrylic: { '8x10': 95, '11x14': 135, '16x20': 189, '20x24': 255, '24x30': 345, '30x40': 465 }
         };
         
-        // Room images - Clean, minimalist backgrounds
-        const roomImages = {
-            living: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1600&h=900&fit=crop', // Clean minimalist living room with sofa
-            bedroom: 'https://images.unsplash.com/photo-1522444885501-4303c9fa0949?w=1600&h=900&fit=crop', // Simple bedroom with clean wall
-            office: 'https://images.unsplash.com/photo-1524634126442-357e0eac3c14?w=1600&h=900&fit=crop', // Minimal office space
-            gallery: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1600&h=900&fit=crop', // Clean white wall living space
-            dining: 'https://images.unsplash.com/photo-1484301548518-d0e0a5db0fc8?w=1600&h=900&fit=crop' // Simple dining room
-        };
+        // Living room background - Clean, minimalist
+        const roomImage = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1600&h=900&fit=crop';
         
         let loadedRoomImage = null;
         let loadedPrintImage = null;
@@ -569,13 +480,13 @@
             
             try {
                 // Load room image if needed
-                if (!loadedRoomImage || loadedRoomImage.src !== roomImages[currentSettings.room]) {
+                if (!loadedRoomImage) {
                     loadedRoomImage = new Image();
                     loadedRoomImage.crossOrigin = 'anonymous';
                     await new Promise((resolve, reject) => {
                         loadedRoomImage.onload = resolve;
                         loadedRoomImage.onerror = reject;
-                        loadedRoomImage.src = roomImages[currentSettings.room];
+                        loadedRoomImage.src = roomImage;
                     });
                 }
                 
@@ -659,16 +570,6 @@
                 window.location.href = '/';
                 return;
             }
-            
-            // Room selector
-            document.querySelectorAll('.room-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentSettings.room = this.dataset.room;
-                    await updatePreview();
-                });
-            });
             
             // Product selector
             document.querySelectorAll('.product-card').forEach(card => {
