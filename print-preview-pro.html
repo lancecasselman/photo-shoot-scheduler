@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Print Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7fafc;
+            overflow-x: hidden;
+        }
+
+        .preview-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        .control-panel {
+            width: 320px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        #mockupCanvas {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            background: white;
+        }
+
+        .room-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .room-btn:hover {
+            background: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .product-card {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .product-card:hover {
+            background: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card.selected {
+            background: #edf2f7;
+            border-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .size-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .size-option {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .size-option:hover {
+            background: #f7fafc;
+            transform: scale(1.05);
+        }
+
+        .size-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .frame-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .frame-option {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .frame-option:hover {
+            transform: scale(1.1);
+        }
+
+        .frame-option.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .frame-option.black {
+            background: #1a1a1a;
+        }
+
+        .frame-option.white {
+            background: white;
+            border-color: #cbd5e0;
+        }
+
+        .frame-option.wood {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+        }
+
+        .frame-option.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+
+        .frame-option.none::after {
+            content: 'None';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: #718096;
+        }
+
+        .crop-controls {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .slider-control {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #4a5568;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #f7fafc;
+            transform: translateY(-2px);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .price-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .price-amount {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .price-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .preview-container {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                width: 100%;
+                order: 2;
+                max-height: 40vh;
+            }
+
+            .canvas-container {
+                order: 1;
+                height: 60vh;
+            }
+
+            .room-selector {
+                flex-wrap: wrap;
+            }
+
+            .room-btn {
+                font-size: 11px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="control-panel">
+            <div class="section">
+                <h3 class="section-title">Product Type</h3>
+                <div class="product-grid" id="productGrid">
+                    <div class="product-card selected" data-product="canvas">Canvas</div>
+                    <div class="product-card" data-product="framed">Framed Print</div>
+                    <div class="product-card" data-product="metal">Metal Print</div>
+                    <div class="product-card" data-product="acrylic">Acrylic</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Size</h3>
+                <div class="size-selector" id="sizeSelector">
+                    <div class="size-option" data-size="8x10">8×10"</div>
+                    <div class="size-option" data-size="11x14">11×14"</div>
+                    <div class="size-option selected" data-size="16x20">16×20"</div>
+                    <div class="size-option" data-size="20x24">20×24"</div>
+                    <div class="size-option" data-size="24x30">24×30"</div>
+                    <div class="size-option" data-size="30x40">30×40"</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Frame Style</h3>
+                <div class="frame-selector" id="frameSelector">
+                    <div class="frame-option none selected" data-frame="none"></div>
+                    <div class="frame-option black" data-frame="black"></div>
+                    <div class="frame-option white" data-frame="white"></div>
+                    <div class="frame-option wood" data-frame="wood"></div>
+                    <div class="frame-option gold" data-frame="gold"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 class="section-title">Crop & Position</h3>
+                <div class="crop-controls">
+                    <div class="slider-control">
+                        <div class="slider-label">
+                            <span>Zoom</span>
+                            <span id="zoomValue">100%</span>
+                        </div>
+                        <input type="range" id="zoomSlider" min="50" max="150" value="100">
+                    </div>
+                    <div class="slider-control">
+                        <div class="slider-label">
+                            <span>Horizontal</span>
+                            <span id="xValue">0</span>
+                        </div>
+                        <input type="range" id="xSlider" min="-100" max="100" value="0">
+                    </div>
+                    <div class="slider-control">
+                        <div class="slider-label">
+                            <span>Vertical</span>
+                            <span id="yValue">0</span>
+                        </div>
+                        <input type="range" id="ySlider" min="-100" max="100" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="price-display">
+                <div class="price-label">Total Price</div>
+                <div class="price-amount" id="priceAmount">$89.00</div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="resetPreview()">Reset</button>
+                <button class="btn btn-primary" onclick="addToCart()">Add to Cart</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="mockupCanvas" width="1200" height="800"></canvas>
+            
+            <div class="room-selector">
+                <button class="room-btn active" data-room="living">Living Room</button>
+                <button class="room-btn" data-room="bedroom">Bedroom</button>
+                <button class="room-btn" data-room="office">Office</button>
+                <button class="room-btn" data-room="gallery">Gallery</button>
+                <button class="room-btn" data-room="dining">Dining Room</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; color: #4a5568;">Generating realistic preview...</p>
+    </div>
+
+    <script>
+        // Mock Perspective.js implementation for now
+        class SimpleMockup {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.roomImages = {
+                    living: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop',
+                    bedroom: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&h=800&fit=crop',
+                    office: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=800&fit=crop',
+                    gallery: 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1200&h=800&fit=crop',
+                    dining: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&h=800&fit=crop'
+                };
+                this.printImage = null;
+                this.roomImage = null;
+            }
+
+            async loadRoom(roomName) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        this.roomImage = img;
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = this.roomImages[roomName];
+                });
+            }
+
+            async loadPrint(imageUrl) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        this.printImage = img;
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = imageUrl;
+                });
+            }
+
+            render(options) {
+                const { size, product, frame, crop } = options;
+                
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw room background
+                if (this.roomImage) {
+                    this.ctx.drawImage(this.roomImage, 0, 0, this.canvas.width, this.canvas.height);
+                }
+                
+                // Calculate print dimensions
+                const [width, height] = size.split('x').map(Number);
+                const aspectRatio = width / height;
+                
+                // Define print area on canvas (centered)
+                const maxWidth = this.canvas.width * 0.3;
+                const maxHeight = this.canvas.height * 0.4;
+                
+                let printWidth, printHeight;
+                if (aspectRatio > maxWidth / maxHeight) {
+                    printWidth = maxWidth;
+                    printHeight = maxWidth / aspectRatio;
+                } else {
+                    printHeight = maxHeight;
+                    printWidth = maxHeight * aspectRatio;
+                }
+                
+                // Scale based on actual size
+                const scaleFactor = Math.sqrt((width * height) / 320) * 0.8;
+                printWidth *= scaleFactor;
+                printHeight *= scaleFactor;
+                
+                // Center position
+                const x = (this.canvas.width - printWidth) / 2;
+                const y = (this.canvas.height - printHeight) / 2 - 50;
+                
+                // Draw frame if selected
+                if (frame !== 'none') {
+                    const frameWidth = 15 * scaleFactor;
+                    this.ctx.fillStyle = this.getFrameColor(frame);
+                    this.ctx.fillRect(x - frameWidth, y - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
+                    
+                    // Add shadow
+                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.shadowOffsetX = 10;
+                    this.ctx.shadowOffsetY = 10;
+                }
+                
+                // Draw white mat/background
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(x, y, printWidth, printHeight);
+                
+                // Draw print image with crop
+                if (this.printImage) {
+                    this.ctx.save();
+                    this.ctx.rect(x, y, printWidth, printHeight);
+                    this.ctx.clip();
+                    
+                    const zoom = crop.zoom / 100;
+                    const offsetX = crop.x * 2;
+                    const offsetY = crop.y * 2;
+                    
+                    const imgWidth = printWidth * zoom;
+                    const imgHeight = printHeight * zoom;
+                    const imgX = x + (printWidth - imgWidth) / 2 + offsetX;
+                    const imgY = y + (printHeight - imgHeight) / 2 + offsetY;
+                    
+                    this.ctx.drawImage(this.printImage, imgX, imgY, imgWidth, imgHeight);
+                    this.ctx.restore();
+                }
+                
+                // Add canvas texture for canvas products
+                if (product === 'canvas') {
+                    this.addCanvasTexture(x, y, printWidth, printHeight);
+                }
+                
+                // Reset shadow
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.shadowBlur = 0;
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+            }
+
+            getFrameColor(frame) {
+                const colors = {
+                    black: '#1a1a1a',
+                    white: '#ffffff',
+                    wood: '#8B4513',
+                    gold: '#FFD700'
+                };
+                return colors[frame] || '#ffffff';
+            }
+
+            addCanvasTexture(x, y, width, height) {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.1;
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 0.5;
+                
+                // Add subtle texture lines
+                for (let i = 0; i < width; i += 2) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + i, y);
+                    this.ctx.lineTo(x + i, y + height);
+                    this.ctx.stroke();
+                }
+                
+                for (let i = 0; i < height; i += 2) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y + i);
+                    this.ctx.lineTo(x + width, y + i);
+                    this.ctx.stroke();
+                }
+                
+                this.ctx.restore();
+            }
+        }
+
+        // Initialize mockup generator
+        const canvas = document.getElementById('mockupCanvas');
+        const mockup = new SimpleMockup(canvas);
+        
+        // Current settings
+        let currentSettings = {
+            room: 'living',
+            product: 'canvas',
+            size: '16x20',
+            frame: 'none',
+            crop: { zoom: 100, x: 0, y: 0 }
+        };
+
+        // Get photo URL from query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const photoUrl = urlParams.get('photo') || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
+
+        // Initialize
+        async function initialize() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            try {
+                await mockup.loadRoom(currentSettings.room);
+                await mockup.loadPrint(photoUrl);
+                updatePreview();
+            } catch (error) {
+                console.error('Error loading images:', error);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // Update preview
+        function updatePreview() {
+            mockup.render(currentSettings);
+            updatePrice();
+        }
+
+        // Update price based on selections
+        function updatePrice() {
+            const basePrices = {
+                canvas: 50,
+                framed: 60,
+                metal: 80,
+                acrylic: 90
+            };
+            
+            const sizePrices = {
+                '8x10': 0,
+                '11x14': 10,
+                '16x20': 20,
+                '20x24': 35,
+                '24x30': 50,
+                '30x40': 75
+            };
+            
+            const framePrices = {
+                none: 0,
+                black: 15,
+                white: 15,
+                wood: 25,
+                gold: 30
+            };
+            
+            const basePrice = basePrices[currentSettings.product] || 50;
+            const sizePrice = sizePrices[currentSettings.size] || 0;
+            const framePrice = framePrices[currentSettings.frame] || 0;
+            
+            const total = basePrice + sizePrice + framePrice;
+            document.getElementById('priceAmount').textContent = `$${total}.00`;
+        }
+
+        // Room selector
+        document.querySelectorAll('.room-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentSettings.room = this.dataset.room;
+                
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                await mockup.loadRoom(currentSettings.room);
+                updatePreview();
+                document.getElementById('loadingOverlay').style.display = 'none';
+            });
+        });
+
+        // Product selector
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                currentSettings.product = this.dataset.product;
+                
+                // Enable/disable frame options based on product
+                const frameSelector = document.getElementById('frameSelector');
+                if (this.dataset.product === 'canvas') {
+                    frameSelector.style.opacity = '0.5';
+                    frameSelector.style.pointerEvents = 'none';
+                    currentSettings.frame = 'none';
+                    document.querySelector('.frame-option.none').classList.add('selected');
+                } else {
+                    frameSelector.style.opacity = '1';
+                    frameSelector.style.pointerEvents = 'auto';
+                }
+                
+                updatePreview();
+            });
+        });
+
+        // Size selector
+        document.querySelectorAll('.size-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                currentSettings.size = this.dataset.size;
+                updatePreview();
+            });
+        });
+
+        // Frame selector
+        document.querySelectorAll('.frame-option').forEach(option => {
+            option.addEventListener('click', function() {
+                if (currentSettings.product === 'canvas') return;
+                
+                document.querySelectorAll('.frame-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                currentSettings.frame = this.dataset.frame;
+                updatePreview();
+            });
+        });
+
+        // Crop controls
+        document.getElementById('zoomSlider').addEventListener('input', function() {
+            currentSettings.crop.zoom = this.value;
+            document.getElementById('zoomValue').textContent = this.value + '%';
+            updatePreview();
+        });
+
+        document.getElementById('xSlider').addEventListener('input', function() {
+            currentSettings.crop.x = this.value;
+            document.getElementById('xValue').textContent = this.value;
+            updatePreview();
+        });
+
+        document.getElementById('ySlider').addEventListener('input', function() {
+            currentSettings.crop.y = this.value;
+            document.getElementById('yValue').textContent = this.value;
+            updatePreview();
+        });
+
+        // Reset preview
+        function resetPreview() {
+            document.getElementById('zoomSlider').value = 100;
+            document.getElementById('xSlider').value = 0;
+            document.getElementById('ySlider').value = 0;
+            
+            currentSettings.crop = { zoom: 100, x: 0, y: 0 };
+            
+            document.getElementById('zoomValue').textContent = '100%';
+            document.getElementById('xValue').textContent = '0';
+            document.getElementById('yValue').textContent = '0';
+            
+            updatePreview();
+        }
+
+        // Add to cart
+        function addToCart() {
+            const cartItem = {
+                ...currentSettings,
+                price: document.getElementById('priceAmount').textContent,
+                photoUrl: photoUrl,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Get existing cart or create new
+            let cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+            cart.push(cartItem);
+            localStorage.setItem('printCart', JSON.stringify(cart));
+            
+            // Show success message
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            message.textContent = 'Added to cart successfully!';
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                message.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => message.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize on load
+        initialize();
+    </script>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
+</body>
+</html>
