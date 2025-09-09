@@ -648,20 +648,47 @@
             }
             
             .room-btn {
-                padding: 8px 14px;
-                font-size: 12px;
+                padding: 10px 16px;
+                font-size: 13px;
                 flex-shrink: 0;
                 white-space: nowrap;
                 min-width: fit-content;
+                background: white;
+                border: 1px solid #e2e8f0;
+                color: #4a5568;
+                transition: all 0.2s;
+            }
+            
+            .room-btn.active {
+                background: #4299e1;
+                color: white;
+                border-color: #4299e1;
+                font-weight: 600;
             }
             
             /* Ensure crop controls don't overlap */
             .crop-controls {
-                bottom: 200px !important;
-                background: rgba(255, 255, 255, 0.95);
+                position: fixed !important;
+                top: 10px !important;
+                left: 10px !important;
+                right: 10px !important;
+                bottom: auto !important;
+                background: rgba(255, 255, 255, 0.98);
                 padding: 12px;
-                border-radius: 12px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                border-radius: 16px;
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.12);
+                z-index: 25;
+            }
+            
+            /* Adjust preview area for mobile */
+            .preview-area {
+                padding-top: 120px; /* Space for crop controls */
+                padding-bottom: 210px; /* Space for room selector and nav */
+            }
+            
+            /* Hide room info on mobile to reduce clutter */
+            #roomInfoDisplay {
+                display: none !important;
             }
             
             /* Mobile-friendly sliders */
@@ -1350,6 +1377,9 @@
             // Get current room configuration
             const roomConfig = roomConfigs[currentRoom];
             
+            // Check if mobile
+            const isMobile = window.innerWidth <= 768;
+            
             // Calculate scale based on room wall width
             // We want the preview container to represent the wall width
             const previewContainer = document.querySelector('.preview-area');
@@ -1359,21 +1389,47 @@
             // Container width represents the full wall width
             const pixelsPerInch = containerWidth / roomConfig.wallWidth;
             
-            // Apply realistic scaling
-            const displayWidth = width * pixelsPerInch;
-            const displayHeight = height * pixelsPerInch;
+            // Apply realistic scaling - but limit max size on mobile
+            let displayWidth = width * pixelsPerInch;
+            let displayHeight = height * pixelsPerInch;
+            
+            // On mobile, ensure print fits nicely in viewport
+            if (isMobile) {
+                const maxWidth = containerWidth * 0.8; // 80% of container
+                const maxHeight = window.innerHeight * 0.4; // 40% of viewport height
+                
+                if (displayWidth > maxWidth) {
+                    const scale = maxWidth / displayWidth;
+                    displayWidth *= scale;
+                    displayHeight *= scale;
+                }
+                
+                if (displayHeight > maxHeight) {
+                    const scale = maxHeight / displayHeight;
+                    displayWidth *= scale;
+                    displayHeight *= scale;
+                }
+            }
             
             // Set the print display size
             printDisplay.style.width = `${displayWidth}px`;
             printDisplay.style.height = `${displayHeight}px`;
             
-            // Position the print at the configured location
-            printDisplay.style.left = `${roomConfig.printPosition.x}%`;
-            printDisplay.style.top = `${roomConfig.printPosition.y}%`;
-            printDisplay.style.transform = `translate(-50%, -50%)`;
+            // Position the print - adjust for mobile
+            if (isMobile) {
+                printDisplay.style.left = '50%';
+                printDisplay.style.top = '40%'; // Center in viewable area
+                printDisplay.style.transform = 'translate(-50%, -50%)';
+            } else {
+                printDisplay.style.left = `${roomConfig.printPosition.x}%`;
+                printDisplay.style.top = `${roomConfig.printPosition.y}%`;
+                printDisplay.style.transform = `translate(-50%, -50%)`;
+            }
             
-            // Add room info display
-            updateRoomInfo(size, roomConfig);
+            // Add room info display (only on desktop)
+            if (!isMobile) {
+                updateRoomInfo(size, roomConfig);
+            }
         }
         
         function updateRoomInfo(printSize, roomConfig) {
