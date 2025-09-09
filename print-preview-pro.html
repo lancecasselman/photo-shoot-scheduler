@@ -622,13 +622,18 @@
                     const printWidth = width * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     const printHeight = height * pixelsPerInch * (currentSettings.crop.zoom / 100);
                     
-                    // Position print centered above sofa
-                    // Standard hanging height is 8-12 inches above furniture
-                    const sofaTop = canvas.height * 0.55; // Sofa back position
-                    const hangingGap = 10 * pixelsPerInch; // 10 inches above sofa
+                    // Position print centered above sofa with more room for larger prints
+                    // Adjust sofa position lower to accommodate up to 45" tall prints
+                    const sofaTop = canvas.height * 0.65; // Move sofa lower for more wall space
+                    const hangingGap = 8 * pixelsPerInch; // 8 inches above sofa (standard gallery height)
                     
+                    // Center horizontally and position vertically with room for large prints
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     const y = sofaTop - printHeight - hangingGap + currentSettings.crop.y * 2;
+                    
+                    // Ensure print doesn't go off top of canvas
+                    const minY = 20; // Minimum distance from top
+                    const adjustedY = Math.max(minY, y);
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -647,15 +652,15 @@
                         // Frame width proportional to print size
                         const frameWidth = Math.min(printWidth, printHeight) * 0.08; // 8% of smallest dimension
                         ctx.fillStyle = frameColors[currentSettings.frame] || '#000';
-                        ctx.fillRect(x - frameWidth, y - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
+                        ctx.fillRect(x - frameWidth, adjustedY - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
                     }
                     
                     // Draw white background
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(x, y, printWidth, printHeight);
+                    ctx.fillRect(x, adjustedY, printWidth, printHeight);
                     
                     // Draw print
-                    ctx.drawImage(loadedPrintImage, x, y, printWidth, printHeight);
+                    ctx.drawImage(loadedPrintImage, x, adjustedY, printWidth, printHeight);
                     
                     // Reset shadow
                     ctx.shadowColor = 'transparent';
@@ -667,7 +672,7 @@
                     ctx.setLineDash([5, 5]);
                     
                     // Horizontal dimension line
-                    const dimY = y + printHeight + 25;
+                    const dimY = adjustedY + printHeight + 25;
                     ctx.beginPath();
                     ctx.moveTo(x - 10, dimY);
                     ctx.lineTo(x + printWidth + 10, dimY);
@@ -676,8 +681,8 @@
                     // Vertical dimension line
                     const dimX = x + printWidth + 25;
                     ctx.beginPath();
-                    ctx.moveTo(dimX, y - 10);
-                    ctx.lineTo(dimX, y + printHeight + 10);
+                    ctx.moveTo(dimX, adjustedY - 10);
+                    ctx.lineTo(dimX, adjustedY + printHeight + 10);
                     ctx.stroke();
                     
                     ctx.setLineDash([]);
@@ -689,7 +694,7 @@
                     ctx.fillText(`${width}"`, x + printWidth / 2, dimY + 20);
                     
                     ctx.save();
-                    ctx.translate(dimX + 20, y + printHeight / 2);
+                    ctx.translate(dimX + 20, adjustedY + printHeight / 2);
                     ctx.rotate(Math.PI / 2);
                     ctx.fillText(`${height}"`, 0, 0);
                     ctx.restore();
@@ -698,7 +703,7 @@
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                     ctx.font = '12px sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, y - 15);
+                    ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, adjustedY - 15);
                     
                     // Add scale reference (sofa width)
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
