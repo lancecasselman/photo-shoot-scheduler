@@ -704,18 +704,26 @@
                     const printWidth = width * pixelsPerInch;
                     const printHeight = height * pixelsPerInch;
                     
-                    // Position print with dramatic gallery-style spacing above sofa
-                    // The print should appear to float well above the furniture
+                    // Position print with smart spacing that works for all sizes
+                    // Ensures even large prints (30×40) have proper spacing
                     
                     // Center horizontally
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     
-                    // Center the print vertically at eye level (upper third of wall)
-                    // This creates the dramatic separation from furniture
-                    const printCenterY = canvas.height * 0.28; // Position at 28% from top for eye-level viewing
+                    // Dynamic positioning based on print size
+                    // Smaller prints can be positioned higher, larger prints need more room
+                    const minTopMargin = 60; // Minimum 60px from top for all prints
+                    const idealCenterY = canvas.height * 0.32; // Ideal center at 32% for medium prints
                     
-                    // Calculate Y position from center point
-                    const adjustedY = printCenterY - (printHeight / 2) + currentSettings.crop.y * 2;
+                    // Calculate position ensuring top margin is respected
+                    const idealY = idealCenterY - (printHeight / 2);
+                    const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
+                    
+                    // For very large prints (30×40), ensure they don't go too low either
+                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image
+                    const minGapAboveSofa = 80; // Minimum 80px above sofa
+                    const maxY = sofaTop - printHeight - minGapAboveSofa;
+                    const finalY = Math.min(adjustedY, maxY);
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -734,12 +742,12 @@
                         // Frame width proportional to print size
                         const frameWidth = Math.min(printWidth, printHeight) * 0.08; // 8% of smallest dimension
                         ctx.fillStyle = frameColors[currentSettings.frame] || '#000';
-                        ctx.fillRect(x - frameWidth, adjustedY - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
+                        ctx.fillRect(x - frameWidth, finalY - frameWidth, printWidth + frameWidth * 2, printHeight + frameWidth * 2);
                     }
                     
                     // Draw white background
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(x, adjustedY, printWidth, printHeight);
+                    ctx.fillRect(x, finalY, printWidth, printHeight);
                     
                     // Calculate crop area based on print aspect ratio
                     const imgWidth = loadedPrintImage.width;
@@ -770,7 +778,7 @@
                     // Draw cropped print
                     ctx.drawImage(loadedPrintImage, 
                         sourceX, sourceY, sourceWidth, sourceHeight,  // Source (crop area)
-                        x, adjustedY, printWidth, printHeight);        // Destination (print size)
+                        x, finalY, printWidth, printHeight);        // Destination (print size)
                     
                     // Reset shadow
                     ctx.shadowColor = 'transparent';
@@ -782,7 +790,7 @@
                     ctx.setLineDash([5, 5]);
                     
                     // Horizontal dimension line
-                    const dimY = adjustedY + printHeight + 25;
+                    const dimY = finalY + printHeight + 25;
                     ctx.beginPath();
                     ctx.moveTo(x - 10, dimY);
                     ctx.lineTo(x + printWidth + 10, dimY);
@@ -791,8 +799,8 @@
                     // Vertical dimension line
                     const dimX = x + printWidth + 25;
                     ctx.beginPath();
-                    ctx.moveTo(dimX, adjustedY - 10);
-                    ctx.lineTo(dimX, adjustedY + printHeight + 10);
+                    ctx.moveTo(dimX, finalY - 10);
+                    ctx.lineTo(dimX, finalY + printHeight + 10);
                     ctx.stroke();
                     
                     ctx.setLineDash([]);
@@ -804,7 +812,7 @@
                     ctx.fillText(`${width}"`, x + printWidth / 2, dimY + 20);
                     
                     ctx.save();
-                    ctx.translate(dimX + 20, adjustedY + printHeight / 2);
+                    ctx.translate(dimX + 20, finalY + printHeight / 2);
                     ctx.rotate(Math.PI / 2);
                     ctx.fillText(`${height}"`, 0, 0);
                     ctx.restore();
@@ -813,7 +821,7 @@
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                     ctx.font = '12px sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, adjustedY - 15);
+                    ctx.fillText(`${currentSettings.product.toUpperCase()} PRINT`, x + printWidth / 2, finalY - 15);
                     
                     // Add scale reference (sofa width)
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
