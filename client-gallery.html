@@ -121,6 +121,44 @@
 
         .photo-info {
             padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .photo-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .print-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .download-btn {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
         }
 
         .photo-filename {
@@ -423,20 +461,11 @@
                 const photo = photos[index];
                 const photoUrl = photo.url || photo.filename;
                 
-                // Open the new print preview window
-                const previewUrl = `/print-preview.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&token=${galleryToken}`;
+                // Use the professional print preview
+                const previewUrl = `/print-preview-pro.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&token=${galleryToken}`;
                 
-                // Open in a new window with specific dimensions for the preview experience
-                const previewWindow = window.open(
-                    previewUrl,
-                    'PrintPreview',
-                    'width=1400,height=900,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,status=yes'
-                );
-                
-                if (!previewWindow) {
-                    // Fallback if popup is blocked
-                    window.location.href = previewUrl;
-                }
+                // Open in same window for better mobile experience
+                window.location.href = previewUrl;
                 
                 return;
                 

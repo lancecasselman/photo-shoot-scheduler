@@ -354,6 +354,26 @@
 <body>
     <div class="preview-container">
         <div class="control-panel">
+            <div style="margin-bottom: 20px;">
+                <button onclick="backToGallery()" style="
+                    background: #f7fafc;
+                    border: 2px solid #e2e8f0;
+                    color: #4a5568;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                ">
+                    ← Back to Gallery
+                </button>
+            </div>
+            
             <div class="section">
                 <h3 class="section-title">Product Type</h3>
                 <div class="product-grid" id="productGrid">
@@ -619,9 +639,25 @@
             crop: { zoom: 100, x: 0, y: 0 }
         };
 
-        // Get photo URL from query parameters
+        // Get parameters from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const photoUrl = urlParams.get('photo') || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
+        const photoUrl = urlParams.get('photo');
+        const galleryToken = urlParams.get('token');
+        const filename = urlParams.get('filename') || 'photo.jpg';
+        
+        // Validate gallery token is present
+        if (!galleryToken) {
+            alert('Invalid gallery access. Please access this page through your gallery.');
+            window.location.href = '/';
+            throw new Error('No gallery token provided');
+        }
+        
+        // Use provided photo or show error
+        if (!photoUrl) {
+            alert('No photo selected. Please select a photo from your gallery.');
+            window.history.back();
+            throw new Error('No photo URL provided');
+        }
 
         // Initialize
         async function initialize() {
@@ -771,12 +807,19 @@
             updatePreview();
         }
 
+        // Back to gallery
+        function backToGallery() {
+            window.location.href = `/client-gallery.html?token=${galleryToken}`;
+        }
+        
         // Add to cart
         function addToCart() {
             const cartItem = {
                 ...currentSettings,
                 price: document.getElementById('priceAmount').textContent,
                 photoUrl: photoUrl,
+                filename: filename,
+                galleryToken: galleryToken,
                 timestamp: new Date().toISOString()
             };
             
@@ -785,7 +828,7 @@
             cart.push(cartItem);
             localStorage.setItem('printCart', JSON.stringify(cart));
             
-            // Show success message
+            // Show success message with cart options
             const message = document.createElement('div');
             message.style.cssText = `
                 position: fixed;
@@ -793,19 +836,42 @@
                 right: 20px;
                 background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
                 color: white;
-                padding: 15px 20px;
+                padding: 20px;
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 z-index: 9999;
                 animation: slideIn 0.3s ease;
             `;
-            message.textContent = 'Added to cart successfully!';
+            message.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 10px;">Added to cart successfully!</div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="backToGallery()" style="
+                        background: rgba(255,255,255,0.2);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        color: white;
+                        padding: 5px 12px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">Continue Shopping</button>
+                    <button onclick="window.location.href='/print-checkout.html?token=${galleryToken}'" style="
+                        background: white;
+                        border: none;
+                        color: #38a169;
+                        padding: 5px 12px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        font-weight: 600;
+                    ">View Cart</button>
+                </div>
+            `;
             document.body.appendChild(message);
             
             setTimeout(() => {
                 message.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => message.remove(), 300);
-            }, 3000);
+            }, 5000);
         }
 
         // Initialize on load
