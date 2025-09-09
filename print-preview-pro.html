@@ -704,24 +704,18 @@
                     const printWidth = width * pixelsPerInch;
                     const printHeight = height * pixelsPerInch;
                     
-                    // Position print centered above sofa with proper gallery spacing
-                    // Sofa positioned lower to accommodate various print sizes
-                    const sofaTop = canvas.height * 0.80; // Sofa at 80% height for better wall space
+                    // Position print much higher on the wall for proper gallery look
+                    // Print should be centered at eye level (about 57-60" from floor)
+                    // This translates to upper third of the wall space
                     
-                    // Calculate ideal hanging position (eye level is typically 57-60" from floor)
-                    // With sofa at ~32" height, prints should be 8-12" above sofa
-                    const idealGap = 8 * pixelsPerInch; // 8 inches above sofa is standard
+                    // Place print in upper portion of canvas for dramatic separation
+                    const printCenterY = canvas.height * 0.35; // Center the print at 35% from top
                     
                     // Center horizontally
                     const x = (canvas.width - printWidth) / 2 + currentSettings.crop.x * 2;
                     
-                    // Calculate vertical position with proper constraints
-                    const idealY = sofaTop - printHeight - idealGap + currentSettings.crop.y * 2;
-                    
-                    // Ensure print stays fully visible within canvas
-                    const minY = 40; // Minimum distance from top for visibility
-                    const maxY = sofaTop - printHeight - (4 * pixelsPerInch); // At least 4 inches above sofa
-                    const adjustedY = Math.max(minY, Math.min(maxY, idealY));
+                    // Calculate Y position based on center point
+                    const adjustedY = printCenterY - (printHeight / 2) + currentSettings.crop.y * 2;
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
