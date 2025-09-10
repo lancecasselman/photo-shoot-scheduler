@@ -248,10 +248,9 @@ function createR2Routes() {
       
       // Generate pre-signed URLs for each file
       const urls = await r2Manager.generateBatchUploadUrls(
-        files.map(f => f.filename),
         userId,
         sessionId,
-        folderType
+        files  // Pass the full file objects with filename, contentType, and size
       );
       
       if (!urls.success) {
