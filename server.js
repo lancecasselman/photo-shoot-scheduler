@@ -5378,7 +5378,8 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         }));
 
         console.log(`📸 Loaded ${photos.length} photos from R2 for session ${sessionId}`);
-        res.json(photos);
+        console.log('📸 Sample photo:', photos.length > 0 ? photos[0] : 'No photos found');
+        res.json({ files: photos });
     } catch (error) {
         console.error('Error loading session photos:', error);
         res.status(500).json({ error: 'Failed to load session photos' });
