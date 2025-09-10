@@ -1331,14 +1331,18 @@
             
             if (isImage) {
                 const img = document.createElement('img');
-                const thumbnailFileName = file.fileName || file.name;
-                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
+                // Use the direct download URL for preview (R2 files)
+                // For large files, browser will handle caching
                 
-                img.src = thumbnailUrl;
+                img.src = file.downloadUrl;
                 img.alt = file.name;
                 img.loading = 'lazy';
+                img.style.objectFit = 'cover';
+                img.style.width = '100%';
+                img.style.height = '100%';
                 img.onclick = () => openLightbox(file.downloadUrl);
                 img.onerror = () => {
+                    console.error('Failed to load image preview:', file.name);
                     img.style.display = 'none';
                     filePreview.innerHTML = '<div class="file-icon">IMG</div>';
                 };
