@@ -1,4 +1,5 @@
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const sharp = require('sharp');
 
@@ -1198,6 +1199,101 @@ class R2FileManager {
     } catch (error) {
       console.error('Error tracking download:', error);
       // Don't throw error - tracking is optional
+    }
+  }
+
+  /**
+   * Generate presigned URL for direct upload to R2
+   * This allows clients to upload directly to R2 without going through our server
+   */
+  async generateUploadPresignedUrl(userId, sessionId, filename, contentType, fileSize) {
+    try {
+      if (!this.r2Available) {
+        throw new Error('R2 storage is not available');
+      }
+
+      // Generate unique key for the file
+      const timestamp = Date.now();
+      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const key = `photographer-${userId}/session-${sessionId}/gallery/${timestamp}-${sanitizedFilename}`;
+      
+      // Create the PutObjectCommand
+      const putCommand = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        ContentType: contentType,
+        ContentLength: fileSize,
+        Metadata: {
+          'original-filename': filename,
+          'session-id': sessionId,
+          'user-id': userId,
+          'upload-timestamp': new Date().toISOString()
+        }
+      });
+
+      // Generate presigned URL valid for 1 hour
+      const presignedUrl = await getSignedUrl(this.s3Client, putCommand, { 
+        expiresIn: 3600 // 1 hour
+      });
+
+      console.log(`📤 Generated presigned upload URL for ${filename} (${(fileSize / (1024 * 1024)).toFixed(2)} MB)`);
+      
+      return {
+        success: true,
+        presignedUrl,
+        key,
+        expiresIn: 3600
+      };
+
+    } catch (error) {
+      console.error('Error generating presigned upload URL:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Generate multiple presigned URLs for batch uploads
+   */
+  async generateBatchUploadUrls(userId, sessionId, files) {
+    try {
+      const urls = [];
+      
+      for (const file of files) {
+        const result = await this.generateUploadPresignedUrl(
+          userId,
+          sessionId,
+          file.filename,
+          file.contentType,
+          file.size
+        );
+        
+        if (result.success) {
+          urls.push({
+            filename: file.filename,
+            presignedUrl: result.presignedUrl,
+            key: result.key,
+            expiresIn: result.expiresIn
+          });
+        }
+      }
+
+      console.log(`📤 Generated ${urls.length} presigned URLs for batch upload`);
+      
+      return {
+        success: true,
+        urls,
+        count: urls.length
+      };
+
+    } catch (error) {
+      console.error('Error generating batch presigned URLs:', error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 }

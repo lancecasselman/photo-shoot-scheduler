@@ -6174,7 +6174,55 @@ app.post('/api/sessions/:id/update-payment-status', isAuthenticated, async (req,
     }
 });
 
-// Upload photos to session with enhanced error handling and processing
+// Generate presigned URLs for direct R2 uploads (FAST UPLOADS)
+app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+    const { files } = req.body; // Array of {filename, contentType, size}
+
+    try {
+        console.log(`🚀 Generating presigned URLs for ${files.length} files`);
+        
+        // Check storage quota first
+        const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+        const quotaCheck = await storageSystem.canUpload(userId, totalSize, normalizedUser.email);
+        
+        if (!quotaCheck.canUpload) {
+            return res.status(403).json({
+                error: 'Storage quota exceeded',
+                currentUsageGB: quotaCheck.currentUsageGB,
+                quotaGB: quotaCheck.quotaGB,
+                message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit.`
+            });
+        }
+
+        // Generate presigned URLs for all files
+        const result = await r2Manager.generateBatchUploadUrls(userId, sessionId, files);
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to generate upload URLs');
+        }
+
+        console.log(`✅ Generated ${result.count} presigned URLs for direct upload`);
+        
+        res.json({
+            success: true,
+            urls: result.urls,
+            count: result.count,
+            storageRemaining: quotaCheck.remainingGB
+        });
+
+    } catch (error) {
+        console.error('Error generating presigned URLs:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate upload URLs',
+            message: error.message 
+        });
+    }
+});
+
+// Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const normalizedUser = normalizeUserForLance(req.user);
