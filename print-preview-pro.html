@@ -43,10 +43,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0;
+            padding: 20px 0;
             min-height: 60vh;
             width: 100%;
             overflow: hidden;
+        }
+        
+        /* Desktop: Smaller canvas */
+        @media (min-width: 769px) {
+            #mockupCanvas {
+                max-width: 600px !important;
+                height: auto !important;
+            }
         }
         
         /* Mobile Styles */
