@@ -5334,6 +5334,57 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get photos for a specific session from R2 files
+app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+
+    try {
+        // First verify the session belongs to the user
+        const sessionResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Get files from r2_files table
+        const filesResult = await pool.query(
+            `SELECT id, filename, original_filename, file_type, file_extension, 
+                    file_size_bytes, file_size_mb, r2_key, r2_url, 
+                    upload_status, created_at, updated_at
+             FROM r2_files 
+             WHERE session_id = $1 AND user_id = $2 
+             ORDER BY created_at DESC`,
+            [sessionId, userId]
+        );
+
+        const photos = filesResult.rows.map(file => ({
+            id: file.id,
+            filename: file.filename,
+            originalName: file.original_filename,
+            url: file.r2_url || `/api/r2/sessions/${sessionId}/files/${file.filename}`,
+            fileType: file.file_type,
+            fileExtension: file.file_extension,
+            fileSizeBytes: file.file_size_bytes,
+            fileSizeMB: file.file_size_mb,
+            r2Key: file.r2_key,
+            uploadStatus: file.upload_status,
+            createdAt: file.created_at,
+            updatedAt: file.updated_at
+        }));
+
+        console.log(`📸 Loaded ${photos.length} photos from R2 for session ${sessionId}`);
+        res.json(photos);
+    } catch (error) {
+        console.error('Error loading session photos:', error);
+        res.status(500).json({ error: 'Failed to load session photos' });
+    }
+});
+
 // Create gallery access token for a session
 app.post('/api/sessions/:id/create-gallery', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
