@@ -6205,7 +6205,7 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
         }
 
         // Generate presigned URLs for all files
-        const result = await r2Manager.generateBatchUploadUrls(userId, sessionId, files);
+        const result = await r2FileManager.generateBatchUploadUrls(userId, sessionId, files);
         
         if (!result.success) {
             throw new Error(result.error || 'Failed to generate upload URLs');

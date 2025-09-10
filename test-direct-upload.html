@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct R2 Upload Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .upload-zone {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .upload-zone:hover {
+            background: #e9ecef;
+            border-color: #0056b3;
+        }
+        .upload-zone.dragover {
+            background: #007bff;
+            color: white;
+        }
+        #fileInput {
+            display: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        .progress {
+            margin-top: 20px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Direct R2 Upload Test</h1>
+        <p>Test direct uploads to Cloudflare R2 using pre-signed URLs (bypassing server)</p>
+        
+        <div class="upload-zone" id="uploadZone">
+            <p>📁 Click to select or drag & drop an image here</p>
+            <small>Supports JPG, PNG, WebP (Max 50MB)</small>
+        </div>
+        
+        <input type="file" id="fileInput" accept="image/*">
+        
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+
+        // Click to upload
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFileUpload(files[0]);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFileUpload(file);
+        });
+
+        function updateStatus(message, type = 'info', data = null) {
+            status.className = `status ${type}`;
+            let html = message;
+            if (data) {
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            status.innerHTML = html;
+        }
+
+        async function handleFileUpload(file) {
+            console.log('Starting upload for:', file.name);
+            updateStatus(`📤 Starting upload for ${file.name}...`, 'info');
+            
+            progress.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+
+            try {
+                // Step 1: Get pre-signed URL from server
+                updateStatus('🔑 Requesting pre-signed URL from server...', 'info');
+                progressBar.style.width = '10%';
+                progressBar.textContent = '10%';
+                
+                const urlResponse = await fetch('/api/sessions/test-session/upload-urls', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        files: [{
+                            filename: file.name,
+                            contentType: file.type || 'image/jpeg',
+                            size: file.size
+                        }]
+                    })
+                });
+
+                if (!urlResponse.ok) {
+                    const error = await urlResponse.text();
+                    throw new Error(`Failed to get pre-signed URL: ${error}`);
+                }
+
+                const urlData = await urlResponse.json();
+                console.log('Pre-signed URL response:', urlData);
+                
+                const uploadInfo = urlData.urls[0];
+                updateStatus('✅ Got pre-signed URL!', 'success', {
+                    filename: uploadInfo.filename,
+                    key: uploadInfo.key,
+                    expiresIn: uploadInfo.expiresIn + ' seconds'
+                });
+                
+                progressBar.style.width = '30%';
+                progressBar.textContent = '30%';
+
+                // Step 2: Upload directly to R2
+                updateStatus('🚀 Uploading directly to R2 (bypassing server)...', 'info');
+                
+                const startTime = Date.now();
+                const uploadResponse = await fetch(uploadInfo.presignedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type || 'image/jpeg'
+                    }
+                });
+
+                const uploadTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                progressBar.style.width = '70%';
+                progressBar.textContent = '70%';
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`R2 upload failed: ${uploadResponse.status}`);
+                }
+
+                updateStatus(`⚡ Direct R2 upload successful! (${uploadTime}s)`, 'success');
+
+                // Step 3: Confirm upload with server
+                progressBar.style.width = '90%';
+                progressBar.textContent = '90%';
+                
+                const confirmResponse = await fetch('/api/sessions/test-session/confirm-uploads', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        uploads: [{
+                            filename: uploadInfo.filename,
+                            key: uploadInfo.key,
+                            size: file.size
+                        }]
+                    })
+                });
+
+                if (!confirmResponse.ok) {
+                    throw new Error('Failed to confirm upload');
+                }
+
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+
+                const result = await confirmResponse.json();
+                const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                updateStatus(`🎉 Upload complete! Total time: ${totalTime}s`, 'success', {
+                    uploadMethod: 'Direct R2 with pre-signed URL',
+                    uploadSpeed: `${(file.size / 1024 / 1024 / uploadTime).toFixed(2)} MB/s`,
+                    fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                    r2Key: uploadInfo.key,
+                    confirmed: result.success
+                });
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                updateStatus(`❌ Upload failed: ${error.message}`, 'error');
+                progress.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

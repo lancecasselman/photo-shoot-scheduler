@@ -977,21 +977,22 @@
                     });
                     
                     if (r2Response.ok) {
-                        console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
-                        uploadedFileName = uploadData.fileName;
+                        console.log(`✅ FAST direct upload to R2 succeeded for ${file.name}`);
+                        uploadedFileName = uploadData.filename || file.name;
                         
-                        // Step 3: Update database with the uploaded file info
-                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
+                        // Step 3: Confirm the upload with the server to update database
+                        response = await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
                             method: 'POST',
                             credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                fileName: uploadData.fileName,
-                                originalName: file.name,
-                                size: file.size,
-                                r2Key: uploadData.r2Key
+                                uploads: [{
+                                    filename: uploadData.filename || file.name,
+                                    key: uploadData.key,
+                                    size: file.size
+                                }]
                             })
                         });
                     } else {
