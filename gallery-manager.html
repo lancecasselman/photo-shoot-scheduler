@@ -934,7 +934,7 @@
                 }
                 
                 // Step 1: Get presigned URL for direct R2 upload (bypasses server)
-                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
+                const urlResponse = await fetch(`/api/r2/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -981,7 +981,7 @@
                         uploadedFileName = uploadData.filename || file.name;
                         
                         // Step 3: Confirm the upload with the server to update database
-                        response = await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
+                        response = await fetch(`/api/r2/sessions/${sessionId}/confirm-uploads`, {
                             method: 'POST',
                             credentials: 'include',
                             headers: {
