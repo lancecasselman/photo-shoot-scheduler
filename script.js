@@ -2095,8 +2095,41 @@ function setupUploadModal(sessionId) {
     });
 
     // Upload button handler
-    uploadBtn.addEventListener('click', () => {
-        uploadPhotosDirect(sessionId, selectedFiles);
+    uploadBtn.addEventListener('click', async () => {
+        console.log('🚀 Upload button clicked! Starting direct upload...');
+        console.log('Files to upload:', selectedFiles.length);
+        
+        // Show progress modal
+        showUploadProgress();
+        
+        try {
+            const result = await uploadPhotosDirect(sessionId, selectedFiles);
+            
+            if (result && result.success) {
+                console.log('✅ Upload successful!', result);
+                showMessage(`Successfully uploaded ${result.count || selectedFiles.length} photos!`, 'success');
+                
+                // Close modals
+                setTimeout(() => {
+                    hideUploadProgress();
+                    const modal = document.getElementById('uploadModal');
+                    if (modal) modal.classList.remove('active');
+                }, 1500);
+                
+                // Reload photos
+                const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
+                const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
+                if (galleryGrid) {
+                    loadSessionPhotos(sessionId, galleryGrid, photoCount);
+                }
+            } else {
+                throw new Error('Upload failed - no success result');
+            }
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            hideUploadProgress();
+            showMessage('Upload failed: ' + error.message, 'error');
+        }
     });
 
     function handleFileSelection(files) {
@@ -2155,12 +2188,41 @@ function setupUploadModal(sessionId) {
         });
     }
 
+    // Simple upload progress functions
+    function showUploadProgress() {
+        const progressHtml = `
+            <div id="uploadProgressModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000;">
+                <div style="background: white; padding: 30px; border-radius: 10px; min-width: 300px; text-align: center;">
+                    <h3>Uploading Photos...</h3>
+                    <div style="margin: 20px 0;">
+                        <div class="spinner" style="margin: 0 auto;"></div>
+                    </div>
+                    <p id="uploadStatusText">Please wait...</p>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', progressHtml);
+    }
+
+    function hideUploadProgress() {
+        const modal = document.getElementById('uploadProgressModal');
+        if (modal) modal.remove();
+    }
+
+    function updateFileProgress(index, fileName, status, percent) {
+        const statusText = document.getElementById('uploadStatusText');
+        if (statusText) {
+            statusText.textContent = `Uploading ${fileName} (${percent}%)`;
+        }
+    }
+
     // Fast upload function using presigned URLs for direct R2 uploads
     async function uploadPhotosDirect(sessionId, files) {
         if (files.length === 0) return;
 
         try {
             console.log('🚀 Starting FAST direct R2 upload process...');
+            console.log('Uploading', files.length, 'files to session', sessionId);
             
             const authToken = await getAuthToken();
             if (!authToken) {
@@ -2193,8 +2255,10 @@ function setupUploadModal(sessionId) {
                 return uploadPhotosLegacy(sessionId, files);
             }
 
-            const { urls } = await urlResponse.json();
+            const urlData = await urlResponse.json();
+            const urls = urlData.urls;
             console.log(`✅ Got ${urls.length} presigned URLs for direct upload`);
+            console.log('First URL data:', urls[0]); // Debug the URL structure
 
             // Step 2: Upload files directly to R2 in parallel (MUCH FASTER!)
             const uploadPromises = files.map(async (file, index) => {
@@ -2202,6 +2266,10 @@ function setupUploadModal(sessionId) {
                 if (!urlData) return null;
 
                 console.log(`📤 Uploading ${file.name} directly to R2 (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
+                console.log('Using presigned URL:', urlData.presignedUrl?.substring(0, 100) + '...');
+                
+                // Update progress for this file
+                updateFileProgress(index, file.name, 'uploading', 0);
                 
                 // For files over 100MB, use chunked upload for better reliability
                 if (file.size > 100 * 1024 * 1024) {
@@ -2218,10 +2286,13 @@ function setupUploadModal(sessionId) {
                 });
 
                 if (!uploadResponse.ok) {
-                    throw new Error(`Failed to upload ${file.name} to R2`);
+                    console.error(`❌ Upload failed for ${file.name}:`, uploadResponse.status, uploadResponse.statusText);
+                    updateFileProgress(index, file.name, 'failed', 0);
+                    throw new Error(`Failed to upload ${file.name} to R2: ${uploadResponse.status} ${uploadResponse.statusText}`);
                 }
 
                 console.log(`✅ ${file.name} uploaded successfully!`);
+                updateFileProgress(index, file.name, 'completed', 100);
                 return {
                     filename: file.name,
                     key: urlData.key,
