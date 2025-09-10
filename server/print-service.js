@@ -285,7 +285,7 @@ class PrintServiceAPI {
       // If we got products, return them, otherwise use fallback
       if (products.length > 0) {
         console.log(`✅ Transformed ${products.length} WHCC products from catalog`);
-        return products.slice(0, 20); // Return first 20 products for gallery display
+        return products; // Return ALL products from WHCC catalog
       } else {
         console.log('⚠️ No products found in WHCC catalog structure');
         return this.getProfessionalFallbackProducts();
