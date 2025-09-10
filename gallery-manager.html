@@ -1223,30 +1223,42 @@
         // Load files
         async function loadFiles() {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/photos`, {
+                const response = await fetch(`/api/sessions/${sessionId}/photos?folder=${folderType}`, {
                     credentials: 'include' // Include cookies for authentication
                 });
                 
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Load files response error:', errorText);
+                    if (response.status === 401 || response.status === 403) {
+                        console.error('Authentication error - session cookies may not be sent');
+                    }
                     throw new Error(`Failed to load files: ${response.status} - ${errorText}`);
                 }
                 
-                const data = await response.json();
-                // Map R2 files data to expected format
-                files = (data.files || []).map(file => ({
-                    name: file.originalName || file.filename,
-                    fileName: file.filename,
-                    contentType: file.fileType || 'image/jpeg',
-                    downloadUrl: file.url,
-                    timeCreated: file.createdAt,
-                    size: file.fileSizeBytes || 0,
+                const payload = await response.json();
+                console.log('API Response:', payload);
+                
+                // Handle different response shapes
+                const items = Array.isArray(payload) ? payload : 
+                             (payload.files || payload.photos || payload.data || []);
+                
+                console.log(`Raw items from API: ${items.length} items`);
+                
+                // Map R2 files data to expected format with defensive handling
+                files = items.map(file => ({
+                    fileName: file.filename || file.fileName || file.name,
+                    name: file.originalName || file.name || file.filename,
+                    contentType: file.fileType || file.contentType || 'image/jpeg',
+                    downloadUrl: file.url || file.downloadUrl || '',
+                    timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
+                    size: file.fileSizeBytes || file.size || 0,
+                    folderType: file.folderType || folderType,
                     id: file.id,
                     r2Key: file.r2Key
-                }));
+                })).filter(x => x.fileName || x.name);
                 
-                console.log(`Loaded ${files.length} files for ${folderType} folder`);
+                console.log(`Mapped to ${files.length} files ready to render`);
                 renderFiles();
                 loadStorageStats();
                 
