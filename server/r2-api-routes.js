@@ -226,6 +226,55 @@ function createR2Routes() {
   });
 
   /**
+   * POST /api/r2/sessions/:sessionId/upload-urls
+   * Generate pre-signed URLs for direct uploads to R2
+   * Body: { files: [{ filename: string, size: number }], folderType: 'gallery' | 'raw' }
+   */
+  router.post('/sessions/:sessionId/upload-urls', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { files, folderType = 'gallery' } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: 'No files specified' });
+      }
+      
+      console.log(`🚀 Generating ${files.length} pre-signed URLs for session ${sessionId}, folder: ${folderType}`);
+      
+      // Generate pre-signed URLs for each file
+      const urls = await r2Manager.generateBatchUploadUrls(
+        files.map(f => f.filename),
+        userId,
+        sessionId,
+        folderType
+      );
+      
+      if (!urls.success) {
+        console.error('❌ Failed to generate pre-signed URLs:', urls.error);
+        return res.status(500).json({ error: 'Failed to generate upload URLs' });
+      }
+      
+      console.log(`✅ Generated ${urls.urls.length} pre-signed URLs`);
+      
+      res.json({
+        success: true,
+        urls: urls.urls,
+        sessionId,
+        folderType
+      });
+      
+    } catch (error) {
+      console.error('❌ Pre-signed URL generation error:', error);
+      res.status(500).json({ error: 'Failed to generate upload URLs', message: error.message });
+    }
+  });
+
+  /**
    * POST /api/r2/upload
    * Upload files to R2 with storage limit checking
    * Supports multiple files and all file types
