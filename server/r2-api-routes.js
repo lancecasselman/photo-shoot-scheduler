@@ -79,21 +79,24 @@ function createR2Routes() {
 
   // Authentication middleware for all routes - compatible with main server auth
   router.use((req, res, next) => {
-    // Strict authentication check - no fallbacks that could be bypassed
+    // Check Passport authentication first (main server method)
     const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
     
     if (isAuthenticated && req.user && req.user.uid) {
-      // Primary authentication method
+      // Primary authentication method via Passport
+      // Ensure session.user is set for consistency
+      if (req.session && !req.session.user) {
+        req.session.user = req.user;
+      }
       return next();
     }
     
+    // Fallback: Check session.user (for legacy compatibility)
+    const hasValidSession = req.session && req.session.user && req.session.user.uid;
     if (hasValidSession) {
-      // Secondary authentication via session - but verify user ID exists
+      // Secondary authentication via session
       req.user = req.session.user;
-      if (req.user.uid) {
-        return next();
-      }
+      return next();
     }
     
     // Log failed authentication attempts for security monitoring
@@ -102,6 +105,7 @@ function createR2Routes() {
       isAuthenticated: isAuthenticated,
       hasSession: !!req.session,
       hasSessionUser: !!(req.session && req.session.user),
+      hasReqUser: !!(req.user),
       hasUserUid: !!(req.user && req.user.uid),
       userAgent: req.get('User-Agent'),
       ip: req.ip
