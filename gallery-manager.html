@@ -917,10 +917,10 @@
             document.getElementById('progressText').textContent = text;
         }
 
-        // Upload single file
+        // Upload single file using DIRECT R2 presigned URLs for maximum speed
         async function uploadFile(file) {
             try {
-                console.log(`Starting upload for ${file.name}, size: ${file.size}`);
+                console.log(`Starting FAST direct upload for ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
                 console.log(`Session ID: ${sessionId}, Folder Type: ${folderType}`);
                 
                 // Mark upload as starting
@@ -933,16 +933,83 @@
                     return; // Stop upload if quota exceeded
                 }
                 
-                // Use FormData for server-proxied upload to R2 (avoids CORS issues)
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                // Upload directly through server to R2
-                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                // Step 1: Get presigned URL for direct R2 upload (bypasses server)
+                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
                     credentials: 'include',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        files: [{
+                            filename: file.name,
+                            contentType: file.type || 'image/jpeg',
+                            size: file.size
+                        }]
+                    })
                 });
+                
+                let response;
+                let uploadedFileName;
+                
+                if (urlResponse.ok) {
+                    // FAST PATH: Direct upload to R2 using presigned URL
+                    const urls = await urlResponse.json();
+                    const uploadData = urls.urls[0];
+                    
+                    console.log(`Got presigned URL for direct R2 upload, bypassing server`);
+                    
+                    // Step 2: Upload directly to R2 (MUCH FASTER - no server proxy!)
+                    const r2Response = await fetch(uploadData.uploadUrl, {
+                        method: 'PUT',
+                        body: file,
+                        headers: {
+                            'Content-Type': file.type || 'image/jpeg'
+                        }
+                    });
+                    
+                    if (r2Response.ok) {
+                        console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
+                        uploadedFileName = uploadData.fileName;
+                        
+                        // Step 3: Update database with the uploaded file info
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                fileName: uploadData.fileName,
+                                originalName: file.name,
+                                size: file.size,
+                                r2Key: uploadData.r2Key
+                            })
+                        });
+                    } else {
+                        console.warn('Direct R2 upload failed, falling back to server upload');
+                        // Fallback to server upload
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            body: formData
+                        });
+                    }
+                } else {
+                    console.warn('Failed to get presigned URL, using server upload');
+                    // Fallback to server upload
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+                }
                 
                 console.log(`Upload response status: ${response.status}`);
                 
