@@ -2096,7 +2096,7 @@ function setupUploadModal(sessionId) {
 
     // Upload button handler
     uploadBtn.addEventListener('click', () => {
-        uploadPhotos(sessionId, selectedFiles);
+        uploadPhotosDirect(sessionId, selectedFiles);
     });
 
     function handleFileSelection(files) {
@@ -2155,12 +2155,106 @@ function setupUploadModal(sessionId) {
         });
     }
 
-    async function uploadPhotos(sessionId, files) {
+    // Fast upload function using presigned URLs for direct R2 uploads
+    async function uploadPhotosDirect(sessionId, files) {
         if (files.length === 0) return;
 
         try {
-            // Show progress in HTML modal
-            console.log('Starting upload process...');
+            console.log('🚀 Starting FAST direct R2 upload process...');
+            
+            const authToken = await getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required for photo upload');
+            }
+
+            // Step 1: Get presigned URLs from server
+            const fileMetadata = files.map(file => ({
+                filename: file.name,
+                contentType: file.type || 'image/jpeg',
+                size: file.size
+            }));
+
+            const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ files: fileMetadata })
+            });
+
+            if (!urlResponse.ok) {
+                const errorData = await urlResponse.json();
+                if (errorData.error === 'Storage quota exceeded') {
+                    throw new Error(errorData.message);
+                }
+                // Fallback to legacy upload if presigned URLs fail
+                console.log('⚠️ Presigned URL generation failed, falling back to legacy upload');
+                return uploadPhotosLegacy(sessionId, files);
+            }
+
+            const { urls } = await urlResponse.json();
+            console.log(`✅ Got ${urls.length} presigned URLs for direct upload`);
+
+            // Step 2: Upload files directly to R2 in parallel (MUCH FASTER!)
+            const uploadPromises = files.map(async (file, index) => {
+                const urlData = urls[index];
+                if (!urlData) return null;
+
+                console.log(`📤 Uploading ${file.name} directly to R2...`);
+                
+                const uploadResponse = await fetch(urlData.presignedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type || 'image/jpeg'
+                    }
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`Failed to upload ${file.name} to R2`);
+                }
+
+                console.log(`✅ ${file.name} uploaded successfully!`);
+                return {
+                    filename: file.name,
+                    key: urlData.key,
+                    size: file.size
+                };
+            });
+
+            // Upload all files in parallel for maximum speed
+            const results = await Promise.all(uploadPromises);
+            const successfulUploads = results.filter(r => r !== null);
+            
+            console.log(`🎉 Successfully uploaded ${successfulUploads.length} files directly to R2!`);
+            
+            // Step 3: Notify server of completed uploads
+            await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ uploads: successfulUploads })
+            });
+
+            return { success: true, count: successfulUploads.length };
+
+        } catch (error) {
+            console.error('Direct upload error:', error);
+            // Fallback to legacy upload on any error
+            console.log('⚠️ Direct upload failed, falling back to legacy upload');
+            return uploadPhotosLegacy(sessionId, files);
+        }
+    }
+
+    // Legacy upload function (slower, through server)
+    async function uploadPhotosLegacy(sessionId, files) {
+        if (files.length === 0) return;
+
+        try {
+            console.log('Starting legacy upload process (slower)...');
 
             const authToken = await getAuthToken();
             if (!authToken) {
@@ -2172,8 +2266,7 @@ function setupUploadModal(sessionId) {
                 formData.append('photos', file);
             });
 
-            // Remove old progress tracking - using HTML modal now
-            console.log('Uploading photos...');
+            console.log('Uploading photos through server...');
 
             const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
                 method: 'POST',
@@ -2189,34 +2282,17 @@ function setupUploadModal(sessionId) {
             }
 
             const result = await response.json();
-
-            // Upload complete - using HTML modal now
-            console.log('Upload complete!');
-
-            console.log('Upload result:', result);
-            showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
-
-            // Close HTML modal after upload
-            setTimeout(() => {
-                const modal = document.getElementById('uploadModal');
-                if (modal) {
-                    modal.classList.remove('active');
-                }
-            }, 1000);
-
-            // Reload photos for this session
-            const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
-            const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
-            if (galleryGrid) {
-                loadSessionPhotos(sessionId, galleryGrid, photoCount);
-            }
+            return { success: true, ...result };
 
         } catch (error) {
-            console.error('Upload error:', error);
-            showMessage('Upload failed: ' + error.message, 'error');
-
-            console.log('Upload failed, hiding progress');
+            console.error('Legacy upload error:', error);
+            throw error;
         }
+    }
+
+    // Use the fast direct upload by default
+    async function uploadPhotos(sessionId, files) {
+        return uploadPhotosDirect(sessionId, files);
     }
 }
 
