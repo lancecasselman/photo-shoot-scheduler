@@ -305,23 +305,10 @@ function createR2Routes() {
       // Separate successful and failed uploads
       const successful = [];
       const failed = [];
-      const thumbnailTasks = []; // For automatic thumbnail generation
       
       uploadResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           successful.push(result.value);
-          
-          // Queue thumbnail generation for image files
-          const file = req.files[index];
-          if (r2Manager.isImageFile(file.originalname)) {
-            thumbnailTasks.push({
-              buffer: file.buffer,
-              filename: file.originalname,
-              userId,
-              sessionId,
-              fileType: result.value.fileType
-            });
-          }
         } else {
           failed.push({
             filename: req.files[index].originalname,
@@ -330,28 +317,9 @@ function createR2Routes() {
         }
       });
 
-      // Generate thumbnails in background (don't wait for completion)
-      if (thumbnailTasks.length > 0) {
-        console.log(`🖼️ Generating thumbnails for ${thumbnailTasks.length} image files...`);
-        
-        // Run thumbnail generation in background
-        Promise.allSettled(
-          thumbnailTasks.map(task => 
-            r2Manager.generateThumbnail(
-              task.buffer, 
-              task.filename, 
-              task.userId, 
-              task.sessionId, 
-              task.fileType
-            )
-          )
-        ).then(thumbResults => {
-          const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
-          console.log(` Generated thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
-        }).catch(thumbError => {
-          console.warn(' Background thumbnail generation error:', thumbError.message);
-        });
-      }
+      // REMOVED automatic thumbnail generation for better upload performance
+      // Thumbnails are now generated on-demand when first requested
+      // This eliminates the bottleneck of downloading large files back from R2
 
       // Get updated storage usage
       const updatedUsage = await r2Manager.getUserStorageUsage(userId);
