@@ -5339,6 +5339,7 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const normalizedUser = normalizeUserForLance(req.user);
     const userId = normalizedUser.uid;
+    const { folder } = req.query; // Accept folder parameter (gallery, raw, etc.)
 
     try {
         // First verify the session belongs to the user
@@ -5351,54 +5352,118 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Get files from r2_files table
-        const filesResult = await pool.query(
-            `SELECT id, filename, original_filename, file_type, file_extension, 
-                    file_size_bytes, file_size_mb, r2_key, r2_url, 
-                    upload_status, created_at, updated_at
-             FROM r2_files 
-             WHERE session_id = $1 AND user_id = $2 
-             ORDER BY created_at DESC`,
-            [sessionId, userId]
-        );
-
-        const photos = filesResult.rows.map(file => ({
-            id: file.id,
-            filename: file.filename,
-            originalName: file.original_filename,
-            url: file.r2_url || `/api/r2/sessions/${sessionId}/files/${file.filename}`,
-            fileType: file.file_type,
-            fileExtension: file.file_extension,
-            fileSizeBytes: file.file_size_bytes,
-            fileSizeMB: file.file_size_mb,
-            r2Key: file.r2_key,
-            uploadStatus: file.upload_status,
-            createdAt: file.created_at,
-            updatedAt: file.updated_at
-        }));
-
-        console.log(`📸 Loaded ${photos.length} photos from R2 for session ${sessionId}`);
-        console.log('📸 Sample photo:', photos.length > 0 ? photos[0] : 'No photos found');
+        // Build query based on folder parameter
+        let filesQuery = `SELECT id, filename, original_filename, file_type, file_extension, 
+                                file_size_bytes, file_size_mb, r2_key, r2_url, 
+                                upload_status, created_at, updated_at
+                         FROM r2_files 
+                         WHERE session_id = $1 AND user_id = $2`;
         
+        const queryParams = [sessionId, userId];
+        
+        // Filter by folder type if specified
+        if (folder) {
+            filesQuery += ` AND file_type = $3`;
+            queryParams.push(folder);
+        }
+        
+        filesQuery += ` ORDER BY created_at DESC`;
+
+        // Get files from r2_files table
+        const filesResult = await pool.query(filesQuery, queryParams);
+
+        console.log(`📸 Loading ${filesResult.rows.length} ${folder || 'all'} photos from R2 for session ${sessionId}`);
+
+        // Check if R2 manager is available and configured
+        if (!r2Manager || !r2Manager.r2Available) {
+            console.warn('⚠️ R2 manager not available, returning files without presigned URLs');
+            const fallbackFiles = filesResult.rows.map(file => ({
+                id: file.id,
+                filename: file.filename,
+                originalName: file.original_filename,
+                url: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`,
+                fileType: file.file_type,
+                fileExtension: file.file_extension,
+                fileSizeBytes: parseInt(file.file_size_bytes) || 0,
+                fileSizeMB: parseFloat(file.file_size_mb) || 0,
+                r2Key: file.r2_key,
+                uploadStatus: file.upload_status,
+                createdAt: file.created_at,
+                updatedAt: file.updated_at,
+                contentType: file.file_type === 'raw' ? 'image/raw' : 
+                             file.file_type === 'gallery' ? 'image/jpeg' : 
+                             'application/octet-stream',
+                size: parseInt(file.file_size_bytes) || 0,
+                downloadUrl: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`
+            }));
+            
+            return res.json({ 
+                success: true,
+                files: fallbackFiles 
+            });
+        }
+
         // Generate presigned URLs for each photo for direct R2 access
-        const photosWithUrls = await Promise.all(photos.map(async (photo) => {
+        const photosWithUrls = await Promise.all(filesResult.rows.map(async (file) => {
+            let presignedUrl = file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`;
+            
             try {
                 // Generate a presigned URL valid for 24 hours
-                const presignedUrl = await r2Manager.getSignedUrl(photo.r2Key, 86400);
-                return {
-                    ...photo,
-                    url: presignedUrl // Replace local URL with presigned R2 URL
-                };
+                if (r2Manager && r2Manager.getSignedUrl && file.r2_key) {
+                    presignedUrl = await r2Manager.getSignedUrl(file.r2_key, 86400);
+                    console.log(`✅ Generated presigned URL for ${file.filename}`);
+                }
             } catch (error) {
-                console.error(`Failed to generate presigned URL for ${photo.filename}:`, error);
-                return photo; // Return original if presigned URL fails
+                console.error(`Failed to generate presigned URL for ${file.filename}:`, error.message);
+                // Use fallback URL
             }
+
+            // Return in format expected by gallery-manager.html
+            return {
+                id: file.id,
+                filename: file.filename,
+                originalName: file.original_filename,
+                name: file.original_filename || file.filename,
+                url: presignedUrl,
+                downloadUrl: presignedUrl,
+                fileType: file.file_type,
+                fileExtension: file.file_extension,
+                fileSizeBytes: parseInt(file.file_size_bytes) || 0,
+                fileSizeMB: parseFloat(file.file_size_mb) || 0,
+                r2Key: file.r2_key,
+                uploadStatus: file.upload_status,
+                createdAt: file.created_at,
+                updatedAt: file.updated_at,
+                timeCreated: file.created_at,
+                // Additional fields expected by gallery-manager.html
+                contentType: file.file_type === 'raw' ? 'image/raw' : 
+                            file.file_type === 'gallery' ? 'image/jpeg' : 
+                            'application/octet-stream',
+                size: parseInt(file.file_size_bytes) || 0,
+                folderType: file.file_type
+            };
         }));
+
+        console.log(`📸 Successfully loaded ${photosWithUrls.length} photos with presigned URLs`);
+        if (photosWithUrls.length > 0) {
+            console.log('📸 Sample photo response:', {
+                filename: photosWithUrls[0].filename,
+                hasPresignedUrl: photosWithUrls[0].url?.includes('X-Amz-Signature') || false,
+                fileType: photosWithUrls[0].fileType
+            });
+        }
         
-        res.json({ files: photosWithUrls });
+        res.json({ 
+            success: true,
+            files: photosWithUrls 
+        });
     } catch (error) {
         console.error('Error loading session photos:', error);
-        res.status(500).json({ error: 'Failed to load session photos' });
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to load session photos',
+            message: error.message 
+        });
     }
 });
 
