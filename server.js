@@ -5379,7 +5379,23 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
 
         console.log(`📸 Loaded ${photos.length} photos from R2 for session ${sessionId}`);
         console.log('📸 Sample photo:', photos.length > 0 ? photos[0] : 'No photos found');
-        res.json({ files: photos });
+        
+        // Generate presigned URLs for each photo for direct R2 access
+        const photosWithUrls = await Promise.all(photos.map(async (photo) => {
+            try {
+                // Generate a presigned URL valid for 24 hours
+                const presignedUrl = await r2Manager.getSignedUrl(photo.r2Key, 86400);
+                return {
+                    ...photo,
+                    url: presignedUrl // Replace local URL with presigned R2 URL
+                };
+            } catch (error) {
+                console.error(`Failed to generate presigned URL for ${photo.filename}:`, error);
+                return photo; // Return original if presigned URL fails
+            }
+        }));
+        
+        res.json({ files: photosWithUrls });
     } catch (error) {
         console.error('Error loading session photos:', error);
         res.status(500).json({ error: 'Failed to load session photos' });
