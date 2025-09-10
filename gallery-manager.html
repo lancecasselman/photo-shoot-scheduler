@@ -1223,7 +1223,9 @@
         // Load files
         async function loadFiles() {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/photos?folder=${folderType}`, {
+                const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
+                console.log('📸 Fetching photos from:', url);
+                const response = await fetch(url, {
                     credentials: 'include' // Include cookies for authentication
                 });
                 
@@ -1334,6 +1336,7 @@
                 // Use the direct download URL for preview (R2 files)
                 // For large files, browser will handle caching
                 
+                console.log(`🖼️ Loading preview for ${file.name}:`, file.downloadUrl);
                 img.src = file.downloadUrl;
                 img.alt = file.name;
                 img.loading = 'lazy';
@@ -1342,7 +1345,7 @@
                 img.style.height = '100%';
                 img.onclick = () => openLightbox(file.downloadUrl);
                 img.onerror = () => {
-                    console.error('Failed to load image preview:', file.name);
+                    console.error('Failed to load image preview:', file.name, 'URL:', file.downloadUrl);
                     img.style.display = 'none';
                     filePreview.innerHTML = '<div class="file-icon">IMG</div>';
                 };
