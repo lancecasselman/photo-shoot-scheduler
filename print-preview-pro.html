@@ -589,33 +589,85 @@
             pricing = {};
             productSizes = {};
             
+            // Map WHCC categories to our UI categories - FIXED: acrylic_prints now correctly maps to 'acrylic'
+            const categoryMapping = {
+                'acrylic_prints': 'acrylic',  // FIXED: was incorrectly mapped to 'specialty'
+                'canvas_prints': 'canvas',
+                'canvas': 'canvas',
+                'metal_prints': 'metal', 
+                'metal': 'metal',
+                'fine_art_prints': 'fineart',  // Map to fineart for proper differentiation
+                'photographic_prints': 'photographic',  // Map to photographic for proper differentiation
+                'prints': 'photographic',
+                'specialty_products': 'specialty',
+                'bamboo': 'bamboo',  // Add bamboo mapping
+                'albums': 'specialty',
+                'cards': 'prints',
+                'framed': 'framed'  // Add framed mapping
+            };
+            
             // Group products by category and extract pricing
             whccProducts.forEach(product => {
-                const category = product.category || 'prints';
+                // Map API category to our UI category
+                const apiCategory = product.category ? product.category.toLowerCase().replace(/ /g, '_') : 'prints';
+                const category = categoryMapping[apiCategory] || 'photographic';
                 
+                // Extract paper type from product name or description
+                let paperType = 'standard';
+                const nameLower = (product.name || '').toLowerCase();
+                const descLower = (product.description || '').toLowerCase();
+                
+                if (nameLower.includes('lustre') || descLower.includes('lustre')) {
+                    paperType = 'lustre';
+                } else if (nameLower.includes('glossy') || descLower.includes('glossy')) {
+                    paperType = 'glossy';
+                } else if (nameLower.includes('matte') || descLower.includes('matte')) {
+                    paperType = 'matte';
+                } else if (nameLower.includes('metallic') || descLower.includes('metallic')) {
+                    paperType = 'metallic';
+                }
+                
+                // Initialize multi-dimensional pricing structure
                 if (!pricing[category]) {
                     pricing[category] = {};
                     productSizes[category] = [];
                 }
                 
-                // Extract size from product name (e.g., "8x10 Lustre Print")
+                if (!pricing[category][paperType]) {
+                    pricing[category][paperType] = {};
+                }
+                
+                // Extract size from product name (e.g., "Acrylic Print 10x20")
                 const sizeMatch = product.name.match(/(\d+)[x×](\d+)/);
                 if (sizeMatch) {
-                    const size = `${sizeMatch[1]}x${sizeMatch[2]}`;
-                    pricing[category][size] = product.price || 0;
+                    const width = parseInt(sizeMatch[1]);
+                    const height = parseInt(sizeMatch[2]);
+                    // Standardize size format (smaller dimension first)
+                    const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
                     
-                    if (!productSizes[category].includes(size)) {
-                        productSizes[category].push(size);
+                    // Store price with paper type variant preserved
+                    if (product.price) {
+                        pricing[category][paperType][size] = product.price;
+                        
+                        if (!productSizes[category].includes(size)) {
+                            productSizes[category].push(size);
+                        }
                     }
                 }
                 
-                // Also check for dimensions object
-                if (product.dimensions) {
-                    const size = `${product.dimensions.width}x${product.dimensions.height}`;
-                    pricing[category][size] = product.price || 0;
+                // Also check for dimensions object if size not found in name
+                if (!sizeMatch && product.dimensions) {
+                    const width = Math.floor(product.dimensions.width);
+                    const height = Math.floor(product.dimensions.height);
+                    // Standardize size format (smaller dimension first)
+                    const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
                     
-                    if (!productSizes[category].includes(size)) {
-                        productSizes[category].push(size);
+                    if (product.price) {
+                        pricing[category][paperType][size] = product.price;
+                        
+                        if (!productSizes[category].includes(size)) {
+                            productSizes[category].push(size);
+                        }
                     }
                 }
             });
@@ -631,35 +683,50 @@
             
             console.log('Processed pricing:', pricing);
             console.log('Available sizes:', productSizes);
+            console.log('Total products loaded:', whccProducts.length);
         }
         
         // Load fallback products if API fails
         function loadFallbackProducts() {
             console.log('Loading fallback products...');
+            // Use multi-dimensional structure for fallback too
             pricing = {
-                prints: {
-                    '4x6': 2.99, '5x7': 4.99, '8x10': 9.99, '11x14': 19.99,
-                    '16x20': 39.99, '20x24': 59.99, '24x30': 89.99, '30x40': 149.99
+                photographic: {
+                    lustre: { '4x6': 2.99, '5x7': 4.99, '8x10': 9.99, '11x14': 19.99, '16x20': 39.99, '20x24': 59.99, '24x30': 89.99, '30x40': 149.99 },
+                    glossy: { '4x6': 3.49, '5x7': 5.49, '8x10': 10.99, '11x14': 21.99, '16x20': 42.99, '20x24': 63.99, '24x30': 94.99, '30x40': 159.99 },
+                    matte: { '4x6': 3.99, '5x7': 5.99, '8x10': 11.99, '11x14': 23.99, '16x20': 45.99, '20x24': 68.99, '24x30': 99.99, '30x40': 169.99 },
+                    metallic: { '4x6': 4.99, '5x7': 7.99, '8x10': 14.99, '11x14': 28.99, '16x20': 54.99, '20x24': 79.99, '24x30': 119.99, '30x40': 199.99 }
+                },
+                fineart: {
+                    standard: { '8x10': 19.99, '11x14': 29.99, '16x20': 49.99, '20x24': 69.99, '24x30': 99.99, '30x40': 159.99 },
+                    lustre: { '8x10': 19.99, '11x14': 29.99, '16x20': 49.99, '20x24': 69.99, '24x30': 99.99, '30x40': 159.99 },
+                    matte: { '8x10': 22.99, '11x14': 33.99, '16x20': 55.99, '20x24': 77.99, '24x30': 109.99, '30x40': 179.99 }
                 },
                 canvas: {
-                    '8x10': 49.99, '11x14': 69.99, '16x20': 99.99, '20x24': 149.99,
-                    '24x30': 199.99, '30x40': 299.99
+                    standard: { '8x10': 49.99, '11x14': 69.99, '16x20': 99.99, '20x24': 149.99, '24x30': 199.99, '30x40': 299.99 }
                 },
                 metal: {
-                    '8x10': 59.99, '11x14': 89.99, '16x20': 129.99, '20x24': 179.99,
-                    '24x30': 249.99, '30x40': 379.99
+                    standard: { '8x10': 59.99, '11x14': 89.99, '16x20': 129.99, '20x24': 179.99, '24x30': 249.99, '30x40': 379.99 }
                 },
-                specialty: {
-                    '8x10': 79.99, '11x14': 109.99, '16x20': 159.99, '20x24': 219.99,
-                    '24x30': 299.99, '30x40': 449.99
+                acrylic: {
+                    standard: { '8x10': 79.99, '11x14': 109.99, '16x20': 159.99, '20x24': 219.99, '24x30': 299.99, '30x40': 449.99 }
+                },
+                bamboo: {
+                    standard: { '8x10': 69.99, '11x14': 99.99, '16x20': 139.99, '20x24': 189.99, '24x30': 259.99, '30x40': 389.99 }
+                },
+                framed: {
+                    standard: { '8x10': 39.99, '11x14': 59.99, '16x20': 89.99, '20x24': 119.99, '24x30': 169.99, '30x40': 259.99 }
                 }
             };
             
             productSizes = {
-                prints: ['4x6', '5x7', '8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                photographic: ['4x6', '5x7', '8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                fineart: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
                 canvas: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
                 metal: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
-                specialty: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40']
+                acrylic: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                bamboo: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                framed: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40']
             };
             
             // Update indicator to show fallback products
@@ -671,23 +738,36 @@
             }
         }
         
-        // Update price display
+        // Update price display - FIXED to use multi-dimensional pricing with paper types
         function updatePrice() {
-            // Map current product type to pricing category
-            const categoryMap = {
-                'photographic': 'prints',
-                'fineart': 'prints',
-                'canvas': 'canvas',
-                'metal': 'metal',
-                'acrylic': 'specialty',
-                'bamboo': 'specialty',
-                'framed': 'prints'
-            };
+            // Use the product type directly as category (no mapping needed)
+            const category = currentSettings.product;
+            const paperType = currentSettings.paper || 'standard';
+            const size = currentSettings.size;
             
-            const category = categoryMap[currentSettings.product] || 'prints';
-            const price = pricing[category] && pricing[category][currentSettings.size] 
-                          ? pricing[category][currentSettings.size] 
-                          : 19.99; // Default price if not found
+            // Try to get price from multi-dimensional structure
+            let price = 19.99; // Default price
+            
+            if (pricing[category]) {
+                // First try with specific paper type
+                if (pricing[category][paperType] && pricing[category][paperType][size]) {
+                    price = pricing[category][paperType][size];
+                }
+                // Fallback to standard paper type
+                else if (pricing[category]['standard'] && pricing[category]['standard'][size]) {
+                    price = pricing[category]['standard'][size];
+                }
+                // Last fallback: try to find any paper type with this size
+                else {
+                    const paperTypes = Object.keys(pricing[category]);
+                    for (const pt of paperTypes) {
+                        if (pricing[category][pt] && pricing[category][pt][size]) {
+                            price = pricing[category][pt][size];
+                            break;
+                        }
+                    }
+                }
+            }
             
             document.getElementById('priceAmount').textContent = `$${price.toFixed(2)}`;
         }

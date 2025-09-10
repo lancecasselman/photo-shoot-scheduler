@@ -78,7 +78,8 @@ class PrintServiceAPI {
         'consumer_secret': this.oasSecret
       });
       
-      console.log(`- Full request URL: ${authUrl}?${params.toString().substring(0, 100)}...`);
+      // Only log the base URL without sensitive query parameters
+      console.log(`- Request URL: ${authUrl}`);
       
       const response = await fetch(`${authUrl}?${params.toString()}`, {
         method: 'GET',
