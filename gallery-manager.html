@@ -836,7 +836,8 @@
             initializeUploadQueue();
             updateProgressDisplay();
             
-            const batchSize = 2;
+            // Increase batch size to 4 for faster uploads
+            const batchSize = 4;
             
             while (uploadQueue.length > 0) {
                 const batch = uploadQueue.splice(0, batchSize);
@@ -1017,15 +1018,18 @@
                     return true; // Allow upload if quota check failed
                 }
                 
-                const quotaData = result.data;
+                // Fix: result contains the quota data directly, not in result.data
+                const quotaData = result;
                 const fileSizeGB = fileSizeBytes / (1024 * 1024 * 1024);
-                const wouldExceedQuota = (quotaData.usedStorageGB + fileSizeGB) > quotaData.totalQuotaGB;
+                const totalUsageGB = parseFloat(quotaData.usage?.totalGB || 0);
+                const totalQuotaGB = parseFloat(quotaData.quota?.totalGB || 100);
+                const wouldExceedQuota = (totalUsageGB + fileSizeGB) > totalQuotaGB;
                 
                 if (wouldExceedQuota) {
                     const upgradeMessage = `
                         ❌ Upload blocked - Storage quota exceeded!
                         
-                        Current usage: ${quotaData.usedStorageGB.toFixed(2)} GB / ${quotaData.totalQuotaGB.toFixed(0)} GB
+                        Current usage: ${totalUsageGB.toFixed(2)} GB / ${totalQuotaGB.toFixed(0)} GB
                         File size: ${fileSizeGB.toFixed(2)} GB
                         
                         You need more storage to upload this file.
@@ -1041,7 +1045,8 @@
                 }
                 
                 // Show warning if approaching limit (90%+)
-                if (quotaData.usagePercentage >= 90) {
+                const usagePercentage = (totalUsageGB / totalQuotaGB) * 100;
+                if (usagePercentage >= 90) {
                     const warningMessage = `
                          Storage nearly full!
                         
