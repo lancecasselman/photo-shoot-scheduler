@@ -1012,9 +1012,10 @@
                 }
                 
                 const result = await response.json();
+                console.log('Storage quota API response:', result);
                 
                 if (!result.success) {
-                    console.warn('Storage quota check failed:', result.error);
+                    console.warn('Storage quota check failed - full result:', result);
                     return true; // Allow upload if quota check failed
                 }
                 
