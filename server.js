@@ -5375,7 +5375,7 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         console.log(`📸 Loading ${filesResult.rows.length} ${folder || 'all'} photos from R2 for session ${sessionId}`);
 
         // Check if R2 manager is available and configured
-        if (!r2Manager || !r2Manager.r2Available) {
+        if (!r2FileManager || !r2FileManager.r2Available) {
             console.warn('⚠️ R2 manager not available, returning files without presigned URLs');
             const fallbackFiles = filesResult.rows.map(file => ({
                 id: file.id,
@@ -5409,8 +5409,8 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
             
             try {
                 // Generate a presigned URL valid for 24 hours
-                if (r2Manager && r2Manager.getSignedUrl && file.r2_key) {
-                    presignedUrl = await r2Manager.getSignedUrl(file.r2_key, 86400);
+                if (r2FileManager && r2FileManager.getSignedUrl && file.r2_key) {
+                    presignedUrl = await r2FileManager.getSignedUrl(file.r2_key, 86400);
                     console.log(`✅ Generated presigned URL for ${file.filename}`);
                 }
             } catch (error) {
