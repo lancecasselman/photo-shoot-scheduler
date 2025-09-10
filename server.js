@@ -1333,8 +1333,14 @@ if (process.env.NODE_ENV === 'production') {
     // CORS for production
     app.use(cors(PRODUCTION_CONFIG.cors));
     
-    // Rate limiting - EXCLUDE webhooks
+    // Rate limiting - EXCLUDE webhooks and uploads
     const limiter = rateLimit(PRODUCTION_CONFIG.rateLimit);
+    const uploadLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 1000, // Much higher limit for uploads
+        message: 'Too many upload requests'
+    });
+    
     app.use((req, res, next) => {
         // Skip rate limiting for webhook endpoints
         if (req.path.includes('/webhook') || 
@@ -1344,14 +1350,23 @@ if (process.env.NODE_ENV === 'production') {
             req.path === '/api/subscriptions/webhook/stripe') {
             return next();
         }
-        // Apply rate limiting to other /api/ routes
+        // Use higher limits for upload endpoints
+        if (req.path.includes('/upload') || 
+            req.path.includes('/r2/') ||
+            req.method === 'POST' && req.path.includes('/photos')) {
+            if (req.path.startsWith('/api/')) {
+                return uploadLimiter(req, res, next);
+            }
+            return next();
+        }
+        // Apply normal rate limiting to other /api/ routes
         if (req.path.startsWith('/api/')) {
             return limiter(req, res, next);
         }
         next();
     });
     
-    // Compression for all responses - EXCLUDE webhooks
+    // Compression for all responses - EXCLUDE webhooks and uploads
     app.use((req, res, next) => {
         // Skip compression for webhook endpoints
         if (req.path.includes('/webhook') || 
@@ -1359,6 +1374,14 @@ if (process.env.NODE_ENV === 'production') {
             req.path === '/api/stripe/connect-webhook' ||
             req.path === '/api/stripe-webhook' ||
             req.path === '/api/subscriptions/webhook/stripe') {
+            return next();
+        }
+        // Skip compression for upload endpoints to improve speed
+        if (req.path.includes('/upload') || 
+            req.path.includes('/r2/') ||
+            req.method === 'POST' && req.path.includes('/photos') ||
+            req.method === 'PUT') {
+            console.log('📤 UPLOAD: Skipping compression for faster uploads:', req.path);
             return next();
         }
         // Apply compression to other routes
