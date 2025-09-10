@@ -300,12 +300,27 @@ function createR2Routes() {
           // Extract folder type from the key if available
           const folderType = upload.key?.includes('/raw/') ? 'raw' : 'gallery';
           
-          // Register the file in the database
+          // Generate UUID for the record
+          const recordId = require('crypto').randomUUID();
+          
+          // Register the file in the database using correct schema column names
           await pool.query(
-            `INSERT INTO r2_files (user_id, session_id, filename, key, size, folder_type, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, NOW())
-             ON CONFLICT (key) DO UPDATE SET size = $5`,
-            [userId, sessionId, upload.filename, upload.key, upload.size, folderType]
+            `INSERT INTO r2_files (id, user_id, session_id, filename, original_filename, file_type, file_extension, file_size_bytes, file_size_mb, r2_key, upload_status, upload_completed_at, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW(), NOW())
+             ON CONFLICT (r2_key) DO UPDATE SET file_size_bytes = $8, file_size_mb = $9, updated_at = NOW()`,
+            [
+              recordId,
+              userId,
+              sessionId,
+              upload.filename,
+              upload.filename, // original_filename same as filename
+              folderType,
+              require('path').extname(upload.filename).toLowerCase(),
+              upload.size.toString(),
+              (upload.size / (1024 * 1024)).toFixed(2), // Convert bytes to MB
+              upload.key,
+              'completed'
+            ]
           );
           
           console.log(`📝 Registered upload: ${upload.filename} (${upload.size} bytes)`);
