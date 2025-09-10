@@ -6222,6 +6222,66 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
     }
 });
 
+// Confirm successful direct uploads and update database
+app.post('/api/sessions/:id/confirm-uploads', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+    const { uploads } = req.body; // Array of {filename, key, size}
+
+    try {
+        console.log(`📝 Confirming ${uploads.length} successful uploads for session ${sessionId}`);
+        
+        // Update session with new photos
+        const photosArray = uploads.map(upload => ({
+            url: `/r2/file/${upload.key}`,
+            filename: upload.filename,
+            originalName: upload.filename
+        }));
+
+        // Get existing session
+        const result = await pool.query(
+            'SELECT photos FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const existingPhotos = result.rows[0].photos || [];
+        const updatedPhotos = [...existingPhotos, ...photosArray];
+
+        // Update session with new photos
+        await pool.query(
+            'UPDATE photography_sessions SET photos = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3',
+            [JSON.stringify(updatedPhotos), sessionId, userId]
+        );
+
+        // Log storage usage
+        const totalSize = uploads.reduce((sum, upload) => sum + upload.size, 0);
+        await storageSystem.logStorageChange(userId, sessionId, 'upload', totalSize, 'gallery', 'batch-upload');
+        
+        // Update storage quota cache
+        await storageSystem.calculateStorageUsage(userId);
+
+        console.log(`✅ Confirmed ${uploads.length} uploads for session ${sessionId}`);
+        
+        res.json({
+            success: true,
+            uploaded: uploads.length,
+            totalPhotos: updatedPhotos.length
+        });
+
+    } catch (error) {
+        console.error('Error confirming uploads:', error);
+        res.status(500).json({ 
+            error: 'Failed to confirm uploads',
+            message: error.message 
+        });
+    }
+});
+
 // Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
