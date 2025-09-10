@@ -473,7 +473,10 @@ async function loadSessions() {
             window.initializeDashboard();
         }
 
-        // Storage usage is now handled by loadStorageUsage() in index.html
+        // Update storage usage after sessions are loaded
+        updateStorageUsage().catch(err => {
+            console.error('Error updating storage usage:', err);
+        });
 
     } catch (error) {
         console.error('Error loading sessions:', error.message || error);
@@ -482,9 +485,94 @@ async function loadSessions() {
     }
 }
 
-// REMOVED: Old updateStorageUsage() function to prevent conflicts
-// Storage usage is now calculated by loadStorageUsage() in index.html
-// This eliminates double-calculations and ensures proper RAW/Gallery separation
+// Storage usage calculation function
+async function updateStorageUsage() {
+    try {
+        console.log('Updating storage usage...');
+        
+        // Get storage quota status from the server
+        const response = await fetch('/api/storage/quota-status');
+        if (!response.ok) {
+            throw new Error('Failed to fetch storage quota');
+        }
+        
+        const data = await response.json();
+        console.log('Storage quota data:', data);
+        
+        // Update storage display in settings if it exists
+        const storageUsageDiv = document.getElementById('storageUsage');
+        if (storageUsageDiv) {
+            const usagePercent = parseFloat(data.percentUsed);
+            const progressColor = usagePercent > 90 ? '#dc3545' : 
+                                 usagePercent > 75 ? '#ffc107' : '#28a745';
+            
+            storageUsageDiv.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span><strong>Used:</strong> ${data.usage.totalGB} GB</span>
+                        <span><strong>Total:</strong> ${data.quota.totalGB} GB</span>
+                    </div>
+                    <div style="background: #e9ecef; border-radius: 8px; height: 20px; overflow: hidden;">
+                        <div style="background: ${progressColor}; width: ${usagePercent}%; height: 100%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 5px; color: #666; font-size: 0.9em;">
+                        ${usagePercent}% used (${data.remainingGB} GB remaining)
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="padding: 10px; background: white; border-radius: 6px;">
+                        <div style="color: #666; font-size: 0.85em;">Gallery Storage</div>
+                        <div style="font-weight: bold;">${data.usage.galleryMB} MB</div>
+                    </div>
+                    <div style="padding: 10px; background: white; border-radius: 6px;">
+                        <div style="color: #666; font-size: 0.85em;">RAW Storage</div>
+                        <div style="font-weight: bold;">${data.usage.rawMB} MB</div>
+                    </div>
+                </div>
+                ${data.isNearLimit ? `
+                    <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; color: #856404;">
+                        <strong>⚠️ Storage Warning:</strong> You are approaching your storage limit. Consider upgrading your plan.
+                    </div>
+                ` : ''}
+            `;
+        }
+        
+        // Update global storage stats if available
+        const totalGalleryStorage = document.getElementById('totalGalleryStorage');
+        const totalRawStorage = document.getElementById('totalRawStorage');
+        const totalCombinedStorage = document.getElementById('totalCombinedStorage');
+        
+        if (totalGalleryStorage) {
+            totalGalleryStorage.textContent = `${data.usage.galleryMB} MB`;
+        }
+        if (totalRawStorage) {
+            totalRawStorage.textContent = `${data.usage.rawMB} MB`;
+        }
+        if (totalCombinedStorage) {
+            totalCombinedStorage.textContent = `${data.usage.totalGB} GB`;
+        }
+        
+        return data;
+        
+    } catch (error) {
+        console.error('Error updating storage usage:', error);
+        
+        // Show error in storage display if exists
+        const storageUsageDiv = document.getElementById('storageUsage');
+        if (storageUsageDiv) {
+            storageUsageDiv.innerHTML = `
+                <div style="color: #dc3545;">
+                    Failed to load storage information. 
+                    <button onclick="updateStorageUsage()" style="margin-left: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+        
+        throw error;
+    }
+}
 
 // Get auth token if available
 async function getAuthToken() {

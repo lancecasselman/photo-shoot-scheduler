@@ -14013,6 +14013,12 @@ END:VCALENDAR`;
                     </div>
                 `;
                 
+                // Load storage usage information
+                if (typeof updateStorageUsage === 'function') {
+                    updateStorageUsage().catch(err => {
+                        console.error('Error loading storage usage:', err);
+                    });
+                }
 
                 showMessage('Settings loaded successfully', 'success');
                 
