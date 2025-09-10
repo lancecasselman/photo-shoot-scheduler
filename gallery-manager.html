@@ -1014,16 +1014,16 @@
                 const result = await response.json();
                 console.log('Storage quota API response:', result);
                 
-                if (!result.success) {
-                    console.warn('Storage quota check failed - full result:', result);
-                    return true; // Allow upload if quota check failed
+                // Handle the actual API response structure
+                if (result.can_upload === false) {
+                    console.warn('Upload not allowed by API');
+                    return false;
                 }
                 
-                // Fix: result contains the quota data directly, not in result.data
-                const quotaData = result;
+                // Use the actual fields from the API response
                 const fileSizeGB = fileSizeBytes / (1024 * 1024 * 1024);
-                const totalUsageGB = parseFloat(quotaData.usage?.totalGB || 0);
-                const totalQuotaGB = parseFloat(quotaData.quota?.totalGB || 100);
+                const totalUsageGB = parseFloat(result.used_gb || 0);
+                const totalQuotaGB = parseFloat(result.quota_gb || 100);
                 const wouldExceedQuota = (totalUsageGB + fileSizeGB) > totalQuotaGB;
                 
                 if (wouldExceedQuota) {
