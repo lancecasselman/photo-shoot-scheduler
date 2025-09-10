@@ -107,6 +107,81 @@ function createR2Routes() {
   });
 
   /**
+   * POST /api/r2/generate-thumbnail
+   * Generate a thumbnail for an uploaded image
+   */
+  router.post('/generate-thumbnail', async (req, res) => {
+    try {
+      const { sessionId, filename, r2Key } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!sessionId || !filename || !r2Key) {
+        return res.status(400).json({ error: 'Missing required parameters: sessionId, filename, and r2Key' });
+      }
+
+      console.log(`🖼️ Generating thumbnail for ${filename} in session ${sessionId}`);
+
+      // Get the original file from R2
+      const originalFile = await r2Manager.getFile(r2Key);
+      if (!originalFile || !originalFile.Body) {
+        return res.status(404).json({ error: 'Original file not found in R2' });
+      }
+
+      // Convert stream to buffer
+      const chunks = [];
+      for await (const chunk of originalFile.Body) {
+        chunks.push(chunk);
+      }
+      const fileBuffer = Buffer.concat(chunks);
+
+      // Generate thumbnail using the existing R2FileManager method
+      const thumbnailResult = await r2Manager.generateThumbnail(
+        fileBuffer,
+        filename,
+        userId,
+        sessionId,
+        'gallery'
+      );
+
+      if (!thumbnailResult || !thumbnailResult.success) {
+        // If thumbnail generation fails (e.g., for RAW files), return gracefully
+        return res.json({
+          success: false,
+          message: thumbnailResult?.error || 'Thumbnail generation not supported for this file type',
+          skipped: thumbnailResult?.skipped || false
+        });
+      }
+
+      // Get presigned URLs for the thumbnails
+      const thumbnailUrls = {};
+      if (thumbnailResult.thumbnails) {
+        for (const thumb of thumbnailResult.thumbnails) {
+          if (thumb.url) {
+            thumbnailUrls[thumb.suffix] = thumb.url;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        thumbnails: thumbnailUrls,
+        message: `Successfully generated ${Object.keys(thumbnailUrls).length} thumbnail sizes`
+      });
+
+    } catch (error) {
+      console.error('❌ Thumbnail generation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate thumbnail', 
+        message: error.message 
+      });
+    }
+  });
+
+  /**
    * GET /api/r2/storage-usage
    * Get user's current storage usage and limits
    */
@@ -334,10 +409,66 @@ function createR2Routes() {
         'UPDATE photography_sessions SET updated_at = NOW() WHERE id = $1',
         [sessionId]
       );
+
+      // Trigger thumbnail generation for image files
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+      const thumbnailPromises = [];
+      
+      for (const upload of uploads) {
+        const ext = require('path').extname(upload.filename).toLowerCase();
+        if (imageExtensions.includes(ext)) {
+          console.log(`🖼️ Triggering thumbnail generation for: ${upload.filename}`);
+          
+          // Generate thumbnail asynchronously
+          const thumbnailPromise = (async () => {
+            try {
+              // First get the file from R2
+              const fileData = await r2Manager.getFile(upload.key);
+              if (!fileData || !fileData.Body) {
+                console.warn(`⚠️ Could not fetch file from R2 for thumbnail: ${upload.filename}`);
+                return null;
+              }
+              
+              // Convert stream to buffer
+              const chunks = [];
+              for await (const chunk of fileData.Body) {
+                chunks.push(chunk);
+              }
+              const fileBuffer = Buffer.concat(chunks);
+              
+              // Generate thumbnail
+              return await r2Manager.generateThumbnail(
+                fileBuffer,
+                upload.filename,
+                userId,
+                sessionId,
+                'gallery'
+              );
+            } catch (err) {
+              console.error(`⚠️ Thumbnail generation failed for ${upload.filename}:`, err.message);
+              return null;
+            }
+          })();
+          
+          thumbnailPromises.push(thumbnailPromise);
+        }
+      }
+
+      // Wait for thumbnails to generate (with timeout)
+      if (thumbnailPromises.length > 0) {
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve('timeout'), 5000));
+        await Promise.race([
+          Promise.all(thumbnailPromises),
+          timeoutPromise
+        ]).catch(err => {
+          console.error('⚠️ Some thumbnails failed to generate:', err);
+        });
+      }
       
       res.json({
         success: true,
         confirmed: uploads.length,
+        thumbnailsQueued: thumbnailPromises.length,
         message: `Successfully confirmed ${uploads.length} uploads`
       });
       

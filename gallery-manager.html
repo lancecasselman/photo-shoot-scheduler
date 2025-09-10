@@ -1253,6 +1253,8 @@
                     name: file.originalName || file.name || file.filename,
                     contentType: file.fileType || file.contentType || 'image/jpeg',
                     downloadUrl: file.url || file.downloadUrl || '',
+                    thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || null,
+                    thumbnails: file.thumbnails || {},
                     timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
                     size: file.fileSizeBytes || file.size || 0,
                     folderType: file.folderType || folderType,
@@ -1333,21 +1335,55 @@
             
             if (isImage) {
                 const img = document.createElement('img');
-                // Use the direct download URL for preview (R2 files)
-                // For large files, browser will handle caching
+                // Use thumbnail for preview if available, otherwise fall back to full image
+                const previewUrl = file.thumbnailUrl || file.downloadUrl;
                 
-                console.log(`🖼️ Loading preview for ${file.name}:`, file.downloadUrl);
-                img.src = file.downloadUrl;
+                console.log(`🖼️ Loading preview for ${file.name}:`, {
+                    hasThumbnail: !!file.thumbnailUrl,
+                    thumbnailUrl: file.thumbnailUrl,
+                    fallbackUrl: file.downloadUrl
+                });
+                
+                // Show loading placeholder while thumbnail loads
+                const loadingPlaceholder = document.createElement('div');
+                loadingPlaceholder.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;';
+                loadingPlaceholder.innerHTML = '⏳ Loading...';
+                filePreview.appendChild(loadingPlaceholder);
+                
+                img.src = previewUrl;
                 img.alt = file.name;
                 img.loading = 'lazy';
                 img.style.objectFit = 'cover';
                 img.style.width = '100%';
                 img.style.height = '100%';
+                img.style.display = 'none'; // Hide until loaded
+                
+                // Use full URL for lightbox, thumbnail for preview
                 img.onclick = () => openLightbox(file.downloadUrl);
+                
+                img.onload = () => {
+                    // Remove loading placeholder and show image
+                    if (loadingPlaceholder && loadingPlaceholder.parentNode) {
+                        loadingPlaceholder.remove();
+                    }
+                    img.style.display = 'block';
+                };
+                
                 img.onerror = () => {
-                    console.error('Failed to load image preview:', file.name, 'URL:', file.downloadUrl);
-                    img.style.display = 'none';
-                    filePreview.innerHTML = '<div class="file-icon">IMG</div>';
+                    console.error('Failed to load image preview:', file.name, 'URL:', previewUrl);
+                    
+                    // If thumbnail failed and we haven't tried the full image yet, try it
+                    if (file.thumbnailUrl && img.src === file.thumbnailUrl && file.downloadUrl) {
+                        console.log('Thumbnail failed, falling back to full image:', file.downloadUrl);
+                        img.src = file.downloadUrl;
+                    } else {
+                        // Both failed, show icon instead
+                        img.style.display = 'none';
+                        if (loadingPlaceholder && loadingPlaceholder.parentNode) {
+                            loadingPlaceholder.remove();
+                        }
+                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
+                    }
                 };
                 
                 filePreview.appendChild(img);

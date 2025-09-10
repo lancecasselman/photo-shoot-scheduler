@@ -5374,28 +5374,71 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
 
         console.log(`📸 Loading ${filesResult.rows.length} ${folder || 'all'} photos from R2 for session ${sessionId}`);
 
+        // Get thumbnail files for this session
+        let thumbnailsQuery = `SELECT id, filename, original_filename, r2_key, file_size_bytes
+                               FROM r2_files 
+                               WHERE session_id = $1 AND user_id = $2 AND file_type = 'thumbnail'
+                               ORDER BY created_at DESC`;
+        const thumbnailsResult = await pool.query(thumbnailsQuery, [sessionId, userId]);
+        
+        // Create a map of original filename to thumbnail info
+        const thumbnailMap = new Map();
+        thumbnailsResult.rows.forEach(thumb => {
+            // Extract original filename and size from thumbnail filename
+            // Pattern: originalname_sm.jpg, originalname_md.jpg, originalname_lg.jpg
+            const match = thumb.filename.match(/^(.+?)_(sm|md|lg)\.jpg$/);
+            if (match) {
+                const [, originalBaseName, size] = match;
+                if (!thumbnailMap.has(originalBaseName)) {
+                    thumbnailMap.set(originalBaseName, {});
+                }
+                thumbnailMap.get(originalBaseName)[size] = {
+                    filename: thumb.filename,
+                    r2Key: thumb.r2_key,
+                    size: parseInt(thumb.file_size_bytes) || 0
+                };
+            }
+        });
+
+        console.log(`🖼️ Found ${thumbnailsResult.rows.length} thumbnails for session ${sessionId}`);
+
         // Check if R2 manager is available and configured
         if (!r2FileManager || !r2FileManager.r2Available) {
             console.warn('⚠️ R2 manager not available, returning files without presigned URLs');
-            const fallbackFiles = filesResult.rows.map(file => ({
-                id: file.id,
-                filename: file.filename,
-                originalName: file.original_filename,
-                url: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`,
-                fileType: file.file_type,
-                fileExtension: file.file_extension,
-                fileSizeBytes: parseInt(file.file_size_bytes) || 0,
-                fileSizeMB: parseFloat(file.file_size_mb) || 0,
-                r2Key: file.r2_key,
-                uploadStatus: file.upload_status,
-                createdAt: file.created_at,
-                updatedAt: file.updated_at,
-                contentType: file.file_type === 'raw' ? 'image/raw' : 
-                             file.file_type === 'gallery' ? 'image/jpeg' : 
-                             'application/octet-stream',
-                size: parseInt(file.file_size_bytes) || 0,
-                downloadUrl: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`
-            }));
+            const fallbackFiles = filesResult.rows.map(file => {
+                // Get thumbnail info for this file
+                const fileBaseName = file.filename.replace(/\.[^.]+$/, '');
+                const thumbnails = thumbnailMap.get(fileBaseName) || {};
+                
+                return {
+                    id: file.id,
+                    filename: file.filename,
+                    originalName: file.original_filename,
+                    url: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`,
+                    // Add thumbnail URL (prefer medium size)
+                    thumbnailUrl: thumbnails.md ? `/api/r2/preview/${sessionId}/${thumbnails.md.filename}` :
+                                  thumbnails.sm ? `/api/r2/preview/${sessionId}/${thumbnails.sm.filename}` :
+                                  null,
+                    thumbnails: {
+                        sm: thumbnails.sm ? `/api/r2/preview/${sessionId}/${thumbnails.sm.filename}` : null,
+                        md: thumbnails.md ? `/api/r2/preview/${sessionId}/${thumbnails.md.filename}` : null,
+                        lg: thumbnails.lg ? `/api/r2/preview/${sessionId}/${thumbnails.lg.filename}` : null
+                    },
+                    fileType: file.file_type,
+                    fileExtension: file.file_extension,
+                    fileSizeBytes: parseInt(file.file_size_bytes) || 0,
+                    fileSizeMB: parseFloat(file.file_size_mb) || 0,
+                    r2Key: file.r2_key,
+                    uploadStatus: file.upload_status,
+                    createdAt: file.created_at,
+                    updatedAt: file.updated_at,
+                    contentType: file.file_type === 'raw' ? 'image/raw' : 
+                                 file.file_type === 'gallery' ? 'image/jpeg' : 
+                                 'application/octet-stream',
+                    size: parseInt(file.file_size_bytes) || 0,
+                    downloadUrl: file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`
+                };
+            });
             
             return res.json({ 
                 success: true,
@@ -5407,16 +5450,40 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         const photosWithUrls = await Promise.all(filesResult.rows.map(async (file) => {
             let presignedUrl = file.r2_url || `/api/r2/preview/${sessionId}/${file.filename}`;
             
+            // Get thumbnail info for this file
+            const fileBaseName = file.filename.replace(/\.[^.]+$/, '');
+            const thumbnails = thumbnailMap.get(fileBaseName) || {};
+            
+            // Generate presigned URLs for thumbnails
+            const thumbnailUrls = {};
+            
             try {
-                // Generate a presigned URL valid for 24 hours
+                // Generate a presigned URL valid for 24 hours for the main file
                 if (r2FileManager && r2FileManager.getSignedUrl && file.r2_key) {
                     presignedUrl = await r2FileManager.getSignedUrl(file.r2_key, 86400);
                     console.log(`✅ Generated presigned URL for ${file.filename}`);
+                }
+                
+                // Generate presigned URLs for thumbnails
+                if (r2FileManager && r2FileManager.getSignedUrl) {
+                    for (const [size, thumbInfo] of Object.entries(thumbnails)) {
+                        if (thumbInfo && thumbInfo.r2Key) {
+                            try {
+                                thumbnailUrls[size] = await r2FileManager.getSignedUrl(thumbInfo.r2Key, 86400);
+                            } catch (thumbError) {
+                                console.error(`Failed to generate presigned URL for thumbnail ${size}:`, thumbError.message);
+                                thumbnailUrls[size] = `/api/r2/preview/${sessionId}/${thumbInfo.filename}`;
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 console.error(`Failed to generate presigned URL for ${file.filename}:`, error.message);
                 // Use fallback URL
             }
+            
+            // Determine best thumbnail URL (prefer medium, then small, then large)
+            const thumbnailUrl = thumbnailUrls.md || thumbnailUrls.sm || thumbnailUrls.lg || null;
 
             // Return in format expected by gallery-manager.html
             return {
@@ -5426,6 +5493,9 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
                 name: file.original_filename || file.filename,
                 url: presignedUrl,
                 downloadUrl: presignedUrl,
+                // Add thumbnail URL and thumbnails object
+                thumbnailUrl: thumbnailUrl,
+                thumbnails: thumbnailUrls,
                 fileType: file.file_type,
                 fileExtension: file.file_extension,
                 fileSizeBytes: parseInt(file.file_size_bytes) || 0,
