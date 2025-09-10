@@ -77,39 +77,32 @@ function createR2Routes() {
   const syncService = new R2SyncService(r2Manager);
   const unifiedDeletion = new UnifiedFileDeletionService();
 
-  // Authentication middleware for all routes - compatible with main server auth
+  // Authentication middleware - simplified to work with main server's Passport auth
   router.use((req, res, next) => {
-    // Check Passport authentication first (main server method)
-    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
+    // Check if user exists from main server auth (Passport or session)
+    const hasUser = req.user && (req.user.uid || req.user.id);
+    const hasSessionUser = req.session && req.session.user && (req.session.user.uid || req.session.user.id);
     
-    if (isAuthenticated && req.user && req.user.uid) {
-      // Primary authentication method via Passport
-      // Ensure session.user is set for consistency
-      if (req.session && !req.session.user) {
-        req.session.user = req.user;
-      }
+    if (hasUser) {
+      // User authenticated via main server (Passport)
       return next();
     }
     
-    // Fallback: Check session.user (for legacy compatibility)
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
-    if (hasValidSession) {
-      // Secondary authentication via session
+    if (hasSessionUser) {
+      // User in session but not in req.user (set it for consistency)
       req.user = req.session.user;
       return next();
     }
     
-    // Log failed authentication attempts for security monitoring
-    console.log('R2 API Auth failed - no valid session', {
-      hasIsAuthenticated: !!req.isAuthenticated,
-      isAuthenticated: isAuthenticated,
+    // Debug logging for failed auth
+    console.log('R2 API Auth failed', {
+      hasReqUser: !!req.user,
       hasSession: !!req.session,
-      hasSessionUser: !!(req.session && req.session.user),
-      hasReqUser: !!(req.user),
-      hasUserUid: !!(req.user && req.user.uid),
-      userAgent: req.get('User-Agent'),
-      ip: req.ip
+      hasSessionUser: hasSessionUser,
+      userAgent: req.get('User-Agent')?.substring(0, 50),
+      path: req.path
     });
+    
     return res.status(401).json({ error: 'Authentication required' });
   });
 
