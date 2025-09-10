@@ -406,7 +406,10 @@
             </button>
             
             <div class="section">
-                <h3 class="section-title">Product Type</h3>
+                <h3 class="section-title">
+                    Product Type
+                    <span id="productSourceIndicator" style="font-size: 12px; font-weight: normal; color: #48bb78; margin-left: 10px;"></span>
+                </h3>
                 <div class="product-grid" id="productGrid">
                     <div class="product-card selected" data-product="photographic">Photographic Print</div>
                     <div class="product-card" data-product="fineart">Fine Art Print</div>
@@ -529,55 +532,11 @@
             crop: { x: 0, y: 0 }
         };
         
-        // WHCC-based pricing structure (approximate)
-        const pricing = {
-            photographic: {
-                '4x6': 3, '5x7': 5, '8x10': 12, '8x12': 14, '11x14': 22, '12x18': 28,
-                '16x20': 42, '16x24': 48, '20x24': 58, '20x30': 72, '24x30': 85,
-                '24x36': 98, '30x40': 145, '30x45': 165
-            },
-            fineart: {
-                '8x10': 18, '8x12': 22, '11x14': 35, '12x18': 42,
-                '16x20': 65, '16x24': 75, '20x24': 88, '20x30': 105,
-                '24x30': 125, '24x36': 145, '30x40': 195, '30x45': 225
-            },
-            canvas: {
-                '8x10': 55, '11x14': 75, '12x18': 85, '16x20': 115, '16x24': 135,
-                '20x24': 155, '20x30': 185, '24x30': 215, '24x36': 245,
-                '30x40': 325, '30x45': 365
-            },
-            metal: {
-                '8x10': 65, '8x12': 75, '11x14': 95, '12x18': 105,
-                '16x20': 145, '16x24': 165, '20x24': 185, '20x30': 225,
-                '24x30': 265, '24x36': 305, '30x40': 385, '30x45': 445
-            },
-            acrylic: {
-                '8x10': 85, '8x12': 95, '11x14': 125, '12x18': 145,
-                '16x20': 195, '16x24': 225, '20x24': 265, '20x30': 315,
-                '24x30': 365, '24x36': 425, '30x40': 525
-            },
-            bamboo: {
-                '5x5': 35, '8x8': 55, '8x10': 65, '11x14': 85, '12x12': 75,
-                '16x16': 115, '16x20': 125, '20x20': 145, '20x24': 165,
-                '24x24': 195, '24x30': 225, '30x30': 265, '30x40': 325
-            },
-            framed: {
-                '8x10': 75, '8x12': 85, '11x14': 105, '12x18': 125,
-                '16x20': 165, '16x24': 185, '20x24': 215, '20x30': 255,
-                '24x30': 295, '24x36': 345, '30x40': 425
-            }
-        };
-        
-        // Product-specific size availability
-        const productSizes = {
-            photographic: ['4x6', '5x7', '8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
-            fineart: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
-            canvas: ['8x10', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
-            metal: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
-            acrylic: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40'],
-            bamboo: ['5x5', '8x8', '8x10', '11x14', '12x12', '16x16', '16x20', '20x20', '20x24', '24x24', '24x30', '30x30', '30x40'],
-            framed: ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40']
-        };
+        // WHCC products will be loaded dynamically from API
+        let whccProducts = [];
+        let pricing = {};
+        let productSizes = {};
+        let loadingProducts = true;
         
         // Living room background - Vertical/portrait orientation for better mobile view
         const roomImage = '/images/vertical-room.jpg';
@@ -585,10 +544,193 @@
         let loadedRoomImage = null;
         let loadedPrintImage = null;
         
+        // Fetch WHCC products from API
+        async function fetchWHCCProducts() {
+            try {
+                console.log('Fetching WHCC products from API...');
+                const response = await fetch('/api/print/products');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch products: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.products && data.products.length > 0) {
+                    whccProducts = data.products;
+                    console.log(`Loaded ${whccProducts.length} WHCC products`);
+                    
+                    // Build pricing and size data from API response
+                    processWHCCProducts();
+                    
+                    // Update indicator to show WHCC products loaded
+                    const indicator = document.getElementById('productSourceIndicator');
+                    if (indicator) {
+                        indicator.innerHTML = '✓ WHCC Live Pricing';
+                        indicator.style.color = '#48bb78';
+                    }
+                    
+                    return true;
+                } else {
+                    throw new Error('No products in API response');
+                }
+            } catch (error) {
+                console.error('Error fetching WHCC products:', error);
+                // Load fallback products if API fails
+                loadFallbackProducts();
+                return false;
+            } finally {
+                loadingProducts = false;
+            }
+        }
+        
+        // Process WHCC products from API into usable format
+        function processWHCCProducts() {
+            pricing = {};
+            productSizes = {};
+            
+            // Group products by category and extract pricing
+            whccProducts.forEach(product => {
+                const category = product.category || 'prints';
+                
+                if (!pricing[category]) {
+                    pricing[category] = {};
+                    productSizes[category] = [];
+                }
+                
+                // Extract size from product name (e.g., "8x10 Lustre Print")
+                const sizeMatch = product.name.match(/(\d+)[x×](\d+)/);
+                if (sizeMatch) {
+                    const size = `${sizeMatch[1]}x${sizeMatch[2]}`;
+                    pricing[category][size] = product.price || 0;
+                    
+                    if (!productSizes[category].includes(size)) {
+                        productSizes[category].push(size);
+                    }
+                }
+                
+                // Also check for dimensions object
+                if (product.dimensions) {
+                    const size = `${product.dimensions.width}x${product.dimensions.height}`;
+                    pricing[category][size] = product.price || 0;
+                    
+                    if (!productSizes[category].includes(size)) {
+                        productSizes[category].push(size);
+                    }
+                }
+            });
+            
+            // Sort sizes numerically
+            Object.keys(productSizes).forEach(category => {
+                productSizes[category].sort((a, b) => {
+                    const [w1, h1] = a.split('x').map(Number);
+                    const [w2, h2] = b.split('x').map(Number);
+                    return (w1 * h1) - (w2 * h2);
+                });
+            });
+            
+            console.log('Processed pricing:', pricing);
+            console.log('Available sizes:', productSizes);
+        }
+        
+        // Load fallback products if API fails
+        function loadFallbackProducts() {
+            console.log('Loading fallback products...');
+            pricing = {
+                prints: {
+                    '4x6': 2.99, '5x7': 4.99, '8x10': 9.99, '11x14': 19.99,
+                    '16x20': 39.99, '20x24': 59.99, '24x30': 89.99, '30x40': 149.99
+                },
+                canvas: {
+                    '8x10': 49.99, '11x14': 69.99, '16x20': 99.99, '20x24': 149.99,
+                    '24x30': 199.99, '30x40': 299.99
+                },
+                metal: {
+                    '8x10': 59.99, '11x14': 89.99, '16x20': 129.99, '20x24': 179.99,
+                    '24x30': 249.99, '30x40': 379.99
+                },
+                specialty: {
+                    '8x10': 79.99, '11x14': 109.99, '16x20': 159.99, '20x24': 219.99,
+                    '24x30': 299.99, '30x40': 449.99
+                }
+            };
+            
+            productSizes = {
+                prints: ['4x6', '5x7', '8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                canvas: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                metal: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                specialty: ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40']
+            };
+            
+            // Update indicator to show fallback products
+            const indicator = document.getElementById('productSourceIndicator');
+            if (indicator) {
+                indicator.innerHTML = '⚠ Standard Pricing';
+                indicator.style.color = '#ed8936';
+                indicator.title = 'WHCC API unavailable - using standard pricing';
+            }
+        }
+        
         // Update price display
         function updatePrice() {
-            const price = pricing[currentSettings.product][currentSettings.size];
-            document.getElementById('priceAmount').textContent = `$${price}.00`;
+            // Map current product type to pricing category
+            const categoryMap = {
+                'photographic': 'prints',
+                'fineart': 'prints',
+                'canvas': 'canvas',
+                'metal': 'metal',
+                'acrylic': 'specialty',
+                'bamboo': 'specialty',
+                'framed': 'prints'
+            };
+            
+            const category = categoryMap[currentSettings.product] || 'prints';
+            const price = pricing[category] && pricing[category][currentSettings.size] 
+                          ? pricing[category][currentSettings.size] 
+                          : 19.99; // Default price if not found
+            
+            document.getElementById('priceAmount').textContent = `$${price.toFixed(2)}`;
+        }
+        
+        // Show loading state for products
+        function showLoadingState() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'productLoadingOverlay';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.95);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            `;
+            loadingDiv.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="width: 50px; height: 50px; border: 4px solid #e2e8f0; border-top-color: #48bb78; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                    <h3 style="color: #2d3748; margin-bottom: 10px;">Loading WHCC Products</h3>
+                    <p style="color: #718096; font-size: 14px;">Fetching latest pricing from WHCC...</p>
+                </div>
+                <style>
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            document.body.appendChild(loadingDiv);
+        }
+        
+        // Hide loading state
+        function hideLoadingState() {
+            const loadingDiv = document.getElementById('productLoadingOverlay');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
         }
         
         // Update crop preview
@@ -881,7 +1023,7 @@
         }
         
         // Initialize on load
-        window.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('DOMContentLoaded', async function() {
             // Validate access
             if (!galleryToken) {
                 alert('Please access this page through your gallery.');
@@ -889,9 +1031,29 @@
                 return;
             }
             
+            // Show loading state
+            showLoadingState();
+            
+            // Fetch WHCC products from API
+            await fetchWHCCProducts();
+            
+            // Hide loading state
+            hideLoadingState();
+            
             // Function to update available sizes based on product
             function updateAvailableSizes() {
-                const availableSizes = productSizes[currentSettings.product];
+                const categoryMap = {
+                    'photographic': 'prints',
+                    'fineart': 'prints',
+                    'canvas': 'canvas',
+                    'metal': 'metal',
+                    'acrylic': 'specialty',
+                    'bamboo': 'specialty',
+                    'framed': 'prints'
+                };
+                
+                const category = categoryMap[currentSettings.product] || 'prints';
+                const availableSizes = productSizes[category] || [];
                 const sizeGrid = document.getElementById('sizeGrid');
                 
                 // Update each size option
