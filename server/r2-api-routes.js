@@ -274,6 +274,65 @@ function createR2Routes() {
   });
 
   /**
+   * POST /api/r2/sessions/:sessionId/confirm-uploads
+   * Confirm that direct uploads to R2 have completed successfully
+   * Body: { uploads: [{ filename: string, key: string, size: number }] }
+   */
+  router.post('/sessions/:sessionId/confirm-uploads', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { uploads } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!uploads || !Array.isArray(uploads) || uploads.length === 0) {
+        return res.status(400).json({ error: 'No uploads to confirm' });
+      }
+      
+      console.log(`✅ Confirming ${uploads.length} direct R2 uploads for session ${sessionId}`);
+      
+      // Register each uploaded file in the database
+      for (const upload of uploads) {
+        try {
+          // Extract folder type from the key if available
+          const folderType = upload.key?.includes('/raw/') ? 'raw' : 'gallery';
+          
+          // Register the file in the database
+          await pool.query(
+            `INSERT INTO r2_files (user_id, session_id, filename, key, size, folder_type, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (key) DO UPDATE SET size = $5`,
+            [userId, sessionId, upload.filename, upload.key, upload.size, folderType]
+          );
+          
+          console.log(`📝 Registered upload: ${upload.filename} (${upload.size} bytes)`);
+        } catch (dbError) {
+          console.error(`Failed to register upload ${upload.filename}:`, dbError);
+        }
+      }
+      
+      // Update session's last updated time
+      await pool.query(
+        'UPDATE photography_sessions SET updated_at = NOW() WHERE id = $1',
+        [sessionId]
+      );
+      
+      res.json({
+        success: true,
+        confirmed: uploads.length,
+        message: `Successfully confirmed ${uploads.length} uploads`
+      });
+      
+    } catch (error) {
+      console.error('❌ Upload confirmation error:', error);
+      res.status(500).json({ error: 'Failed to confirm uploads', message: error.message });
+    }
+  });
+
+  /**
    * POST /api/r2/upload
    * Upload files to R2 with storage limit checking
    * Supports multiple files and all file types
