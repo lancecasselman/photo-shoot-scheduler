@@ -1234,7 +1234,17 @@
                 }
                 
                 const data = await response.json();
-                files = data.files || [];
+                // Map R2 files data to expected format
+                files = (data.files || []).map(file => ({
+                    name: file.originalName || file.filename,
+                    fileName: file.filename,
+                    contentType: file.fileType || 'image/jpeg',
+                    downloadUrl: file.url,
+                    timeCreated: file.createdAt,
+                    size: file.fileSizeBytes || 0,
+                    id: file.id,
+                    r2Key: file.r2Key
+                }));
                 
                 console.log(`Loaded ${files.length} files for ${folderType} folder`);
                 renderFiles();
