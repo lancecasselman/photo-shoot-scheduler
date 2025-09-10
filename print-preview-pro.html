@@ -710,16 +710,17 @@
                     const printAspectRatio = width / height;
                     
                     // Room calibration: Standard sofa is 84" wide (7 feet)
-                    // The sofa in the room image takes up approximately 850px width
-                    // This gives us a more realistic scale
+                    // Measure actual sofa width in the vertical room image
+                    // For proper scale, we need to calibrate based on the actual room dimensions
                     const sofaWidthInches = 84;
-                    const sofaWidthPixels = 850;
+                    const sofaWidthPixels = canvas.width * 0.75; // Sofa takes up about 75% of room width
                     const pixelsPerInch = sofaWidthPixels / sofaWidthInches;
                     
-                    // Calculate actual print dimensions in pixels
-                    // pixelsPerInch is about 10.1, so a 16x20" print = 161x202 pixels
-                    const printWidth = width * pixelsPerInch;
-                    const printHeight = height * pixelsPerInch;
+                    // Calculate actual print dimensions in pixels with proper scaling
+                    // Scale factor to make prints appear at realistic sizes
+                    const scaleFactor = 0.8; // Slightly reduce size for better visual proportion
+                    const printWidth = width * pixelsPerInch * scaleFactor;
+                    const printHeight = height * pixelsPerInch * scaleFactor;
                     
                     // Position print with smart spacing that works for all sizes
                     // Ensures even large prints (30×40) have proper spacing
@@ -740,14 +741,10 @@
                     const idealY = idealCenterY - (printHeight / 2);
                     const adjustedY = Math.max(minTopMargin, idealY) + currentSettings.crop.y * 2;
                     
-                    // Set exactly 50 inches from top of couch to TOP of print
-                    const sofaTop = canvas.height * 0.65; // Where sofa appears in image
-                    const gapInInches = 50; // 50 inches from couch top to print top
-                    const gapInPixels = gapInInches * pixelsPerInch; // Convert to pixels
-                    
-                    // Position print so its TOP is 50 inches above the couch
-                    const printTopY = sofaTop - gapInPixels;
-                    const finalY = printTopY;
+                    // Position print properly in the room - keep it at the top area
+                    // For vertical room, position print in upper portion
+                    const printCenterY = canvas.height * 0.25; // Position at 25% from top
+                    const finalY = printCenterY - (printHeight / 2);
                     
                     // Add shadow
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
