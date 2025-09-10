@@ -1223,7 +1223,7 @@
         // Load files
         async function loadFiles() {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                const response = await fetch(`/api/sessions/${sessionId}/photos`, {
                     credentials: 'include' // Include cookies for authentication
                 });
                 
