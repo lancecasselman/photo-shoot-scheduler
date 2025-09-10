@@ -954,13 +954,21 @@
                 
                 if (urlResponse.ok) {
                     // FAST PATH: Direct upload to R2 using presigned URL
-                    const urls = await urlResponse.json();
-                    const uploadData = urls.urls[0];
+                    const urlData = await urlResponse.json();
+                    console.log('Presigned URL response:', urlData);
                     
-                    console.log(`Got presigned URL for direct R2 upload, bypassing server`);
+                    // The API returns { urls: [...], count: X }
+                    const uploadData = urlData.urls[0];
+                    
+                    if (!uploadData || !uploadData.presignedUrl) {
+                        console.error('Invalid presigned URL data:', uploadData);
+                        throw new Error('Failed to get valid presigned URL');
+                    }
+                    
+                    console.log(`✅ Got presigned URL for FAST direct R2 upload, bypassing server completely`);
                     
                     // Step 2: Upload directly to R2 (MUCH FASTER - no server proxy!)
-                    const r2Response = await fetch(uploadData.uploadUrl, {
+                    const r2Response = await fetch(uploadData.presignedUrl, {
                         method: 'PUT',
                         body: file,
                         headers: {

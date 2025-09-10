@@ -348,6 +348,10 @@ const localBackup = new LocalBackupFallback();
 const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
+
+// Import and initialize multipart uploader for FAST uploads
+const MultipartUploader = require('./server/multipart-upload');
+const multipartUploader = new MultipartUploader(r2FileManager.s3Client, 'photoappr2token');
 const aiServices = new AIServices();
 const blogGenerator = new BlogGenerator();
 
@@ -2803,7 +2807,7 @@ const uploadMemory = multer({
     }
 });
 
-// Server-proxied upload to R2 (avoiding CORS issues)
+// OPTIMIZED Server-proxied upload to R2 with MULTIPART for speed
 app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthenticated, uploadMemory.single('file'), async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
@@ -2814,7 +2818,8 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
             return res.status(400).json({ error: 'No file provided' });
         }
         
-        console.log(`Direct R2 upload - Session: ${sessionId}, Folder: ${folderType}, File: ${file.originalname}, Size: ${file.size}, User: ${userId}`);
+        const uploadSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        console.log(`⚡ OPTIMIZED R2 upload - Session: ${sessionId}, File: ${file.originalname}, Size: ${uploadSizeMB}MB`);
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
@@ -2842,26 +2847,28 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         const fileNameWithoutExt = file.originalname.substring(0, file.originalname.lastIndexOf('.'));
         const uniqueFileName = `${timestamp}-${fileNameWithoutExt}${fileExt}`;
         
-        // Upload to R2
+        // Upload to R2 using MULTIPART for files > 10MB (FAST!)
         const r2Key = `photographer-${userId}/session-${sessionId}/${folderType}/${uniqueFileName}`;
         
-        const { PutObjectCommand } = require('@aws-sdk/client-s3');
-        const putCommand = new PutObjectCommand({
-            Bucket: 'photoappr2token',
-            Key: r2Key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            Metadata: {
-                'originalName': file.originalname,
-                'userId': userId,
-                'sessionId': sessionId,
-                'folderType': folderType,
-                'uploadTimestamp': now.toISOString()
-            }
-        });
+        const metadata = {
+            'originalName': file.originalname,
+            'userId': userId,
+            'sessionId': sessionId,
+            'folderType': folderType,
+            'uploadTimestamp': now.toISOString()
+        };
         
-        await r2FileManager.s3Client.send(putCommand);
-        console.log(` File uploaded to R2: ${r2Key}`);
+        // Use smart upload: multipart for large files, simple for small
+        const uploadStart = Date.now();
+        await multipartUploader.smartUpload(
+            file.buffer,
+            r2Key,
+            file.mimetype,
+            metadata
+        );
+        const uploadTime = ((Date.now() - uploadStart) / 1000).toFixed(2);
+        
+        console.log(`✅ File uploaded to R2 in ${uploadTime}s: ${r2Key}`);
         
         // Track in database using pool
         const fileSizeMB = file.size / (1024 * 1024);
