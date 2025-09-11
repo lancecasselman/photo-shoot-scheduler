@@ -5222,8 +5222,15 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription,
         const R2FileManager = require('./server/r2-file-manager');
         const r2Manager = new R2FileManager(null, pool);
         
+        // SPECIAL HANDLING: For Lance's unified account, use the Firebase UID for R2 storage lookups
+        let r2UserId = userId;
+        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
+            console.log('UNIFIED LANCE ACCOUNT: Using Firebase UID for R2 storage lookup');
+            r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Firebase UID for R2 storage
+        }
+        
         // Get session files from R2
-        const sessionFiles = await r2Manager.getSessionFiles(userId, sessionId);
+        const sessionFiles = await r2Manager.getSessionFiles(r2UserId, sessionId);
         
         // Filter by folder type if specified
         let files = [];

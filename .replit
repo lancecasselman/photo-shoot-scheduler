@@ -45,6 +45,10 @@ externalPort = 3001
 localPort = 42485
 externalPort = 3000
 
+[[ports]]
+localPort = 46371
+externalPort = 4200
+
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["sh", "-c", "node server.js"]

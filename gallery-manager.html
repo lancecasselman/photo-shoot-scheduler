@@ -730,8 +730,9 @@
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            sessionId = urlParams.get('sessionId');
-            folderType = urlParams.get('folderType');
+            // Support both 'id' and 'sessionId' parameter names
+            sessionId = urlParams.get('sessionId') || urlParams.get('id');
+            folderType = urlParams.get('folderType') || urlParams.get('folder') || 'gallery';
             clientName = urlParams.get('clientName') || 'Client';
             
             console.log('URL Parameters:', { sessionId, folderType, clientName });
