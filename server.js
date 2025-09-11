@@ -9661,8 +9661,41 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
             token: galleryToken
         });
 
+        // Add thumbnail URLs to each photo
+        const photosWithThumbnails = photos.map(photo => {
+            // Extract filename from URL if present
+            let filename = photo.filename || photo.originalName;
+            if (!filename && photo.url) {
+                // Extract filename from URL
+                const urlParts = photo.url.split('/');
+                filename = urlParts[urlParts.length - 1];
+                // Remove timestamp prefix if present (format: 20250906022712-DSC_0111.jpg)
+                if (filename.includes('-')) {
+                    const parts = filename.split('-');
+                    if (parts[0].length === 14 && /^\d+$/.test(parts[0])) {
+                        filename = parts.slice(1).join('-');
+                    }
+                }
+            }
+            
+            // Generate thumbnail URLs
+            const baseName = filename ? filename.replace(/\.[^.]+$/, '') : 'photo';
+            const thumbnailBase = `/api/gallery/${session.id}/thumbnail`;
+            
+            return {
+                ...photo,
+                filename: filename,
+                fullUrl: photo.url,
+                thumbnails: {
+                    small: `${thumbnailBase}/${baseName}_sm.jpg`,
+                    medium: `${thumbnailBase}/${baseName}_md.jpg`,
+                    large: `${thumbnailBase}/${baseName}_lg.jpg`
+                }
+            };
+        });
+        
         res.json({
-            photos: photos,
+            photos: photosWithThumbnails,
             totalPhotos: photos.length
         });
     } catch (error) {
@@ -9737,6 +9770,123 @@ app.get('/api/gallery/:id/photo/:filename', async (req, res) => {
     } catch (error) {
         console.error('Error serving gallery photo:', error);
         res.status(404).json({ error: 'Photo not found' });
+    }
+});
+
+// Serve thumbnail from gallery
+app.get('/api/gallery/:id/thumbnail/:filename', async (req, res) => {
+    const sessionId = req.params.id;
+    const filename = decodeURIComponent(req.params.filename);
+
+    try {
+        // Get session to get userId
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Get the Firebase UID from session_files table to properly locate R2 files
+        let firebaseUserId = null;
+        try {
+            const client = await pool.connect();
+            const fileUserResult = await client.query(
+                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
+                [sessionId]
+            );
+            client.release();
+            if (fileUserResult.rows.length > 0) {
+                firebaseUserId = fileUserResult.rows[0].user_id;
+            }
+        } catch (dbError) {
+            console.error('Error getting Firebase UID:', dbError);
+        }
+        
+        // Get the thumbnail directly from R2 using the S3 API
+        const { GetObjectCommand } = require('@aws-sdk/client-s3');
+        const userIdForR2 = firebaseUserId || session.userId;
+        const key = `photographer-${userIdForR2}/session-${sessionId}/thumbnails/${filename}`;
+        
+        console.log(`Fetching thumbnail from R2: ${key}`);
+        
+        try {
+            const getCommand = new GetObjectCommand({
+                Bucket: 'photoappr2token',
+                Key: key
+            });
+            
+            const response = await r2FileManager.s3Client.send(getCommand);
+            
+            // Convert stream to buffer
+            const chunks = [];
+            for await (const chunk of response.Body) {
+                chunks.push(chunk);
+            }
+            const buffer = Buffer.concat(chunks);
+            
+            // Thumbnails are always JPEG
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=31536000');
+            res.setHeader('Content-Length', buffer.length);
+            
+            // Send the thumbnail buffer
+            res.send(buffer);
+        } catch (thumbnailError) {
+            // If thumbnail not found, try to get and resize the original image on the fly
+            console.log(`Thumbnail not found, falling back to original: ${thumbnailError.message}`);
+            
+            // Extract original filename from thumbnail name (remove _sm, _md, _lg suffix)
+            const originalName = filename.replace(/_(?:sm|md|lg)\.jpg$/, '');
+            const originalExt = originalName.split('.').pop();
+            const originalKey = `photographer-${userIdForR2}/session-${sessionId}/gallery/${originalName}.${originalExt}`;
+            
+            try {
+                const getOriginalCommand = new GetObjectCommand({
+                    Bucket: 'photoappr2token',
+                    Key: originalKey
+                });
+                
+                const originalResponse = await r2FileManager.s3Client.send(getOriginalCommand);
+                
+                // Convert stream to buffer
+                const originalChunks = [];
+                for await (const chunk of originalResponse.Body) {
+                    originalChunks.push(chunk);
+                }
+                const originalBuffer = Buffer.concat(originalChunks);
+                
+                // Resize on the fly using sharp
+                const sharp = require('sharp');
+                let width = 400, height = 300; // Default to medium size
+                
+                if (filename.includes('_sm')) {
+                    width = 150;
+                    height = 150;
+                } else if (filename.includes('_lg')) {
+                    width = 800;
+                    height = 600;
+                }
+                
+                const resizedBuffer = await sharp(originalBuffer)
+                    .resize(width, height, { 
+                        fit: 'inside', 
+                        withoutEnlargement: true 
+                    })
+                    .jpeg({ quality: 85, progressive: true })
+                    .toBuffer();
+                
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour since it's generated on the fly
+                res.setHeader('Content-Length', resizedBuffer.length);
+                
+                res.send(resizedBuffer);
+            } catch (fallbackError) {
+                console.error('Error generating thumbnail on the fly:', fallbackError);
+                res.status(404).json({ error: 'Thumbnail not found' });
+            }
+        }
+    } catch (error) {
+        console.error('Error serving thumbnail:', error);
+        res.status(404).json({ error: 'Thumbnail not found' });
     }
 });
 

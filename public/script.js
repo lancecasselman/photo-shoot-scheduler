@@ -1938,10 +1938,26 @@ function createPhotoItem(photo, index, sessionId) {
     photoItem.setAttribute('data-photo-index', index);
 
     const img = document.createElement('img');
-    img.src = photo.url;
-    img.alt = photo.fileName || `Photo ${index + 1}`;
+    
+    // Use thumbnail for display (medium size for gallery grid)
+    if (photo.thumbnails && photo.thumbnails.medium) {
+        img.src = photo.thumbnails.medium;
+        // Store full URL as data attribute for lightbox
+        img.setAttribute('data-full-url', photo.fullUrl || photo.url);
+    } else {
+        // Fallback to original URL if no thumbnails
+        img.src = photo.url;
+        img.setAttribute('data-full-url', photo.url);
+    }
+    
+    img.alt = photo.fileName || photo.filename || `Photo ${index + 1}`;
     img.loading = 'lazy';
-    img.onclick = () => openPhotoLightbox(photo.url, photo.fileName);
+    
+    // Update onclick to use full URL for lightbox
+    img.onclick = () => {
+        const fullUrl = img.getAttribute('data-full-url') || photo.url;
+        openPhotoLightbox(fullUrl, photo.fileName || photo.filename);
+    };
 
     // Add delete button for admin users
     const deleteBtn = document.createElement('button');
