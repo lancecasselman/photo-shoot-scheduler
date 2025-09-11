@@ -763,47 +763,9 @@
             return true;
         }
 
-        // Check authentication status
-        async function checkAuth() {
-            try {
-                // First check if we're authenticated
-                const authResponse = await fetch('/api/user', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                
-                if (!authResponse.ok) {
-                    console.error('Not authenticated, redirecting to login');
-                    window.location.href = '/secure-login.html';
-                    return false;
-                }
-                
-                const userData = await authResponse.json();
-                console.log('Authenticated as:', userData);
-                return true;
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                return false;
-            }
-        }
-
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             if (getUrlParams()) {
-                // Check authentication first
-                const isAuth = await checkAuth();
-                if (!isAuth) {
-                    console.error('Authentication required');
-                    document.getElementById('fileContainer').innerHTML = `
-                        <div class="empty-state">
-                            <h3>Authentication Required</h3>
-                            <p>Please log in to access the gallery manager.</p>
-                            <button class="btn" onclick="window.location.href='/secure-login.html'">Go to Login</button>
-                        </div>
-                    `;
-                    return;
-                }
-                
                 // Load complete session data to get client contact info
                 await loadSessionData();
                 
