@@ -9849,6 +9849,8 @@ app.get('/gallery/:token/photo/:filename', async (req, res) => {
     const { token, filename } = req.params;
     
     try {
+        console.log(`📸 Gallery photo request: token=${token}, filename=${filename}`);
+        
         // Verify gallery token exists and get session info
         const client = await pool.connect();
         const galleryQuery = await client.query(`
@@ -9860,30 +9862,121 @@ app.get('/gallery/:token/photo/:filename', async (req, res) => {
         client.release();
 
         if (galleryQuery.rows.length === 0) {
+            console.error(`❌ Gallery not found for token: ${token}`);
             return res.status(404).send('Gallery not found');
         }
 
         const session = galleryQuery.rows[0];
+        console.log(`✅ Found session ${session.id} for gallery token ${token}`);
         
-        // Use R2FileManager to download and serve the file
-        const fileResult = await r2FileManager.downloadFile(session.user_id, session.id, filename);
+        // Try to download the file from R2
+        // The filename in the URL might include a timestamp prefix, so we need to handle that
+        try {
+            const fileResult = await r2FileManager.downloadFile(session.user_id, session.id, filename);
+            
+            if (fileResult.success) {
+                console.log(`✅ Successfully downloaded file: ${filename}`);
+                // Set appropriate headers for image serving
+                res.set({
+                    'Content-Type': fileResult.contentType || 'image/jpeg',
+                    'Content-Length': fileResult.buffer.length,
+                    'Cache-Control': 'public, max-age=31536000', // 1 year cache
+                    'Content-Disposition': `inline; filename="${fileResult.filename}"`
+                });
+                return res.send(fileResult.buffer);
+            }
+        } catch (downloadError) {
+            console.error(`⚠️ Direct download failed for ${filename}:`, downloadError.message);
+        }
         
-        if (!fileResult.success) {
+        // If direct download fails, try to find the file with R2FileManager
+        console.log(`🔍 Attempting to find file through R2 storage...`);
+        const R2FileManager = require('./server/r2-file-manager');
+        const r2Manager = new R2FileManager(null, pool);
+        
+        // Get all files for the session and find matching filename
+        // Try with the session's user_id first
+        let sessionFiles = await r2Manager.getSessionFiles(session.user_id, session.id);
+        
+        // If no files found and this is user 44735007 (Lance's account), try with Firebase UID
+        if ((!sessionFiles.totalFiles || sessionFiles.totalFiles === 0) && session.user_id === '44735007') {
+            console.log('🔍 No files found with user_id, trying Firebase UID for Lance\'s account...');
+            sessionFiles = await r2Manager.getSessionFiles('BFZI4tzu4rdsiZZSK63cqZ5yohw2', session.id);
+        }
+        
+        // Look for the file in both gallery and raw files
+        const allFiles = [
+            ...(sessionFiles.filesByType.gallery || []),
+            ...(sessionFiles.filesByType.raw || [])
+        ];
+        
+        console.log(`📁 Found ${allFiles.length} total files in session ${session.id}`);
+        
+        // Find the file matching the filename (might have timestamp prefix)
+        // The filename in the URL might be the full filename with timestamp or just the base name
+        const matchingFile = allFiles.find(f => {
+            // Exact match
+            if (f.filename === filename) return true;
+            // Match if the file ends with the requested filename (for timestamp prefixes)
+            if (f.filename.endsWith(filename)) return true;
+            // Match if filenames match after removing timestamp prefixes from both
+            const cleanRequested = filename.replace(/^\d+-/, '').replace(/^\d{14}-/, '');
+            const cleanActual = f.filename.replace(/^\d+-/, '').replace(/^\d{14}-/, '');
+            if (cleanActual === cleanRequested) return true;
+            // Match if the requested filename is contained in the actual filename
+            if (f.filename.includes(cleanRequested)) return true;
+            return false;
+        });
+        
+        if (!matchingFile) {
+            console.error(`❌ Photo not found: ${filename} in session ${session.id}`);
+            console.log('Available files:', allFiles.map(f => f.filename).slice(0, 10));
             return res.status(404).send('Photo not found');
         }
-
+        
+        console.log(`✅ Found matching file: ${matchingFile.filename} with r2Key: ${matchingFile.r2Key}`);
+        
+        // Download the file directly from R2 using the key
+        const { GetObjectCommand } = require('@aws-sdk/client-s3');
+        const getCommand = new GetObjectCommand({
+            Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+            Key: matchingFile.r2Key
+        });
+        
+        const response = await r2Manager.s3Client.send(getCommand);
+        
+        // Convert stream to buffer
+        const chunks = [];
+        for await (const chunk of response.Body) {
+            chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        
+        console.log(`✅ Successfully retrieved file from R2: ${matchingFile.filename} (${buffer.length} bytes)`);
+        
+        // Determine content type from file extension
+        const ext = matchingFile.filename.toLowerCase().split('.').pop();
+        const contentTypeMap = {
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 
+            'png': 'image/png', 'gif': 'image/gif',
+            'webp': 'image/webp', 'svg': 'image/svg+xml',
+            'tiff': 'image/tiff', 'tif': 'image/tiff',
+            'bmp': 'image/bmp'
+        };
+        const contentType = contentTypeMap[ext] || 'image/jpeg';
+        
         // Set appropriate headers for image serving
         res.set({
-            'Content-Type': fileResult.contentType || 'image/jpeg',
-            'Content-Length': fileResult.buffer.length,
+            'Content-Type': contentType,
+            'Content-Length': buffer.length,
             'Cache-Control': 'public, max-age=31536000', // 1 year cache
-            'Content-Disposition': `inline; filename="${fileResult.filename}"`
+            'Content-Disposition': `inline; filename="${matchingFile.filename}"`
         });
 
-        res.send(fileResult.buffer);
+        res.send(buffer);
 
     } catch (error) {
-        console.error('Error serving gallery photo:', error);
+        console.error('❌ Error serving gallery photo:', error);
         res.status(500).send('Error loading photo');
     }
 });
