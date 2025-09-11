@@ -5198,6 +5198,113 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
+// Get photos for a session from R2 storage with thumbnails
+app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { folder } = req.query; // 'gallery' or 'raw'
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        console.log(`📸 Loading ${folder || 'all'} photos for session ${sessionId}, user ${userId}`);
+        
+        // First verify session belongs to user
+        const sessionResult = await pool.query(
+            'SELECT id, client_name, user_id FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+        
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found or access denied' });
+        }
+        
+        // Get files from R2 using the file manager
+        const R2FileManager = require('./server/r2-file-manager');
+        const r2Manager = new R2FileManager(null, pool);
+        
+        // Get session files from R2
+        const sessionFiles = await r2Manager.getSessionFiles(userId, sessionId);
+        
+        // Filter by folder type if specified
+        let files = [];
+        if (folder === 'gallery' && sessionFiles.filesByType.gallery) {
+            files = sessionFiles.filesByType.gallery;
+        } else if (folder === 'raw' && sessionFiles.filesByType.raw) {
+            files = sessionFiles.filesByType.raw;
+        } else {
+            // Return all files if no folder specified
+            files = [
+                ...(sessionFiles.filesByType.gallery || []),
+                ...(sessionFiles.filesByType.raw || [])
+            ];
+        }
+        
+        console.log(`📸 Found ${files.length} ${folder || 'total'} files for session ${sessionId}`);
+        
+        // Generate presigned URLs and thumbnail URLs for each file
+        const filesWithUrls = await Promise.all(files.map(async (file) => {
+            try {
+                // Generate presigned URL for download
+                const downloadUrl = await r2Manager.getPresignedUrl(file.r2Key, 3600, file.filename);
+                
+                // Generate thumbnail URLs for images
+                let thumbnails = {};
+                if (r2Manager.isImageFile(file.filename)) {
+                    // Try to get thumbnail URLs
+                    const sizes = ['_sm', '_md', '_lg'];
+                    for (const size of sizes) {
+                        try {
+                            const thumbnailKey = file.r2Key.replace(/(\.[^.]+)$/, `${size}$1`);
+                            const thumbnailUrl = await r2Manager.getPresignedUrl(thumbnailKey, 3600, `${file.filename}${size}`);
+                            if (thumbnailUrl) {
+                                // Map to expected format
+                                if (size === '_sm') thumbnails.sm = thumbnailUrl;
+                                if (size === '_md') thumbnails.md = thumbnailUrl;
+                                if (size === '_lg') thumbnails.lg = thumbnailUrl;
+                            }
+                        } catch (thumbError) {
+                            console.log(`⚠️ Thumbnail ${size} not available for ${file.filename}`);
+                        }
+                    }
+                }
+                
+                return {
+                    id: file.id || file.filename,
+                    filename: file.filename,
+                    originalName: file.filename,
+                    r2Key: file.r2Key,
+                    folderType: file.fileType || folder,
+                    contentType: file.contentType || 'image/jpeg',
+                    fileSizeBytes: file.fileSizeBytes || 0,
+                    size: file.fileSizeBytes || 0,
+                    createdAt: file.uploadedAt || file.createdAt,
+                    url: downloadUrl,
+                    downloadUrl: downloadUrl,
+                    thumbnailUrl: thumbnails.md || thumbnails.sm || downloadUrl,
+                    thumbnails: thumbnails
+                };
+            } catch (urlError) {
+                console.error(`Error generating URLs for ${file.filename}:`, urlError);
+                return {
+                    ...file,
+                    url: null,
+                    downloadUrl: null,
+                    thumbnails: {}
+                };
+            }
+        }));
+        
+        res.json({
+            success: true,
+            files: filesWithUrls
+        });
+        
+    } catch (error) {
+        console.error('Error fetching session photos:', error);
+        res.status(500).json({ error: 'Failed to fetch photos', message: error.message });
+    }
+});
+
 app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails

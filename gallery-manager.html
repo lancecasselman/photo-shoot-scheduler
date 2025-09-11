@@ -1357,10 +1357,11 @@
                         fileName: file.filename || file.fileName || file.name,
                         name: file.originalName || file.name || file.filename,
                         contentType: file.contentType || file.fileType || 'image/jpeg',
-                        // Prioritize downloadUrl over url for full image
+                        // Use the actual download URL from the API
                         downloadUrl: file.downloadUrl || file.url || '',
-                        // Use the provided thumbnailUrl or fallback to thumbnail sizes
+                        // Use the thumbnail URL provided by the API (md size for gallery view)
                         thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || file.downloadUrl || file.url || null,
+                        // Store all thumbnail sizes for responsive loading
                         thumbnails: file.thumbnails || {},
                         timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
                         size: file.fileSizeBytes || file.size || 0,
@@ -1443,95 +1444,86 @@
             
             if (isImage) {
                 const img = document.createElement('img');
-                // Track what we've tried to prevent infinite loops
-                let attemptCount = 0;
-                const maxAttempts = 4;
                 
-                // Build array of URLs to try in order
-                const urlsToTry = [];
-                
-                // 1. Try thumbnail URL first if available
-                if (file.thumbnailUrl) {
-                    urlsToTry.push(file.thumbnailUrl);
-                }
-                
-                // 2. Try download URL
-                if (file.downloadUrl) {
-                    urlsToTry.push(file.downloadUrl);
-                }
-                
-                // 3. Try R2 preview endpoint
-                const sessionMatch = window.location.search.match(/sessionId=([^&]+)/);
-                if (sessionMatch && file.fileName) {
-                    urlsToTry.push(`/api/r2/preview/${sessionMatch[1]}/${file.fileName}`);
-                }
-                
-                // 4. Try direct R2 download if we have the key
-                if (file.r2Key) {
-                    urlsToTry.push(`/api/r2/download/${file.r2Key}`);
-                }
+                // Use the thumbnailUrl directly from the API response
+                // The API returns proper presigned URLs for thumbnails
+                const thumbnailUrl = file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm;
+                const fullImageUrl = file.downloadUrl || file.url;
                 
                 console.log(`🖼️ Loading preview for ${file.name}:`, {
-                    hasThumbnail: !!file.thumbnailUrl,
-                    thumbnailUrl: file.thumbnailUrl,
-                    downloadUrl: file.downloadUrl,
-                    urlsToTry: urlsToTry
+                    hasThumbnail: !!thumbnailUrl,
+                    thumbnailUrl: thumbnailUrl,
+                    fullImageUrl: fullImageUrl,
+                    thumbnails: file.thumbnails
                 });
                 
-                // Show loading placeholder while thumbnail loads
-                const loadingPlaceholder = document.createElement('div');
-                loadingPlaceholder.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;';
-                loadingPlaceholder.innerHTML = '⏳ Loading...';
-                filePreview.appendChild(loadingPlaceholder);
-                
-                // Function to try next URL
-                const tryNextUrl = () => {
-                    if (attemptCount >= urlsToTry.length || attemptCount >= maxAttempts) {
-                        // All attempts failed, show generic icon
-                        console.log('⚠️ All image sources failed, showing generic icon');
-                        img.style.display = 'none';
+                if (thumbnailUrl) {
+                    // Show loading placeholder while thumbnail loads
+                    const loadingPlaceholder = document.createElement('div');
+                    loadingPlaceholder.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;';
+                    loadingPlaceholder.innerHTML = '⏳ Loading...';
+                    filePreview.appendChild(loadingPlaceholder);
+                    
+                    img.src = thumbnailUrl;
+                    img.alt = file.name;
+                    img.loading = 'lazy';
+                    img.style.objectFit = 'cover';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.display = 'none'; // Hide until loaded
+                    
+                    // Use full URL for lightbox
+                    img.onclick = () => openLightbox(fullImageUrl);
+                    
+                    img.onload = () => {
+                        // Remove loading placeholder and show image
                         if (loadingPlaceholder && loadingPlaceholder.parentNode) {
                             loadingPlaceholder.remove();
                         }
-                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                        return;
-                    }
+                        img.style.display = 'block';
+                        console.log(`✅ Successfully loaded thumbnail for ${file.name}`);
+                    };
                     
-                    const urlToTry = urlsToTry[attemptCount];
-                    console.log(`🔄 Attempt ${attemptCount + 1}: Loading ${urlToTry}`);
-                    img.src = urlToTry;
-                    attemptCount++;
-                };
-                
-                img.alt = file.name;
-                img.loading = 'lazy';
-                img.style.objectFit = 'cover';
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.display = 'none'; // Hide until loaded
-                img.setAttribute('crossorigin', 'anonymous'); // Handle CORS
-                
-                // Use full URL for lightbox
-                img.onclick = () => openLightbox(file.downloadUrl || urlsToTry[0]);
-                
-                img.onload = () => {
-                    // Remove loading placeholder and show image
-                    if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                        loadingPlaceholder.remove();
-                    }
-                    img.style.display = 'block';
-                    console.log(`✅ Successfully loaded preview for ${file.name} from ${img.src}`);
-                };
-                
-                img.onerror = () => {
-                    console.error(`❌ Failed to load image attempt ${attemptCount}:`, img.src);
-                    tryNextUrl();
-                };
-                
-                // Start loading with first URL
-                tryNextUrl();
-                
-                filePreview.appendChild(img);
+                    img.onerror = () => {
+                        console.error(`❌ Failed to load thumbnail for ${file.name}:`, thumbnailUrl);
+                        // Try to load the full image as fallback
+                        if (fullImageUrl && img.src !== fullImageUrl) {
+                            console.log(`🔄 Falling back to full image for ${file.name}`);
+                            img.src = fullImageUrl;
+                        } else {
+                            // Show generic icon if all fails
+                            img.style.display = 'none';
+                            if (loadingPlaceholder && loadingPlaceholder.parentNode) {
+                                loadingPlaceholder.remove();
+                            }
+                            filePreview.innerHTML = '<div class="file-icon">📷</div>';
+                        }
+                    };
+                    
+                    filePreview.appendChild(img);
+                } else if (fullImageUrl) {
+                    // No thumbnail available, use full image
+                    console.log(`⚠️ No thumbnail available for ${file.name}, using full image`);
+                    img.src = fullImageUrl;
+                    img.alt = file.name;
+                    img.loading = 'lazy';
+                    img.style.objectFit = 'cover';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.onclick = () => openLightbox(fullImageUrl);
+                    
+                    img.onerror = () => {
+                        console.error(`❌ Failed to load image for ${file.name}`);
+                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
+                    };
+                    
+                    filePreview.appendChild(img);
+                } else {
+                    // No URLs available, show generic icon
+                    console.log(`⚠️ No image URLs available for ${file.name}`);
+                    filePreview.innerHTML = '<div class="file-icon">📷</div>';
+                }
+            
             } else {
                 const fileIcon = document.createElement('div');
                 fileIcon.className = 'file-icon';
