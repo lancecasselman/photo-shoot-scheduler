@@ -1248,19 +1248,34 @@
                 console.log(`Raw items from API: ${items.length} items`);
                 
                 // Map R2 files data to expected format with defensive handling
-                files = items.map(file => ({
-                    fileName: file.filename || file.fileName || file.name,
-                    name: file.originalName || file.name || file.filename,
-                    contentType: file.fileType || file.contentType || 'image/jpeg',
-                    downloadUrl: file.url || file.downloadUrl || '',
-                    thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || null,
-                    thumbnails: file.thumbnails || {},
-                    timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
-                    size: file.fileSizeBytes || file.size || 0,
-                    folderType: file.folderType || folderType,
-                    id: file.id,
-                    r2Key: file.r2Key
-                })).filter(x => x.fileName || x.name);
+                files = items.map(file => {
+                    // Debug logging to understand the actual API response
+                    console.log('📸 Processing file:', {
+                        filename: file.filename,
+                        originalName: file.originalName,
+                        downloadUrl: file.downloadUrl,
+                        thumbnailUrl: file.thumbnailUrl,
+                        url: file.url,
+                        contentType: file.contentType,
+                        thumbnails: file.thumbnails
+                    });
+                    
+                    return {
+                        fileName: file.filename || file.fileName || file.name,
+                        name: file.originalName || file.name || file.filename,
+                        contentType: file.contentType || file.fileType || 'image/jpeg',
+                        // Prioritize downloadUrl over url for full image
+                        downloadUrl: file.downloadUrl || file.url || '',
+                        // Use the provided thumbnailUrl or fallback to thumbnail sizes
+                        thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || file.downloadUrl || file.url || null,
+                        thumbnails: file.thumbnails || {},
+                        timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
+                        size: file.fileSizeBytes || file.size || 0,
+                        folderType: file.folderType || folderType,
+                        id: file.id,
+                        r2Key: file.r2Key
+                    };
+                }).filter(x => x.fileName || x.name);
                 
                 console.log(`Mapped to ${files.length} files ready to render`);
                 renderFiles();
@@ -1335,13 +1350,39 @@
             
             if (isImage) {
                 const img = document.createElement('img');
-                // Use thumbnail for preview if available, otherwise fall back to full image
-                const previewUrl = file.thumbnailUrl || file.downloadUrl;
+                // Track what we've tried to prevent infinite loops
+                let attemptCount = 0;
+                const maxAttempts = 4;
+                
+                // Build array of URLs to try in order
+                const urlsToTry = [];
+                
+                // 1. Try thumbnail URL first if available
+                if (file.thumbnailUrl) {
+                    urlsToTry.push(file.thumbnailUrl);
+                }
+                
+                // 2. Try download URL
+                if (file.downloadUrl) {
+                    urlsToTry.push(file.downloadUrl);
+                }
+                
+                // 3. Try R2 preview endpoint
+                const sessionMatch = window.location.search.match(/sessionId=([^&]+)/);
+                if (sessionMatch && file.fileName) {
+                    urlsToTry.push(`/api/r2/preview/${sessionMatch[1]}/${file.fileName}`);
+                }
+                
+                // 4. Try direct R2 download if we have the key
+                if (file.r2Key) {
+                    urlsToTry.push(`/api/r2/download/${file.r2Key}`);
+                }
                 
                 console.log(`🖼️ Loading preview for ${file.name}:`, {
                     hasThumbnail: !!file.thumbnailUrl,
                     thumbnailUrl: file.thumbnailUrl,
-                    fallbackUrl: file.downloadUrl
+                    downloadUrl: file.downloadUrl,
+                    urlsToTry: urlsToTry
                 });
                 
                 // Show loading placeholder while thumbnail loads
@@ -1350,16 +1391,35 @@
                 loadingPlaceholder.innerHTML = '⏳ Loading...';
                 filePreview.appendChild(loadingPlaceholder);
                 
-                img.src = previewUrl;
+                // Function to try next URL
+                const tryNextUrl = () => {
+                    if (attemptCount >= urlsToTry.length || attemptCount >= maxAttempts) {
+                        // All attempts failed, show generic icon
+                        console.log('⚠️ All image sources failed, showing generic icon');
+                        img.style.display = 'none';
+                        if (loadingPlaceholder && loadingPlaceholder.parentNode) {
+                            loadingPlaceholder.remove();
+                        }
+                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
+                        return;
+                    }
+                    
+                    const urlToTry = urlsToTry[attemptCount];
+                    console.log(`🔄 Attempt ${attemptCount + 1}: Loading ${urlToTry}`);
+                    img.src = urlToTry;
+                    attemptCount++;
+                };
+                
                 img.alt = file.name;
                 img.loading = 'lazy';
                 img.style.objectFit = 'cover';
                 img.style.width = '100%';
                 img.style.height = '100%';
                 img.style.display = 'none'; // Hide until loaded
+                img.setAttribute('crossorigin', 'anonymous'); // Handle CORS
                 
-                // Use full URL for lightbox, thumbnail for preview
-                img.onclick = () => openLightbox(file.downloadUrl);
+                // Use full URL for lightbox
+                img.onclick = () => openLightbox(file.downloadUrl || urlsToTry[0]);
                 
                 img.onload = () => {
                     // Remove loading placeholder and show image
@@ -1367,24 +1427,16 @@
                         loadingPlaceholder.remove();
                     }
                     img.style.display = 'block';
+                    console.log(`✅ Successfully loaded preview for ${file.name} from ${img.src}`);
                 };
                 
                 img.onerror = () => {
-                    console.error('Failed to load image preview:', file.name, 'URL:', previewUrl);
-                    
-                    // If thumbnail failed and we haven't tried the full image yet, try it
-                    if (file.thumbnailUrl && img.src === file.thumbnailUrl && file.downloadUrl) {
-                        console.log('Thumbnail failed, falling back to full image:', file.downloadUrl);
-                        img.src = file.downloadUrl;
-                    } else {
-                        // Both failed, show icon instead
-                        img.style.display = 'none';
-                        if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                            loadingPlaceholder.remove();
-                        }
-                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                    }
+                    console.error(`❌ Failed to load image attempt ${attemptCount}:`, img.src);
+                    tryNextUrl();
                 };
+                
+                // Start loading with first URL
+                tryNextUrl();
                 
                 filePreview.appendChild(img);
             } else {
