@@ -48,7 +48,7 @@ async function testFixedPhotosAPI() {
             if (galleryFiles.length > 0) {
                 const testFile = galleryFiles[0];
                 try {
-                    const presignedUrl = await r2Manager.getPresignedUrl(testFile.r2Key, 3600, testFile.filename);
+                    const presignedUrl = await r2Manager.getSignedUrl(testFile.r2Key, 3600);
                     console.log(`   ✅ Generated presigned URL for ${testFile.filename}`);
                     console.log(`   URL starts with: ${presignedUrl.substring(0, 80)}...`);
                     
@@ -70,7 +70,7 @@ async function testFixedPhotosAPI() {
                     const thumbnailKey = firstGalleryFile.r2Key.replace(/(\.[^.]+)$/, `${size}$1`);
                     try {
                         // Check if thumbnail exists by trying to generate a URL for it
-                        const thumbnailUrl = await r2Manager.getPresignedUrl(thumbnailKey, 3600, `thumb${size}`);
+                        const thumbnailUrl = await r2Manager.getSignedUrl(thumbnailKey, 3600);
                         console.log(`   ✅ Thumbnail ${size} exists`);
                     } catch (error) {
                         console.log(`   ⚠️ Thumbnail ${size} not found (may need generation)`);

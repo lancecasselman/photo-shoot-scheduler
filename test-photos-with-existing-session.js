@@ -48,7 +48,7 @@ async function testPhotosAPI() {
             console.log('\n🔗 Testing Presigned URL generation:');
             const firstFile = sessionFiles.filesByType.gallery[0];
             try {
-                const presignedUrl = await r2Manager.getPresignedUrl(firstFile.r2Key, 3600, firstFile.filename);
+                const presignedUrl = await r2Manager.getSignedUrl(firstFile.r2Key, 3600);
                 console.log(`   ✅ Generated URL for ${firstFile.filename}`);
                 console.log(`   URL: ${presignedUrl.substring(0, 100)}...`);
             } catch (urlError) {

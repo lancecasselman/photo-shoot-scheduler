@@ -5256,67 +5256,137 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription,
         
         console.log(`📸 Found ${files.length} ${folder || 'total'} files for session ${sessionId}`);
         
-        // Generate presigned URLs and thumbnail URLs for each file
-        const filesWithUrls = await Promise.all(files.map(async (file) => {
-            try {
-                // Generate presigned URL for download
-                const downloadUrl = await r2Manager.getPresignedUrl(file.r2Key, 3600, file.filename);
-                
-                // Generate thumbnail URLs for images
-                let thumbnails = {};
-                if (r2Manager.isImageFile(file.filename)) {
-                    // Try to get thumbnail URLs
-                    const sizes = ['_sm', '_md', '_lg'];
-                    for (const size of sizes) {
-                        try {
-                            const thumbnailKey = file.r2Key.replace(/(\.[^.]+)$/, `${size}$1`);
-                            const thumbnailUrl = await r2Manager.getPresignedUrl(thumbnailKey, 3600, `${file.filename}${size}`);
-                            if (thumbnailUrl) {
-                                // Map to expected format
-                                if (size === '_sm') thumbnails.sm = thumbnailUrl;
-                                if (size === '_md') thumbnails.md = thumbnailUrl;
-                                if (size === '_lg') thumbnails.lg = thumbnailUrl;
+        // OPTIMIZATION: Process files in batches to avoid timeouts with large numbers of files
+        const BATCH_SIZE = 20; // Process 20 files at a time
+        const filesWithUrls = [];
+        
+        // Process files in batches
+        for (let i = 0; i < files.length; i += BATCH_SIZE) {
+            const batch = files.slice(i, i + BATCH_SIZE);
+            console.log(`📸 Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(files.length / BATCH_SIZE)} (files ${i + 1}-${Math.min(i + BATCH_SIZE, files.length)})`);
+            
+            // Process each batch in parallel
+            const batchResults = await Promise.all(batch.map(async (file) => {
+                try {
+                    // Skip URL generation for very large batches to prevent timeout
+                    // Return file info immediately and let client request URLs as needed
+                    if (files.length > 50) {
+                        // For large galleries, return minimal info without presigned URLs
+                        // Client can request individual file URLs as needed
+                        return {
+                            id: file.id || file.filename,
+                            filename: file.filename,
+                            originalName: file.filename,
+                            r2Key: file.r2Key,
+                            folderType: file.fileType || folder,
+                            contentType: file.contentType || 'image/jpeg',
+                            fileSizeBytes: file.fileSizeBytes || 0,
+                            size: file.fileSizeBytes || 0,
+                            createdAt: file.uploadedAt || file.createdAt,
+                            // Use preview endpoint instead of presigned URLs for large galleries
+                            url: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}`,
+                            downloadUrl: `/api/r2/download/${sessionId}/${encodeURIComponent(file.filename)}`,
+                            thumbnailUrl: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=md`,
+                            thumbnails: {
+                                sm: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=sm`,
+                                md: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=md`,
+                                lg: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=lg`
+                            },
+                            requiresAuth: true // Flag to indicate these URLs need authentication
+                        };
+                    }
+                    
+                    // For smaller galleries, generate presigned URLs as before
+                    const downloadUrl = await r2Manager.getSignedUrl(file.r2Key, 3600);
+                    
+                    // Generate thumbnail URLs for images
+                    let thumbnails = {};
+                    if (r2Manager.isImageFile(file.filename)) {
+                        // Try to get thumbnail URLs (but don't fail if they don't exist)
+                        const sizes = ['_sm', '_md', '_lg'];
+                        for (const size of sizes) {
+                            try {
+                                const thumbnailKey = file.r2Key.replace(/(\.[^.]+)$/, `${size}$1`);
+                                const thumbnailUrl = await r2Manager.getSignedUrl(thumbnailKey, 3600);
+                                if (thumbnailUrl) {
+                                    // Map to expected format
+                                    if (size === '_sm') thumbnails.sm = thumbnailUrl;
+                                    if (size === '_md') thumbnails.md = thumbnailUrl;
+                                    if (size === '_lg') thumbnails.lg = thumbnailUrl;
+                                }
+                            } catch (thumbError) {
+                                // Silently skip missing thumbnails - they're optional
                             }
-                        } catch (thumbError) {
-                            console.log(`⚠️ Thumbnail ${size} not available for ${file.filename}`);
                         }
                     }
+                    
+                    return {
+                        id: file.id || file.filename,
+                        filename: file.filename,
+                        originalName: file.filename,
+                        r2Key: file.r2Key,
+                        folderType: file.fileType || folder,
+                        contentType: file.contentType || 'image/jpeg',
+                        fileSizeBytes: file.fileSizeBytes || 0,
+                        size: file.fileSizeBytes || 0,
+                        createdAt: file.uploadedAt || file.createdAt,
+                        url: downloadUrl,
+                        downloadUrl: downloadUrl,
+                        thumbnailUrl: thumbnails.md || thumbnails.sm || downloadUrl,
+                        thumbnails: thumbnails
+                    };
+                } catch (urlError) {
+                    console.error(`⚠️ Error generating URLs for ${file.filename}, returning basic info:`, urlError.message);
+                    // Return file info without URLs rather than failing completely
+                    return {
+                        id: file.id || file.filename,
+                        filename: file.filename,
+                        originalName: file.filename,
+                        r2Key: file.r2Key,
+                        folderType: file.fileType || folder,
+                        contentType: file.contentType || 'image/jpeg',
+                        fileSizeBytes: file.fileSizeBytes || 0,
+                        size: file.fileSizeBytes || 0,
+                        createdAt: file.uploadedAt || file.createdAt,
+                        // Fallback to preview endpoints if URL generation fails
+                        url: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}`,
+                        downloadUrl: `/api/r2/download/${sessionId}/${encodeURIComponent(file.filename)}`,
+                        thumbnailUrl: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=md`,
+                        thumbnails: {
+                            sm: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=sm`,
+                            md: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=md`,
+                            lg: `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}?size=lg`
+                        },
+                        requiresAuth: true,
+                        error: 'URL generation failed'
+                    };
                 }
-                
-                return {
-                    id: file.id || file.filename,
-                    filename: file.filename,
-                    originalName: file.filename,
-                    r2Key: file.r2Key,
-                    folderType: file.fileType || folder,
-                    contentType: file.contentType || 'image/jpeg',
-                    fileSizeBytes: file.fileSizeBytes || 0,
-                    size: file.fileSizeBytes || 0,
-                    createdAt: file.uploadedAt || file.createdAt,
-                    url: downloadUrl,
-                    downloadUrl: downloadUrl,
-                    thumbnailUrl: thumbnails.md || thumbnails.sm || downloadUrl,
-                    thumbnails: thumbnails
-                };
-            } catch (urlError) {
-                console.error(`Error generating URLs for ${file.filename}:`, urlError);
-                return {
-                    ...file,
-                    url: null,
-                    downloadUrl: null,
-                    thumbnails: {}
-                };
-            }
-        }));
+            }));
+            
+            // Add batch results to the final array
+            filesWithUrls.push(...batchResults);
+        }
         
+        console.log(`✅ Successfully processed ${filesWithUrls.length} files for session ${sessionId}`);
+        
+        // Always return a response, even if some files failed
         res.json({
             success: true,
-            files: filesWithUrls
+            files: filesWithUrls,
+            totalFiles: filesWithUrls.length,
+            sessionId: sessionId,
+            clientName: sessionResult.rows[0].client_name
         });
         
     } catch (error) {
-        console.error('Error fetching session photos:', error);
-        res.status(500).json({ error: 'Failed to fetch photos', message: error.message });
+        console.error('❌ Critical error fetching session photos:', error);
+        // Return a more informative error response
+        res.status(500).json({ 
+            error: 'Failed to fetch photos', 
+            message: error.message,
+            sessionId: req.params.sessionId,
+            details: 'The server encountered an error while processing your photo request. Please try again.'
+        });
     }
 });
 
