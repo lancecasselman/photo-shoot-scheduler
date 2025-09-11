@@ -9543,46 +9543,58 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
 app.get('/api/gallery/:token/verify', async (req, res) => {
     const galleryToken = req.params.token;
     
-    console.log('🔒 BULLETPROOF API VERIFY:', {
+    console.log('🔒 GALLERY API VERIFY:', {
         token: galleryToken,
         timestamp: new Date().toISOString()
     });
 
     try {
-        // BULLETPROOF: Direct token lookup with photo verification
+        // First get the session info using the gallery token
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
                 id, 
+                user_id,
                 client_name, 
                 session_type,
-                photos,
-                gallery_access_token,
-                jsonb_array_length(photos) as photo_count
+                gallery_access_token
             FROM photography_sessions 
-            WHERE gallery_access_token = $1 
-            AND photos IS NOT NULL 
-            AND jsonb_array_length(photos) > 0
+            WHERE gallery_access_token = $1
         `, [galleryToken]);
         client.release();
 
-        // STRICT: No photos = no gallery
+        // Check if session exists
         if (galleryQuery.rows.length === 0) {
-            console.log('❌ API VERIFY BLOCKED: No verified photos for token:', galleryToken);
-            return res.status(404).json({ error: 'Gallery not available - photos not ready' });
+            console.log('❌ API VERIFY BLOCKED: No session found for token:', galleryToken);
+            return res.status(404).json({ error: 'Gallery not available' });
         }
 
         const session = galleryQuery.rows[0];
-        const photos = session.photos || [];
+        
+        // Get the actual current files from R2 storage using the file manager
+        // This gets the real files, not the old database photos
+        const filesResult = await r2FileManager.getSessionFiles(session.user_id, session.id);
+        
+        // Get the gallery files (not RAW files)
+        const galleryFiles = filesResult.filesByType?.gallery || [];
+        
+        // Format photos for the gallery display
+        const photos = galleryFiles.map(file => ({
+            url: `/api/sessions/${session.id}/files/gallery/${encodeURIComponent(file.filename)}`,
+            filename: file.filename,
+            originalName: file.filename,
+            size: file.fileSizeBytes,
+            uploadedAt: file.uploadedAt
+        }));
 
-        // FINAL VERIFICATION: Double-check photos exist
+        // FINAL VERIFICATION: Check if there are photos
         if (!photos || photos.length === 0) {
-            console.log('❌ API VERIFY BLOCKED: Session found but NO PHOTOS:', {
+            console.log('❌ API VERIFY: No gallery files found:', {
                 sessionId: session.id,
                 clientName: session.client_name,
                 token: galleryToken
             });
-            return res.status(404).json({ error: 'Photos not ready yet' });
+            return res.status(404).json({ error: 'No photos available in gallery' });
         }
 
         // LOG VERIFIED PHOTOS BEING SERVED
@@ -9591,7 +9603,7 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
             clientName: session.client_name,
             sessionType: session.session_type,
             photoCount: photos.length,
-            verifiedPhotos: photos.map(p => p.url || p.filename),
+            verifiedPhotos: photos.map(p => p.filename),
             token: galleryToken
         });
 
@@ -9613,46 +9625,58 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
 app.get('/api/gallery/:token/photos', async (req, res) => {
     const galleryToken = req.params.token;
     
-    console.log('🔒 BULLETPROOF API PHOTOS:', {
+    console.log('🔒 GALLERY API PHOTOS:', {
         token: galleryToken,
         timestamp: new Date().toISOString()
     });
 
     try {
-        // BULLETPROOF: Direct token lookup with photo verification
+        // First get the session info using the gallery token
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
                 id, 
+                user_id,
                 client_name, 
                 session_type,
-                photos,
-                gallery_access_token,
-                jsonb_array_length(photos) as photo_count
+                gallery_access_token
             FROM photography_sessions 
-            WHERE gallery_access_token = $1 
-            AND photos IS NOT NULL 
-            AND jsonb_array_length(photos) > 0
+            WHERE gallery_access_token = $1
         `, [galleryToken]);
         client.release();
 
-        // STRICT: No photos = no gallery
+        // Check if session exists
         if (galleryQuery.rows.length === 0) {
-            console.log('❌ API PHOTOS BLOCKED: No verified photos for token:', galleryToken);
-            return res.status(404).json({ error: 'Gallery not available - photos not ready' });
+            console.log('❌ API PHOTOS BLOCKED: No session found for token:', galleryToken);
+            return res.status(404).json({ error: 'Gallery not available' });
         }
 
         const session = galleryQuery.rows[0];
-        const photos = session.photos || [];
+        
+        // Get the actual current files from R2 storage using the file manager
+        // This gets the real files, not the old database photos
+        const filesResult = await r2FileManager.getSessionFiles(session.user_id, session.id);
+        
+        // Get the gallery files (not RAW files)
+        const galleryFiles = filesResult.filesByType?.gallery || [];
+        
+        // Format photos for the gallery display
+        const photos = galleryFiles.map(file => ({
+            url: `/api/sessions/${session.id}/files/gallery/${encodeURIComponent(file.filename)}`,
+            filename: file.filename,
+            originalName: file.filename,
+            size: file.fileSizeBytes,
+            uploadedAt: file.uploadedAt
+        }));
 
-        // FINAL VERIFICATION: Double-check photos exist
+        // FINAL VERIFICATION: Check if there are photos
         if (!photos || photos.length === 0) {
-            console.log('❌ API PHOTOS BLOCKED: Session found but NO PHOTOS:', {
+            console.log('❌ API PHOTOS: No gallery files found:', {
                 sessionId: session.id,
                 clientName: session.client_name,
                 token: galleryToken
             });
-            return res.status(404).json({ error: 'Photos not ready yet' });
+            return res.status(404).json({ error: 'No photos available in gallery' });
         }
 
         // LOG VERIFIED PHOTOS BEING SERVED
@@ -9661,7 +9685,7 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
             clientName: session.client_name,
             sessionType: session.session_type,
             photoCount: photos.length,
-            verifiedPhotos: photos.map(p => p.url || p.filename),
+            verifiedPhotos: photos.map(p => p.filename),
             token: galleryToken
         });
 
