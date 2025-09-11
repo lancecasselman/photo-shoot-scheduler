@@ -626,6 +626,172 @@ class R2FileManager {
   }
 
   /**
+   * Generate a pre-signed URL for direct browser-to-R2 upload
+   */
+  async generateUploadPresignedUrl(filename, userId, sessionId, fileType = null, expiresIn = 3600) {
+    try {
+      if (!this.r2Available) {
+        throw new Error('R2 storage is not available');
+      }
+
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      
+      // Generate the R2 key using existing pattern
+      const actualFileType = fileType || this.getFileTypeCategory(filename);
+      const r2Key = this.generateR2Key(userId, sessionId, filename, actualFileType);
+      
+      // Determine content type from filename
+      const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+      const contentTypeMap = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', 
+        '.gif': 'image/gif', '.webp': 'image/webp', '.tiff': 'image/tiff', '.tif': 'image/tiff',
+        '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.mov': 'video/quicktime',
+        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.zip': 'application/zip',
+        // RAW formats
+        '.nef': 'image/x-nikon-nef', '.cr2': 'image/x-canon-cr2', '.arw': 'image/x-sony-arw',
+        '.dng': 'image/x-adobe-dng', '.raf': 'image/x-fuji-raf', '.orf': 'image/x-olympus-orf'
+      };
+      const contentType = contentTypeMap[ext] || 'application/octet-stream';
+      
+      // Create the PutObjectCommand with metadata
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: r2Key,
+        ContentType: contentType,
+        Metadata: {
+          'original-filename': filename,
+          'user-id': userId,
+          'session-id': sessionId,
+          'file-type': actualFileType,
+          'upload-timestamp': new Date().toISOString()
+        }
+      });
+      
+      // Generate the pre-signed URL
+      const presignedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
+      
+      console.log(`📤 Generated upload pre-signed URL for: ${filename}`);
+      
+      return {
+        url: presignedUrl,
+        r2Key,
+        filename,
+        fileType: actualFileType,
+        contentType,
+        expiresIn
+      };
+    } catch (error) {
+      console.error('Error generating upload pre-signed URL:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process files after direct R2 upload (generate thumbnails, update database)
+   */
+  async processUploadedFile(r2Key, filename, userId, sessionId, fileSizeBytes = null) {
+    try {
+      console.log(`🔄 Processing uploaded file: ${filename}`);
+      
+      let contentType = 'application/octet-stream';
+      
+      // Get file metadata from R2 if not provided
+      if (!fileSizeBytes) {
+        const { HeadObjectCommand } = require('@aws-sdk/client-s3');
+        const headCommand = new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: r2Key
+        });
+        const response = await this.s3Client.send(headCommand);
+        fileSizeBytes = response.ContentLength;
+        contentType = response.ContentType || 'application/octet-stream';
+      }
+      
+      const fileSizeMB = (fileSizeBytes / (1024 * 1024));
+      const fileType = this.getFileTypeCategory(filename);
+      
+      // Update backup index
+      const fileInfo = {
+        filename,
+        r2Key,
+        fileType,
+        fileSizeBytes,
+        uploadedAt: new Date().toISOString(),
+        originalFormat: filename.substring(filename.lastIndexOf('.')),
+        contentType
+      };
+      
+      await this.updateBackupIndex(userId, sessionId, fileInfo, 'add');
+      
+      // Update database record
+      if (this.pool) {
+        try {
+          await this.pool.query(`
+            INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (session_id, filename) 
+            DO UPDATE SET 
+              file_size_bytes = EXCLUDED.file_size_bytes,
+              file_size_mb = EXCLUDED.file_size_mb,
+              r2_key = EXCLUDED.r2_key,
+              uploaded_at = EXCLUDED.uploaded_at
+          `, [userId, sessionId, fileType, filename, fileSizeBytes, fileSizeMB, r2Key, new Date(), filename]);
+          
+          console.log(`✅ Database record updated for file: ${filename}`);
+        } catch (dbError) {
+          console.warn('⚠️ Failed to update database record:', dbError.message);
+        }
+      }
+      
+      // Generate thumbnail for image files
+      if (this.isImageFile(filename)) {
+        try {
+          // Download the file from R2 to generate thumbnails
+          const { GetObjectCommand } = require('@aws-sdk/client-s3');
+          const getCommand = new GetObjectCommand({
+            Bucket: this.bucketName,
+            Key: r2Key
+          });
+          const response = await this.s3Client.send(getCommand);
+          const fileBuffer = await this.streamToBuffer(response.Body);
+          
+          await this.generateThumbnail(fileBuffer, filename, userId, sessionId, fileType);
+          console.log(`🖼️ Thumbnail generated for: ${filename}`);
+        } catch (thumbnailError) {
+          console.warn(`⚠️ Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
+          // Continue - thumbnail generation failure shouldn't fail the processing
+        }
+      }
+      
+      return {
+        success: true,
+        filename,
+        r2Key,
+        fileType,
+        fileSizeBytes,
+        fileSizeMB,
+        processedAt: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error('Error processing uploaded file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper method to convert stream to buffer
+   */
+  async streamToBuffer(stream) {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  /**
    * Download file from R2 at full resolution
    */
   async downloadFile(userId, sessionId, filename) {

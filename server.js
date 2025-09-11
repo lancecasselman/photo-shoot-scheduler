@@ -6289,6 +6289,153 @@ app.post('/api/sessions/:id/confirm-uploads', isAuthenticated, async (req, res) 
     }
 });
 
+// NEW: Generate batch pre-signed URLs for direct R2 uploads (4 photos at a time)
+app.post('/api/gallery/batch-presigned-urls', isAuthenticated, async (req, res) => {
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+    const { sessionId, files } = req.body; // files: Array of {filename, fileSize}
+    
+    // Validate request
+    if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+    }
+    
+    if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: 'Files array is required' });
+    }
+    
+    if (files.length > 4) {
+        return res.status(400).json({ error: 'Maximum 4 files allowed per batch' });
+    }
+    
+    console.log(`📤 Generating batch pre-signed URLs for ${files.length} files, session ${sessionId}`);
+    
+    try {
+        // Check storage quota before generating URLs
+        const totalSize = files.reduce((sum, file) => sum + (file.fileSize || 0), 0);
+        const canUploadResult = await storageSystem.canUpload(userId, totalSize);
+        
+        if (!canUploadResult.canUpload) {
+            return res.status(413).json({
+                error: 'Storage limit exceeded',
+                message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
+                usage: {
+                    currentGB: canUploadResult.currentUsageGB,
+                    quotaGB: canUploadResult.quotaGB,
+                    remainingGB: canUploadResult.remainingGB,
+                    requestedGB: (totalSize / (1024 * 1024 * 1024)).toFixed(2)
+                },
+                upgradeRequired: true
+            });
+        }
+        
+        // Generate pre-signed URLs for each file
+        const presignedUrls = [];
+        for (const file of files) {
+            if (!file.filename) {
+                console.warn('⚠️ Skipping file without filename');
+                continue;
+            }
+            
+            try {
+                const presignedData = await r2FileManager.generateUploadPresignedUrl(
+                    file.filename,
+                    userId,
+                    sessionId,
+                    'gallery', // Default to gallery type for batch uploads
+                    3600 // 1 hour expiry
+                );
+                
+                presignedUrls.push({
+                    ...presignedData,
+                    fileSize: file.fileSize
+                });
+            } catch (error) {
+                console.error(`❌ Failed to generate pre-signed URL for ${file.filename}:`, error);
+                presignedUrls.push({
+                    filename: file.filename,
+                    error: error.message
+                });
+            }
+        }
+        
+        // Return the pre-signed URLs
+        res.json({
+            success: true,
+            sessionId,
+            presignedUrls,
+            expiresIn: 3600,
+            message: `Generated ${presignedUrls.length} pre-signed URLs for direct upload`
+        });
+        
+    } catch (error) {
+        console.error('Error generating batch pre-signed URLs:', error);
+        res.status(500).json({
+            error: 'Failed to generate pre-signed URLs',
+            details: error.message
+        });
+    }
+});
+
+// NEW: Process uploaded files after direct R2 upload (generate thumbnails)
+app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res) => {
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+    const { sessionId, uploadedFiles } = req.body; // uploadedFiles: Array of {r2Key, filename, fileSize}
+    
+    if (!sessionId || !uploadedFiles || !Array.isArray(uploadedFiles)) {
+        return res.status(400).json({ error: 'Invalid request parameters' });
+    }
+    
+    console.log(`🔄 Processing ${uploadedFiles.length} uploaded files for session ${sessionId}`);
+    
+    const processResults = [];
+    
+    try {
+        // Process each uploaded file
+        for (const file of uploadedFiles) {
+            try {
+                const result = await r2FileManager.processUploadedFile(
+                    file.r2Key,
+                    file.filename,
+                    userId,
+                    sessionId,
+                    file.fileSize
+                );
+                
+                processResults.push({
+                    ...result,
+                    thumbnailGenerated: true
+                });
+                
+                console.log(`✅ Processed: ${file.filename}`);
+            } catch (error) {
+                console.error(`❌ Failed to process ${file.filename}:`, error);
+                processResults.push({
+                    filename: file.filename,
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+        
+        // Return processing results
+        res.json({
+            success: true,
+            processed: processResults.filter(r => r.success).length,
+            failed: processResults.filter(r => !r.success).length,
+            results: processResults
+        });
+        
+    } catch (error) {
+        console.error('Error processing uploaded files:', error);
+        res.status(500).json({
+            error: 'Failed to process uploaded files',
+            details: error.message
+        });
+    }
+});
+
 // Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
