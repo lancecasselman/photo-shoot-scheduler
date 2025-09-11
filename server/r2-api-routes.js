@@ -12,7 +12,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 * 1024, // 5GB max file size (R2 technical limit)
-    files: 50, // Max 50 files per request - optimized for gallery uploads
+    files: 500, // Max 500 files per request - effectively unlimited for photography sessions
   },
   fileFilter: (req, file, cb) => {
     // Security: Validate file types - allow photography-related files
@@ -483,7 +483,7 @@ function createR2Routes() {
    * Upload files to R2 with storage limit checking
    * Supports multiple files and all file types
    */
-  router.post('/upload', upload.array('files', 50), async (req, res) => {
+  router.post('/upload', upload.array('files', 500), async (req, res) => {
     try {
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId } = req.body;
@@ -534,7 +534,7 @@ function createR2Routes() {
       }
 
       // Upload files with optimized concurrency for maximum speed
-      const CONCURRENT_UPLOADS = 6; // Increased from 2 to 6 for faster processing
+      const CONCURRENT_UPLOADS = 4; // Optimized to 4 for balanced performance and stability
       const uploadResults = [];
       
       // Process files in batches for optimal performance
@@ -596,7 +596,7 @@ function createR2Routes() {
    * Alternative upload endpoint for RAW backup dashboard
    * Same functionality as /upload but with different response format
    */
-  router.post('/backup-upload', upload.array('files', 50), async (req, res) => {
+  router.post('/backup-upload', upload.array('files', 500), async (req, res) => {
     try {
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId } = req.body;
@@ -724,7 +724,7 @@ function createR2Routes() {
    * POST /api/r2/gallery-upload
    * Upload files specifically to gallery folder (not RAW backup)
    */
-  router.post('/gallery-upload', upload.array('files', 50), async (req, res) => {
+  router.post('/gallery-upload', upload.array('files', 500), async (req, res) => {
     try {
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId } = req.body;
