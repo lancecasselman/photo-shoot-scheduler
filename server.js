@@ -4514,83 +4514,6 @@ async function initializeDatabase(retryCount = 0) {
     }
 }
 
-// Helper function to enhance photos with thumbnail URLs
-async function enhancePhotosWithThumbnails(photos, userId, sessionId) {
-    if (!photos || !Array.isArray(photos) || photos.length === 0) {
-        return [];
-    }
-
-    const enhancedPhotos = [];
-    
-    for (const photo of photos) {
-        const enhancedPhoto = { ...photo };
-        
-        // Extract filename from URL if needed
-        let filename = photo.filename || photo.originalName;
-        if (!filename && photo.url) {
-            const urlParts = photo.url.split('/');
-            filename = urlParts[urlParts.length - 1];
-            // Remove timestamp prefix if present (e.g., "20250906022712-DSC_0111.jpg" -> "DSC_0111.jpg")
-            if (filename.includes('-')) {
-                const parts = filename.split('-');
-                if (parts[0].length === 14 && /^\d+$/.test(parts[0])) {
-                    filename = parts.slice(1).join('-');
-                }
-            }
-        }
-        
-        if (filename) {
-            try {
-                // Generate thumbnail URLs using R2FileManager
-                const thumbnailSizes = ['sm', 'md', 'lg'];
-                const thumbnails = {};
-                
-                for (const size of thumbnailSizes) {
-                    // Remove file extension and add thumbnail suffix
-                    const ext = filename.split('.').pop();
-                    const baseName = filename.replace(`.${ext}`, '');
-                    const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}_${size}.jpg`;
-                    
-                    try {
-                        // Generate presigned URL for thumbnail
-                        const thumbnailUrl = await r2FileManager.getSignedUrl(thumbnailKey, 3600);
-                        if (thumbnailUrl) {
-                            thumbnails[size === 'sm' ? 'small' : size === 'md' ? 'medium' : 'large'] = thumbnailUrl;
-                        }
-                    } catch (err) {
-                        // Thumbnail might not exist, that's okay
-                        console.log(`Thumbnail not found: ${thumbnailKey}`);
-                    }
-                }
-                
-                // Only add thumbnails object if we found at least one thumbnail
-                if (Object.keys(thumbnails).length > 0) {
-                    enhancedPhoto.thumbnails = thumbnails;
-                }
-                
-                // Also generate presigned URL for the main photo if needed
-                if (photo.url && !photo.url.startsWith('http')) {
-                    const mainKey = `photographer-${userId}/session-${sessionId}/gallery/${filename}`;
-                    try {
-                        const presignedUrl = await r2FileManager.getSignedUrl(mainKey, 3600);
-                        if (presignedUrl) {
-                            enhancedPhoto.url = presignedUrl;
-                        }
-                    } catch (err) {
-                        console.log(`Main photo not found in R2: ${mainKey}`);
-                    }
-                }
-            } catch (error) {
-                console.error(`Error enhancing photo ${filename}:`, error);
-            }
-        }
-        
-        enhancedPhotos.push(enhancedPhoto);
-    }
-    
-    return enhancedPhotos;
-}
-
 // Database helper functions with user separation
 async function getAllSessions(userId) {
     try {
@@ -4606,46 +4529,41 @@ async function getAllSessions(userId) {
         const result = await pool.query(query, params);
         console.log('Database query result sample (first row):', result.rows[0]);
 
-        const mappedRows = await Promise.all(result.rows.map(async row => {
-            // Enhance photos with thumbnail URLs
-            const enhancedPhotos = await enhancePhotosWithThumbnails(row.photos, row.user_id, row.id);
-            
-            return {
-                id: row.id,
-                userId: row.user_id,
-                clientName: row.client_name,
-                sessionType: row.session_type,
-                dateTime: row.date_time,
-                location: row.location,
-                phoneNumber: row.phone_number,
-                email: row.email,
-                price: parseFloat(row.price),
-                depositAmount: parseFloat(row.deposit_amount || 0),
-                deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
-                depositPaid: row.deposit_paid || false,
-                depositSent: row.deposit_sent || false,
-                invoiceSent: row.invoice_sent || false,
-                depositPaidAt: row.deposit_paid_at,
-                invoicePaidAt: row.invoice_paid_at,
-                duration: row.duration,
-                notes: row.notes,
-                contractSigned: row.contract_signed,
-                paid: row.paid,
-                edited: row.edited,
-                delivered: row.delivered,
-                sendReminder: row.send_reminder,
-                notifyGalleryReady: row.notify_gallery_ready,
-                photos: enhancedPhotos,
-                galleryAccessToken: row.gallery_access_token,
-                galleryCreatedAt: row.gallery_created_at,
-                galleryExpiresAt: row.gallery_expires_at,
-                galleryReadyNotified: row.gallery_ready_notified,
-                hasPaymentPlan: row.has_payment_plan || false,
-                paymentPlanId: row.payment_plan_id || null,
-                createdAt: row.created_at,
-                updatedAt: row.updated_at,
-                stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
-            };
+        const mappedRows = result.rows.map(row => ({
+            id: row.id,
+            userId: row.user_id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            depositAmount: parseFloat(row.deposit_amount || 0),
+            deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+            depositPaid: row.deposit_paid || false,
+            depositSent: row.deposit_sent || false,
+            invoiceSent: row.invoice_sent || false,
+            depositPaidAt: row.deposit_paid_at,
+            invoicePaidAt: row.invoice_paid_at,
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            galleryAccessToken: row.gallery_access_token,
+            galleryCreatedAt: row.gallery_created_at,
+            galleryExpiresAt: row.gallery_expires_at,
+            galleryReadyNotified: row.gallery_ready_notified,
+            hasPaymentPlan: row.has_payment_plan || false,
+            paymentPlanId: row.payment_plan_id || null,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
         }));
         
         return mappedRows;
@@ -5284,225 +5202,6 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-// Get photos for a specific session (frontend compatibility endpoint) - OPTIMIZED
-app.get('/api/sessions/:sessionId/photos', isAuthenticated, async (req, res) => {
-    try {
-        const { sessionId } = req.params;
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
-
-        console.log(`📸 Photos requested for session: ${sessionId} by user: ${userId}`);
-
-        // Verify session ownership
-        const sessionResult = await pool.query(
-            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
-            [sessionId, userId]
-        );
-
-        if (sessionResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Extract session data for consistent reference
-        const session = sessionResult.rows[0];
-
-        // SPECIAL ACCESS: If Lance's accounts, use Firebase UID for R2 storage
-        let r2UserId = userId;
-        const userEmail = req.user.email.toLowerCase();
-        if (userEmail === 'lancecasselman@icloud.com' || userEmail === 'lancecasselman2011@gmail.com' || userEmail === 'lance@thelegacyphotography.com') {
-            r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Lance's Firebase UID for R2 storage
-        }
-
-        // Get session files from R2
-        const sessionFiles = await r2FileManager.getSessionFiles(r2UserId, sessionId);
-        
-        let photos = [];
-        let isLegacyPhotos = false;
-        
-        if (!sessionFiles.success || !sessionFiles.filesByType.gallery || sessionFiles.filesByType.gallery.length === 0) {
-            console.log(`📸 No gallery files found in R2 for session: ${sessionId}, checking legacy photos...`);
-            
-            // FALLBACK: Check legacy photos stored in session.photos column
-            const legacyPhotos = session.photos || [];
-            
-            if (legacyPhotos.length === 0) {
-                console.log(`📸 No legacy photos found either for session: ${sessionId}`);
-                return res.json({ photos: [] });
-            }
-            
-            console.log(`📸 Found ${legacyPhotos.length} legacy photos for session: ${sessionId}`);
-            isLegacyPhotos = true;
-            
-            // Convert legacy photos to expected format for batch processing
-            photos = legacyPhotos.map(legacyPhoto => {
-                const filename = legacyPhoto.filename || legacyPhoto.originalName;
-                return {
-                    fileName: filename,
-                    filename: filename,
-                    originalUrl: legacyPhoto.url || '',
-                    fileSize: legacyPhoto.fileSize || 0,
-                    fileSizeMB: legacyPhoto.fileSizeMB || (legacyPhoto.fileSize ? legacyPhoto.fileSize / (1024 * 1024) : 0),
-                    uploadedAt: legacyPhoto.uploadedAt || session.created_at,
-                    contentType: legacyPhoto.contentType || 'image/jpeg',
-                    isLegacy: true
-                };
-            }).filter(photo => photo.filename); // Filter out photos without filenames
-            
-        } else {
-            console.log(`📸 Found ${sessionFiles.filesByType.gallery.length} R2 gallery files for session: ${sessionId}`);
-            
-            // Transform gallery files into photo format for batch processing
-            photos = sessionFiles.filesByType.gallery.map(file => ({
-                fileName: file.filename,
-                filename: file.filename,
-                fileSize: file.fileSizeBytes,
-                fileSizeMB: file.fileSizeMB,
-                uploadedAt: file.uploadedAt,
-                contentType: file.contentType,
-                r2Key: file.r2Key,
-                isLegacy: false
-            }));
-        }
-        
-        if (photos.length === 0) {
-            console.log(`📸 No processable photos found for session: ${sessionId}`);
-            return res.json({ photos: [] });
-        }
-
-        console.log(`📸 Processing ${photos.length} photos using optimized batch method...`);
-        
-        // Use optimized batch thumbnail URL generation (fixes 3N calls problem)
-        const batchResult = await r2FileManager.getBatchThumbnailUrls(r2UserId, sessionId, photos, 3600);
-        
-        if (!batchResult.success) {
-            console.error('❌ Batch thumbnail generation failed:', batchResult.error);
-            throw new Error('Failed to generate thumbnail URLs');
-        }
-        
-        // Identify photos that need thumbnail generation
-        const photosNeedingThumbnails = batchResult.results.filter(result => result.needsThumbnailGeneration);
-        
-        // Generate missing thumbnails on-demand if needed
-        if (photosNeedingThumbnails.length > 0) {
-            console.log(`📸 Generating ${photosNeedingThumbnails.length} missing thumbnails on-demand...`);
-            
-            const thumbnailGenResult = await r2FileManager.generateMissingThumbnails(
-                r2UserId, 
-                sessionId, 
-                photosNeedingThumbnails.map(p => ({ filename: p.filename }))
-            );
-            
-            if (thumbnailGenResult.success && thumbnailGenResult.generated > 0) {
-                console.log(`📸 Generated ${thumbnailGenResult.generated} new thumbnails, refreshing URLs...`);
-                
-                // Refresh thumbnail URLs for the photos that had thumbnails generated
-                const refreshResult = await r2FileManager.getBatchThumbnailUrls(
-                    r2UserId, 
-                    sessionId, 
-                    photosNeedingThumbnails.map(p => ({ filename: p.filename })), 
-                    3600
-                );
-                
-                if (refreshResult.success) {
-                    // Merge the refreshed thumbnail URLs back into the main results
-                    refreshResult.results.forEach(refreshedPhoto => {
-                        const originalIndex = batchResult.results.findIndex(p => p.filename === refreshedPhoto.filename);
-                        if (originalIndex !== -1) {
-                            batchResult.results[originalIndex].thumbnails = refreshedPhoto.thumbnails;
-                            batchResult.results[originalIndex].needsThumbnailGeneration = false;
-                        }
-                    });
-                }
-            }
-        }
-        
-        // Build final photo response with all URLs populated
-        const finalPhotos = [];
-        
-        for (let i = 0; i < photos.length; i++) {
-            const originalPhoto = photos[i];
-            const batchResultPhoto = batchResult.results[i];
-            
-            if (!batchResultPhoto) {
-                console.warn(`Missing batch result for photo: ${originalPhoto.filename}`);
-                continue;
-            }
-            
-            const finalPhoto = {
-                fileName: originalPhoto.filename,
-                filename: originalPhoto.filename,
-                url: batchResultPhoto.mainUrl || '',
-                fullUrl: batchResultPhoto.mainUrl || '',
-                fileSize: originalPhoto.fileSize,
-                fileSizeMB: originalPhoto.fileSizeMB,
-                uploadedAt: originalPhoto.uploadedAt,
-                contentType: originalPhoto.contentType
-            };
-            
-            // Add thumbnails if available
-            if (batchResultPhoto.thumbnails && Object.keys(batchResultPhoto.thumbnails).length > 0) {
-                finalPhoto.thumbnails = batchResultPhoto.thumbnails;
-            }
-            
-            // For legacy photos, handle special URL logic
-            if (originalPhoto.isLegacy) {
-                // If we don't have a main URL from R2, try to construct one or use original
-                if (!finalPhoto.url && originalPhoto.originalUrl) {
-                    if (originalPhoto.originalUrl.startsWith('http')) {
-                        // Use the original HTTP URL directly
-                        finalPhoto.url = originalPhoto.originalUrl;
-                        finalPhoto.fullUrl = originalPhoto.originalUrl;
-                    } else {
-                        // Try to construct R2 key and get presigned URL
-                        const r2Key = `photographer-${r2UserId}/session-${sessionId}/gallery/${originalPhoto.filename}`;
-                        try {
-                            const presignedUrl = await r2FileManager.getSignedUrl(r2Key, 3600);
-                            if (presignedUrl) {
-                                finalPhoto.url = presignedUrl;
-                                finalPhoto.fullUrl = presignedUrl;
-                            } else {
-                                // Fallback to original URL
-                                finalPhoto.url = originalPhoto.originalUrl;
-                                finalPhoto.fullUrl = originalPhoto.originalUrl;
-                            }
-                        } catch (err) {
-                            console.log(`Legacy photo not found in R2: ${r2Key}, using original URL`);
-                            finalPhoto.url = originalPhoto.originalUrl;
-                            finalPhoto.fullUrl = originalPhoto.originalUrl;
-                        }
-                    }
-                }
-                
-                // For legacy photos without thumbnails, use the main photo as fallback
-                if (!finalPhoto.thumbnails || Object.keys(finalPhoto.thumbnails).length === 0) {
-                    if (finalPhoto.url) {
-                        finalPhoto.thumbnails = {
-                            small: finalPhoto.url,
-                            medium: finalPhoto.url,
-                            large: finalPhoto.url
-                        };
-                    }
-                }
-            } else {
-                // For non-legacy photos, fallback to thumbnail if main photo is not accessible
-                if (!finalPhoto.url && finalPhoto.thumbnails && finalPhoto.thumbnails.large) {
-                    finalPhoto.url = finalPhoto.thumbnails.large;
-                    finalPhoto.fullUrl = finalPhoto.thumbnails.large;
-                }
-            }
-            
-            finalPhotos.push(finalPhoto);
-        }
-
-        console.log(`📸 Successfully processed ${finalPhotos.length} photos for session ${sessionId} (${isLegacyPhotos ? 'legacy' : 'R2'} mode)`);
-        res.json({ photos: finalPhotos });
-
-    } catch (error) {
-        console.error('Error fetching session photos:', error);
-        res.status(500).json({ error: 'Failed to fetch session photos' });
-    }
-});
-
 app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
@@ -5531,48 +5230,40 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 WHERE user_id = '44735007'
                 ORDER BY created_at DESC
             `);
-            sessions = await Promise.all(lanceSessionsResult.rows.map(async row => {
-                // For Lance's account, use the proper user ID for R2 storage
-                const r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Lance's Firebase UID for R2 storage
-                
-                // Enhance photos with thumbnail URLs
-                const enhancedPhotos = await enhancePhotosWithThumbnails(row.photos, r2UserId, row.id);
-                
-                return {
-                    id: row.id,
-                    clientName: row.client_name,
-                    sessionType: row.session_type,
-                    dateTime: row.date_time,
-                    location: row.location,
-                    phoneNumber: row.phone_number,
-                    email: row.email,
-                    price: parseFloat(row.price),
-                    depositAmount: parseFloat(row.deposit_amount || 0), // FIXED: Include deposit amount mapping
-                    deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
-                    depositPaid: row.deposit_paid || false,
-                    depositSent: row.deposit_sent || false,
-                    invoiceSent: row.invoice_sent || false,
-                    depositPaidAt: row.deposit_paid_at,
-                    invoicePaidAt: row.invoice_paid_at,
-                    duration: row.duration,
-                    notes: row.notes,
-                    contractSigned: row.contract_signed,
-                    paid: row.paid,
-                    edited: row.edited,
-                    delivered: row.delivered,
-                    sendReminder: row.send_reminder,
-                    notifyGalleryReady: row.notify_gallery_ready,
-                    photos: enhancedPhotos,
-                    galleryAccessToken: row.gallery_access_token,
-                    galleryCreatedAt: row.gallery_created_at,
-                    galleryExpiresAt: row.gallery_expires_at,
-                    galleryReadyNotified: row.gallery_ready_notified,
-                    hasPaymentPlan: row.has_payment_plan || false,
-                    paymentPlanId: row.payment_plan_id || null,
-                    createdAt: row.created_at,
-                    updatedAt: row.updated_at,
-                    stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
-                };
+            sessions = lanceSessionsResult.rows.map(row => ({
+                id: row.id,
+                clientName: row.client_name,
+                sessionType: row.session_type,
+                dateTime: row.date_time,
+                location: row.location,
+                phoneNumber: row.phone_number,
+                email: row.email,
+                price: parseFloat(row.price),
+                depositAmount: parseFloat(row.deposit_amount || 0), // FIXED: Include deposit amount mapping
+                deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+                depositPaid: row.deposit_paid || false,
+                depositSent: row.deposit_sent || false,
+                invoiceSent: row.invoice_sent || false,
+                depositPaidAt: row.deposit_paid_at,
+                invoicePaidAt: row.invoice_paid_at,
+                duration: row.duration,
+                notes: row.notes,
+                contractSigned: row.contract_signed,
+                paid: row.paid,
+                edited: row.edited,
+                delivered: row.delivered,
+                sendReminder: row.send_reminder,
+                notifyGalleryReady: row.notify_gallery_ready,
+                photos: row.photos || [],
+                galleryAccessToken: row.gallery_access_token,
+                galleryCreatedAt: row.gallery_created_at,
+                galleryExpiresAt: row.gallery_expires_at,
+                galleryReadyNotified: row.gallery_ready_notified,
+                hasPaymentPlan: row.has_payment_plan || false,
+                paymentPlanId: row.payment_plan_id || null,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
             }));
             console.log(`UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
@@ -6776,37 +6467,254 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
     }
 });
 
-// CONSOLIDATED: Legacy upload endpoint redirects to batch presigned URL method
-// This endpoint is kept for backward compatibility but redirects to the efficient batch method
+// Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
-    console.log('⚠️ LEGACY UPLOAD ENDPOINT CALLED - Redirecting to batch presigned URL method');
-    
-    // Return a redirect response that instructs the client to use the batch presigned URL method
-    return res.status(308).json({
-        message: 'This endpoint has been deprecated. Please use the batch presigned URL method.',
-        redirect: true,
-        newEndpoint: '/api/r2/generate-presigned-urls',
-        instructions: 'Use R2DirectUploader class for efficient direct-to-R2 uploads',
-        documentation: 'The batch presigned URL method supports concurrent uploads, better performance, and direct browser-to-R2 transfers.'
+    const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+
+    console.log(` Starting upload for session ${sessionId}...`);
+
+    // Disable all timeouts for upload requests
+    req.setTimeout(0); // Infinite timeout
+    res.setTimeout(0); // Infinite timeout
+
+    console.log(` Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
+    console.log(` Headers:`, req.headers);
+
+    console.log(`Starting Starting multer processing for session ${sessionId}...`);
+
+    upload.array('photos')(req, res, async (uploadError) => {
+        console.log(` Multer callback triggered - error: ${uploadError ? 'YES' : 'NO'}`);
+
+        if (uploadError) {
+            console.error(' Multer upload error:', uploadError);
+            console.error(' Error stack:', uploadError.stack);
+            console.error(' Error code:', uploadError.code);
+            console.error(' Error field:', uploadError.field);
+
+            // Send immediate error response
+            if (!res.headersSent) {
+                return res.status(400).json({ 
+                    error: 'Upload failed', 
+                    details: uploadError.message,
+                    code: uploadError.code,
+                    field: uploadError.field
+                });
+            }
+            return;
+        }
+
+        console.log(` Multer success - starting processing...`);
+        console.log(` Files received: ${req.files ? req.files.length : 0}`);
+
+        if (!req.files || req.files.length === 0) {
+            console.log(' No files received in request');
+            if (!res.headersSent) {
+                return res.status(400).json({ error: 'No files uploaded' });
+            }
+            return;
+        }
+
+        // QUOTA ENFORCEMENT: Check total upload size against user's storage limit
+        const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
+        console.log(` Total upload size: ${(totalUploadSize / 1024 / 1024).toFixed(2)}MB`);
+        
+        try {
+            const userEmail = normalizedUser.email || req.session?.user?.email;
+            const quotaCheck = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
+            if (!quotaCheck.canUpload) {
+                console.log(`❌ Upload blocked - quota exceeded for user ${userId}`);
+                if (!res.headersSent) {
+                    return res.status(413).json({ 
+                        error: 'Storage quota exceeded',
+                        currentUsageGB: quotaCheck.currentUsageGB,
+                        quotaGB: quotaCheck.quotaGB,
+                        requiredGB: quotaCheck.newTotalGB,
+                        uploadSizeMB: (totalUploadSize / 1024 / 1024).toFixed(2),
+                        message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit. Please upgrade your storage plan to continue.`,
+                        upgradeRequired: true
+                    });
+                }
+                return;
+            }
+
+            // Warning if near limit
+            if (quotaCheck.isNearLimit) {
+                console.log(` User ${userId} approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
+            }
+        } catch (quotaError) {
+            console.error('Quota check failed, allowing upload (fail-safe):', quotaError);
+        }
+
+        const uploadedPhotos = [];
+
+        console.log(` Processing ${req.files.length} files for session ${sessionId}`);
+
+        // Process files with detailed logging and dual storage
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
+            try {
+                console.log(`File: Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+
+                // Store original file metadata
+                const originalPath = file.path;
+                const originalSize = file.size;
+
+                // Create optimized version for app display if file is an image and large
+                let displayPath = originalPath;
+                let optimizedSize = originalSize;
+                let fileType = 'other';
+
+                // Determine file type
+                if (file.mimetype.startsWith('image/')) {
+                    fileType = 'image';
+                } else if (file.mimetype.startsWith('video/')) {
+                    fileType = 'video';
+                } else if (file.mimetype.startsWith('audio/')) {
+                    fileType = 'audio';
+                } else if (file.mimetype === 'application/pdf') {
+                    fileType = 'pdf';
+                } else if (file.mimetype.includes('document') || file.mimetype.includes('text')) {
+                    fileType = 'document';
+                }
+
+                // Only optimize images that are large
+                if (fileType === 'image' && file.size > 2 * 1024 * 1024) { // 2MB threshold
+                    try {
+                        const sharp = require('sharp');
+                        const optimizedFilename = `optimized_${file.filename}`;
+                        const optimizedPath = path.join(uploadsDir, optimizedFilename);
+
+                        await sharp(originalPath)
+                            .resize(1920, 2560, { 
+                                fit: 'inside', 
+                                withoutEnlargement: true 
+                            })
+                            .jpeg({ quality: 85 })
+                            .toFile(optimizedPath);
+
+                        displayPath = optimizedPath;
+                        optimizedSize = fs.statSync(optimizedPath).size;
+
+                        console.log(`Image optimized: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimizedSize / 1024 / 1024).toFixed(1)}MB`);
+                    } catch (optimizeError) {
+                        console.log(`Image optimization failed, using original: ${optimizeError.message}`);
+                    }
+                } else {
+                    console.log(`File type: ${fileType} - no optimization needed`);
+                }
+
+                // Detect RAW files for R2 backup
+                const isRawFile = isRAWFile(file.originalname, file.mimetype);
+                const userId = req.user?.uid || req.user?.id || 'unknown';
+
+                const photoData = {
+                    filename: file.filename,
+                    originalName: file.originalname,
+                    originalSize: originalSize,
+                    optimizedSize: optimizedSize,
+                    originalPath: originalPath,
+                    displayPath: displayPath,
+                    uploadDate: new Date().toISOString(),
+                    needsR2Backup: true, // Flag for background R2 backup
+                    isRawFile: isRawFile,
+                    mimeType: file.mimetype,
+                    fileType: fileType,
+                    userId: userId
+                };
+
+                uploadedPhotos.push(photoData);
+                console.log(`SUCCESS: File processed: ${file.originalname}`);
+
+            } catch (fileError) {
+                console.error(` Error processing file ${file.originalname}:`, fileError);
+                // Continue with other files
+            }
+        }
+
+        console.log(` Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
+
+        // Send immediate response to prevent connection timeout
+        if (!res.headersSent) {
+            res.json({
+                message: 'Photos uploaded successfully',
+                uploaded: uploadedPhotos.length,
+                photos: uploadedPhotos,
+                databaseUpdated: false // Will update in background
+            });
+        }
+
+        // Update database asynchronously in background
+        try {
+            console.log(` Background database update starting...`);
+            const session = await getSessionById(sessionId);
+            if (session) {
+                const existingPhotos = session.photos || [];
+                const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
+                await updateSession(sessionId, { photos: updatedPhotos });
+                console.log(`SUCCESS: Background database update completed: ${uploadedPhotos.length} new photos`);
+
+                // Start comprehensive R2 backup process for all uploaded files (PRIMARY)  
+                console.log(`☁️ Starting R2 backup for ${uploadedPhotos.length} files`);
+                const backupUserId = req.user?.uid || req.user?.id || userId || 'unknown';
+                processR2BackupsAsync(sessionId, uploadedPhotos, backupUserId);
+
+                // CRITICAL: Also add files to session_files table for accurate storage tracking
+                try {
+                    for (const photo of uploadedPhotos) {
+                        const folderType = photo.isRawFile ? 'raw' : 'gallery';
+                        const fileSize = photo.originalSize || 0;
+                        
+                        await pool.query(`
+                            INSERT INTO session_files (session_id, filename, file_size_bytes, folder_type, user_id)
+                            VALUES ($1, $2, $3, $4, $5)
+                            ON CONFLICT (session_id, filename) DO UPDATE SET
+                                file_size_bytes = $3,
+                                folder_type = $4,
+                                user_id = $5
+                        `, [
+                            sessionId,
+                            photo.originalName || photo.filename,
+                            fileSize,
+                            folderType,
+                            userId  // Use the Firebase UID here
+                        ]);
+
+                        // NEW: Log storage usage for quota tracking
+                        try {
+                            await storageSystem.logStorageChange(
+                                userId, 
+                                sessionId, 
+                                'upload', 
+                                fileSize, 
+                                folderType, 
+                                photo.originalName || photo.filename
+                            );
+                        } catch (logError) {
+                            console.error('Storage quota logging failed:', logError);
+                        }
+                    }
+                    console.log(` Added ${uploadedPhotos.length} files to session_files database and logged storage usage`);
+                } catch (trackingError) {
+                    console.error('Error adding files to session_files table:', trackingError);
+                }
+
+                // Skip Firebase upload to avoid bucket errors - R2 is primary storage
+                // uploadPhotosToFirebase(sessionId, uploadedPhotos);
+            } else {
+                console.error(` Session ${sessionId} not found for background database update`);
+            }
+        } catch (dbError) {
+            console.error(` Background database update error:`, dbError);
+            // Don't send response here as we already sent one above
+        }
+
+        return; // Exit early to prevent double response
     });
 });
 
-// DEAD CODE REMOVED: Original legacy upload implementation has been removed
-// The batch presigned URL method (/api/r2/generate-presigned-urls) is now the ONLY upload method
-// It provides:
-// - Direct browser-to-R2 uploads (no server bottleneck)
-// - Concurrent uploads (up to 4 files at once)
-// - Proper quota checking and validation
-// - Optimized for large files and RAW formats
-
-/* ORIGINAL LEGACY CODE REMOVED (lines 6780-7024)
-app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
-    // ... 244 lines of legacy multer-based upload code removed ...
-    upload.array('photos')(req, res, async (uploadError) => {
-    // Legacy multer-based upload code has been completely removed
-    // All uploads now use the batch presigned URL method via R2DirectUploader
-});
-*/
+// DEAD CODE BLOCK REMOVED - was unreachable after return statement
 
 // Test R2 connection (admin only)
 app.get('/api/r2-test', isAuthenticated, async (req, res) => {
@@ -9753,41 +9661,8 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
             token: galleryToken
         });
 
-        // Add thumbnail URLs to each photo
-        const photosWithThumbnails = photos.map(photo => {
-            // Extract filename from URL if present
-            let filename = photo.filename || photo.originalName;
-            if (!filename && photo.url) {
-                // Extract filename from URL
-                const urlParts = photo.url.split('/');
-                filename = urlParts[urlParts.length - 1];
-                // Remove timestamp prefix if present (format: 20250906022712-DSC_0111.jpg)
-                if (filename.includes('-')) {
-                    const parts = filename.split('-');
-                    if (parts[0].length === 14 && /^\d+$/.test(parts[0])) {
-                        filename = parts.slice(1).join('-');
-                    }
-                }
-            }
-            
-            // Generate thumbnail URLs
-            const baseName = filename ? filename.replace(/\.[^.]+$/, '') : 'photo';
-            const thumbnailBase = `/api/gallery/${session.id}/thumbnail`;
-            
-            return {
-                ...photo,
-                filename: filename,
-                fullUrl: photo.url,
-                thumbnails: {
-                    small: `${thumbnailBase}/${baseName}_sm.jpg`,
-                    medium: `${thumbnailBase}/${baseName}_md.jpg`,
-                    large: `${thumbnailBase}/${baseName}_lg.jpg`
-                }
-            };
-        });
-        
         res.json({
-            photos: photosWithThumbnails,
+            photos: photos,
             totalPhotos: photos.length
         });
     } catch (error) {
@@ -9862,123 +9737,6 @@ app.get('/api/gallery/:id/photo/:filename', async (req, res) => {
     } catch (error) {
         console.error('Error serving gallery photo:', error);
         res.status(404).json({ error: 'Photo not found' });
-    }
-});
-
-// Serve thumbnail from gallery
-app.get('/api/gallery/:id/thumbnail/:filename', async (req, res) => {
-    const sessionId = req.params.id;
-    const filename = decodeURIComponent(req.params.filename);
-
-    try {
-        // Get session to get userId
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-        
-        // Get the Firebase UID from session_files table to properly locate R2 files
-        let firebaseUserId = null;
-        try {
-            const client = await pool.connect();
-            const fileUserResult = await client.query(
-                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
-                [sessionId]
-            );
-            client.release();
-            if (fileUserResult.rows.length > 0) {
-                firebaseUserId = fileUserResult.rows[0].user_id;
-            }
-        } catch (dbError) {
-            console.error('Error getting Firebase UID:', dbError);
-        }
-        
-        // Get the thumbnail directly from R2 using the S3 API
-        const { GetObjectCommand } = require('@aws-sdk/client-s3');
-        const userIdForR2 = firebaseUserId || session.userId;
-        const key = `photographer-${userIdForR2}/session-${sessionId}/thumbnails/${filename}`;
-        
-        console.log(`Fetching thumbnail from R2: ${key}`);
-        
-        try {
-            const getCommand = new GetObjectCommand({
-                Bucket: 'photoappr2token',
-                Key: key
-            });
-            
-            const response = await r2FileManager.s3Client.send(getCommand);
-            
-            // Convert stream to buffer
-            const chunks = [];
-            for await (const chunk of response.Body) {
-                chunks.push(chunk);
-            }
-            const buffer = Buffer.concat(chunks);
-            
-            // Thumbnails are always JPEG
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=31536000');
-            res.setHeader('Content-Length', buffer.length);
-            
-            // Send the thumbnail buffer
-            res.send(buffer);
-        } catch (thumbnailError) {
-            // If thumbnail not found, try to get and resize the original image on the fly
-            console.log(`Thumbnail not found, falling back to original: ${thumbnailError.message}`);
-            
-            // Extract original filename from thumbnail name (remove _sm, _md, _lg suffix)
-            const originalName = filename.replace(/_(?:sm|md|lg)\.jpg$/, '');
-            const originalExt = originalName.split('.').pop();
-            const originalKey = `photographer-${userIdForR2}/session-${sessionId}/gallery/${originalName}.${originalExt}`;
-            
-            try {
-                const getOriginalCommand = new GetObjectCommand({
-                    Bucket: 'photoappr2token',
-                    Key: originalKey
-                });
-                
-                const originalResponse = await r2FileManager.s3Client.send(getOriginalCommand);
-                
-                // Convert stream to buffer
-                const originalChunks = [];
-                for await (const chunk of originalResponse.Body) {
-                    originalChunks.push(chunk);
-                }
-                const originalBuffer = Buffer.concat(originalChunks);
-                
-                // Resize on the fly using sharp
-                const sharp = require('sharp');
-                let width = 400, height = 300; // Default to medium size
-                
-                if (filename.includes('_sm')) {
-                    width = 150;
-                    height = 150;
-                } else if (filename.includes('_lg')) {
-                    width = 800;
-                    height = 600;
-                }
-                
-                const resizedBuffer = await sharp(originalBuffer)
-                    .resize(width, height, { 
-                        fit: 'inside', 
-                        withoutEnlargement: true 
-                    })
-                    .jpeg({ quality: 85, progressive: true })
-                    .toBuffer();
-                
-                res.setHeader('Content-Type', 'image/jpeg');
-                res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour since it's generated on the fly
-                res.setHeader('Content-Length', resizedBuffer.length);
-                
-                res.send(resizedBuffer);
-            } catch (fallbackError) {
-                console.error('Error generating thumbnail on the fly:', fallbackError);
-                res.status(404).json({ error: 'Thumbnail not found' });
-            }
-        }
-    } catch (error) {
-        console.error('Error serving thumbnail:', error);
-        res.status(404).json({ error: 'Thumbnail not found' });
     }
 });
 
