@@ -5222,15 +5222,23 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription,
         const R2FileManager = require('./server/r2-file-manager');
         const r2Manager = new R2FileManager(null, pool);
         
-        // SPECIAL HANDLING: For Lance's unified account, use the Firebase UID for R2 storage lookups
-        let r2UserId = userId;
-        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
-            console.log('UNIFIED LANCE ACCOUNT: Using Firebase UID for R2 storage lookup');
-            r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Firebase UID for R2 storage
+        // Try multiple user ID patterns since photos may be stored under different IDs
+        // 1. First try with the normalized user ID from the session
+        let sessionFiles = await r2Manager.getSessionFiles(userId, sessionId);
+        
+        // 2. If no files found and this is Lance's account, try with Firebase UID
+        if ((!sessionFiles.totalFiles || sessionFiles.totalFiles === 0) && 
+            (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com')) {
+            console.log('UNIFIED LANCE ACCOUNT: Trying Firebase UID for R2 storage lookup');
+            sessionFiles = await r2Manager.getSessionFiles('BFZI4tzu4rdsiZZSK63cqZ5yohw2', sessionId);
         }
         
-        // Get session files from R2
-        const sessionFiles = await r2Manager.getSessionFiles(r2UserId, sessionId);
+        // 3. If still no files found, try with the actual user_id from the session row
+        if ((!sessionFiles.totalFiles || sessionFiles.totalFiles === 0) && sessionResult.rows[0].user_id) {
+            const actualUserId = sessionResult.rows[0].user_id;
+            console.log(`📸 No files found with normalized user ID ${userId}, trying actual session user_id: ${actualUserId}`);
+            sessionFiles = await r2Manager.getSessionFiles(actualUserId, sessionId);
+        }
         
         // Filter by folder type if specified
         let files = [];
@@ -5448,7 +5456,9 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get photos for a specific session from R2 files
+// DUPLICATE ENDPOINT - Commented out as we're using the updated one above at line 5202
+// This endpoint was using the old r2_files table which may not exist
+/* COMMENTED OUT - DUPLICATE ENDPOINT
 app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const normalizedUser = normalizeUserForLance(req.user);
@@ -5659,6 +5669,7 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         });
     }
 });
+END OF COMMENTED OUT DUPLICATE ENDPOINT */
 
 // Create gallery access token for a session
 app.post('/api/sessions/:id/create-gallery', isAuthenticated, async (req, res) => {

@@ -103,6 +103,86 @@ class R2FileManager {
     
     return 'other';
   }
+  
+  /**
+   * Get content type based on file extension
+   */
+  getContentType(filename) {
+    if (!filename) return 'application/octet-stream';
+    
+    const ext = filename.toLowerCase().split('.').pop();
+    const contentTypes = {
+      // Images
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'bmp': 'image/bmp',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'tiff': 'image/tiff',
+      'tif': 'image/tiff',
+      // RAW formats
+      'nef': 'image/x-nikon-nef',
+      'cr2': 'image/x-canon-cr2',
+      'arw': 'image/x-sony-arw',
+      'dng': 'image/x-adobe-dng',
+      'raf': 'image/x-fuji-raf',
+      'orf': 'image/x-olympus-orf',
+      // Videos
+      'mp4': 'video/mp4',
+      'mov': 'video/quicktime',
+      'avi': 'video/x-msvideo',
+      'mkv': 'video/x-matroska',
+      'wmv': 'video/x-ms-wmv',
+      // Documents
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'txt': 'text/plain',
+      // Adobe
+      'psd': 'image/vnd.adobe.photoshop',
+      'ai': 'application/postscript',
+      'eps': 'application/postscript'
+    };
+    
+    return contentTypes[ext] || 'application/octet-stream';
+  }
+  
+  /**
+   * Rebuild backup index from existing R2 files
+   */
+  async rebuildBackupIndex(userId, sessionId, files) {
+    try {
+      const indexKey = this.generateBackupIndexKey(userId, sessionId);
+      const backupIndex = {
+        sessionId,
+        userId,
+        files: files,
+        lastUpdated: new Date().toISOString(),
+        totalFiles: files.length,
+        totalSizeBytes: files.reduce((sum, f) => sum + (f.fileSizeBytes || 0), 0),
+        rebuilt: true,
+        rebuiltAt: new Date().toISOString()
+      };
+      
+      // Upload the rebuilt index to R2
+      const putCommand = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: indexKey,
+        Body: JSON.stringify(backupIndex, null, 2),
+        ContentType: 'application/json'
+      });
+      
+      await this.s3Client.send(putCommand);
+      console.log(`✅ Backup index rebuilt for session ${sessionId} with ${files.length} files`);
+      
+      return backupIndex;
+    } catch (error) {
+      console.error('Error rebuilding backup index:', error);
+      throw error;
+    }
+  }
 
   // Check if file is an image that can be processed
   isImageFile(filename) {
@@ -713,23 +793,118 @@ class R2FileManager {
       // Get the backup index which contains all file metadata
       const backupIndex = await this.getSessionBackupIndex(userId, sessionId);
       
+      // If backup index is empty or missing, fall back to direct R2 listing
       if (!backupIndex.files || backupIndex.files.length === 0) {
-        console.log(`📁 No files found in backup index for session ${sessionId}`);
+        console.log(`📁 No files in backup index for session ${sessionId}, falling back to direct R2 listing`);
+        
+        // Construct the prefix to search for files in R2 - using the correct pattern
+        const sessionPrefix = `photographer-${userId}/session-${sessionId}/`;
+        console.log(`🔍 Searching R2 with prefix: ${sessionPrefix}`);
+        
+        // List all objects with this prefix
+        const r2Objects = await this.listObjects(sessionPrefix);
+        
+        if (!r2Objects || r2Objects.length === 0) {
+          console.log(`📁 No files found in R2 for session ${sessionId}`);
+          return {
+            success: true,
+            filesByType: {
+              raw: [],
+              gallery: [],
+              video: [],
+              document: [],
+              other: []
+            },
+            totalFiles: 0,
+            totalSize: 0
+          };
+        }
+        
+        console.log(`📁 Found ${r2Objects.length} objects in R2 for session ${sessionId}`);
+        
+        // Organize files by category from R2 listing
+        const filesByType = {
+          raw: [],
+          gallery: [],
+          video: [],
+          document: [],
+          other: []
+        };
+        
+        let totalSize = 0;
+        const indexFiles = [];
+        
+        for (const obj of r2Objects) {
+          // Skip backup index files and thumbnails
+          if (obj.Key.endsWith('backup-index.json') || 
+              obj.Key.endsWith('backups.json') ||
+              obj.Key.includes('_sm.') || 
+              obj.Key.includes('_md.') || 
+              obj.Key.includes('_lg.')) {
+            continue;
+          }
+          
+          // Extract filename from the key
+          const filename = obj.Key.split('/').pop();
+          
+          // Determine category based on path or extension
+          let category = 'other';
+          if (obj.Key.includes('/raw/')) {
+            category = 'raw';
+          } else if (obj.Key.includes('/gallery/')) {
+            category = 'gallery';
+          } else if (obj.Key.includes('/video/')) {
+            category = 'video';
+          } else if (obj.Key.includes('/document/')) {
+            category = 'document';
+          } else {
+            category = this.getFileTypeCategory(filename);
+          }
+          
+          const fileInfo = {
+            filename: filename,
+            fileSizeBytes: obj.Size || 0,
+            fileSizeMB: (obj.Size || 0) / (1024 * 1024),
+            uploadedAt: obj.LastModified ? obj.LastModified.toISOString() : new Date().toISOString(),
+            fileType: category,
+            contentType: this.getContentType(filename),
+            r2Key: obj.Key,
+            originalFormat: filename.split('.').pop()
+          };
+          
+          filesByType[category].push(fileInfo);
+          totalSize += obj.Size || 0;
+          
+          // Collect for index rebuild
+          indexFiles.push({
+            filename: filename,
+            r2Key: obj.Key,
+            fileSizeBytes: obj.Size || 0,
+            contentType: this.getContentType(filename),
+            originalFormat: filename.split('.').pop(),
+            uploadedAt: obj.LastModified ? obj.LastModified.toISOString() : new Date().toISOString()
+          });
+        }
+        
+        // Rebuild the backup index asynchronously (don't wait for it)
+        if (indexFiles.length > 0) {
+          console.log(`🔧 Rebuilding backup index with ${indexFiles.length} files`);
+          this.rebuildBackupIndex(userId, sessionId, indexFiles).catch(err => {
+            console.error('Failed to rebuild backup index:', err);
+          });
+        }
+        
+        console.log(`📁 Retrieved ${indexFiles.length} files from R2 for session ${sessionId}`);
+        
         return {
           success: true,
-          filesByType: {
-            raw: [],
-            gallery: [],
-            video: [],
-            document: [],
-            other: []
-          },
-          totalFiles: 0,
-          totalSize: 0
+          filesByType,
+          totalFiles: indexFiles.length,
+          totalSize
         };
       }
 
-      // Organize files by category
+      // Organize files by category from backup index
       const filesByType = {
         raw: [],
         gallery: [],
@@ -776,7 +951,7 @@ class R2FileManager {
         totalSize += file.fileSizeBytes;
       });
 
-      console.log(`📁 Retrieved ${backupIndex.files.length} files for session ${sessionId}`);
+      console.log(`📁 Retrieved ${backupIndex.files.length} files from backup index for session ${sessionId}`);
 
       return {
         success: true,
