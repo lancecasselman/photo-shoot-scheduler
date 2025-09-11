@@ -5200,6 +5200,14 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
 
 // Get photos for a session from R2 storage with thumbnails
 app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription, async (req, res) => {
+    // Set a longer timeout for large galleries (5 minutes)
+    req.setTimeout(300000);
+    res.setTimeout(300000);
+    
+    // Set headers to keep connection alive
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Keep-Alive', 'timeout=300');
+    
     try {
         const { sessionId } = req.params;
         const { folder } = req.query; // 'gallery' or 'raw'
@@ -5369,17 +5377,36 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, requireSubscription,
         
         console.log(`✅ Successfully processed ${filesWithUrls.length} files for session ${sessionId}`);
         
-        // Always return a response, even if some files failed
-        res.json({
+        // CRITICAL FIX: Ensure response is always sent
+        // Check if response has already been sent (in case of timeout)
+        if (res.headersSent) {
+            console.warn('⚠️ Response already sent, likely due to timeout');
+            return;
+        }
+        
+        // Always return a response immediately, even if some files failed
+        const responseData = {
             success: true,
-            files: filesWithUrls,
+            photos: filesWithUrls,  // Changed from 'files' to 'photos' to match client expectation
+            files: filesWithUrls,   // Keep 'files' for backward compatibility
             totalFiles: filesWithUrls.length,
             sessionId: sessionId,
             clientName: sessionResult.rows[0].client_name
-        });
+        };
+        
+        console.log(`📤 Sending response with ${responseData.totalFiles} files`);
+        res.json(responseData);
+        console.log(`✅ Response sent successfully for session ${sessionId}`);
         
     } catch (error) {
         console.error('❌ Critical error fetching session photos:', error);
+        
+        // Check if response has already been sent
+        if (res.headersSent) {
+            console.warn('⚠️ Response already sent, cannot send error');
+            return;
+        }
+        
         // Return a more informative error response
         res.status(500).json({ 
             error: 'Failed to fetch photos', 
@@ -5529,6 +5556,14 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
 
 // TEMPORARY TEST ENDPOINT - FOR TESTING ONLY - REMOVE IN PRODUCTION
 app.get('/api/test/sessions/:sessionId/photos', async (req, res) => {
+    // Set a longer timeout for large galleries (5 minutes)
+    req.setTimeout(300000);
+    res.setTimeout(300000);
+    
+    // Set headers to keep connection alive
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Keep-Alive', 'timeout=300');
+    
     try {
         const { sessionId } = req.params;
         const { folder } = req.query; // 'gallery' or 'raw'
@@ -5651,8 +5686,15 @@ app.get('/api/test/sessions/:sessionId/photos', async (req, res) => {
         console.log('🧪 TEST: Processed', filesWithUrls.length, 'files with URLs');
         console.log('🧪 TEST: Files with thumbnails:', filesWithUrls.filter(f => f.thumbnails && Object.keys(f.thumbnails).length > 0).length);
         
-        // Return the response in the expected format
-        res.json(filesWithUrls);
+        // Return the response in the expected format for client compatibility
+        res.json({
+            success: true,
+            photos: filesWithUrls,  // Client expects 'photos' property
+            files: filesWithUrls,   // Also include 'files' for backward compatibility
+            totalFiles: filesWithUrls.length,
+            sessionId: sessionId,
+            clientName: sessionResult.rows[0]?.client_name || 'Test Session'
+        });
         
     } catch (error) {
         console.error('🧪 TEST ENDPOINT ERROR:', error);
