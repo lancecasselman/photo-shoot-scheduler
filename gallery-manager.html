@@ -730,9 +730,8 @@
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            // Support both 'id' and 'sessionId' parameter names
-            sessionId = urlParams.get('sessionId') || urlParams.get('id');
-            folderType = urlParams.get('folderType') || urlParams.get('folder') || 'gallery';
+            sessionId = urlParams.get('sessionId');
+            folderType = urlParams.get('folderType');
             clientName = urlParams.get('clientName') || 'Client';
             
             console.log('URL Parameters:', { sessionId, folderType, clientName });
@@ -764,38 +763,8 @@
             return true;
         }
 
-        // Check authentication
-        async function checkAuth() {
-            try {
-                const response = await fetch('/api/auth/status', {
-                    credentials: 'include'
-                });
-                
-                if (!response.ok) {
-                    console.error('❌ Authentication check failed:', response.status);
-                    window.location.href = '/secure-login.html';
-                    return false;
-                }
-                
-                const data = await response.json();
-                console.log('✅ Authentication successful:', data.user?.email);
-                return true;
-            } catch (error) {
-                console.error('❌ Authentication error:', error);
-                window.location.href = '/secure-login.html';
-                return false;
-            }
-        }
-        
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            // First check authentication
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) {
-                console.error('❌ User not authenticated, redirecting to login...');
-                return;
-            }
-            
             if (getUrlParams()) {
                 // Load complete session data to get client contact info
                 await loadSessionData();
@@ -965,7 +934,7 @@
                 }
                 
                 // Step 1: Get presigned URL for direct R2 upload (bypasses server)
-                const urlResponse = await fetch(`/api/r2/sessions/${sessionId}/upload-urls`, {
+                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -1008,22 +977,21 @@
                     });
                     
                     if (r2Response.ok) {
-                        console.log(`✅ FAST direct upload to R2 succeeded for ${file.name}`);
-                        uploadedFileName = uploadData.filename || file.name;
+                        console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
+                        uploadedFileName = uploadData.fileName;
                         
-                        // Step 3: Confirm the upload with the server to update database
-                        response = await fetch(`/api/r2/sessions/${sessionId}/confirm-uploads`, {
+                        // Step 3: Update database with the uploaded file info
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
                             method: 'POST',
                             credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                uploads: [{
-                                    filename: uploadData.filename || file.name,
-                                    key: uploadData.key,
-                                    size: file.size
-                                }]
+                                fileName: uploadData.fileName,
+                                originalName: file.name,
+                                size: file.size,
+                                r2Key: uploadData.r2Key
                             })
                         });
                     } else {
@@ -1253,126 +1221,21 @@
 
         // Load files
         async function loadFiles() {
-            console.log('📸 LOADING FILES STARTED');
-            console.log('📸 Current sessionId:', sessionId);
-            console.log('📸 Current folderType:', folderType);
-            
-            if (!sessionId) {
-                console.error('📸 ERROR: sessionId is not set!');
-                document.getElementById('fileContainer').innerHTML = `
-                    <div class="empty-state">
-                        <h3>Error</h3>
-                        <p>No session ID provided in the URL.</p>
-                    </div>
-                `;
-                return;
-            }
-            
             try {
-                const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
-                console.log('📸 Fetching photos from:', url);
-                console.log('Session ID:', sessionId, 'Folder Type:', folderType);
-                
-                // Check if we have session cookies
-                console.log('Cookies:', document.cookie);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include', // Include cookies for authentication
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                    credentials: 'include' // Include cookies for authentication
                 });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Load files response error:', errorText);
-                    
-                    if (response.status === 401 || response.status === 403) {
-                        console.error('🔒 Authentication error detected');
-                        console.error('Session cookies may not be sent or user is not authenticated');
-                        
-                        // Show user-friendly error message
-                        document.getElementById('fileContainer').innerHTML = `
-                            <div class="empty-state">
-                                <h3>Authentication Required</h3>
-                                <p>You need to be logged in to view photos.</p>
-                                <p style="color: #666; font-size: 0.9em;">Error: ${response.status} - ${errorText}</p>
-                                <button class="btn" onclick="window.location.href='/secure-login.html'">Login</button>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    if (response.status === 404) {
-                        console.error('Session not found or user does not have access');
-                        document.getElementById('fileContainer').innerHTML = `
-                            <div class="empty-state">
-                                <h3>Session Not Found</h3>
-                                <p>This session does not exist or you don't have permission to access it.</p>
-                                <button class="btn" onclick="window.location.href='/secure-app.html'">Go to Dashboard</button>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
                     throw new Error(`Failed to load files: ${response.status} - ${errorText}`);
                 }
                 
-                const payload = await response.json();
-                console.log('📸 API Response received:', payload);
-                console.log('📸 Response structure:', {
-                    hasSuccess: 'success' in payload,
-                    hasFiles: 'files' in payload,
-                    isArray: Array.isArray(payload),
-                    filesIsArray: Array.isArray(payload.files),
-                    filesLength: payload.files ? payload.files.length : 0
-                });
+                const data = await response.json();
+                files = data.files || [];
                 
-                // The API returns { success: true, files: [...] }
-                const items = payload.files || (Array.isArray(payload) ? payload : []);
-                
-                console.log(`📸 Raw items from API: ${items.length} items`);
-                if (items.length > 0) {
-                    console.log('📸 First item structure:', items[0]);
-                }
-                
-                // Map R2 files data to expected format with defensive handling
-                files = items.map(file => {
-                    // Debug logging to understand the actual API response
-                    console.log('📸 Processing file:', {
-                        filename: file.filename,
-                        originalName: file.originalName,
-                        downloadUrl: file.downloadUrl,
-                        thumbnailUrl: file.thumbnailUrl,
-                        url: file.url,
-                        contentType: file.contentType,
-                        thumbnails: file.thumbnails
-                    });
-                    
-                    return {
-                        fileName: file.filename || file.fileName || file.name,
-                        name: file.originalName || file.name || file.filename,
-                        contentType: file.contentType || file.fileType || 'image/jpeg',
-                        // Use the actual download URL from the API
-                        downloadUrl: file.downloadUrl || file.url || '',
-                        // Use the thumbnail URL provided by the API (md size for gallery view)
-                        thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || file.downloadUrl || file.url || null,
-                        // Store all thumbnail sizes for responsive loading
-                        thumbnails: file.thumbnails || {},
-                        timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
-                        size: file.fileSizeBytes || file.size || 0,
-                        folderType: file.folderType || folderType,
-                        id: file.id,
-                        r2Key: file.r2Key
-                    };
-                }).filter(x => x.fileName || x.name);
-                
-                console.log(`Mapped to ${files.length} files ready to render`);
+                console.log(`Loaded ${files.length} files for ${folderType} folder`);
                 renderFiles();
                 loadStorageStats();
                 
@@ -1445,86 +1308,19 @@
             
             if (isImage) {
                 const img = document.createElement('img');
+                const thumbnailFileName = file.fileName || file.name;
+                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
                 
-                // Use the thumbnailUrl directly from the API response
-                // The API returns proper presigned URLs for thumbnails
-                const thumbnailUrl = file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm;
-                const fullImageUrl = file.downloadUrl || file.url;
+                img.src = thumbnailUrl;
+                img.alt = file.name;
+                img.loading = 'lazy';
+                img.onclick = () => openLightbox(file.downloadUrl);
+                img.onerror = () => {
+                    img.style.display = 'none';
+                    filePreview.innerHTML = '<div class="file-icon">IMG</div>';
+                };
                 
-                console.log(`🖼️ Loading preview for ${file.name}:`, {
-                    hasThumbnail: !!thumbnailUrl,
-                    thumbnailUrl: thumbnailUrl,
-                    fullImageUrl: fullImageUrl,
-                    thumbnails: file.thumbnails
-                });
-                
-                if (thumbnailUrl) {
-                    // Show loading placeholder while thumbnail loads
-                    const loadingPlaceholder = document.createElement('div');
-                    loadingPlaceholder.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;';
-                    loadingPlaceholder.innerHTML = '⏳ Loading...';
-                    filePreview.appendChild(loadingPlaceholder);
-                    
-                    img.src = thumbnailUrl;
-                    img.alt = file.name;
-                    img.loading = 'lazy';
-                    img.style.objectFit = 'cover';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.display = 'none'; // Hide until loaded
-                    
-                    // Use full URL for lightbox
-                    img.onclick = () => openLightbox(fullImageUrl);
-                    
-                    img.onload = () => {
-                        // Remove loading placeholder and show image
-                        if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                            loadingPlaceholder.remove();
-                        }
-                        img.style.display = 'block';
-                        console.log(`✅ Successfully loaded thumbnail for ${file.name}`);
-                    };
-                    
-                    img.onerror = () => {
-                        console.error(`❌ Failed to load thumbnail for ${file.name}:`, thumbnailUrl);
-                        // Try to load the full image as fallback
-                        if (fullImageUrl && img.src !== fullImageUrl) {
-                            console.log(`🔄 Falling back to full image for ${file.name}`);
-                            img.src = fullImageUrl;
-                        } else {
-                            // Show generic icon if all fails
-                            img.style.display = 'none';
-                            if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                                loadingPlaceholder.remove();
-                            }
-                            filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                        }
-                    };
-                    
-                    filePreview.appendChild(img);
-                } else if (fullImageUrl) {
-                    // No thumbnail available, use full image
-                    console.log(`⚠️ No thumbnail available for ${file.name}, using full image`);
-                    img.src = fullImageUrl;
-                    img.alt = file.name;
-                    img.loading = 'lazy';
-                    img.style.objectFit = 'cover';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.onclick = () => openLightbox(fullImageUrl);
-                    
-                    img.onerror = () => {
-                        console.error(`❌ Failed to load image for ${file.name}`);
-                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                    };
-                    
-                    filePreview.appendChild(img);
-                } else {
-                    // No URLs available, show generic icon
-                    console.log(`⚠️ No image URLs available for ${file.name}`);
-                    filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                }
-            
+                filePreview.appendChild(img);
             } else {
                 const fileIcon = document.createElement('div');
                 fileIcon.className = 'file-icon';
