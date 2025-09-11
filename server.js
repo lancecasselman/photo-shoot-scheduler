@@ -47,7 +47,7 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import R2 storage services
 const R2FileManager = require('./server/r2-file-manager');
 const createR2Routes = require('./server/r2-api-routes');
-const createMultipartRoutes = require('./server/multipart-endpoints');
+// const createMultipartRoutes = require('./server/multipart-endpoints'); // Removed - was only for Uppy/ObjectUploader
 
 // Import new storage system
 const StorageSystem = require('./server/storage-system');
@@ -2441,7 +2441,7 @@ app.post('/api/auth/mobile-session', async (req, res) => {
 app.use('/api/r2', createR2Routes());
 
 // Enhanced Multipart Upload Routes - Optimized for large file uploads
-app.use('/api/r2/multipart', createMultipartRoutes(pool));
+// app.use('/api/r2/multipart', createMultipartRoutes(pool)); // Removed - was only for Uppy/ObjectUploader
 
 // Booking Agreement API routes
 const createBookingAgreementRoutes = require('./server/booking-agreements-routes');

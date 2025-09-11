@@ -2376,7 +2376,93 @@ function closeUploadModal() {
     }
 }
 
-// Enhanced upload function with per-file progress tracking
+// Image compression function for upload optimization
+async function compressImage(file, options = {}) {
+    const {
+        quality = 0.8, // 80% quality for good balance
+        maxWidth = 2500, // Max width as per professional standards
+        maxHeight = 2500, // Max height
+        format = 'image/jpeg' // Always convert to JPEG for consistency
+    } = options;
+
+    // Skip compression for RAW files and small files
+    const extension = file.name.toLowerCase().split('.').pop();
+    const rawFormats = ['nef', 'cr2', 'arw', 'dng', 'raf', 'orf', 'rw2', '3fr'];
+    if (rawFormats.includes(extension) || file.size < 500 * 1024) {
+        console.log(`⏭️ Skipping compression for ${file.name} (RAW or small file)`);
+        return file;
+    }
+
+    // Skip non-image files
+    if (!file.type.startsWith('image/')) {
+        return file;
+    }
+
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+            try {
+                // Calculate optimal dimensions
+                let width = img.width;
+                let height = img.height;
+                
+                // Scale down if needed
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw with high quality
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to blob
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        console.warn(`⚠️ Compression failed for ${file.name}, using original`);
+                        resolve(file);
+                        return;
+                    }
+                    
+                    const compressedFile = new File(
+                        [blob],
+                        file.name.replace(/\.[^/.]+$/, '.jpg'),
+                        { type: format, lastModified: Date.now() }
+                    );
+                    
+                    const reduction = ((file.size - compressedFile.size) / file.size * 100).toFixed(1);
+                    console.log(`🗜️ ${file.name} compressed by ${reduction}% (${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+                    resolve(compressedFile);
+                }, format, quality);
+            } catch (error) {
+                console.warn(`⚠️ Compression error for ${file.name}:`, error);
+                resolve(file);
+            }
+        };
+        
+        img.onerror = () => {
+            console.warn(`⚠️ Failed to load ${file.name} for compression`);
+            resolve(file);
+        };
+        
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+// Enhanced upload function with per-file progress tracking and compression
 async function uploadPhotos(sessionId, files) {
         if (files.length === 0) return;
 
@@ -2388,20 +2474,29 @@ async function uploadPhotos(sessionId, files) {
                 throw new Error('Authentication required for photo upload');
             }
 
+            // Compress images before upload for optimal performance
+            console.log('🗜️ Compressing images for optimal upload...');
+            const processedFiles = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const compressedFile = await compressImage(file);
+                processedFiles.push(compressedFile);
+            }
+
             // Show enhanced progress modal with per-file tracking
-            showEnhancedUploadProgress(files.length);
+            showEnhancedUploadProgress(processedFiles.length);
 
             // Process files in smaller batches for optimal performance
             const BATCH_SIZE = 6; // Upload 6 files concurrently
             let totalUploaded = 0;
             let totalFailed = 0;
             
-            for (let i = 0; i < files.length; i += BATCH_SIZE) {
-                const batch = files.slice(i, i + BATCH_SIZE);
+            for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
+                const batch = processedFiles.slice(i, i + BATCH_SIZE);
                 
                 // Update progress: Starting batch
-                const batchStartProgress = Math.round((i / files.length) * 100);
-                updateEnhancedProgress(batchStartProgress, `Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(files.length/BATCH_SIZE)}...`);
+                const batchStartProgress = Math.round((i / processedFiles.length) * 100);
+                updateEnhancedProgress(batchStartProgress, `Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(processedFiles.length/BATCH_SIZE)}...`);
                 
                 // Upload current batch
                 const formData = new FormData();
@@ -2445,8 +2540,8 @@ async function uploadPhotos(sessionId, files) {
                 }
                 
                 // Update overall progress
-                const overallProgress = Math.round(((i + batch.length) / files.length) * 100);
-                updateEnhancedProgress(overallProgress, `Uploaded ${totalUploaded}/${files.length} files`);
+                const overallProgress = Math.round(((i + batch.length) / processedFiles.length) * 100);
+                updateEnhancedProgress(overallProgress, `Uploaded ${totalUploaded}/${processedFiles.length} files`);
             }
 
             // Upload complete
