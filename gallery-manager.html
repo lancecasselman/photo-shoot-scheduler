@@ -611,17 +611,20 @@
             <span id="progressStats">0 / 0 files</span>
             <span id="progressSpeed">0 MB/s</span>
         </div>
+        <div id="batchQueueStatus" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 8px; display: none;">
+            <strong>📋 Queue Status:</strong> <span id="queueStatusText">No files in queue</span>
+        </div>
         <div class="upload-queue" id="uploadQueue"></div>
     </div>
 
     <div class="upload-zone" id="uploadZone" onclick="triggerFileUpload()">
         <h3>Upload Files</h3>
         <p>Drag and drop files or click anywhere in this area to browse</p>
-        <p><strong>🚀 Fast batch upload: Up to 4 photos at once • Direct to cloud • All file types supported</strong></p>
+        <p><strong>🚀 Fast batch upload: Unlimited files • Processed in 4-file batches • Direct to cloud • All file types supported</strong></p>
         <div class="upload-mode-selector" style="margin-top: 10px;">
             <label style="margin-right: 20px; cursor: pointer;">
                 <input type="radio" name="uploadMode" value="batch" checked>
-                <span>Fast Batch (4 files max)</span>
+                <span>Fast Batch (Unlimited files, 4 at a time)</span>
             </label>
             <label style="cursor: pointer;">
                 <input type="radio" name="uploadMode" value="legacy">
@@ -854,6 +857,12 @@
             document.getElementById('fileInput').click();
         }
 
+        // Global queue for batch uploads
+        let batchUploadQueue = [];
+        let currentBatchIndex = 0;
+        let totalFilesInQueue = 0;
+        let isProcessingBatch = false;
+        
         // Handle file selection
         function handleFileSelection(selectedFiles) {
             if (selectedFiles.length === 0) return;
@@ -862,29 +871,110 @@
             const uploadMode = document.querySelector('input[name="uploadMode"]:checked').value;
             
             if (uploadMode === 'batch') {
-                // Batch mode: limit to 4 files
-                if (selectedFiles.length > 4) {
-                    alert('Batch mode supports up to 4 files at once. Only the first 4 files will be uploaded.');
-                    selectedFiles = selectedFiles.slice(0, 4);
-                }
-                processBatchUpload(selectedFiles);
+                // Batch mode: Add files to queue and process in chunks of 4
+                addFilesToBatchQueue(selectedFiles);
             } else {
                 // Legacy mode: use existing queue system
                 uploadQueue = [...selectedFiles];
                 processUploadQueue();
             }
         }
-
-        // NEW: Process batch upload (up to 4 files at once using pre-signed URLs)
-        async function processBatchUpload(files) {
-            if (isUploading) return;
+        
+        // Add files to batch queue and start processing
+        function addFilesToBatchQueue(files) {
+            // Add files to the batch queue
+            batchUploadQueue.push(...files);
+            totalFilesInQueue = batchUploadQueue.length;
             
-            isUploading = true;
-            const startTime = Date.now();
+            console.log(`📋 Added ${files.length} files to queue. Total in queue: ${totalFilesInQueue}`);
+            
+            // Start processing if not already running
+            if (!isProcessingBatch) {
+                processBatchQueue();
+            }
+        }
+        
+        // Update queue status display
+        function updateQueueStatus(filesInQueue, currentBatch, totalBatches) {
+            const queueStatusDiv = document.getElementById('batchQueueStatus');
+            const queueStatusText = document.getElementById('queueStatusText');
+            
+            if (filesInQueue > 0) {
+                queueStatusDiv.style.display = 'block';
+                queueStatusText.textContent = `${filesInQueue} files waiting • Processing batch ${currentBatch} of ${totalBatches}`;
+            } else {
+                queueStatusDiv.style.display = 'none';
+            }
+        }
+        
+        // Calculate and update progress bar
+        function updateBatchProgress(filesCompleted, totalFiles) {
+            const percentage = Math.round((filesCompleted / totalFiles) * 100);
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressStats').textContent = `${filesCompleted} / ${totalFiles} files`;
+        }
+        
+        // Process the batch queue - uploads files in chunks of 4
+        async function processBatchQueue() {
+            if (isProcessingBatch || batchUploadQueue.length === 0) return;
+            
+            isProcessingBatch = true;
+            currentBatchIndex = 0;
+            let totalFilesProcessed = 0;
             
             // Show progress container
             document.getElementById('progressContainer').style.display = 'block';
-            updateProgressText(`Preparing batch upload of ${files.length} files...`);
+            
+            while (batchUploadQueue.length > 0) {
+                // Take up to 4 files from the queue
+                const batch = batchUploadQueue.splice(0, 4);
+                currentBatchIndex++;
+                
+                const filesProcessed = totalFilesProcessed;
+                const batchStart = filesProcessed + 1;
+                const batchEnd = filesProcessed + batch.length;
+                const totalBatches = Math.ceil(totalFilesInQueue / 4);
+                
+                // Update displays
+                updateProgressText(`🚀 Uploading batch ${currentBatchIndex} (files ${batchStart}-${batchEnd} of ${totalFilesInQueue})...`);
+                updateQueueStatus(batchUploadQueue.length, currentBatchIndex, totalBatches);
+                updateBatchProgress(filesProcessed, totalFilesInQueue);
+                
+                // Process this batch
+                await processBatchUpload(batch, batchStart, batchEnd, totalFilesInQueue);
+                
+                totalFilesProcessed += batch.length;
+                updateBatchProgress(totalFilesProcessed, totalFilesInQueue);
+                
+                // Check if more files were added while processing
+                if (batchUploadQueue.length > 0 && (totalFilesProcessed + batchUploadQueue.length) > totalFilesInQueue) {
+                    totalFilesInQueue = totalFilesProcessed + batchUploadQueue.length;
+                    console.log(`📋 More files added during upload. New total: ${totalFilesInQueue}`);
+                }
+            }
+            
+            // All files processed
+            updateProgressText(`✅ All ${totalFilesInQueue} files uploaded successfully!`);
+            updateBatchProgress(totalFilesInQueue, totalFilesInQueue);
+            updateQueueStatus(0, 0, 0);
+            
+            setTimeout(() => {
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('batchQueueStatus').style.display = 'none';
+                currentBatchIndex = 0;
+                totalFilesInQueue = 0;
+                totalFilesProcessed = 0;
+            }, 3000);
+            
+            isProcessingBatch = false;
+        }
+
+        // NEW: Process batch upload (up to 4 files at once using pre-signed URLs)
+        async function processBatchUpload(files, batchStart = 1, batchEnd = files.length, totalFiles = files.length) {
+            const startTime = Date.now();
+            
+            // Note: Don't check isUploading here, as we're managing state in processBatchQueue
+            updateProgressText(`📤 Uploading files ${batchStart}-${batchEnd} of ${totalFiles}...`);
             
             try {
                 // Step 1: Get batch pre-signed URLs from server
@@ -966,23 +1056,20 @@
                     }
                 }
                 
-                // Step 4: Show completion
+                // Step 4: Show completion for this batch
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                updateProgressText(`✅ Batch upload complete! ${successfulUploads.length}/${files.length} files uploaded in ${elapsed}s`);
+                console.log(`✅ Batch complete! ${successfulUploads.length}/${files.length} files uploaded in ${elapsed}s`);
                 
-                setTimeout(() => {
-                    document.getElementById('progressContainer').style.display = 'none';
-                    loadFiles(); // Refresh file list
-                }, 2000);
+                // Don't hide progress container or refresh yet - let processBatchQueue handle that
+                if (batchEnd === totalFiles) {
+                    // This was the last batch, refresh files
+                    loadFiles();
+                }
                 
             } catch (error) {
                 console.error('Batch upload error:', error);
-                updateProgressText(`❌ Upload failed: ${error.message}`);
-                setTimeout(() => {
-                    document.getElementById('progressContainer').style.display = 'none';
-                }, 3000);
-            } finally {
-                isUploading = false;
+                updateProgressText(`❌ Upload failed for batch ${batchStart}-${batchEnd}: ${error.message}`);
+                // Continue with next batch even if this one failed
             }
         }
 
