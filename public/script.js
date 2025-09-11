@@ -1959,31 +1959,247 @@ function createPhotoItem(photo, index, sessionId) {
     return photoItem;
 }
 
-// Open photo upload dialog - use existing HTML modal
+// Open photo upload dialog - create modal dynamically
 function openUploadDialog(sessionId) {
     console.log('Opening upload dialog for session:', sessionId);
 
-    // Use the existing HTML modal
-    const modal = document.getElementById('uploadModal');
-    const fileInput = document.getElementById('fileInput');
-    const filePreview = document.getElementById('filePreview');
+    // Remove existing modal if any
+    const existingModal = document.getElementById('uploadModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
 
-    // Clear previous state
-    fileInput.value = '';
-    filePreview.innerHTML = '';
+    // Create modal HTML structure
+    const modal = document.createElement('div');
+    modal.id = 'uploadModal';
+    modal.className = 'upload-modal';
+    modal.innerHTML = `
+        <div class="upload-modal-content">
+            <div class="upload-modal-header">
+                <h3>Upload Photos</h3>
+                <button class="close-btn" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="upload-modal-body">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Drag & drop files here or click to browse</p>
+                        <p class="file-types">All file types accepted • Max 5GB per file</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
+                </div>
+                <div class="file-preview" id="filePreview"></div>
+            </div>
+            <div class="upload-modal-footer">
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn btn-primary" id="uploadBtn" disabled>Upload Files</button>
+            </div>
+        </div>
+    `;
+
+    // Add modal styles if not already present
+    if (!document.querySelector('#uploadModalStyles')) {
+        const styles = document.createElement('style');
+        styles.id = 'uploadModalStyles';
+        styles.innerHTML = `
+            .upload-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+            }
+            .upload-modal.active {
+                display: flex;
+            }
+            .upload-modal-content {
+                background: white;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            }
+            .upload-modal-header {
+                padding: 20px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .upload-modal-header h3 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: #333;
+            }
+            .upload-modal-header .close-btn {
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: #999;
+                padding: 0;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .upload-modal-header .close-btn:hover {
+                color: #333;
+            }
+            .upload-modal-body {
+                padding: 20px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .drop-zone {
+                border: 2px dashed #cbd5e1;
+                border-radius: 8px;
+                padding: 40px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background: #f9fafb;
+            }
+            .drop-zone:hover {
+                border-color: #00D4AA;
+                background: #f0fdf4;
+            }
+            .drop-zone.drag-over {
+                border-color: #00D4AA;
+                background: #e6fffa;
+            }
+            .drop-zone-content {
+                pointer-events: none;
+            }
+            .upload-icon {
+                color: #00D4AA;
+                margin-bottom: 16px;
+            }
+            .drop-zone p {
+                margin: 8px 0;
+                color: #6b7280;
+            }
+            .drop-zone .file-types {
+                font-size: 14px;
+                color: #9ca3af;
+            }
+            .file-preview {
+                margin-top: 20px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .file-preview-item {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                background: #f9fafb;
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+            .file-preview-item img {
+                width: 40px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 4px;
+                margin-right: 12px;
+            }
+            .file-preview-item .file-info {
+                flex: 1;
+            }
+            .file-preview-item .file-name {
+                font-weight: 500;
+                color: #333;
+                font-size: 14px;
+            }
+            .file-preview-item .file-size {
+                font-size: 12px;
+                color: #9ca3af;
+            }
+            .file-preview-item .remove-file {
+                background: none;
+                border: none;
+                color: #ef4444;
+                cursor: pointer;
+                font-size: 20px;
+                padding: 0 8px;
+            }
+            .upload-modal-footer {
+                padding: 20px;
+                border-top: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+            .upload-modal-footer .btn {
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .upload-modal-footer .btn-secondary {
+                background: #f3f4f6;
+                color: #374151;
+                border: 1px solid #d1d5db;
+            }
+            .upload-modal-footer .btn-secondary:hover {
+                background: #e5e7eb;
+            }
+            .upload-modal-footer .btn-primary {
+                background: #00D4AA;
+                color: white;
+                border: none;
+            }
+            .upload-modal-footer .btn-primary:hover:not(:disabled) {
+                background: #00BF9A;
+            }
+            .upload-modal-footer .btn-primary:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+
+    // Add modal to page
+    document.body.appendChild(modal);
 
     // Store session ID for upload
     window.currentUploadSessionId = sessionId;
+
+    // Setup event handlers
+    setupUploadModal(sessionId);
 
     // Show modal
     modal.classList.add('active');
 }
 
-// Setup upload modal functionality - removed old code
+// Setup upload modal functionality
 function setupUploadModal(sessionId) {
-    // This function is no longer needed since we use HTML upload modal
-    console.log('Using existing HTML upload modal for session:', sessionId);
-    return; // Exit early - all functionality handled by HTML modal
+    console.log('Setting up upload modal for session:', sessionId);
+    
+    // Get modal elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const previewContainer = document.getElementById('filePreview');
+    
+    // Track selected files
+    let selectedFiles = [];
 
     // File input change handler
     fileInput.addEventListener('change', (e) => {
@@ -2071,9 +2287,22 @@ function setupUploadModal(sessionId) {
             previewContainer.appendChild(previewItem);
         });
     }
+}
 
-    // Enhanced upload function with per-file progress tracking
-    async function uploadPhotos(sessionId, files) {
+// Close upload modal
+function closeUploadModal() {
+    const modal = document.getElementById('uploadModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // Clean up after a delay to allow animation
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
+    }
+}
+
+// Enhanced upload function with per-file progress tracking
+async function uploadPhotos(sessionId, files) {
         if (files.length === 0) return;
 
         try {
@@ -2171,11 +2400,10 @@ function setupUploadModal(sessionId) {
                 loadSessionPhotos(sessionId, galleryGrid, photoCount);
             }
 
-        } catch (error) {
-            console.error('Upload error:', error);
-            showMessage('Upload failed: ' + error.message, 'error');
-            hideEnhancedUploadProgress();
-        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        showMessage('Upload failed: ' + error.message, 'error');
+        hideEnhancedUploadProgress();
     }
     
     // Enhanced progress modal functions
