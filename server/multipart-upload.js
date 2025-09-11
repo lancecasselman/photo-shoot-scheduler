@@ -14,25 +14,44 @@ class MultipartUploader {
     this.s3Client = s3Client;
     this.bucketName = bucketName;
     this.CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for optimal speed with photos
-    this.MAX_CONCURRENT_PARTS = 6; // Upload 6 parts simultaneously
+    this.MAX_CONCURRENT_PARTS = 8; // Increased from 6 to 8 for better performance
+    this.ADAPTIVE_CONCURRENT_PARTS = true; // Enable adaptive concurrency based on file size
   }
 
   /**
-   * Calculate optimal chunk size based on file size
+   * Calculate optimal chunk size based on file size and network conditions
    */
   calculateOptimalChunkSize(fileSize) {
     const minChunkSize = 5 * 1024 * 1024; // 5MB minimum
     const maxChunkSize = 50 * 1024 * 1024; // 50MB for very large files
     const maxParts = 10000; // S3/R2 limit
     
-    // For files 20-100MB, use 10MB chunks
-    if (fileSize < 100 * 1024 * 1024) {
-      return 10 * 1024 * 1024;
+    // Dynamic chunk sizing based on file size:
+    if (fileSize < 50 * 1024 * 1024) { // < 50MB - use smaller chunks for faster initial feedback
+      return 5 * 1024 * 1024; // 5MB chunks
+    } else if (fileSize < 500 * 1024 * 1024) { // 50-500MB - standard photo files
+      return 10 * 1024 * 1024; // 10MB chunks
+    } else { // > 500MB - large video/RAW files
+      return 25 * 1024 * 1024; // 25MB chunks for efficiency
     }
-    
-    // For larger files, calculate dynamically
-    let chunkSize = Math.max(minChunkSize, Math.ceil(fileSize / maxParts));
-    return Math.min(chunkSize, maxChunkSize);
+  }
+
+  /**
+   * Calculate optimal concurrency based on file size and system capacity
+   */
+  calculateOptimalConcurrency(fileSize, totalParts) {
+    if (!this.ADAPTIVE_CONCURRENT_PARTS) {
+      return this.MAX_CONCURRENT_PARTS;
+    }
+
+    // Adaptive concurrency logic
+    if (fileSize < 50 * 1024 * 1024) { // Small files
+      return Math.min(4, totalParts); // Conservative for small files
+    } else if (fileSize < 500 * 1024 * 1024) { // Medium files
+      return Math.min(this.MAX_CONCURRENT_PARTS, totalParts);
+    } else { // Large files - maximize throughput
+      return Math.min(10, totalParts); // Up to 10 for very large files
+    }
   }
 
   /**
@@ -42,8 +61,9 @@ class MultipartUploader {
     const fileSize = fileBuffer.length;
     const chunkSize = this.calculateOptimalChunkSize(fileSize);
     const totalParts = Math.ceil(fileSize / chunkSize);
+    const optimalConcurrency = this.calculateOptimalConcurrency(fileSize, totalParts);
     
-    console.log(`⚡ FAST Multipart upload: ${(fileSize / (1024*1024)).toFixed(2)}MB in ${totalParts} parts of ${(chunkSize / (1024*1024)).toFixed(2)}MB`);
+    console.log(`⚡ ENHANCED Multipart upload: ${(fileSize / (1024*1024)).toFixed(2)}MB in ${totalParts} parts of ${(chunkSize / (1024*1024)).toFixed(2)}MB (${optimalConcurrency} concurrent)`);
     
     let uploadId;
     
@@ -64,11 +84,11 @@ class MultipartUploader {
       const parts = [];
       const uploadedParts = [];
       
-      // 2. Upload parts with controlled concurrency
-      for (let i = 0; i < totalParts; i += this.MAX_CONCURRENT_PARTS) {
+      // 2. Upload parts with adaptive concurrency
+      for (let i = 0; i < totalParts; i += optimalConcurrency) {
         const batch = [];
         
-        for (let j = i; j < Math.min(i + this.MAX_CONCURRENT_PARTS, totalParts); j++) {
+        for (let j = i; j < Math.min(i + optimalConcurrency, totalParts); j++) {
           const start = j * chunkSize;
           const end = Math.min(start + chunkSize, fileSize);
           const chunk = fileBuffer.slice(start, end);
