@@ -8735,7 +8735,11 @@ lance@thelegacyphotography.com`;
                             <button onclick="editContract('${contract.id}')" class="btn btn-secondary" style="margin-right: 10px;">
                                 Edit
                             </button>
-                            ${contract.status === 'draft' || contract.status === 'pending' ? `` : ''}
+                            ${contract.status === 'draft' || contract.status === 'pending' ? `
+                                <button onclick="resendAgreement('${contract.id}')" class="btn btn-secondary">
+                                    Send to Client
+                                </button>
+                            ` : ''}
                             ${contract.status === 'sent' || contract.status === 'signed' ? `
                                 <button onclick="resendAgreement('${contract.id}')" class="btn btn-success" style="margin-left: 10px;">
                                     Resend Contract
