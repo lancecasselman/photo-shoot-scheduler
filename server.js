@@ -5284,6 +5284,116 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
+// Get photos for a specific session (frontend compatibility endpoint)
+app.get('/api/sessions/:sessionId/photos', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        console.log(`📸 Photos requested for session: ${sessionId} by user: ${userId}`);
+
+        // Verify session ownership
+        const sessionResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // SPECIAL ACCESS: If Lance's accounts, use Firebase UID for R2 storage
+        let r2UserId = userId;
+        const userEmail = req.user.email.toLowerCase();
+        if (userEmail === 'lancecasselman@icloud.com' || userEmail === 'lancecasselman2011@gmail.com' || userEmail === 'lance@thelegacyphotography.com') {
+            r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Lance's Firebase UID for R2 storage
+        }
+
+        // Get session files from R2
+        const sessionFiles = await r2FileManager.getSessionFiles(r2UserId, sessionId);
+        
+        if (!sessionFiles.success || !sessionFiles.filesByType.gallery) {
+            console.log(`📸 No gallery files found for session: ${sessionId}`);
+            return res.json({ photos: [] });
+        }
+
+        // Transform gallery files into photo format expected by frontend
+        const photos = [];
+        
+        for (const file of sessionFiles.filesByType.gallery) {
+            try {
+                const photo = {
+                    fileName: file.filename,
+                    filename: file.filename,
+                    url: '', // Will be populated below
+                    fullUrl: '', // Will be populated below
+                    fileSize: file.fileSizeBytes,
+                    fileSizeMB: file.fileSizeMB,
+                    uploadedAt: file.uploadedAt,
+                    contentType: file.contentType
+                };
+
+                // Generate thumbnail URLs using same pattern as enhancePhotosWithThumbnails
+                const filename = file.filename;
+                const ext = filename.split('.').pop();
+                const baseName = filename.replace(`.${ext}`, '');
+                
+                const thumbnails = {};
+                const thumbnailSizes = ['sm', 'md', 'lg'];
+                
+                for (const size of thumbnailSizes) {
+                    const thumbnailKey = `photographer-${r2UserId}/session-${sessionId}/thumbnails/${baseName}_${size}.jpg`;
+                    
+                    try {
+                        const thumbnailUrl = await r2FileManager.getSignedUrl(thumbnailKey, 3600);
+                        if (thumbnailUrl) {
+                            thumbnails[size === 'sm' ? 'small' : size === 'md' ? 'medium' : 'large'] = thumbnailUrl;
+                        }
+                    } catch (err) {
+                        // Thumbnail might not exist yet, that's okay
+                        console.log(`Thumbnail not found: ${thumbnailKey}`);
+                    }
+                }
+                
+                // Add thumbnails if we found any
+                if (Object.keys(thumbnails).length > 0) {
+                    photo.thumbnails = thumbnails;
+                }
+                
+                // Generate presigned URL for the main photo
+                const mainKey = file.r2Key || `photographer-${r2UserId}/session-${sessionId}/gallery/${filename}`;
+                try {
+                    const presignedUrl = await r2FileManager.getSignedUrl(mainKey, 3600);
+                    if (presignedUrl) {
+                        photo.url = presignedUrl;
+                        photo.fullUrl = presignedUrl;
+                    }
+                } catch (err) {
+                    console.log(`Main photo not found in R2: ${mainKey}`);
+                    // Fallback to thumbnail if main photo is not accessible
+                    if (photo.thumbnails && photo.thumbnails.large) {
+                        photo.url = photo.thumbnails.large;
+                        photo.fullUrl = photo.thumbnails.large;
+                    }
+                }
+                
+                photos.push(photo);
+                
+            } catch (error) {
+                console.error(`Error processing photo ${file.filename}:`, error);
+            }
+        }
+
+        console.log(`📸 Retrieved ${photos.length} photos for session ${sessionId}`);
+        res.json({ photos });
+
+    } catch (error) {
+        console.error('Error fetching session photos:', error);
+        res.status(500).json({ error: 'Failed to fetch session photos' });
+    }
+});
+
 app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
