@@ -4514,6 +4514,83 @@ async function initializeDatabase(retryCount = 0) {
     }
 }
 
+// Helper function to enhance photos with thumbnail URLs
+async function enhancePhotosWithThumbnails(photos, userId, sessionId) {
+    if (!photos || !Array.isArray(photos) || photos.length === 0) {
+        return [];
+    }
+
+    const enhancedPhotos = [];
+    
+    for (const photo of photos) {
+        const enhancedPhoto = { ...photo };
+        
+        // Extract filename from URL if needed
+        let filename = photo.filename || photo.originalName;
+        if (!filename && photo.url) {
+            const urlParts = photo.url.split('/');
+            filename = urlParts[urlParts.length - 1];
+            // Remove timestamp prefix if present (e.g., "20250906022712-DSC_0111.jpg" -> "DSC_0111.jpg")
+            if (filename.includes('-')) {
+                const parts = filename.split('-');
+                if (parts[0].length === 14 && /^\d+$/.test(parts[0])) {
+                    filename = parts.slice(1).join('-');
+                }
+            }
+        }
+        
+        if (filename) {
+            try {
+                // Generate thumbnail URLs using R2FileManager
+                const thumbnailSizes = ['sm', 'md', 'lg'];
+                const thumbnails = {};
+                
+                for (const size of thumbnailSizes) {
+                    // Remove file extension and add thumbnail suffix
+                    const ext = filename.split('.').pop();
+                    const baseName = filename.replace(`.${ext}`, '');
+                    const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}_${size}.jpg`;
+                    
+                    try {
+                        // Generate presigned URL for thumbnail
+                        const thumbnailUrl = await r2FileManager.getSignedUrl(thumbnailKey, 3600);
+                        if (thumbnailUrl) {
+                            thumbnails[size === 'sm' ? 'small' : size === 'md' ? 'medium' : 'large'] = thumbnailUrl;
+                        }
+                    } catch (err) {
+                        // Thumbnail might not exist, that's okay
+                        console.log(`Thumbnail not found: ${thumbnailKey}`);
+                    }
+                }
+                
+                // Only add thumbnails object if we found at least one thumbnail
+                if (Object.keys(thumbnails).length > 0) {
+                    enhancedPhoto.thumbnails = thumbnails;
+                }
+                
+                // Also generate presigned URL for the main photo if needed
+                if (photo.url && !photo.url.startsWith('http')) {
+                    const mainKey = `photographer-${userId}/session-${sessionId}/gallery/${filename}`;
+                    try {
+                        const presignedUrl = await r2FileManager.getSignedUrl(mainKey, 3600);
+                        if (presignedUrl) {
+                            enhancedPhoto.url = presignedUrl;
+                        }
+                    } catch (err) {
+                        console.log(`Main photo not found in R2: ${mainKey}`);
+                    }
+                }
+            } catch (error) {
+                console.error(`Error enhancing photo ${filename}:`, error);
+            }
+        }
+        
+        enhancedPhotos.push(enhancedPhoto);
+    }
+    
+    return enhancedPhotos;
+}
+
 // Database helper functions with user separation
 async function getAllSessions(userId) {
     try {
@@ -4529,41 +4606,46 @@ async function getAllSessions(userId) {
         const result = await pool.query(query, params);
         console.log('Database query result sample (first row):', result.rows[0]);
 
-        const mappedRows = result.rows.map(row => ({
-            id: row.id,
-            userId: row.user_id,
-            clientName: row.client_name,
-            sessionType: row.session_type,
-            dateTime: row.date_time,
-            location: row.location,
-            phoneNumber: row.phone_number,
-            email: row.email,
-            price: parseFloat(row.price),
-            depositAmount: parseFloat(row.deposit_amount || 0),
-            deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
-            depositPaid: row.deposit_paid || false,
-            depositSent: row.deposit_sent || false,
-            invoiceSent: row.invoice_sent || false,
-            depositPaidAt: row.deposit_paid_at,
-            invoicePaidAt: row.invoice_paid_at,
-            duration: row.duration,
-            notes: row.notes,
-            contractSigned: row.contract_signed,
-            paid: row.paid,
-            edited: row.edited,
-            delivered: row.delivered,
-            sendReminder: row.send_reminder,
-            notifyGalleryReady: row.notify_gallery_ready,
-            photos: row.photos || [],
-            galleryAccessToken: row.gallery_access_token,
-            galleryCreatedAt: row.gallery_created_at,
-            galleryExpiresAt: row.gallery_expires_at,
-            galleryReadyNotified: row.gallery_ready_notified,
-            hasPaymentPlan: row.has_payment_plan || false,
-            paymentPlanId: row.payment_plan_id || null,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-            stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
+        const mappedRows = await Promise.all(result.rows.map(async row => {
+            // Enhance photos with thumbnail URLs
+            const enhancedPhotos = await enhancePhotosWithThumbnails(row.photos, row.user_id, row.id);
+            
+            return {
+                id: row.id,
+                userId: row.user_id,
+                clientName: row.client_name,
+                sessionType: row.session_type,
+                dateTime: row.date_time,
+                location: row.location,
+                phoneNumber: row.phone_number,
+                email: row.email,
+                price: parseFloat(row.price),
+                depositAmount: parseFloat(row.deposit_amount || 0),
+                deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+                depositPaid: row.deposit_paid || false,
+                depositSent: row.deposit_sent || false,
+                invoiceSent: row.invoice_sent || false,
+                depositPaidAt: row.deposit_paid_at,
+                invoicePaidAt: row.invoice_paid_at,
+                duration: row.duration,
+                notes: row.notes,
+                contractSigned: row.contract_signed,
+                paid: row.paid,
+                edited: row.edited,
+                delivered: row.delivered,
+                sendReminder: row.send_reminder,
+                notifyGalleryReady: row.notify_gallery_ready,
+                photos: enhancedPhotos,
+                galleryAccessToken: row.gallery_access_token,
+                galleryCreatedAt: row.gallery_created_at,
+                galleryExpiresAt: row.gallery_expires_at,
+                galleryReadyNotified: row.gallery_ready_notified,
+                hasPaymentPlan: row.has_payment_plan || false,
+                paymentPlanId: row.payment_plan_id || null,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
+            };
         }));
         
         return mappedRows;
@@ -5230,40 +5312,48 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 WHERE user_id = '44735007'
                 ORDER BY created_at DESC
             `);
-            sessions = lanceSessionsResult.rows.map(row => ({
-                id: row.id,
-                clientName: row.client_name,
-                sessionType: row.session_type,
-                dateTime: row.date_time,
-                location: row.location,
-                phoneNumber: row.phone_number,
-                email: row.email,
-                price: parseFloat(row.price),
-                depositAmount: parseFloat(row.deposit_amount || 0), // FIXED: Include deposit amount mapping
-                deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
-                depositPaid: row.deposit_paid || false,
-                depositSent: row.deposit_sent || false,
-                invoiceSent: row.invoice_sent || false,
-                depositPaidAt: row.deposit_paid_at,
-                invoicePaidAt: row.invoice_paid_at,
-                duration: row.duration,
-                notes: row.notes,
-                contractSigned: row.contract_signed,
-                paid: row.paid,
-                edited: row.edited,
-                delivered: row.delivered,
-                sendReminder: row.send_reminder,
-                notifyGalleryReady: row.notify_gallery_ready,
-                photos: row.photos || [],
-                galleryAccessToken: row.gallery_access_token,
-                galleryCreatedAt: row.gallery_created_at,
-                galleryExpiresAt: row.gallery_expires_at,
-                galleryReadyNotified: row.gallery_ready_notified,
-                hasPaymentPlan: row.has_payment_plan || false,
-                paymentPlanId: row.payment_plan_id || null,
-                createdAt: row.created_at,
-                updatedAt: row.updated_at,
-                stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
+            sessions = await Promise.all(lanceSessionsResult.rows.map(async row => {
+                // For Lance's account, use the proper user ID for R2 storage
+                const r2UserId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2'; // Lance's Firebase UID for R2 storage
+                
+                // Enhance photos with thumbnail URLs
+                const enhancedPhotos = await enhancePhotosWithThumbnails(row.photos, r2UserId, row.id);
+                
+                return {
+                    id: row.id,
+                    clientName: row.client_name,
+                    sessionType: row.session_type,
+                    dateTime: row.date_time,
+                    location: row.location,
+                    phoneNumber: row.phone_number,
+                    email: row.email,
+                    price: parseFloat(row.price),
+                    depositAmount: parseFloat(row.deposit_amount || 0), // FIXED: Include deposit amount mapping
+                    deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+                    depositPaid: row.deposit_paid || false,
+                    depositSent: row.deposit_sent || false,
+                    invoiceSent: row.invoice_sent || false,
+                    depositPaidAt: row.deposit_paid_at,
+                    invoicePaidAt: row.invoice_paid_at,
+                    duration: row.duration,
+                    notes: row.notes,
+                    contractSigned: row.contract_signed,
+                    paid: row.paid,
+                    edited: row.edited,
+                    delivered: row.delivered,
+                    sendReminder: row.send_reminder,
+                    notifyGalleryReady: row.notify_gallery_ready,
+                    photos: enhancedPhotos,
+                    galleryAccessToken: row.gallery_access_token,
+                    galleryCreatedAt: row.gallery_created_at,
+                    galleryExpiresAt: row.gallery_expires_at,
+                    galleryReadyNotified: row.gallery_ready_notified,
+                    hasPaymentPlan: row.has_payment_plan || false,
+                    paymentPlanId: row.payment_plan_id || null,
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                    stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
+                };
             }));
             console.log(`UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
