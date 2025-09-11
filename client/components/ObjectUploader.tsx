@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
-// @ts-ignore - Uppy React types compatibility
+import type { UppyFile, UploadResult } from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
 import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
+import type { AwsS3Options } from "@uppy/aws-s3";
 // Image compression utilities
 import { smartCompressImage, shouldCompressFile } from '../utils/imageCompression.js';
 // Upload optimization feature flags
@@ -28,7 +27,7 @@ interface ObjectUploaderProps {
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => void;
   buttonClassName?: string;
-  children: ReactNode;
+  children: React.ReactNode;
   // Enhanced upload options
   enableCompression?: boolean;
   enableMultipart?: boolean;
@@ -77,7 +76,7 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
-  const [compressionStats, setCompressionStats] = useState<{[key: string]: any}>({});
+  const [compressionStats, setCompressionStats] = useState({} as {[key: string]: any});
   
   const [uppy] = useState(() => {
     const uppyInstance = new Uppy({
@@ -94,15 +93,16 @@ export function ObjectUploader({
         try {
           if (shouldCompressFile(file.data as File)) {
             setProcessingStatus(`Compressing ${file.name}...`);
-            console.log(`🗜️ Compressing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+            const originalSize = file.size ?? 0;
+            console.log(`🗜️ Compressing ${file.name} (${(originalSize / 1024 / 1024).toFixed(2)}MB)`);
             
             const compressedFile = await smartCompressImage(file.data as File);
-            const reduction = ((file.size - compressedFile.size) / file.size * 100).toFixed(1);
+            const reduction = originalSize > 0 ? ((originalSize - compressedFile.size) / originalSize * 100).toFixed(1) : '0';
             
             setCompressionStats(prev => ({
               ...prev,
               [file.id]: {
-                originalSize: file.size,
+                originalSize: originalSize,
                 compressedSize: compressedFile.size,
                 reduction: reduction + '%'
               }
@@ -114,7 +114,7 @@ export function ObjectUploader({
               size: compressedFile.size
             });
             
-            console.log(`✅ ${file.name} compressed by ${reduction}% (${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+            console.log(`✅ ${file.name} compressed by ${reduction}% (${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB)`);
             setProcessingStatus('');
           }
         } catch (error) {
@@ -125,23 +125,27 @@ export function ObjectUploader({
     }
 
     // Configure AWS S3 plugin with enhanced multipart support
-    uppyInstance.use(AwsS3, {
-      shouldUseMultipart: enableMultipart,
+    const awsS3Config: any = {
+      shouldUseMultipart: enableMultipart ? (file: UppyFile<any, any>) => {
+        const fileSize = file.size ?? 0;
+        return fileSize > 50 * 1024 * 1024; // 50MB threshold
+      } : false,
       // Enhanced multipart configuration for large files
       limit: enableMultipart ? 4 : 1, // 4 concurrent parts for multipart
-      getUploadParameters: async (file) => {
+      getUploadParameters: async (file: UppyFile<any, any>) => {
         try {
           // For multipart uploads, we need different endpoints
-          if (enableMultipart && file.size > 50 * 1024 * 1024) { // 50MB threshold
+          const fileSize = file.size ?? 0;
+          if (enableMultipart && fileSize > 50 * 1024 * 1024) { // 50MB threshold
             // Use multipart upload endpoint
             const response = await fetch('/api/r2/multipart/create', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
               body: JSON.stringify({
-                fileName: file.name,
-                fileSize: file.size,
-                contentType: file.type,
+                fileName: file.name || 'unnamed',
+                fileSize: fileSize,
+                contentType: file.type || 'application/octet-stream',
                 sessionId,
                 folderType
               })
@@ -161,7 +165,9 @@ export function ObjectUploader({
           return await onGetUploadParameters(file.name || '');
         }
       },
-    });
+    };
+
+    uppyInstance.use(AwsS3, awsS3Config);
 
     // Enhanced progress tracking
     uppyInstance.on('upload-progress', (file, progress) => {
@@ -220,6 +226,7 @@ export function ObjectUploader({
         </div>
       )}
 
+      {/* @ts-ignore - Uppy React type compatibility */}
       <DashboardModal
         uppy={uppy}
         open={showModal}
