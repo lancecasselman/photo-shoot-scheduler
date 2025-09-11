@@ -940,6 +940,9 @@
             updateBatchProgress(totalFilesInQueue, totalFilesInQueue);
             updateQueueStatus(0, 0, 0);
             
+            // Refresh the file list to show newly uploaded files
+            loadFiles();
+            
             setTimeout(() => {
                 document.getElementById('progressContainer').style.display = 'none';
                 document.getElementById('batchQueueStatus').style.display = 'none';
