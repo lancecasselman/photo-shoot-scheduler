@@ -1,5 +1,6 @@
 const express = require('express');
-const multer = require('multer');
+// CONSOLIDATED: Multer removed - all uploads now use batch presigned URLs
+// const multer = require('multer'); // REMOVED - no longer needed
 const R2FileManager = require('./r2-file-manager');
 // REMOVED: Old stripe storage billing - using new storage system
 const R2SyncService = require('./r2-sync-service');
@@ -7,55 +8,27 @@ const UnifiedFileDeletionService = require('./unified-file-deletion');
 const StorageSystem = require('./storage-system');
 const { Pool } = require('pg');
 
-// Configure multer for file uploads (memory storage for direct R2 upload)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 * 1024, // 5GB max file size (R2 technical limit)
-    files: 50, // Max 50 files per request - optimized for gallery uploads
-  },
-  fileFilter: (req, file, cb) => {
-    // Security: Validate file types - allow photography-related files
-    const allowedMimeTypes = [
-      // Images
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp',
-      'image/webp', 'image/tiff', 'image/svg+xml',
-      // RAW formats
-      'image/x-canon-cr2', 'image/x-canon-crw', 'image/x-nikon-nef',
-      'image/x-sony-arw', 'image/x-fuji-raf', 'image/x-olympus-orf',
-      'image/x-pentax-pef', 'image/x-panasonic-rw2', 'image/x-adobe-dng',
-      // Video formats
-      'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
-      // Audio formats
-      'audio/wav', 'audio/flac', 'audio/aiff', 'audio/mpeg',
-      // Documents
-      'application/pdf', 'text/plain',
-      // Adobe files
-      'image/vnd.adobe.photoshop', 'application/postscript'
-    ];
+/**
+ * UPLOAD CONSOLIDATION COMPLETE:
+ * All photo uploads now use the batch presigned URL method exclusively.
+ * 
+ * The batch presigned URL method is the ONLY upload system because it:
+ * - Uploads directly from browser to R2 (no server bottleneck)
+ * - Supports concurrent uploads (up to 4 files at once)
+ * - Has proper quota checking and validation
+ * - Is optimized for large files and RAW formats
+ * 
+ * Removed methods:
+ * - Legacy multer-based server uploads (/api/r2/upload, /api/r2/backup-upload, /api/r2/gallery-upload)
+ * - Legacy session upload endpoint (/api/sessions/:id/upload-photos)
+ * 
+ * Primary endpoints:
+ * - POST /api/r2/generate-presigned-urls - Get presigned URLs for direct uploads
+ * - POST /api/r2/confirm-uploads - Confirm successful uploads and process files
+ */
 
-    // Check file extension as backup validation
-    const allowedExtensions = [
-      '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.svg',
-      '.cr2', '.cr3', '.crw', '.nef', '.nrw', '.arw', '.srf', '.sr2', '.raf',
-      '.orf', '.pef', '.ptx', '.rw2', '.dng', '.3fr', '.dcr', '.k25', '.kdc',
-      '.erf', '.fff', '.iiq', '.mos', '.mrw', '.raw', '.rwz', '.x3f',
-      '.mp4', '.mov', '.avi', '.mkv', '.wmv', '.m4v',
-      '.wav', '.flac', '.aiff', '.m4a', '.mp3',
-      '.pdf', '.txt', '.psd', '.ai', '.eps'
-    ];
-
-    const fileExt = require('path').extname(file.originalname).toLowerCase();
-    const isMimeAllowed = allowedMimeTypes.includes(file.mimetype);
-    const isExtAllowed = allowedExtensions.includes(fileExt);
-
-    if (isMimeAllowed || isExtAllowed) {
-      cb(null, true);
-    } else {
-      cb(new Error(`File type not allowed: ${file.mimetype} (${fileExt}). Only photography-related files are permitted.`));
-    }
-  }
-});
+// Multer configuration removed - no longer needed for consolidated upload system
+// All file validation now happens in the generate-presigned-urls endpoint
 
 /**
  * R2 Storage API Routes
@@ -229,339 +202,65 @@ function createR2Routes() {
   });
 
   /**
-   * POST /api/r2/upload
-   * Upload files to R2 with storage limit checking
-   * Supports multiple files and all file types
+   * CONSOLIDATED: Server-side upload endpoint redirected to batch presigned URL method
+   * This endpoint is kept for backward compatibility but redirects to the efficient batch method
    */
+  router.post('/upload', (req, res) => {
+    console.log('⚠️ REDUNDANT UPLOAD ENDPOINT CALLED - Redirecting to batch presigned URL method');
+    return res.status(308).json({
+      message: 'This endpoint has been deprecated. Please use the batch presigned URL method.',
+      redirect: true,
+      newEndpoint: '/api/r2/generate-presigned-urls',
+      instructions: 'Use R2DirectUploader class for efficient direct-to-R2 uploads',
+      documentation: 'The batch presigned URL method supports concurrent uploads, better performance, and direct browser-to-R2 transfers.'
+    });
+  });
+
+  /* ORIGINAL SERVER UPLOAD CODE REMOVED - replaced with redirect
   router.post('/upload', upload.array('files', 50), async (req, res) => {
-    try {
-      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files provided' });
-      }
-
-      console.log(`📤 Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
-
-      // Check total upload size against storage limit with admin bypass
-      const userEmail = req.user?.email;
-      const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      
-      // Admin bypass check
-      const adminEmails = [
-        'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com'
-      ];
-      
-      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
-        console.log(`✅ Admin bypass for uploads: ${userEmail} has unlimited storage`);
-      } else {
-        // Use proper StorageSystem for quota checking
-        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
-        
-        if (!canUploadResult.canUpload) {
-          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
-          return res.status(413).json({ 
-            error: 'Storage limit exceeded',
-            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
-            usage: {
-              currentGB: canUploadResult.currentUsageGB,
-              quotaGB: canUploadResult.quotaGB,
-              remainingGB: canUploadResult.remainingGB,
-              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
-            },
-            upgradeRequired: true
-          });
-        }
-        
-        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
-      }
-
-      // Upload files with optimized concurrency for maximum speed
-      const CONCURRENT_UPLOADS = 6; // Increased from 2 to 6 for faster processing
-      const uploadResults = [];
-      
-      // Process files in batches for optimal performance
-      for (let i = 0; i < req.files.length; i += CONCURRENT_UPLOADS) {
-        const batch = req.files.slice(i, i + CONCURRENT_UPLOADS);
-        const batchPromises = batch.map(file => 
-          r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId)
-        );
-        
-        const batchResults = await Promise.allSettled(batchPromises);
-        uploadResults.push(...batchResults);
-        
-        // Send progress update to client (if WebSocket is available)
-        const progress = Math.round(((i + batch.length) / req.files.length) * 100);
-        console.log(`📊 Upload progress: ${progress}% (${i + batch.length}/${req.files.length} files)`);
-      }
-      
-      // Separate successful and failed uploads
-      const successful = [];
-      const failed = [];
-      
-      uploadResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          successful.push(result.value);
-        } else {
-          failed.push({
-            filename: req.files[index].originalname,
-            error: result.reason?.message || 'Upload failed'
-          });
-        }
-      });
-
-      // REMOVED automatic thumbnail generation for better upload performance
-      // Thumbnails are now generated on-demand when first requested
-      // This eliminates the bottleneck of downloading large files back from R2
-
-      // Get updated storage usage
-      const updatedUsage = await r2Manager.getUserStorageUsage(userId);
-
-      res.json({
-        success: true,
-        uploaded: successful.length,
-        failed: failed.length,
-        results: {
-          successful,
-          failed
-        },
-        storageUsage: updatedUsage
-      });
-
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      res.status(500).json({ error: 'Upload failed', details: error.message });
-    }
+    // ... server-side upload code removed ...
   });
+  */
 
   /**
-   * POST /api/r2/backup-upload
-   * Alternative upload endpoint for RAW backup dashboard
-   * Same functionality as /upload but with different response format
+   * CONSOLIDATED: Backup upload endpoint redirected to batch presigned URL method
    */
+  router.post('/backup-upload', (req, res) => {
+    console.log('⚠️ REDUNDANT BACKUP-UPLOAD ENDPOINT CALLED - Redirecting to batch presigned URL method');
+    return res.status(308).json({
+      message: 'This endpoint has been deprecated. Please use the batch presigned URL method.',
+      redirect: true,
+      newEndpoint: '/api/r2/generate-presigned-urls',
+      instructions: 'Use R2DirectUploader class for efficient direct-to-R2 uploads',
+      documentation: 'The batch presigned URL method supports concurrent uploads, better performance, and direct browser-to-R2 transfers.'
+    });
+  });
+
+  /* ORIGINAL BACKUP UPLOAD CODE REMOVED - replaced with redirect
   router.post('/backup-upload', upload.array('files', 50), async (req, res) => {
-    try {
-      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files provided' });
-      }
-
-      console.log(`📱 RAW BACKUP: Processing ${req.files.length} RAW files for user ${userId}, session ${sessionId}`);
-
-      // Check total upload size against storage limit with admin bypass
-      const userEmail = req.user?.email;
-      const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      
-      // Admin bypass check
-      const adminEmails = [
-        'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com'
-      ];
-      
-      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
-        console.log(`✅ Admin bypass for RAW uploads: ${userEmail} has unlimited storage`);
-      } else {
-        // Use proper StorageSystem for quota checking
-        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
-        
-        if (!canUploadResult.canUpload) {
-          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
-          return res.status(413).json({ 
-            error: 'Storage limit exceeded',
-            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
-            usage: {
-              currentGB: canUploadResult.currentUsageGB,
-              quotaGB: canUploadResult.quotaGB,
-              remainingGB: canUploadResult.remainingGB,
-              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
-            },
-            upgradeRequired: true
-          });
-        }
-        
-        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
-      }
-
-      // Upload files as RAW backup files (NOT gallery files)
-      const uploadPromises = req.files.map(file => 
-        r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId, 'raw')
-      );
-      
-      const uploadResults = await Promise.allSettled(uploadPromises);
-      
-      // Count successful and failed uploads and queue thumbnail generation
-      let successfulUploads = 0;
-      let failedUploads = 0;
-      const thumbnailTasks = [];
-      
-      uploadResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          successfulUploads++;
-          
-          // Queue thumbnail generation for image files
-          const file = req.files[index];
-          if (r2Manager.isImageFile(file.originalname)) {
-            thumbnailTasks.push({
-              buffer: file.buffer,
-              filename: file.originalname,
-              userId,
-              sessionId,
-              fileType: 'raw'
-            });
-          }
-        } else {
-          failedUploads++;
-          console.error('Upload failed:', result.reason?.message);
-        }
-      });
-
-      // Generate thumbnails in background for RAW files too
-      if (thumbnailTasks.length > 0) {
-        console.log(`🖼️ Generating RAW thumbnails for ${thumbnailTasks.length} image files...`);
-        
-        Promise.allSettled(
-          thumbnailTasks.map(task => 
-            r2Manager.generateThumbnail(
-              task.buffer, 
-              task.filename, 
-              task.userId, 
-              task.sessionId, 
-              task.fileType
-            )
-          )
-        ).then(thumbResults => {
-          const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
-          console.log(` Generated RAW thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
-        }).catch(thumbError => {
-          console.warn(' Background RAW thumbnail generation error:', thumbError.message);
-        });
-      }
-
-      res.json({
-        success: true,
-        sessionId,
-        totalFiles: req.files.length,
-        successfulUploads,
-        failedUploads,
-        message: `Successfully uploaded ${successfulUploads} of ${req.files.length} files to R2 Cloud Storage`
-      });
-
-    } catch (error) {
-      console.error('R2 backup upload error:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Upload failed', 
-        message: error.message 
-      });
-    }
+    // ... backup upload code removed ...
   });
+  */
 
   /**
-   * POST /api/r2/gallery-upload
-   * Upload files specifically to gallery folder (not RAW backup)
+   * CONSOLIDATED: Gallery upload endpoint redirected to batch presigned URL method
    */
-  router.post('/gallery-upload', upload.array('files', 50), async (req, res) => {
-    try {
-      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files provided' });
-      }
-
-      console.log(` Gallery Upload: Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
-
-      // Check total upload size against storage limit with admin bypass
-      const userEmail = req.user?.email;
-      const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      
-      // Admin bypass check
-      const adminEmails = [
-        'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com'
-      ];
-      
-      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
-        console.log(`✅ Admin bypass for gallery uploads: ${userEmail} has unlimited storage`);
-      } else {
-        // Use proper StorageSystem for quota checking
-        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
-        
-        if (!canUploadResult.canUpload) {
-          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
-          return res.status(413).json({ 
-            error: 'Storage limit exceeded',
-            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
-            usage: {
-              currentGB: canUploadResult.currentUsageGB,
-              quotaGB: canUploadResult.quotaGB,
-              remainingGB: canUploadResult.remainingGB,
-              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
-            },
-            upgradeRequired: true
-          });
-        }
-        
-        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
-      }
-
-      // Upload files as GALLERY files (not RAW backup)
-      const uploadPromises = req.files.map(file => 
-        r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId, 'gallery')
-      );
-      
-      const uploadResults = await Promise.allSettled(uploadPromises);
-      
-      // Count successful and failed uploads
-      let successfulUploads = 0;
-      let failedUploads = 0;
-      
-      uploadResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          successfulUploads++;
-        } else {
-          failedUploads++;
-          console.error('Gallery upload failed:', result.reason?.message);
-        }
-      });
-
-      res.json({
-        success: true,
-        sessionId,
-        totalFiles: req.files.length,
-        successfulUploads,
-        failedUploads,
-        message: `Successfully uploaded ${successfulUploads} of ${req.files.length} gallery photos`
-      });
-
-    } catch (error) {
-      console.error('Gallery upload error:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Gallery upload failed', 
-        message: error.message 
-      });
-    }
+  router.post('/gallery-upload', (req, res) => {
+    console.log('⚠️ REDUNDANT GALLERY-UPLOAD ENDPOINT CALLED - Redirecting to batch presigned URL method');
+    return res.status(308).json({
+      message: 'This endpoint has been deprecated. Please use the batch presigned URL method.',
+      redirect: true,
+      newEndpoint: '/api/r2/generate-presigned-urls',
+      instructions: 'Use R2DirectUploader class for efficient direct-to-R2 uploads',
+      documentation: 'The batch presigned URL method supports concurrent uploads, better performance, and direct browser-to-R2 transfers.'
+    });
   });
+
+  /* ORIGINAL GALLERY UPLOAD CODE REMOVED - replaced with redirect
+  router.post('/gallery-upload', upload.array('files', 50), async (req, res) => {
+    // ... gallery upload code removed ...
+  });
+  */
 
   /**
    * GET /api/r2/session/:sessionId/files

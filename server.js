@@ -6776,254 +6776,37 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
     }
 });
 
-// Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
+// CONSOLIDATED: Legacy upload endpoint redirects to batch presigned URL method
+// This endpoint is kept for backward compatibility but redirects to the efficient batch method
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const normalizedUser = normalizeUserForLance(req.user);
-    const userId = normalizedUser.uid;
-
-    console.log(` Starting upload for session ${sessionId}...`);
-
-    // Disable all timeouts for upload requests
-    req.setTimeout(0); // Infinite timeout
-    res.setTimeout(0); // Infinite timeout
-
-    console.log(` Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
-    console.log(` Headers:`, req.headers);
-
-    console.log(`Starting Starting multer processing for session ${sessionId}...`);
-
-    upload.array('photos')(req, res, async (uploadError) => {
-        console.log(` Multer callback triggered - error: ${uploadError ? 'YES' : 'NO'}`);
-
-        if (uploadError) {
-            console.error(' Multer upload error:', uploadError);
-            console.error(' Error stack:', uploadError.stack);
-            console.error(' Error code:', uploadError.code);
-            console.error(' Error field:', uploadError.field);
-
-            // Send immediate error response
-            if (!res.headersSent) {
-                return res.status(400).json({ 
-                    error: 'Upload failed', 
-                    details: uploadError.message,
-                    code: uploadError.code,
-                    field: uploadError.field
-                });
-            }
-            return;
-        }
-
-        console.log(` Multer success - starting processing...`);
-        console.log(` Files received: ${req.files ? req.files.length : 0}`);
-
-        if (!req.files || req.files.length === 0) {
-            console.log(' No files received in request');
-            if (!res.headersSent) {
-                return res.status(400).json({ error: 'No files uploaded' });
-            }
-            return;
-        }
-
-        // QUOTA ENFORCEMENT: Check total upload size against user's storage limit
-        const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-        console.log(` Total upload size: ${(totalUploadSize / 1024 / 1024).toFixed(2)}MB`);
-        
-        try {
-            const userEmail = normalizedUser.email || req.session?.user?.email;
-            const quotaCheck = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
-            if (!quotaCheck.canUpload) {
-                console.log(`❌ Upload blocked - quota exceeded for user ${userId}`);
-                if (!res.headersSent) {
-                    return res.status(413).json({ 
-                        error: 'Storage quota exceeded',
-                        currentUsageGB: quotaCheck.currentUsageGB,
-                        quotaGB: quotaCheck.quotaGB,
-                        requiredGB: quotaCheck.newTotalGB,
-                        uploadSizeMB: (totalUploadSize / 1024 / 1024).toFixed(2),
-                        message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit. Please upgrade your storage plan to continue.`,
-                        upgradeRequired: true
-                    });
-                }
-                return;
-            }
-
-            // Warning if near limit
-            if (quotaCheck.isNearLimit) {
-                console.log(` User ${userId} approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
-            }
-        } catch (quotaError) {
-            console.error('Quota check failed, allowing upload (fail-safe):', quotaError);
-        }
-
-        const uploadedPhotos = [];
-
-        console.log(` Processing ${req.files.length} files for session ${sessionId}`);
-
-        // Process files with detailed logging and dual storage
-        for (let i = 0; i < req.files.length; i++) {
-            const file = req.files[i];
-            try {
-                console.log(`File: Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-
-                // Store original file metadata
-                const originalPath = file.path;
-                const originalSize = file.size;
-
-                // Create optimized version for app display if file is an image and large
-                let displayPath = originalPath;
-                let optimizedSize = originalSize;
-                let fileType = 'other';
-
-                // Determine file type
-                if (file.mimetype.startsWith('image/')) {
-                    fileType = 'image';
-                } else if (file.mimetype.startsWith('video/')) {
-                    fileType = 'video';
-                } else if (file.mimetype.startsWith('audio/')) {
-                    fileType = 'audio';
-                } else if (file.mimetype === 'application/pdf') {
-                    fileType = 'pdf';
-                } else if (file.mimetype.includes('document') || file.mimetype.includes('text')) {
-                    fileType = 'document';
-                }
-
-                // Only optimize images that are large
-                if (fileType === 'image' && file.size > 2 * 1024 * 1024) { // 2MB threshold
-                    try {
-                        const sharp = require('sharp');
-                        const optimizedFilename = `optimized_${file.filename}`;
-                        const optimizedPath = path.join(uploadsDir, optimizedFilename);
-
-                        await sharp(originalPath)
-                            .resize(1920, 2560, { 
-                                fit: 'inside', 
-                                withoutEnlargement: true 
-                            })
-                            .jpeg({ quality: 85 })
-                            .toFile(optimizedPath);
-
-                        displayPath = optimizedPath;
-                        optimizedSize = fs.statSync(optimizedPath).size;
-
-                        console.log(`Image optimized: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimizedSize / 1024 / 1024).toFixed(1)}MB`);
-                    } catch (optimizeError) {
-                        console.log(`Image optimization failed, using original: ${optimizeError.message}`);
-                    }
-                } else {
-                    console.log(`File type: ${fileType} - no optimization needed`);
-                }
-
-                // Detect RAW files for R2 backup
-                const isRawFile = isRAWFile(file.originalname, file.mimetype);
-                const userId = req.user?.uid || req.user?.id || 'unknown';
-
-                const photoData = {
-                    filename: file.filename,
-                    originalName: file.originalname,
-                    originalSize: originalSize,
-                    optimizedSize: optimizedSize,
-                    originalPath: originalPath,
-                    displayPath: displayPath,
-                    uploadDate: new Date().toISOString(),
-                    needsR2Backup: true, // Flag for background R2 backup
-                    isRawFile: isRawFile,
-                    mimeType: file.mimetype,
-                    fileType: fileType,
-                    userId: userId
-                };
-
-                uploadedPhotos.push(photoData);
-                console.log(`SUCCESS: File processed: ${file.originalname}`);
-
-            } catch (fileError) {
-                console.error(` Error processing file ${file.originalname}:`, fileError);
-                // Continue with other files
-            }
-        }
-
-        console.log(` Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
-
-        // Send immediate response to prevent connection timeout
-        if (!res.headersSent) {
-            res.json({
-                message: 'Photos uploaded successfully',
-                uploaded: uploadedPhotos.length,
-                photos: uploadedPhotos,
-                databaseUpdated: false // Will update in background
-            });
-        }
-
-        // Update database asynchronously in background
-        try {
-            console.log(` Background database update starting...`);
-            const session = await getSessionById(sessionId);
-            if (session) {
-                const existingPhotos = session.photos || [];
-                const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
-                await updateSession(sessionId, { photos: updatedPhotos });
-                console.log(`SUCCESS: Background database update completed: ${uploadedPhotos.length} new photos`);
-
-                // Start comprehensive R2 backup process for all uploaded files (PRIMARY)  
-                console.log(`☁️ Starting R2 backup for ${uploadedPhotos.length} files`);
-                const backupUserId = req.user?.uid || req.user?.id || userId || 'unknown';
-                processR2BackupsAsync(sessionId, uploadedPhotos, backupUserId);
-
-                // CRITICAL: Also add files to session_files table for accurate storage tracking
-                try {
-                    for (const photo of uploadedPhotos) {
-                        const folderType = photo.isRawFile ? 'raw' : 'gallery';
-                        const fileSize = photo.originalSize || 0;
-                        
-                        await pool.query(`
-                            INSERT INTO session_files (session_id, filename, file_size_bytes, folder_type, user_id)
-                            VALUES ($1, $2, $3, $4, $5)
-                            ON CONFLICT (session_id, filename) DO UPDATE SET
-                                file_size_bytes = $3,
-                                folder_type = $4,
-                                user_id = $5
-                        `, [
-                            sessionId,
-                            photo.originalName || photo.filename,
-                            fileSize,
-                            folderType,
-                            userId  // Use the Firebase UID here
-                        ]);
-
-                        // NEW: Log storage usage for quota tracking
-                        try {
-                            await storageSystem.logStorageChange(
-                                userId, 
-                                sessionId, 
-                                'upload', 
-                                fileSize, 
-                                folderType, 
-                                photo.originalName || photo.filename
-                            );
-                        } catch (logError) {
-                            console.error('Storage quota logging failed:', logError);
-                        }
-                    }
-                    console.log(` Added ${uploadedPhotos.length} files to session_files database and logged storage usage`);
-                } catch (trackingError) {
-                    console.error('Error adding files to session_files table:', trackingError);
-                }
-
-                // Skip Firebase upload to avoid bucket errors - R2 is primary storage
-                // uploadPhotosToFirebase(sessionId, uploadedPhotos);
-            } else {
-                console.error(` Session ${sessionId} not found for background database update`);
-            }
-        } catch (dbError) {
-            console.error(` Background database update error:`, dbError);
-            // Don't send response here as we already sent one above
-        }
-
-        return; // Exit early to prevent double response
+    console.log('⚠️ LEGACY UPLOAD ENDPOINT CALLED - Redirecting to batch presigned URL method');
+    
+    // Return a redirect response that instructs the client to use the batch presigned URL method
+    return res.status(308).json({
+        message: 'This endpoint has been deprecated. Please use the batch presigned URL method.',
+        redirect: true,
+        newEndpoint: '/api/r2/generate-presigned-urls',
+        instructions: 'Use R2DirectUploader class for efficient direct-to-R2 uploads',
+        documentation: 'The batch presigned URL method supports concurrent uploads, better performance, and direct browser-to-R2 transfers.'
     });
 });
 
-// DEAD CODE BLOCK REMOVED - was unreachable after return statement
+// DEAD CODE REMOVED: Original legacy upload implementation has been removed
+// The batch presigned URL method (/api/r2/generate-presigned-urls) is now the ONLY upload method
+// It provides:
+// - Direct browser-to-R2 uploads (no server bottleneck)
+// - Concurrent uploads (up to 4 files at once)
+// - Proper quota checking and validation
+// - Optimized for large files and RAW formats
+
+/* ORIGINAL LEGACY CODE REMOVED (lines 6780-7024)
+app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
+    // ... 244 lines of legacy multer-based upload code removed ...
+    upload.array('photos')(req, res, async (uploadError) => {
+    // Legacy multer-based upload code has been completely removed
+    // All uploads now use the batch presigned URL method via R2DirectUploader
+});
+*/
 
 // Test R2 connection (admin only)
 app.get('/api/r2-test', isAuthenticated, async (req, res) => {
