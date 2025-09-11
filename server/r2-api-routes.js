@@ -1417,6 +1417,375 @@ function createR2Routes() {
     }
   });
 
+  /**
+   * POST /api/r2/generate-presigned-urls
+   * Generate presigned URLs for direct browser-to-R2 uploads
+   * Supports batch uploads with storage quota checking
+   */
+  router.post('/generate-presigned-urls', async (req, res) => {
+    try {
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      const { sessionId, files } = req.body;
+      
+      // Validate request
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: 'Files array is required' });
+      }
+      
+      // Security: Limit number of files per request
+      if (files.length > 50) {
+        return res.status(400).json({ 
+          error: 'Too many files. Maximum 50 files per request' 
+        });
+      }
+      
+      // Validate each file and check size limits
+      let totalRequestSize = 0;
+      const validatedFiles = [];
+      
+      for (const file of files) {
+        if (!file.filename || !file.contentType || !file.size) {
+          return res.status(400).json({ 
+            error: `Invalid file data: ${file.filename || 'unnamed'}` 
+          });
+        }
+        
+        // Determine file type category
+        const fileType = r2Manager.getFileTypeCategory(file.filename);
+        
+        // Apply size limits based on file type
+        let maxSize;
+        if (fileType === 'raw' || fileType === 'video') {
+          maxSize = 5 * 1024 * 1024 * 1024; // 5GB for RAW/video
+        } else if (fileType === 'gallery' || fileType === 'adobe') {
+          maxSize = 500 * 1024 * 1024; // 500MB for images and Adobe files
+        } else {
+          maxSize = 100 * 1024 * 1024; // 100MB for other files
+        }
+        
+        if (file.size > maxSize) {
+          return res.status(400).json({ 
+            error: `File too large: ${file.filename} (${(file.size / (1024*1024)).toFixed(2)}MB exceeds ${(maxSize / (1024*1024)).toFixed(0)}MB limit)` 
+          });
+        }
+        
+        totalRequestSize += file.size;
+        validatedFiles.push({
+          filename: file.filename,
+          contentType: file.contentType,
+          size: file.size,
+          fileType: fileType
+        });
+      }
+      
+      console.log(`📤 Presigned URL request: ${validatedFiles.length} files, ${(totalRequestSize / (1024*1024)).toFixed(2)}MB total`);
+      
+      // Check storage quota before generating URLs
+      const quotaCheck = await storageSystem.checkStorageQuota(userId, totalRequestSize);
+      
+      if (!quotaCheck.allowed) {
+        return res.status(403).json({
+          error: 'Storage quota exceeded',
+          message: quotaCheck.message,
+          currentUsage: quotaCheck.currentUsage,
+          quotaLimit: quotaCheck.quotaLimit,
+          requestedSize: totalRequestSize
+        });
+      }
+      
+      // Generate presigned URLs for batch upload
+      const urlResult = await r2Manager.generateBatchUploadUrls(userId, sessionId, validatedFiles);
+      
+      if (!urlResult.success) {
+        return res.status(500).json({ 
+          error: 'Failed to generate upload URLs',
+          details: urlResult.error
+        });
+      }
+      
+      // Return presigned URLs to client
+      res.json({
+        success: true,
+        urls: urlResult.urls,
+        count: urlResult.count,
+        totalSize: totalRequestSize,
+        quotaRemaining: quotaCheck.quotaRemaining
+      });
+      
+      console.log(`✅ Generated ${urlResult.count} presigned URLs for user ${userId}`);
+      
+    } catch (error) {
+      console.error('Error generating presigned URLs:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate upload URLs',
+        message: error.message 
+      });
+    }
+  });
+
+  /**
+   * POST /api/r2/confirm-uploads
+   * Confirm successful uploads and update database
+   * Called after client completes direct uploads to R2
+   * SECURITY: Verifies actual file sizes and auto-deletes files that exceed limits
+   */
+  router.post('/confirm-uploads', async (req, res) => {
+    try {
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      const { sessionId, uploadedFiles } = req.body;
+      
+      if (!sessionId || !uploadedFiles || !Array.isArray(uploadedFiles)) {
+        return res.status(400).json({ 
+          error: 'Invalid request. Session ID and uploaded files are required' 
+        });
+      }
+      
+      console.log(`📝 Confirming ${uploadedFiles.length} uploads for session ${sessionId}`);
+      
+      const confirmedFiles = [];
+      const failedFiles = [];
+      const deletedFiles = [];
+      let totalActualSize = 0;
+      let totalDeclaredSize = 0;
+      
+      // Import S3 commands once
+      const { HeadObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+      
+      // Verify each file exists in R2 and check actual sizes
+      for (const file of uploadedFiles) {
+        try {
+          // SECURITY: Verify file exists and get ACTUAL size from R2
+          const headCommand = new HeadObjectCommand({
+            Bucket: r2Manager.bucketName,
+            Key: file.key
+          });
+          
+          const headResult = await r2Manager.s3Client.send(headCommand);
+          
+          if (headResult) {
+            // CRITICAL: Use actual Content-Length from R2, not client-provided size
+            const actualSizeBytes = headResult.ContentLength;
+            const declaredSize = file.size || 0;
+            const fileType = r2Manager.getFileTypeCategory(file.filename);
+            
+            totalDeclaredSize += declaredSize;
+            
+            // SECURITY: Check file size limits based on file type
+            let maxSize;
+            if (fileType === 'raw' || fileType === 'video') {
+              maxSize = 5 * 1024 * 1024 * 1024; // 5GB for RAW/video
+            } else if (fileType === 'gallery' || fileType === 'adobe') {
+              maxSize = 500 * 1024 * 1024; // 500MB for images and Adobe files
+            } else {
+              maxSize = 100 * 1024 * 1024; // 100MB for other files
+            }
+            
+            // SECURITY: Verify actual size against limits
+            if (actualSizeBytes > maxSize) {
+              console.error(`🚨 SECURITY VIOLATION: File ${file.filename} actual size (${(actualSizeBytes / (1024*1024)).toFixed(2)}MB) exceeds limit (${(maxSize / (1024*1024)).toFixed(0)}MB)`);
+              
+              // AUTO-DELETE file that exceeds limits
+              const deleteCommand = new DeleteObjectCommand({
+                Bucket: r2Manager.bucketName,
+                Key: file.key
+              });
+              
+              await r2Manager.s3Client.send(deleteCommand);
+              console.log(`🗑️ Auto-deleted oversized file: ${file.filename}`);
+              
+              deletedFiles.push({
+                filename: file.filename,
+                key: file.key,
+                actualSize: actualSizeBytes,
+                maxAllowed: maxSize,
+                reason: 'File size exceeds limit'
+              });
+              
+              failedFiles.push({
+                filename: file.filename,
+                error: `File size (${(actualSizeBytes / (1024*1024)).toFixed(2)}MB) exceeds limit (${(maxSize / (1024*1024)).toFixed(0)}MB). File has been deleted.`
+              });
+              
+              continue; // Skip to next file
+            }
+            
+            // SECURITY: Check for size mismatch (potential bypass attempt)
+            const sizeMismatchThreshold = 1024; // 1KB tolerance for minor differences
+            if (declaredSize > 0 && Math.abs(actualSizeBytes - declaredSize) > sizeMismatchThreshold) {
+              console.warn(`⚠️ Size mismatch for ${file.filename}: declared ${declaredSize} bytes, actual ${actualSizeBytes} bytes`);
+            }
+            
+            // Add to total ACTUAL size (not declared size)
+            totalActualSize += actualSizeBytes;
+            
+            // Update backup index with ACTUAL size
+            await r2Manager.updateBackupIndex(userId, sessionId, {
+              filename: file.filename,
+              originalPath: file.key,
+              backupPath: file.key,
+              fileSizeBytes: actualSizeBytes, // Use ACTUAL size
+              fileType: fileType,
+              uploadedAt: new Date().toISOString(),
+              status: 'uploaded',
+              thumbnailGenerated: false,
+              actualSize: actualSizeBytes,
+              declaredSize: declaredSize
+            });
+            
+            confirmedFiles.push({
+              filename: file.filename,
+              key: file.key,
+              size: actualSizeBytes, // Return ACTUAL size
+              declaredSize: declaredSize,
+              fileType: fileType
+            });
+            
+            // Generate thumbnails for image files in background
+            if (r2Manager.isImageFile(file.filename)) {
+              // Schedule thumbnail generation (non-blocking)
+              setImmediate(async () => {
+                try {
+                  const getCommand = new GetObjectCommand({
+                    Bucket: r2Manager.bucketName,
+                    Key: file.key
+                  });
+                  
+                  const getResult = await r2Manager.s3Client.send(getCommand);
+                  const chunks = [];
+                  for await (const chunk of getResult.Body) {
+                    chunks.push(chunk);
+                  }
+                  const fileBuffer = Buffer.concat(chunks);
+                  
+                  await r2Manager.generateThumbnail(
+                    fileBuffer,
+                    file.filename,
+                    userId,
+                    sessionId,
+                    fileType
+                  );
+                  
+                  console.log(`🖼️ Thumbnail generated for ${file.filename}`);
+                } catch (thumbError) {
+                  console.error(`Failed to generate thumbnail for ${file.filename}:`, thumbError.message);
+                }
+              });
+            }
+          } else {
+            throw new Error('File not found in R2');
+          }
+        } catch (error) {
+          console.error(`Failed to confirm upload for ${file.filename}:`, error.message);
+          failedFiles.push({
+            filename: file.filename,
+            error: error.message
+          });
+        }
+      }
+      
+      // SECURITY: Check total actual size against storage quota
+      const userEmail = req.user?.email;
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com'
+      ];
+      
+      // Skip quota check for admin accounts
+      const isAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase());
+      
+      if (!isAdmin && totalActualSize > 0) {
+        const quotaCheck = await storageSystem.checkStorageQuota(userId, totalActualSize);
+        
+        if (!quotaCheck.allowed) {
+          console.error(`🚨 QUOTA VIOLATION: User ${userId} exceeded quota with ${(totalActualSize / (1024*1024*1024)).toFixed(2)}GB upload`);
+          
+          // Delete ALL files from this batch if quota exceeded
+          for (const file of confirmedFiles) {
+            try {
+              const deleteCommand = new DeleteObjectCommand({
+                Bucket: r2Manager.bucketName,
+                Key: file.key
+              });
+              
+              await r2Manager.s3Client.send(deleteCommand);
+              console.log(`🗑️ Auto-deleted file due to quota violation: ${file.filename}`);
+              
+              deletedFiles.push({
+                filename: file.filename,
+                key: file.key,
+                actualSize: file.size,
+                reason: 'Storage quota exceeded'
+              });
+            } catch (deleteError) {
+              console.error(`Failed to delete file ${file.filename}:`, deleteError.message);
+            }
+          }
+          
+          return res.status(413).json({
+            error: 'Storage quota exceeded',
+            message: quotaCheck.message,
+            deletedFiles: deletedFiles,
+            currentUsage: quotaCheck.currentUsage,
+            quotaLimit: quotaCheck.quotaLimit,
+            uploadedSize: totalActualSize
+          });
+        }
+      }
+      
+      // Only update storage usage with ACTUAL sizes after all validations pass
+      if (confirmedFiles.length > 0) {
+        await storageSystem.updateStorageUsage(userId, totalActualSize);
+      }
+      
+      // Get updated storage usage
+      const currentUsage = await storageSystem.getUserStorageUsage(userId);
+      
+      // Return response with security details
+      const response = {
+        success: failedFiles.length === 0 && deletedFiles.length === 0,
+        confirmed: confirmedFiles.length,
+        failed: failedFiles.length,
+        deleted: deletedFiles.length,
+        confirmedFiles,
+        failedFiles,
+        deletedFiles,
+        totalActualSize,
+        totalDeclaredSize,
+        sizeMismatch: totalActualSize !== totalDeclaredSize,
+        storageUsage: {
+          used: currentUsage.used,
+          limit: currentUsage.limit,
+          percentage: currentUsage.percentage
+        }
+      };
+      
+      // Log security events
+      if (deletedFiles.length > 0) {
+        console.log(`🚨 SECURITY: Auto-deleted ${deletedFiles.length} files for user ${userId}`, deletedFiles);
+      }
+      
+      if (response.sizeMismatch) {
+        console.log(`⚠️ Size mismatch detected: declared ${totalDeclaredSize} bytes, actual ${totalActualSize} bytes`);
+      }
+      
+      res.json(response);
+      
+      console.log(`✅ Confirmed ${confirmedFiles.length} uploads, ${failedFiles.length} failed, ${deletedFiles.length} deleted`);
+      
+    } catch (error) {
+      console.error('Error confirming uploads:', error);
+      res.status(500).json({ 
+        error: 'Failed to confirm uploads',
+        message: error.message 
+      });
+    }
+  });
+
   return router;
 }
 
