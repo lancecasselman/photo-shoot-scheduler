@@ -2,7 +2,7 @@ modules = ["nodejs-20", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["android-tools", "firebase-tools", "git-lfs", "openjdk17", "openssh", "postgresql", "unzip", "wget"]
+packages = ["android-tools", "firebase-tools", "git-lfs", "openjdk17", "openssh", "postgresql", "unzip", "wget", "imagemagick"]
 
 [workflows]
 runButton = "Project"
