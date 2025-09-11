@@ -2072,104 +2072,112 @@ function setupUploadModal(sessionId) {
         });
     }
 
-    // Enhanced upload function with per-file progress tracking
+    // Enhanced upload function using R2DirectUploader with 4 concurrent uploads
     async function uploadPhotos(sessionId, files) {
         if (files.length === 0) return;
 
         try {
-            console.log(`🚀 Starting optimized upload of ${files.length} files...`);
+            console.log(`🚀 Starting R2 direct upload of ${files.length} files with 4 concurrent uploads...`);
 
-            const authToken = await getAuthToken();
-            if (!authToken) {
-                throw new Error('Authentication required for photo upload');
+            // Check if R2DirectUploader is available
+            if (typeof R2DirectUploader === 'undefined') {
+                console.error('R2DirectUploader not loaded');
+                showMessage('Upload system not ready. Please refresh the page.', 'error');
+                return;
             }
 
             // Show enhanced progress modal with per-file tracking
             showEnhancedUploadProgress(files.length);
 
-            // Process files in smaller batches for optimal performance
-            const BATCH_SIZE = 6; // Upload 6 files concurrently
-            let totalUploaded = 0;
-            let totalFailed = 0;
-            
-            for (let i = 0; i < files.length; i += BATCH_SIZE) {
-                const batch = files.slice(i, i + BATCH_SIZE);
-                
-                // Update progress: Starting batch
-                const batchStartProgress = Math.round((i / files.length) * 100);
-                updateEnhancedProgress(batchStartProgress, `Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(files.length/BATCH_SIZE)}...`);
-                
-                // Upload current batch
-                const formData = new FormData();
-                batch.forEach((file, index) => {
-                    formData.append('photos', file);
-                    updateFileProgress(i + index, file.name, 'uploading', 0);
-                });
+            // Track file indices for progress updates
+            let fileIndexMap = new Map();
+            files.forEach((file, index) => {
+                fileIndexMap.set(file.name, index);
+            });
 
-                try {
-                    const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Upload failed');
+            // Create R2DirectUploader instance with 4 concurrent uploads
+            const uploader = new R2DirectUploader({
+                maxConcurrent: 4,  // Exactly 4 concurrent uploads as requested
+                sessionId: sessionId,
+                onProgress: (fileName, percent, status) => {
+                    const fileIndex = fileIndexMap.get(fileName);
+                    if (fileIndex !== undefined) {
+                        updateFileProgress(fileIndex, fileName, status || 'uploading', percent);
+                    }
+                },
+                onFileComplete: (fileName, success) => {
+                    const fileIndex = fileIndexMap.get(fileName);
+                    if (fileIndex !== undefined) {
+                        updateFileProgress(fileIndex, fileName, success ? 'completed' : 'failed', success ? 100 : 0);
+                    }
+                },
+                onAllComplete: (result) => {
+                    const { completed, failed, total } = result;
+                    
+                    console.log(`✅ R2 Upload complete! ${completed.length} uploaded, ${failed.length} failed`);
+                    updateEnhancedProgress(100, `Complete! ${completed.length} uploaded successfully`);
+                    
+                    if (failed.length > 0) {
+                        showMessage(`Upload completed with ${failed.length} failed files. ${completed.length} files uploaded successfully.`, 'warning');
+                    } else {
+                        showMessage(`Successfully uploaded all ${completed.length} files!`, 'success');
                     }
 
-                    const result = await response.json();
-                    
-                    // Update individual file progress
-                    batch.forEach((file, index) => {
-                        updateFileProgress(i + index, file.name, 'completed', 100);
-                    });
-                    
-                    totalUploaded += result.uploaded || batch.length;
-                    
-                } catch (batchError) {
-                    console.error(`Batch ${Math.floor(i/BATCH_SIZE) + 1} failed:`, batchError);
-                    
-                    // Mark batch files as failed
-                    batch.forEach((file, index) => {
-                        updateFileProgress(i + index, file.name, 'failed', 0);
-                    });
-                    
-                    totalFailed += batch.length;
+                    // Close progress modal after delay
+                    setTimeout(() => {
+                        hideEnhancedUploadProgress();
+                        const modal = document.getElementById('uploadModal');
+                        if (modal) {
+                            modal.classList.remove('active');
+                        }
+                    }, 2000);
+
+                    // Reload photos for this session to show newly uploaded files
+                    const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
+                    const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
+                    if (galleryGrid) {
+                        loadSessionPhotos(sessionId, galleryGrid, photoCount);
+                    }
+                },
+                onError: (fileName, error) => {
+                    console.error(`Upload error for ${fileName}:`, error);
+                    const fileIndex = fileIndexMap.get(fileName);
+                    if (fileIndex !== undefined) {
+                        updateFileProgress(fileIndex, fileName, 'failed', 0);
+                    }
                 }
+            });
+
+            // Initialize file progress indicators
+            files.forEach((file, index) => {
+                updateFileProgress(index, file.name, 'pending', 0);
+            });
+
+            // Update overall progress periodically
+            let progressInterval = setInterval(() => {
+                const completedCount = uploader.completedUploads.length;
+                const failedCount = uploader.failedUploads.length;
+                const totalProcessed = completedCount + failedCount;
+                const activeCount = uploader.activeUploads.size;
                 
-                // Update overall progress
-                const overallProgress = Math.round(((i + batch.length) / files.length) * 100);
-                updateEnhancedProgress(overallProgress, `Uploaded ${totalUploaded}/${files.length} files`);
-            }
-
-            // Upload complete
-            console.log(`✅ Upload complete! ${totalUploaded} uploaded, ${totalFailed} failed`);
-            updateEnhancedProgress(100, `Complete! ${totalUploaded} uploaded successfully`);
-            
-            if (totalFailed > 0) {
-                showMessage(`Upload completed with ${totalFailed} failed files. ${totalUploaded} files uploaded successfully.`, 'warning');
-            } else {
-                showMessage(`Successfully uploaded all ${totalUploaded} files!`, 'success');
-            }
-
-            // Close progress modal after delay
-            setTimeout(() => {
-                hideEnhancedUploadProgress();
-                const modal = document.getElementById('uploadModal');
-                if (modal) {
-                    modal.classList.remove('active');
+                if (totalProcessed < files.length) {
+                    const overallProgress = Math.round((totalProcessed / files.length) * 100);
+                    updateEnhancedProgress(
+                        overallProgress, 
+                        `Uploading ${activeCount} files (${totalProcessed}/${files.length} processed)`
+                    );
+                } else {
+                    clearInterval(progressInterval);
                 }
-            }, 2000);
+            }, 500);
 
-            // Reload photos for this session
-            const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
-            const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
-            if (galleryGrid) {
-                loadSessionPhotos(sessionId, galleryGrid, photoCount);
-            }
+            // Start the upload process
+            const result = await uploader.uploadFiles(files, sessionId);
+            
+            // Clear the progress interval if still running
+            clearInterval(progressInterval);
+
+            // The onAllComplete callback will handle the rest
 
         } catch (error) {
             console.error('Upload error:', error);
