@@ -918,9 +918,9 @@
                 
                 const uploadPromises = files.map((file, index) => {
                     const presignedData = urlData.presignedUrls[index];
-                    if (presignedData.error) {
-                        console.error(`Skipping ${file.name}:`, presignedData.error);
-                        return Promise.resolve({ success: false, filename: file.name, error: presignedData.error });
+                    if (!presignedData || presignedData.error) {
+                        console.error(`Skipping ${file.name}:`, presignedData?.error || 'No pre-signed URL generated');
+                        return Promise.resolve({ success: false, filename: file.name, error: presignedData?.error || 'No pre-signed URL' });
                     }
                     return uploadFileDirectToR2(file, presignedData);
                 });
@@ -931,11 +931,16 @@
                 const successfulUploads = [];
                 uploadResults.forEach((result, index) => {
                     if (result.status === 'fulfilled' && result.value.success) {
-                        successfulUploads.push({
-                            r2Key: urlData.presignedUrls[index].r2Key,
-                            filename: files[index].name,
-                            fileSize: files[index].size
-                        });
+                        const presignedData = urlData.presignedUrls[index];
+                        if (presignedData && presignedData.r2Key) {
+                            successfulUploads.push({
+                                r2Key: presignedData.r2Key,
+                                filename: files[index].name,
+                                fileSize: files[index].size
+                            });
+                        }
+                    } else {
+                        console.error(`Upload failed for ${files[index].name}:`, result.reason || result.value?.error);
                     }
                 });
                 
@@ -986,11 +991,12 @@
             try {
                 console.log(`📤 Uploading ${file.name} directly to R2...`);
                 
-                const response = await fetch(presignedData.url, {
+                // Use the presignedUrl from the corrected server response
+                const response = await fetch(presignedData.presignedUrl, {
                     method: 'PUT',
                     body: file,
                     headers: {
-                        'Content-Type': presignedData.contentType || file.type || 'application/octet-stream'
+                        'Content-Type': file.type || 'application/octet-stream'
                     }
                 });
                 

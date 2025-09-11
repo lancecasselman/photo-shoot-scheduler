@@ -6338,18 +6338,45 @@ app.post('/api/gallery/batch-presigned-urls', isAuthenticated, async (req, res) 
             }
             
             try {
+                // Get content type from filename
+                const ext = file.filename.toLowerCase().split('.').pop();
+                const contentTypes = {
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp',
+                    'bmp': 'image/bmp',
+                    'svg': 'image/svg+xml',
+                    'tiff': 'image/tiff',
+                    'tif': 'image/tiff'
+                };
+                const contentType = contentTypes[ext] || 'application/octet-stream';
+                
+                // Correct parameter order: userId, sessionId, filename, contentType, fileSize
                 const presignedData = await r2FileManager.generateUploadPresignedUrl(
-                    file.filename,
                     userId,
                     sessionId,
-                    'gallery', // Default to gallery type for batch uploads
-                    3600 // 1 hour expiry
+                    file.filename,
+                    contentType,
+                    file.fileSize || 0
                 );
                 
-                presignedUrls.push({
-                    ...presignedData,
-                    fileSize: file.fileSize
-                });
+                if (presignedData.success) {
+                    presignedUrls.push({
+                        filename: file.filename,
+                        presignedUrl: presignedData.presignedUrl,
+                        r2Key: presignedData.key,
+                        fileSize: file.fileSize,
+                        expiresIn: presignedData.expiresIn
+                    });
+                } else {
+                    console.error(`❌ Failed to generate pre-signed URL for ${file.filename}:`, presignedData.error);
+                    presignedUrls.push({
+                        filename: file.filename,
+                        error: presignedData.error || 'Failed to generate URL'
+                    });
+                }
             } catch (error) {
                 console.error(`❌ Failed to generate pre-signed URL for ${file.filename}:`, error);
                 presignedUrls.push({
