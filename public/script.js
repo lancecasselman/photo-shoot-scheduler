@@ -2188,6 +2188,9 @@ function openUploadDialog(sessionId) {
     modal.classList.add('active');
 }
 
+// Global storage for upload modal event handlers to prevent duplicates
+window.uploadModalHandlers = null;
+
 // Setup upload modal functionality
 function setupUploadModal(sessionId) {
     console.log('Setting up upload modal for session:', sessionId);
@@ -2198,39 +2201,80 @@ function setupUploadModal(sessionId) {
     const uploadBtn = document.getElementById('uploadBtn');
     const previewContainer = document.getElementById('filePreview');
     
+    // Clean up any existing handlers first
+    if (window.uploadModalHandlers) {
+        console.log('Cleaning up existing upload modal handlers');
+        if (fileInput && window.uploadModalHandlers.fileInputChange) {
+            fileInput.removeEventListener('change', window.uploadModalHandlers.fileInputChange);
+        }
+        if (dropZone) {
+            if (window.uploadModalHandlers.dropZoneClick) {
+                dropZone.removeEventListener('click', window.uploadModalHandlers.dropZoneClick);
+            }
+            if (window.uploadModalHandlers.dragOver) {
+                dropZone.removeEventListener('dragover', window.uploadModalHandlers.dragOver);
+            }
+            if (window.uploadModalHandlers.dragLeave) {
+                dropZone.removeEventListener('dragleave', window.uploadModalHandlers.dragLeave);
+            }
+            if (window.uploadModalHandlers.drop) {
+                dropZone.removeEventListener('drop', window.uploadModalHandlers.drop);
+            }
+        }
+        if (uploadBtn && window.uploadModalHandlers.uploadClick) {
+            uploadBtn.removeEventListener('click', window.uploadModalHandlers.uploadClick);
+        }
+    }
+    
     // Track selected files
     let selectedFiles = [];
 
-    // File input change handler
-    fileInput.addEventListener('change', (e) => {
-        handleFileSelection(e.target.files);
-    });
+    // Create and store event handler functions globally
+    window.uploadModalHandlers = {
+        fileInputChange: (e) => {
+            handleFileSelection(e.target.files);
+        },
+        dropZoneClick: (e) => {
+            // Prevent multiple file dialogs
+            e.preventDefault();
+            e.stopPropagation();
+            if (fileInput && !fileInput.disabled) {
+                fileInput.click();
+            }
+        },
+        dragOver: (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        },
+        dragLeave: () => {
+            dropZone.classList.remove('drag-over');
+        },
+        drop: (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFileSelection(e.dataTransfer.files);
+        },
+        uploadClick: (e) => {
+            e.preventDefault();
+            uploadPhotos(sessionId, selectedFiles);
+        }
+    };
 
-    // Drop zone click handler
-    dropZone.addEventListener('click', () => {
-        fileInput.click();
-    });
+    // Add event listeners using the stored handlers
+    if (fileInput) {
+        fileInput.addEventListener('change', window.uploadModalHandlers.fileInputChange);
+    }
 
-    // Drag and drop handlers
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
+    if (dropZone) {
+        dropZone.addEventListener('click', window.uploadModalHandlers.dropZoneClick);
+        dropZone.addEventListener('dragover', window.uploadModalHandlers.dragOver);
+        dropZone.addEventListener('dragleave', window.uploadModalHandlers.dragLeave);
+        dropZone.addEventListener('drop', window.uploadModalHandlers.drop);
+    }
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        handleFileSelection(e.dataTransfer.files);
-    });
-
-    // Upload button handler
-    uploadBtn.addEventListener('click', () => {
-        uploadPhotos(sessionId, selectedFiles);
-    });
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', window.uploadModalHandlers.uploadClick);
+    }
 
     function handleFileSelection(files) {
         selectedFiles = Array.from(files).filter(file => {
@@ -2293,6 +2337,37 @@ function setupUploadModal(sessionId) {
 function closeUploadModal() {
     const modal = document.getElementById('uploadModal');
     if (modal) {
+        // Clean up event handlers before removing modal
+        if (window.uploadModalHandlers) {
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (fileInput && window.uploadModalHandlers.fileInputChange) {
+                fileInput.removeEventListener('change', window.uploadModalHandlers.fileInputChange);
+            }
+            if (dropZone) {
+                if (window.uploadModalHandlers.dropZoneClick) {
+                    dropZone.removeEventListener('click', window.uploadModalHandlers.dropZoneClick);
+                }
+                if (window.uploadModalHandlers.dragOver) {
+                    dropZone.removeEventListener('dragover', window.uploadModalHandlers.dragOver);
+                }
+                if (window.uploadModalHandlers.dragLeave) {
+                    dropZone.removeEventListener('dragleave', window.uploadModalHandlers.dragLeave);
+                }
+                if (window.uploadModalHandlers.drop) {
+                    dropZone.removeEventListener('drop', window.uploadModalHandlers.drop);
+                }
+            }
+            if (uploadBtn && window.uploadModalHandlers.uploadClick) {
+                uploadBtn.removeEventListener('click', window.uploadModalHandlers.uploadClick);
+            }
+            
+            // Clear the handlers reference
+            window.uploadModalHandlers = null;
+        }
+        
         modal.classList.remove('active');
         // Clean up after a delay to allow animation
         setTimeout(() => {
