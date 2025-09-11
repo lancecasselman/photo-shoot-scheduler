@@ -763,9 +763,47 @@
             return true;
         }
 
+        // Check authentication status
+        async function checkAuth() {
+            try {
+                // First check if we're authenticated
+                const authResponse = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!authResponse.ok) {
+                    console.error('Not authenticated, redirecting to login');
+                    window.location.href = '/secure-login.html';
+                    return false;
+                }
+                
+                const userData = await authResponse.json();
+                console.log('Authenticated as:', userData);
+                return true;
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                return false;
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
             if (getUrlParams()) {
+                // Check authentication first
+                const isAuth = await checkAuth();
+                if (!isAuth) {
+                    console.error('Authentication required');
+                    document.getElementById('fileContainer').innerHTML = `
+                        <div class="empty-state">
+                            <h3>Authentication Required</h3>
+                            <p>Please log in to access the gallery manager.</p>
+                            <button class="btn" onclick="window.location.href='/secure-login.html'">Go to Login</button>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 // Load complete session data to get client contact info
                 await loadSessionData();
                 
@@ -1225,25 +1263,63 @@
             try {
                 const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
                 console.log('📸 Fetching photos from:', url);
+                console.log('Session ID:', sessionId, 'Folder Type:', folderType);
+                
+                // Check if we have session cookies
+                console.log('Cookies:', document.cookie);
+                
                 const response = await fetch(url, {
-                    credentials: 'include' // Include cookies for authentication
+                    method: 'GET',
+                    credentials: 'include', // Include cookies for authentication
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Load files response error:', errorText);
+                    
                     if (response.status === 401 || response.status === 403) {
-                        console.error('Authentication error - session cookies may not be sent');
+                        console.error('🔒 Authentication error detected');
+                        console.error('Session cookies may not be sent or user is not authenticated');
+                        
+                        // Show user-friendly error message
+                        document.getElementById('fileContainer').innerHTML = `
+                            <div class="empty-state">
+                                <h3>Authentication Required</h3>
+                                <p>You need to be logged in to view photos.</p>
+                                <p style="color: #666; font-size: 0.9em;">Error: ${response.status} - ${errorText}</p>
+                                <button class="btn" onclick="window.location.href='/secure-login.html'">Login</button>
+                            </div>
+                        `;
+                        return;
                     }
+                    
+                    if (response.status === 404) {
+                        console.error('Session not found or user does not have access');
+                        document.getElementById('fileContainer').innerHTML = `
+                            <div class="empty-state">
+                                <h3>Session Not Found</h3>
+                                <p>This session does not exist or you don't have permission to access it.</p>
+                                <button class="btn" onclick="window.location.href='/secure-app.html'">Go to Dashboard</button>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
                     throw new Error(`Failed to load files: ${response.status} - ${errorText}`);
                 }
                 
                 const payload = await response.json();
                 console.log('API Response:', payload);
                 
-                // Handle different response shapes
-                const items = Array.isArray(payload) ? payload : 
-                             (payload.files || payload.photos || payload.data || []);
+                // The API returns { success: true, files: [...] }
+                const items = payload.files || (Array.isArray(payload) ? payload : []);
                 
                 console.log(`Raw items from API: ${items.length} items`);
                 

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Manager Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .photo-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+        .photo-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .photo-info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Gallery Manager Test Suite</h1>
+        
+        <div class="test-section">
+            <h2>1. Authentication Check</h2>
+            <button onclick="checkAuth()">Check Authentication</button>
+            <div id="authStatus"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Load Sessions</h2>
+            <button onclick="loadSessions()">Load My Sessions</button>
+            <div id="sessionsStatus"></div>
+            <div id="sessionsList"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Test Gallery API</h2>
+            <input type="text" id="sessionId" placeholder="Enter Session ID" style="padding: 8px; width: 300px;">
+            <select id="folderType" style="padding: 8px;">
+                <option value="gallery">Gallery</option>
+                <option value="raw">Raw</option>
+            </select>
+            <button onclick="testGalleryAPI()">Test API Call</button>
+            <div id="apiStatus"></div>
+            <div id="photoGrid" class="photo-grid"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Open Gallery Manager</h2>
+            <button onclick="openGalleryManager()">Open Gallery Manager Window</button>
+            <div id="galleryStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Check Authentication
+        async function checkAuth() {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.innerHTML = '<div class="status info">Checking authentication...</div>';
+            
+            try {
+                const response = await fetch('/api/user', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Authenticated as: ${user.email || user.displayName}
+                            <pre>${JSON.stringify(user, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Not authenticated (${response.status})
+                            <br><a href="/secure-login.html">Go to Login</a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 2. Load Sessions
+        async function loadSessions() {
+            const statusDiv = document.getElementById('sessionsStatus');
+            const listDiv = document.getElementById('sessionsList');
+            statusDiv.innerHTML = '<div class="status info">Loading sessions...</div>';
+            
+            try {
+                const response = await fetch('/api/sessions', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const sessions = await response.json();
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Found ${sessions.length} sessions
+                        </div>
+                    `;
+                    
+                    if (sessions.length > 0) {
+                        listDiv.innerHTML = sessions.map(session => `
+                            <div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                                <strong>${session.client_name || session.clientName}</strong> - ${session.session_type || session.sessionType}<br>
+                                Session ID: <code>${session.id}</code><br>
+                                <button onclick="document.getElementById('sessionId').value='${session.id}'; testGalleryAPI()">
+                                    Test Gallery API
+                                </button>
+                                <button onclick="document.getElementById('sessionId').value='${session.id}'; openGalleryManager()">
+                                    Open Gallery Manager
+                                </button>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Failed to load sessions (${response.status})
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 3. Test Gallery API
+        async function testGalleryAPI() {
+            const sessionId = document.getElementById('sessionId').value;
+            const folderType = document.getElementById('folderType').value;
+            const statusDiv = document.getElementById('apiStatus');
+            const gridDiv = document.getElementById('photoGrid');
+            
+            if (!sessionId) {
+                statusDiv.innerHTML = '<div class="status error">Please enter a session ID</div>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<div class="status info">Testing API call...</div>';
+            gridDiv.innerHTML = '';
+            
+            try {
+                const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
+                console.log('Testing URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('API Response:', data);
+                    
+                    const files = data.files || [];
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ API call successful! Found ${files.length} files
+                            <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                    
+                    // Display photos
+                    if (files.length > 0) {
+                        gridDiv.innerHTML = files.slice(0, 6).map(file => `
+                            <div class="photo-card">
+                                <img src="${file.thumbnailUrl || file.downloadUrl || file.url}" 
+                                     alt="${file.originalName || file.filename}"
+                                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'150\\' viewBox=\\'0 0 200 150\\'%3E%3Crect fill=\\'%23ddd\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\'%23999\\'%3ENo Preview%3C/text%3E%3C/svg%3E'">
+                                <div class="photo-info">
+                                    <strong>${file.originalName || file.filename}</strong><br>
+                                    ${file.fileSizeMB ? file.fileSizeMB.toFixed(2) + ' MB' : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        if (files.length > 6) {
+                            gridDiv.innerHTML += `<div class="photo-card" style="display: flex; align-items: center; justify-content: center; height: 150px; background: #f5f5f5;">
+                                <div>+${files.length - 6} more files</div>
+                            </div>`;
+                        }
+                    }
+                } else {
+                    const errorText = await response.text();
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ API call failed (${response.status})
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error: ${error.message}
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // 4. Open Gallery Manager
+        function openGalleryManager() {
+            const sessionId = document.getElementById('sessionId').value;
+            const folderType = document.getElementById('folderType').value;
+            const statusDiv = document.getElementById('galleryStatus');
+            
+            if (!sessionId) {
+                statusDiv.innerHTML = '<div class="status error">Please enter a session ID</div>';
+                return;
+            }
+            
+            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=${folderType}&clientName=Test`;
+            const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes';
+            
+            statusDiv.innerHTML = `
+                <div class="status info">
+                    Opening gallery manager...<br>
+                    URL: <code>${url}</code>
+                </div>
+            `;
+            
+            window.open(url, 'gallery_test', windowFeatures);
+        }
+
+        // Auto-check auth on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
