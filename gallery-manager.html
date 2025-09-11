@@ -763,8 +763,38 @@
             return true;
         }
 
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    console.error('❌ Authentication check failed:', response.status);
+                    window.location.href = '/secure-login.html';
+                    return false;
+                }
+                
+                const data = await response.json();
+                console.log('✅ Authentication successful:', data.user?.email);
+                return true;
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                window.location.href = '/secure-login.html';
+                return false;
+            }
+        }
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
+            // First check authentication
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) {
+                console.error('❌ User not authenticated, redirecting to login...');
+                return;
+            }
+            
             if (getUrlParams()) {
                 // Load complete session data to get client contact info
                 await loadSessionData();
@@ -1222,6 +1252,21 @@
 
         // Load files
         async function loadFiles() {
+            console.log('📸 LOADING FILES STARTED');
+            console.log('📸 Current sessionId:', sessionId);
+            console.log('📸 Current folderType:', folderType);
+            
+            if (!sessionId) {
+                console.error('📸 ERROR: sessionId is not set!');
+                document.getElementById('fileContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Error</h3>
+                        <p>No session ID provided in the URL.</p>
+                    </div>
+                `;
+                return;
+            }
+            
             try {
                 const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
                 console.log('📸 Fetching photos from:', url);
@@ -1278,12 +1323,22 @@
                 }
                 
                 const payload = await response.json();
-                console.log('API Response:', payload);
+                console.log('📸 API Response received:', payload);
+                console.log('📸 Response structure:', {
+                    hasSuccess: 'success' in payload,
+                    hasFiles: 'files' in payload,
+                    isArray: Array.isArray(payload),
+                    filesIsArray: Array.isArray(payload.files),
+                    filesLength: payload.files ? payload.files.length : 0
+                });
                 
                 // The API returns { success: true, files: [...] }
                 const items = payload.files || (Array.isArray(payload) ? payload : []);
                 
-                console.log(`Raw items from API: ${items.length} items`);
+                console.log(`📸 Raw items from API: ${items.length} items`);
+                if (items.length > 0) {
+                    console.log('📸 First item structure:', items[0]);
+                }
                 
                 // Map R2 files data to expected format with defensive handling
                 files = items.map(file => {

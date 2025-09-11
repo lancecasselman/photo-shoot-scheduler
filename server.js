@@ -5341,6 +5341,8 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
     const userId = normalizedUser.uid;
     const { folder } = req.query; // Accept folder parameter (gallery, raw, etc.)
 
+    console.log(`📸 PHOTOS ENDPOINT CALLED - Session: ${sessionId}, User: ${userId}, Folder: ${folder || 'all'}`);
+
     try {
         // First verify the session belongs to the user
         const sessionResult = await pool.query(
@@ -5373,6 +5375,7 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         const filesResult = await pool.query(filesQuery, queryParams);
 
         console.log(`📸 Loading ${filesResult.rows.length} ${folder || 'all'} photos from R2 for session ${sessionId}`);
+        console.log(`📸 First file:`, filesResult.rows[0] ? JSON.stringify(filesResult.rows[0], null, 2) : 'No files found');
 
         // Get thumbnail files for this session
         let thumbnailsQuery = `SELECT id, filename, original_filename, r2_key, file_size_bytes
@@ -5403,6 +5406,12 @@ app.get('/api/sessions/:id/photos', isAuthenticated, async (req, res) => {
         console.log(`🖼️ Found ${thumbnailsResult.rows.length} thumbnails for session ${sessionId}`);
 
         // Check if R2 manager is available and configured
+        console.log(`📸 R2 Manager status:`, {
+            exists: !!r2FileManager,
+            r2Available: r2FileManager?.r2Available,
+            hasGetSignedUrl: typeof r2FileManager?.getSignedUrl === 'function'
+        });
+        
         if (!r2FileManager || !r2FileManager.r2Available) {
             console.warn('⚠️ R2 manager not available, returning files without presigned URLs');
             const fallbackFiles = filesResult.rows.map(file => {
