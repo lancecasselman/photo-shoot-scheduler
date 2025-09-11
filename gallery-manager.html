@@ -620,17 +620,7 @@
     <div class="upload-zone" id="uploadZone" onclick="triggerFileUpload()">
         <h3>Upload Files</h3>
         <p>Drag and drop files or click anywhere in this area to browse</p>
-        <p><strong>🚀 Fast batch upload: Unlimited files • Processed in 4-file batches • Direct to cloud • All file types supported</strong></p>
-        <div class="upload-mode-selector" style="margin-top: 10px;">
-            <label style="margin-right: 20px; cursor: pointer;">
-                <input type="radio" name="uploadMode" value="batch" checked>
-                <span>Fast Batch (Unlimited files, 4 at a time)</span>
-            </label>
-            <label style="cursor: pointer;">
-                <input type="radio" name="uploadMode" value="legacy">
-                <span>Legacy Mode (Multiple files)</span>
-            </label>
-        </div>
+        <p><strong>🚀 Fast direct upload: Unlimited files • Processed in 4-file batches • Direct to cloud • All file types supported</strong></p>
     </div>
 
     <input type="file" id="fileInput" class="file-input" multiple accept="*/*">
@@ -867,17 +857,9 @@
         function handleFileSelection(selectedFiles) {
             if (selectedFiles.length === 0) return;
             
-            // Check which upload mode is selected
-            const uploadMode = document.querySelector('input[name="uploadMode"]:checked').value;
-            
-            if (uploadMode === 'batch') {
-                // Batch mode: Add files to queue and process in chunks of 4
-                addFilesToBatchQueue(selectedFiles);
-            } else {
-                // Legacy mode: use existing queue system
-                uploadQueue = [...selectedFiles];
-                processUploadQueue();
-            }
+            // Always use batch mode - the only upload method
+            // Add files to queue and process in chunks of 4
+            addFilesToBatchQueue(selectedFiles);
         }
         
         // Add files to batch queue and start processing
