@@ -644,18 +644,6 @@ function createSessionCard(session) {
     galleryBtn.textContent = ' Copy Gallery URL';
     galleryBtn.onclick = () => copyGalleryUrl(session.id);
 
-    // RAW Backup Upload Button
-    const rawUploadBtn = document.createElement('button');
-    rawUploadBtn.className = 'btn btn-info';
-    rawUploadBtn.textContent = 'RAW Backup Upload';
-    rawUploadBtn.onclick = () => {
-        currentGallerySessionId = session.id;
-        initRawUpload();
-    };
-    rawUploadBtn.style.backgroundColor = '#6c757d';
-    rawUploadBtn.style.color = 'white';
-    rawUploadBtn.style.margin = '2px';
-    rawUploadBtn.style.display = 'inline-block';
 
     // RAW Folder Button
     const rawFolderBtn = document.createElement('button');
@@ -750,7 +738,6 @@ function createSessionCard(session) {
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(viewContractsBtn);
-    actions.appendChild(rawUploadBtn);
     actions.appendChild(rawFolderBtn);
     actions.appendChild(deleteBtn);
 
