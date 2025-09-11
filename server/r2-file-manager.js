@@ -103,86 +103,6 @@ class R2FileManager {
     
     return 'other';
   }
-  
-  /**
-   * Get content type based on file extension
-   */
-  getContentType(filename) {
-    if (!filename) return 'application/octet-stream';
-    
-    const ext = filename.toLowerCase().split('.').pop();
-    const contentTypes = {
-      // Images
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'bmp': 'image/bmp',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'tiff': 'image/tiff',
-      'tif': 'image/tiff',
-      // RAW formats
-      'nef': 'image/x-nikon-nef',
-      'cr2': 'image/x-canon-cr2',
-      'arw': 'image/x-sony-arw',
-      'dng': 'image/x-adobe-dng',
-      'raf': 'image/x-fuji-raf',
-      'orf': 'image/x-olympus-orf',
-      // Videos
-      'mp4': 'video/mp4',
-      'mov': 'video/quicktime',
-      'avi': 'video/x-msvideo',
-      'mkv': 'video/x-matroska',
-      'wmv': 'video/x-ms-wmv',
-      // Documents
-      'pdf': 'application/pdf',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'txt': 'text/plain',
-      // Adobe
-      'psd': 'image/vnd.adobe.photoshop',
-      'ai': 'application/postscript',
-      'eps': 'application/postscript'
-    };
-    
-    return contentTypes[ext] || 'application/octet-stream';
-  }
-  
-  /**
-   * Rebuild backup index from existing R2 files
-   */
-  async rebuildBackupIndex(userId, sessionId, files) {
-    try {
-      const indexKey = this.generateBackupIndexKey(userId, sessionId);
-      const backupIndex = {
-        sessionId,
-        userId,
-        files: files,
-        lastUpdated: new Date().toISOString(),
-        totalFiles: files.length,
-        totalSizeBytes: files.reduce((sum, f) => sum + (f.fileSizeBytes || 0), 0),
-        rebuilt: true,
-        rebuiltAt: new Date().toISOString()
-      };
-      
-      // Upload the rebuilt index to R2
-      const putCommand = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: indexKey,
-        Body: JSON.stringify(backupIndex, null, 2),
-        ContentType: 'application/json'
-      });
-      
-      await this.s3Client.send(putCommand);
-      console.log(`✅ Backup index rebuilt for session ${sessionId} with ${files.length} files`);
-      
-      return backupIndex;
-    } catch (error) {
-      console.error('Error rebuilding backup index:', error);
-      throw error;
-    }
-  }
 
   // Check if file is an image that can be processed
   isImageFile(filename) {
@@ -706,6 +626,172 @@ class R2FileManager {
   }
 
   /**
+   * Generate a pre-signed URL for direct browser-to-R2 upload
+   */
+  async generateUploadPresignedUrl(filename, userId, sessionId, fileType = null, expiresIn = 3600) {
+    try {
+      if (!this.r2Available) {
+        throw new Error('R2 storage is not available');
+      }
+
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      
+      // Generate the R2 key using existing pattern
+      const actualFileType = fileType || this.getFileTypeCategory(filename);
+      const r2Key = this.generateR2Key(userId, sessionId, filename, actualFileType);
+      
+      // Determine content type from filename
+      const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+      const contentTypeMap = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', 
+        '.gif': 'image/gif', '.webp': 'image/webp', '.tiff': 'image/tiff', '.tif': 'image/tiff',
+        '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.mov': 'video/quicktime',
+        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.zip': 'application/zip',
+        // RAW formats
+        '.nef': 'image/x-nikon-nef', '.cr2': 'image/x-canon-cr2', '.arw': 'image/x-sony-arw',
+        '.dng': 'image/x-adobe-dng', '.raf': 'image/x-fuji-raf', '.orf': 'image/x-olympus-orf'
+      };
+      const contentType = contentTypeMap[ext] || 'application/octet-stream';
+      
+      // Create the PutObjectCommand with metadata
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: r2Key,
+        ContentType: contentType,
+        Metadata: {
+          'original-filename': filename,
+          'user-id': userId,
+          'session-id': sessionId,
+          'file-type': actualFileType,
+          'upload-timestamp': new Date().toISOString()
+        }
+      });
+      
+      // Generate the pre-signed URL
+      const presignedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
+      
+      console.log(`📤 Generated upload pre-signed URL for: ${filename}`);
+      
+      return {
+        url: presignedUrl,
+        r2Key,
+        filename,
+        fileType: actualFileType,
+        contentType,
+        expiresIn
+      };
+    } catch (error) {
+      console.error('Error generating upload pre-signed URL:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process files after direct R2 upload (generate thumbnails, update database)
+   */
+  async processUploadedFile(r2Key, filename, userId, sessionId, fileSizeBytes = null) {
+    try {
+      console.log(`🔄 Processing uploaded file: ${filename}`);
+      
+      let contentType = 'application/octet-stream';
+      
+      // Get file metadata from R2 if not provided
+      if (!fileSizeBytes) {
+        const { HeadObjectCommand } = require('@aws-sdk/client-s3');
+        const headCommand = new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: r2Key
+        });
+        const response = await this.s3Client.send(headCommand);
+        fileSizeBytes = response.ContentLength;
+        contentType = response.ContentType || 'application/octet-stream';
+      }
+      
+      const fileSizeMB = (fileSizeBytes / (1024 * 1024));
+      const fileType = this.getFileTypeCategory(filename);
+      
+      // Update backup index
+      const fileInfo = {
+        filename,
+        r2Key,
+        fileType,
+        fileSizeBytes,
+        uploadedAt: new Date().toISOString(),
+        originalFormat: filename.substring(filename.lastIndexOf('.')),
+        contentType
+      };
+      
+      await this.updateBackupIndex(userId, sessionId, fileInfo, 'add');
+      
+      // Update database record
+      if (this.pool) {
+        try {
+          await this.pool.query(`
+            INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (session_id, filename) 
+            DO UPDATE SET 
+              file_size_bytes = EXCLUDED.file_size_bytes,
+              file_size_mb = EXCLUDED.file_size_mb,
+              r2_key = EXCLUDED.r2_key,
+              uploaded_at = EXCLUDED.uploaded_at
+          `, [userId, sessionId, fileType, filename, fileSizeBytes, fileSizeMB, r2Key, new Date(), filename]);
+          
+          console.log(`✅ Database record updated for file: ${filename}`);
+        } catch (dbError) {
+          console.warn('⚠️ Failed to update database record:', dbError.message);
+        }
+      }
+      
+      // Generate thumbnail for image files
+      if (this.isImageFile(filename)) {
+        try {
+          // Download the file from R2 to generate thumbnails
+          const { GetObjectCommand } = require('@aws-sdk/client-s3');
+          const getCommand = new GetObjectCommand({
+            Bucket: this.bucketName,
+            Key: r2Key
+          });
+          const response = await this.s3Client.send(getCommand);
+          const fileBuffer = await this.streamToBuffer(response.Body);
+          
+          await this.generateThumbnail(fileBuffer, filename, userId, sessionId, fileType);
+          console.log(`🖼️ Thumbnail generated for: ${filename}`);
+        } catch (thumbnailError) {
+          console.warn(`⚠️ Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
+          // Continue - thumbnail generation failure shouldn't fail the processing
+        }
+      }
+      
+      return {
+        success: true,
+        filename,
+        r2Key,
+        fileType,
+        fileSizeBytes,
+        fileSizeMB,
+        processedAt: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error('Error processing uploaded file:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper method to convert stream to buffer
+   */
+  async streamToBuffer(stream) {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  /**
    * Download file from R2 at full resolution
    */
   async downloadFile(userId, sessionId, filename) {
@@ -793,118 +879,23 @@ class R2FileManager {
       // Get the backup index which contains all file metadata
       const backupIndex = await this.getSessionBackupIndex(userId, sessionId);
       
-      // If backup index is empty or missing, fall back to direct R2 listing
       if (!backupIndex.files || backupIndex.files.length === 0) {
-        console.log(`📁 No files in backup index for session ${sessionId}, falling back to direct R2 listing`);
-        
-        // Construct the prefix to search for files in R2 - using the correct pattern
-        const sessionPrefix = `photographer-${userId}/session-${sessionId}/`;
-        console.log(`🔍 Searching R2 with prefix: ${sessionPrefix}`);
-        
-        // List all objects with this prefix
-        const r2Objects = await this.listObjects(sessionPrefix);
-        
-        if (!r2Objects || r2Objects.length === 0) {
-          console.log(`📁 No files found in R2 for session ${sessionId}`);
-          return {
-            success: true,
-            filesByType: {
-              raw: [],
-              gallery: [],
-              video: [],
-              document: [],
-              other: []
-            },
-            totalFiles: 0,
-            totalSize: 0
-          };
-        }
-        
-        console.log(`📁 Found ${r2Objects.length} objects in R2 for session ${sessionId}`);
-        
-        // Organize files by category from R2 listing
-        const filesByType = {
-          raw: [],
-          gallery: [],
-          video: [],
-          document: [],
-          other: []
-        };
-        
-        let totalSize = 0;
-        const indexFiles = [];
-        
-        for (const obj of r2Objects) {
-          // Skip backup index files and thumbnails
-          if (obj.Key.endsWith('backup-index.json') || 
-              obj.Key.endsWith('backups.json') ||
-              obj.Key.includes('_sm.') || 
-              obj.Key.includes('_md.') || 
-              obj.Key.includes('_lg.')) {
-            continue;
-          }
-          
-          // Extract filename from the key
-          const filename = obj.Key.split('/').pop();
-          
-          // Determine category based on path or extension
-          let category = 'other';
-          if (obj.Key.includes('/raw/')) {
-            category = 'raw';
-          } else if (obj.Key.includes('/gallery/')) {
-            category = 'gallery';
-          } else if (obj.Key.includes('/video/')) {
-            category = 'video';
-          } else if (obj.Key.includes('/document/')) {
-            category = 'document';
-          } else {
-            category = this.getFileTypeCategory(filename);
-          }
-          
-          const fileInfo = {
-            filename: filename,
-            fileSizeBytes: obj.Size || 0,
-            fileSizeMB: (obj.Size || 0) / (1024 * 1024),
-            uploadedAt: obj.LastModified ? obj.LastModified.toISOString() : new Date().toISOString(),
-            fileType: category,
-            contentType: this.getContentType(filename),
-            r2Key: obj.Key,
-            originalFormat: filename.split('.').pop()
-          };
-          
-          filesByType[category].push(fileInfo);
-          totalSize += obj.Size || 0;
-          
-          // Collect for index rebuild
-          indexFiles.push({
-            filename: filename,
-            r2Key: obj.Key,
-            fileSizeBytes: obj.Size || 0,
-            contentType: this.getContentType(filename),
-            originalFormat: filename.split('.').pop(),
-            uploadedAt: obj.LastModified ? obj.LastModified.toISOString() : new Date().toISOString()
-          });
-        }
-        
-        // Rebuild the backup index asynchronously (don't wait for it)
-        if (indexFiles.length > 0) {
-          console.log(`🔧 Rebuilding backup index with ${indexFiles.length} files`);
-          this.rebuildBackupIndex(userId, sessionId, indexFiles).catch(err => {
-            console.error('Failed to rebuild backup index:', err);
-          });
-        }
-        
-        console.log(`📁 Retrieved ${indexFiles.length} files from R2 for session ${sessionId}`);
-        
+        console.log(`📁 No files found in backup index for session ${sessionId}`);
         return {
           success: true,
-          filesByType,
-          totalFiles: indexFiles.length,
-          totalSize
+          filesByType: {
+            raw: [],
+            gallery: [],
+            video: [],
+            document: [],
+            other: []
+          },
+          totalFiles: 0,
+          totalSize: 0
         };
       }
 
-      // Organize files by category from backup index
+      // Organize files by category
       const filesByType = {
         raw: [],
         gallery: [],
@@ -951,7 +942,7 @@ class R2FileManager {
         totalSize += file.fileSizeBytes;
       });
 
-      console.log(`📁 Retrieved ${backupIndex.files.length} files from backup index for session ${sessionId}`);
+      console.log(`📁 Retrieved ${backupIndex.files.length} files for session ${sessionId}`);
 
       return {
         success: true,

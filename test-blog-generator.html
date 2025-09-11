@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Blog Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .result {
+            background: white;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blog Generator Test Page</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Check OpenAI Integration</h2>
+        <button onclick="testOpenAI()">Test OpenAI Connection</button>
+        <div id="openai-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Generate Blog Post</h2>
+        <button onclick="testBlogGeneration()">Generate Sample Blog</button>
+        <div id="blog-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Generate Blog Ideas</h2>
+        <button onclick="testBlogIdeas()">Generate Blog Ideas</button>
+        <div id="ideas-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Check AI Credits</h2>
+        <button onclick="checkCredits()">Check AI Credits</button>
+        <div id="credits-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testOpenAI() {
+            const resultDiv = document.getElementById('openai-result');
+            resultDiv.innerHTML = 'Testing OpenAI connection...';
+            
+            try {
+                const response = await fetch('/api/ai/generate-blog', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        topic: 'Test: Is OpenAI Working?',
+                        length: 'short'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✓ OpenAI is working!</span>\n\nGenerated content preview:\n${data.content.substring(0, 200)}...`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">✗ Error: ${data.error || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ Connection error: ${error.message}</span>`;
+            }
+        }
+
+        async function testBlogGeneration() {
+            const resultDiv = document.getElementById('blog-result');
+            resultDiv.innerHTML = 'Generating blog post...';
+            
+            try {
+                const response = await fetch('/api/ai/generate-blog', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        topic: '5 Tips for Perfect Wedding Photography',
+                        photographyType: 'wedding',
+                        style: 'professional',
+                        tone: 'informative',
+                        length: 'medium',
+                        keywords: ['wedding photography', 'professional tips', 'bride and groom']
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✓ Blog generated successfully!</span>\n\nTitle: ${data.title}\nWord Count: ${data.wordCount}\n\nContent:\n${data.content}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">✗ Error: ${data.error || 'Unknown error'}\n${data.details || ''}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testBlogIdeas() {
+            const resultDiv = document.getElementById('ideas-result');
+            resultDiv.innerHTML = 'Generating blog ideas...';
+            
+            try {
+                const response = await fetch('/api/ai/generate-blog-ideas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        photographyType: 'portrait',
+                        count: 5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const ideasText = data.ideas ? data.ideas.map((idea, i) => 
+                        `${i + 1}. ${idea.title}\n   ${idea.description}\n   Keywords: ${idea.keywords ? idea.keywords.join(', ') : 'N/A'}`
+                    ).join('\n\n') : 'No ideas generated';
+                    
+                    resultDiv.innerHTML = `<span class="success">✓ Ideas generated successfully!</span>\n\n${ideasText}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">✗ Error: ${data.error || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function checkCredits() {
+            const resultDiv = document.getElementById('credits-result');
+            resultDiv.innerHTML = 'Checking AI credits...';
+            
+            try {
+                const response = await fetch('/api/ai/credits');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✓ AI Credits: ${data.credits}</span>\nUser ID: ${data.userId}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">✗ Error: ${data.error || 'Unable to fetch credits'}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

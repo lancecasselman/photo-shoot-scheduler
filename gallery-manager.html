@@ -296,6 +296,38 @@
             display: none;
         }
 
+        .upload-mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .upload-mode-selector label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-mode-selector label:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-mode-selector input[type="radio"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .upload-mode-selector input[type="radio"]:checked + span {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
         .stats {
             background: white;
             padding: 20px 30px;
@@ -579,13 +611,26 @@
             <span id="progressStats">0 / 0 files</span>
             <span id="progressSpeed">0 MB/s</span>
         </div>
+        <div id="batchQueueStatus" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 8px; display: none;">
+            <strong>📋 Queue Status:</strong> <span id="queueStatusText">No files in queue</span>
+        </div>
         <div class="upload-queue" id="uploadQueue"></div>
     </div>
 
     <div class="upload-zone" id="uploadZone" onclick="triggerFileUpload()">
         <h3>Upload Files</h3>
         <p>Drag and drop files or click anywhere in this area to browse</p>
-        <p><strong>Processes 2 files at a time • No size limits • All file types supported</strong></p>
+        <p><strong>🚀 Fast batch upload: Unlimited files • Processed in 4-file batches • Direct to cloud • All file types supported</strong></p>
+        <div class="upload-mode-selector" style="margin-top: 10px;">
+            <label style="margin-right: 20px; cursor: pointer;">
+                <input type="radio" name="uploadMode" value="batch" checked>
+                <span>Fast Batch (Unlimited files, 4 at a time)</span>
+            </label>
+            <label style="cursor: pointer;">
+                <input type="radio" name="uploadMode" value="legacy">
+                <span>Legacy Mode (Multiple files)</span>
+            </label>
+        </div>
     </div>
 
     <input type="file" id="fileInput" class="file-input" multiple accept="*/*">
@@ -730,9 +775,8 @@
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            // Support both 'id' and 'sessionId' parameter names
-            sessionId = urlParams.get('sessionId') || urlParams.get('id');
-            folderType = urlParams.get('folderType') || urlParams.get('folder') || 'gallery';
+            sessionId = urlParams.get('sessionId');
+            folderType = urlParams.get('folderType');
             clientName = urlParams.get('clientName') || 'Client';
             
             console.log('URL Parameters:', { sessionId, folderType, clientName });
@@ -764,38 +808,8 @@
             return true;
         }
 
-        // Check authentication
-        async function checkAuth() {
-            try {
-                const response = await fetch('/api/auth/status', {
-                    credentials: 'include'
-                });
-                
-                if (!response.ok) {
-                    console.error('❌ Authentication check failed:', response.status);
-                    window.location.href = '/secure-login.html';
-                    return false;
-                }
-                
-                const data = await response.json();
-                console.log('✅ Authentication successful:', data.user?.email);
-                return true;
-            } catch (error) {
-                console.error('❌ Authentication error:', error);
-                window.location.href = '/secure-login.html';
-                return false;
-            }
-        }
-        
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            // First check authentication
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) {
-                console.error('❌ User not authenticated, redirecting to login...');
-                return;
-            }
-            
             if (getUrlParams()) {
                 // Load complete session data to get client contact info
                 await loadSessionData();
@@ -843,15 +857,249 @@
             document.getElementById('fileInput').click();
         }
 
+        // Global queue for batch uploads
+        let batchUploadQueue = [];
+        let currentBatchIndex = 0;
+        let totalFilesInQueue = 0;
+        let isProcessingBatch = false;
+        
         // Handle file selection
         function handleFileSelection(selectedFiles) {
             if (selectedFiles.length === 0) return;
             
-            uploadQueue = [...selectedFiles];
-            processUploadQueue();
+            // Check which upload mode is selected
+            const uploadMode = document.querySelector('input[name="uploadMode"]:checked').value;
+            
+            if (uploadMode === 'batch') {
+                // Batch mode: Add files to queue and process in chunks of 4
+                addFilesToBatchQueue(selectedFiles);
+            } else {
+                // Legacy mode: use existing queue system
+                uploadQueue = [...selectedFiles];
+                processUploadQueue();
+            }
+        }
+        
+        // Add files to batch queue and start processing
+        function addFilesToBatchQueue(files) {
+            // Add files to the batch queue
+            batchUploadQueue.push(...files);
+            totalFilesInQueue = batchUploadQueue.length;
+            
+            console.log(`📋 Added ${files.length} files to queue. Total in queue: ${totalFilesInQueue}`);
+            
+            // Start processing if not already running
+            if (!isProcessingBatch) {
+                processBatchQueue();
+            }
+        }
+        
+        // Update queue status display
+        function updateQueueStatus(filesInQueue, currentBatch, totalBatches) {
+            const queueStatusDiv = document.getElementById('batchQueueStatus');
+            const queueStatusText = document.getElementById('queueStatusText');
+            
+            if (filesInQueue > 0) {
+                queueStatusDiv.style.display = 'block';
+                queueStatusText.textContent = `${filesInQueue} files waiting • Processing batch ${currentBatch} of ${totalBatches}`;
+            } else {
+                queueStatusDiv.style.display = 'none';
+            }
+        }
+        
+        // Calculate and update progress bar
+        function updateBatchProgress(filesCompleted, totalFiles) {
+            const percentage = Math.round((filesCompleted / totalFiles) * 100);
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressStats').textContent = `${filesCompleted} / ${totalFiles} files`;
+        }
+        
+        // Process the batch queue - uploads files in chunks of 4
+        async function processBatchQueue() {
+            if (isProcessingBatch || batchUploadQueue.length === 0) return;
+            
+            isProcessingBatch = true;
+            currentBatchIndex = 0;
+            let totalFilesProcessed = 0;
+            
+            // Show progress container
+            document.getElementById('progressContainer').style.display = 'block';
+            
+            while (batchUploadQueue.length > 0) {
+                // Take up to 4 files from the queue
+                const batch = batchUploadQueue.splice(0, 4);
+                currentBatchIndex++;
+                
+                const filesProcessed = totalFilesProcessed;
+                const batchStart = filesProcessed + 1;
+                const batchEnd = filesProcessed + batch.length;
+                const totalBatches = Math.ceil(totalFilesInQueue / 4);
+                
+                // Update displays
+                updateProgressText(`🚀 Uploading batch ${currentBatchIndex} (files ${batchStart}-${batchEnd} of ${totalFilesInQueue})...`);
+                updateQueueStatus(batchUploadQueue.length, currentBatchIndex, totalBatches);
+                updateBatchProgress(filesProcessed, totalFilesInQueue);
+                
+                // Process this batch
+                await processBatchUpload(batch, batchStart, batchEnd, totalFilesInQueue);
+                
+                totalFilesProcessed += batch.length;
+                updateBatchProgress(totalFilesProcessed, totalFilesInQueue);
+                
+                // Check if more files were added while processing
+                if (batchUploadQueue.length > 0 && (totalFilesProcessed + batchUploadQueue.length) > totalFilesInQueue) {
+                    totalFilesInQueue = totalFilesProcessed + batchUploadQueue.length;
+                    console.log(`📋 More files added during upload. New total: ${totalFilesInQueue}`);
+                }
+            }
+            
+            // All files processed
+            updateProgressText(`✅ All ${totalFilesInQueue} files uploaded successfully!`);
+            updateBatchProgress(totalFilesInQueue, totalFilesInQueue);
+            updateQueueStatus(0, 0, 0);
+            
+            setTimeout(() => {
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('batchQueueStatus').style.display = 'none';
+                currentBatchIndex = 0;
+                totalFilesInQueue = 0;
+                totalFilesProcessed = 0;
+            }, 3000);
+            
+            isProcessingBatch = false;
         }
 
-        // Process upload queue (2 files at a time)
+        // NEW: Process batch upload (up to 4 files at once using pre-signed URLs)
+        async function processBatchUpload(files, batchStart = 1, batchEnd = files.length, totalFiles = files.length) {
+            const startTime = Date.now();
+            
+            // Note: Don't check isUploading here, as we're managing state in processBatchQueue
+            updateProgressText(`📤 Uploading files ${batchStart}-${batchEnd} of ${totalFiles}...`);
+            
+            try {
+                // Step 1: Get batch pre-signed URLs from server
+                console.log('🚀 Getting batch pre-signed URLs for', files.length, 'files');
+                
+                const urlResponse = await fetch('/api/gallery/batch-presigned-urls', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        files: files.map(f => ({
+                            filename: f.name,
+                            fileSize: f.size
+                        }))
+                    })
+                });
+                
+                if (!urlResponse.ok) {
+                    const error = await urlResponse.json();
+                    throw new Error(error.message || 'Failed to get pre-signed URLs');
+                }
+                
+                const urlData = await urlResponse.json();
+                console.log('✅ Got batch pre-signed URLs:', urlData);
+                
+                // Step 2: Upload all files directly to R2 in parallel
+                updateProgressText(`Uploading ${files.length} files directly to cloud...`);
+                
+                const uploadPromises = files.map((file, index) => {
+                    const presignedData = urlData.presignedUrls[index];
+                    if (!presignedData || presignedData.error) {
+                        console.error(`Skipping ${file.name}:`, presignedData?.error || 'No pre-signed URL generated');
+                        return Promise.resolve({ success: false, filename: file.name, error: presignedData?.error || 'No pre-signed URL' });
+                    }
+                    return uploadFileDirectToR2(file, presignedData);
+                });
+                
+                const uploadResults = await Promise.allSettled(uploadPromises);
+                
+                // Step 3: Process successfully uploaded files
+                const successfulUploads = [];
+                uploadResults.forEach((result, index) => {
+                    if (result.status === 'fulfilled' && result.value.success) {
+                        const presignedData = urlData.presignedUrls[index];
+                        if (presignedData && presignedData.r2Key) {
+                            successfulUploads.push({
+                                r2Key: presignedData.r2Key,
+                                filename: files[index].name,
+                                fileSize: files[index].size
+                            });
+                        }
+                    } else {
+                        console.error(`Upload failed for ${files[index].name}:`, result.reason || result.value?.error);
+                    }
+                });
+                
+                if (successfulUploads.length > 0) {
+                    updateProgressText(`Processing ${successfulUploads.length} uploaded files...`);
+                    
+                    // Notify server to process uploaded files (generate thumbnails)
+                    const processResponse = await fetch('/api/gallery/process-uploaded-files', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            uploadedFiles: successfulUploads
+                        })
+                    });
+                    
+                    if (processResponse.ok) {
+                        const processResult = await processResponse.json();
+                        console.log('✅ Files processed:', processResult);
+                    }
+                }
+                
+                // Step 4: Show completion for this batch
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                console.log(`✅ Batch complete! ${successfulUploads.length}/${files.length} files uploaded in ${elapsed}s`);
+                
+                // Don't hide progress container or refresh yet - let processBatchQueue handle that
+                if (batchEnd === totalFiles) {
+                    // This was the last batch, refresh files
+                    loadFiles();
+                }
+                
+            } catch (error) {
+                console.error('Batch upload error:', error);
+                updateProgressText(`❌ Upload failed for batch ${batchStart}-${batchEnd}: ${error.message}`);
+                // Continue with next batch even if this one failed
+            }
+        }
+
+        // NEW: Upload file directly to R2 using pre-signed URL
+        async function uploadFileDirectToR2(file, presignedData) {
+            try {
+                console.log(`📤 Uploading ${file.name} directly to R2...`);
+                
+                // Use the presignedUrl from the corrected server response
+                const response = await fetch(presignedData.presignedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type || 'application/octet-stream'
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log(`✅ ${file.name} uploaded successfully to R2`);
+                    return { success: true, filename: file.name };
+                } else {
+                    throw new Error(`Upload failed with status ${response.status}`);
+                }
+            } catch (error) {
+                console.error(`❌ Failed to upload ${file.name}:`, error);
+                return { success: false, filename: file.name, error: error.message };
+            }
+        }
+
+        // Process upload queue (2 files at a time) - LEGACY MODE
         async function processUploadQueue() {
             if (isUploading || uploadQueue.length === 0) return;
             
@@ -965,7 +1213,7 @@
                 }
                 
                 // Step 1: Get presigned URL for direct R2 upload (bypasses server)
-                const urlResponse = await fetch(`/api/r2/sessions/${sessionId}/upload-urls`, {
+                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -1008,22 +1256,21 @@
                     });
                     
                     if (r2Response.ok) {
-                        console.log(`✅ FAST direct upload to R2 succeeded for ${file.name}`);
-                        uploadedFileName = uploadData.filename || file.name;
+                        console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
+                        uploadedFileName = uploadData.fileName;
                         
-                        // Step 3: Confirm the upload with the server to update database
-                        response = await fetch(`/api/r2/sessions/${sessionId}/confirm-uploads`, {
+                        // Step 3: Update database with the uploaded file info
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
                             method: 'POST',
                             credentials: 'include',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                uploads: [{
-                                    filename: uploadData.filename || file.name,
-                                    key: uploadData.key,
-                                    size: file.size
-                                }]
+                                fileName: uploadData.fileName,
+                                originalName: file.name,
+                                size: file.size,
+                                r2Key: uploadData.r2Key
                             })
                         });
                     } else {
@@ -1253,126 +1500,21 @@
 
         // Load files
         async function loadFiles() {
-            console.log('📸 LOADING FILES STARTED');
-            console.log('📸 Current sessionId:', sessionId);
-            console.log('📸 Current folderType:', folderType);
-            
-            if (!sessionId) {
-                console.error('📸 ERROR: sessionId is not set!');
-                document.getElementById('fileContainer').innerHTML = `
-                    <div class="empty-state">
-                        <h3>Error</h3>
-                        <p>No session ID provided in the URL.</p>
-                    </div>
-                `;
-                return;
-            }
-            
             try {
-                const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
-                console.log('📸 Fetching photos from:', url);
-                console.log('Session ID:', sessionId, 'Folder Type:', folderType);
-                
-                // Check if we have session cookies
-                console.log('Cookies:', document.cookie);
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include', // Include cookies for authentication
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                    credentials: 'include' // Include cookies for authentication
                 });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Load files response error:', errorText);
-                    
-                    if (response.status === 401 || response.status === 403) {
-                        console.error('🔒 Authentication error detected');
-                        console.error('Session cookies may not be sent or user is not authenticated');
-                        
-                        // Show user-friendly error message
-                        document.getElementById('fileContainer').innerHTML = `
-                            <div class="empty-state">
-                                <h3>Authentication Required</h3>
-                                <p>You need to be logged in to view photos.</p>
-                                <p style="color: #666; font-size: 0.9em;">Error: ${response.status} - ${errorText}</p>
-                                <button class="btn" onclick="window.location.href='/secure-login.html'">Login</button>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    if (response.status === 404) {
-                        console.error('Session not found or user does not have access');
-                        document.getElementById('fileContainer').innerHTML = `
-                            <div class="empty-state">
-                                <h3>Session Not Found</h3>
-                                <p>This session does not exist or you don't have permission to access it.</p>
-                                <button class="btn" onclick="window.location.href='/secure-app.html'">Go to Dashboard</button>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
                     throw new Error(`Failed to load files: ${response.status} - ${errorText}`);
                 }
                 
-                const payload = await response.json();
-                console.log('📸 API Response received:', payload);
-                console.log('📸 Response structure:', {
-                    hasSuccess: 'success' in payload,
-                    hasFiles: 'files' in payload,
-                    isArray: Array.isArray(payload),
-                    filesIsArray: Array.isArray(payload.files),
-                    filesLength: payload.files ? payload.files.length : 0
-                });
+                const data = await response.json();
+                files = data.files || [];
                 
-                // The API returns { success: true, files: [...] }
-                const items = payload.files || (Array.isArray(payload) ? payload : []);
-                
-                console.log(`📸 Raw items from API: ${items.length} items`);
-                if (items.length > 0) {
-                    console.log('📸 First item structure:', items[0]);
-                }
-                
-                // Map R2 files data to expected format with defensive handling
-                files = items.map(file => {
-                    // Debug logging to understand the actual API response
-                    console.log('📸 Processing file:', {
-                        filename: file.filename,
-                        originalName: file.originalName,
-                        downloadUrl: file.downloadUrl,
-                        thumbnailUrl: file.thumbnailUrl,
-                        url: file.url,
-                        contentType: file.contentType,
-                        thumbnails: file.thumbnails
-                    });
-                    
-                    return {
-                        fileName: file.filename || file.fileName || file.name,
-                        name: file.originalName || file.name || file.filename,
-                        contentType: file.contentType || file.fileType || 'image/jpeg',
-                        // Use the actual download URL from the API
-                        downloadUrl: file.downloadUrl || file.url || '',
-                        // Use the thumbnail URL provided by the API (md size for gallery view)
-                        thumbnailUrl: file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm || file.downloadUrl || file.url || null,
-                        // Store all thumbnail sizes for responsive loading
-                        thumbnails: file.thumbnails || {},
-                        timeCreated: file.createdAt || file.timeCreated || file.uploaded_at || null,
-                        size: file.fileSizeBytes || file.size || 0,
-                        folderType: file.folderType || folderType,
-                        id: file.id,
-                        r2Key: file.r2Key
-                    };
-                }).filter(x => x.fileName || x.name);
-                
-                console.log(`Mapped to ${files.length} files ready to render`);
+                console.log(`Loaded ${files.length} files for ${folderType} folder`);
                 renderFiles();
                 loadStorageStats();
                 
@@ -1445,86 +1587,19 @@
             
             if (isImage) {
                 const img = document.createElement('img');
+                const thumbnailFileName = file.fileName || file.name;
+                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
                 
-                // Use the thumbnailUrl directly from the API response
-                // The API returns proper presigned URLs for thumbnails
-                const thumbnailUrl = file.thumbnailUrl || file.thumbnails?.md || file.thumbnails?.sm;
-                const fullImageUrl = file.downloadUrl || file.url;
+                img.src = thumbnailUrl;
+                img.alt = file.name;
+                img.loading = 'lazy';
+                img.onclick = () => openLightbox(file.downloadUrl);
+                img.onerror = () => {
+                    img.style.display = 'none';
+                    filePreview.innerHTML = '<div class="file-icon">IMG</div>';
+                };
                 
-                console.log(`🖼️ Loading preview for ${file.name}:`, {
-                    hasThumbnail: !!thumbnailUrl,
-                    thumbnailUrl: thumbnailUrl,
-                    fullImageUrl: fullImageUrl,
-                    thumbnails: file.thumbnails
-                });
-                
-                if (thumbnailUrl) {
-                    // Show loading placeholder while thumbnail loads
-                    const loadingPlaceholder = document.createElement('div');
-                    loadingPlaceholder.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #999;';
-                    loadingPlaceholder.innerHTML = '⏳ Loading...';
-                    filePreview.appendChild(loadingPlaceholder);
-                    
-                    img.src = thumbnailUrl;
-                    img.alt = file.name;
-                    img.loading = 'lazy';
-                    img.style.objectFit = 'cover';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.display = 'none'; // Hide until loaded
-                    
-                    // Use full URL for lightbox
-                    img.onclick = () => openLightbox(fullImageUrl);
-                    
-                    img.onload = () => {
-                        // Remove loading placeholder and show image
-                        if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                            loadingPlaceholder.remove();
-                        }
-                        img.style.display = 'block';
-                        console.log(`✅ Successfully loaded thumbnail for ${file.name}`);
-                    };
-                    
-                    img.onerror = () => {
-                        console.error(`❌ Failed to load thumbnail for ${file.name}:`, thumbnailUrl);
-                        // Try to load the full image as fallback
-                        if (fullImageUrl && img.src !== fullImageUrl) {
-                            console.log(`🔄 Falling back to full image for ${file.name}`);
-                            img.src = fullImageUrl;
-                        } else {
-                            // Show generic icon if all fails
-                            img.style.display = 'none';
-                            if (loadingPlaceholder && loadingPlaceholder.parentNode) {
-                                loadingPlaceholder.remove();
-                            }
-                            filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                        }
-                    };
-                    
-                    filePreview.appendChild(img);
-                } else if (fullImageUrl) {
-                    // No thumbnail available, use full image
-                    console.log(`⚠️ No thumbnail available for ${file.name}, using full image`);
-                    img.src = fullImageUrl;
-                    img.alt = file.name;
-                    img.loading = 'lazy';
-                    img.style.objectFit = 'cover';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.onclick = () => openLightbox(fullImageUrl);
-                    
-                    img.onerror = () => {
-                        console.error(`❌ Failed to load image for ${file.name}`);
-                        filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                    };
-                    
-                    filePreview.appendChild(img);
-                } else {
-                    // No URLs available, show generic icon
-                    console.log(`⚠️ No image URLs available for ${file.name}`);
-                    filePreview.innerHTML = '<div class="file-icon">📷</div>';
-                }
-            
+                filePreview.appendChild(img);
             } else {
                 const fileIcon = document.createElement('div');
                 fileIcon.className = 'file-icon';

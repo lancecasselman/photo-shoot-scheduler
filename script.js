@@ -2260,74 +2260,48 @@ function setupUploadModal(sessionId) {
             console.log(`✅ Got ${urls.length} presigned URLs for direct upload`);
             console.log('First URL data:', urls[0]); // Debug the URL structure
 
-            // Step 2: Upload files in batches of 4 for optimal performance
-            const CONCURRENT_UPLOADS = 4; // Process 4 files at a time for balanced performance
-            const results = [];
-            
-            console.log(`📊 Uploading ${files.length} files in batches of ${CONCURRENT_UPLOADS}...`);
-            
-            // Process files in batches
-            for (let i = 0; i < files.length; i += CONCURRENT_UPLOADS) {
-                const batch = files.slice(i, i + CONCURRENT_UPLOADS);
-                const batchStartIndex = i;
-                
-                console.log(`🚀 Processing batch ${Math.floor(i / CONCURRENT_UPLOADS) + 1} of ${Math.ceil(files.length / CONCURRENT_UPLOADS)} (${batch.length} files)`);
-                
-                // Create upload promises for this batch
-                const batchPromises = batch.map(async (file, batchIndex) => {
-                    const index = batchStartIndex + batchIndex;
-                    const urlData = urls[index];
-                    if (!urlData) return null;
+            // Step 2: Upload files directly to R2 in parallel (MUCH FASTER!)
+            const uploadPromises = files.map(async (file, index) => {
+                const urlData = urls[index];
+                if (!urlData) return null;
 
-                    console.log(`📤 Uploading ${file.name} directly to R2 (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
-                    console.log('Using presigned URL:', urlData.presignedUrl?.substring(0, 100) + '...');
-                    
-                    // Update progress for this file
-                    updateFileProgress(index, file.name, 'uploading', 0);
-                    
-                    // For files over 100MB, use chunked upload for better reliability
-                    if (file.size > 100 * 1024 * 1024) {
-                        return uploadLargeFileDirect(file, urlData);
-                    }
-                    
-                    // Standard upload for smaller files
-                    const uploadResponse = await fetch(urlData.presignedUrl, {
-                        method: 'PUT',
-                        body: file,
-                        headers: {
-                            'Content-Type': file.type || 'image/jpeg'
-                        }
-                    });
-
-                    if (!uploadResponse.ok) {
-                        console.error(`❌ Upload failed for ${file.name}:`, uploadResponse.status, uploadResponse.statusText);
-                        updateFileProgress(index, file.name, 'failed', 0);
-                        throw new Error(`Failed to upload ${file.name} to R2: ${uploadResponse.status} ${uploadResponse.statusText}`);
-                    }
-
-                    console.log(`✅ ${file.name} uploaded successfully!`);
-                    updateFileProgress(index, file.name, 'completed', 100);
-                    return {
-                        filename: file.name,
-                        key: urlData.key,
-                        size: file.size
-                    };
-                });
+                console.log(`📤 Uploading ${file.name} directly to R2 (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
+                console.log('Using presigned URL:', urlData.presignedUrl?.substring(0, 100) + '...');
                 
-                // Wait for this batch to complete before moving to the next
-                const batchResults = await Promise.all(batchPromises);
-                results.push(...batchResults);
+                // Update progress for this file
+                updateFileProgress(index, file.name, 'uploading', 0);
                 
-                // Update overall progress
-                const overallProgress = Math.round(((i + batch.length) / files.length) * 100);
-                console.log(`📊 Overall upload progress: ${overallProgress}% (${i + batch.length}/${files.length} files)`);
-                
-                const statusText = document.getElementById('uploadStatusText');
-                if (statusText) {
-                    statusText.textContent = `Uploaded ${i + batch.length} of ${files.length} files (${overallProgress}%)`;
+                // For files over 100MB, use chunked upload for better reliability
+                if (file.size > 100 * 1024 * 1024) {
+                    return uploadLargeFileDirect(file, urlData);
                 }
-            }
-            
+                
+                // Standard upload for smaller files
+                const uploadResponse = await fetch(urlData.presignedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type || 'image/jpeg'
+                    }
+                });
+
+                if (!uploadResponse.ok) {
+                    console.error(`❌ Upload failed for ${file.name}:`, uploadResponse.status, uploadResponse.statusText);
+                    updateFileProgress(index, file.name, 'failed', 0);
+                    throw new Error(`Failed to upload ${file.name} to R2: ${uploadResponse.status} ${uploadResponse.statusText}`);
+                }
+
+                console.log(`✅ ${file.name} uploaded successfully!`);
+                updateFileProgress(index, file.name, 'completed', 100);
+                return {
+                    filename: file.name,
+                    key: urlData.key,
+                    size: file.size
+                };
+            });
+
+            // Upload all files in parallel for maximum speed
+            const results = await Promise.all(uploadPromises);
             const successfulUploads = results.filter(r => r !== null);
             
             console.log(`🎉 Successfully uploaded ${successfulUploads.length} files directly to R2!`);
