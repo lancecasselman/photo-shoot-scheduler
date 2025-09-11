@@ -5284,7 +5284,7 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-// Get photos for a specific session (frontend compatibility endpoint)
+// Get photos for a specific session (frontend compatibility endpoint) - OPTIMIZED
 app.get('/api/sessions/:sessionId/photos', isAuthenticated, async (req, res) => {
     try {
         const { sessionId } = req.params;
@@ -5303,6 +5303,9 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, async (req, res) => 
             return res.status(404).json({ error: 'Session not found' });
         }
 
+        // Extract session data for consistent reference
+        const session = sessionResult.rows[0];
+
         // SPECIAL ACCESS: If Lance's accounts, use Firebase UID for R2 storage
         let r2UserId = userId;
         const userEmail = req.user.email.toLowerCase();
@@ -5313,80 +5316,186 @@ app.get('/api/sessions/:sessionId/photos', isAuthenticated, async (req, res) => 
         // Get session files from R2
         const sessionFiles = await r2FileManager.getSessionFiles(r2UserId, sessionId);
         
-        if (!sessionFiles.success || !sessionFiles.filesByType.gallery) {
-            console.log(`📸 No gallery files found for session: ${sessionId}`);
+        let photos = [];
+        let isLegacyPhotos = false;
+        
+        if (!sessionFiles.success || !sessionFiles.filesByType.gallery || sessionFiles.filesByType.gallery.length === 0) {
+            console.log(`📸 No gallery files found in R2 for session: ${sessionId}, checking legacy photos...`);
+            
+            // FALLBACK: Check legacy photos stored in session.photos column
+            const legacyPhotos = session.photos || [];
+            
+            if (legacyPhotos.length === 0) {
+                console.log(`📸 No legacy photos found either for session: ${sessionId}`);
+                return res.json({ photos: [] });
+            }
+            
+            console.log(`📸 Found ${legacyPhotos.length} legacy photos for session: ${sessionId}`);
+            isLegacyPhotos = true;
+            
+            // Convert legacy photos to expected format for batch processing
+            photos = legacyPhotos.map(legacyPhoto => {
+                const filename = legacyPhoto.filename || legacyPhoto.originalName;
+                return {
+                    fileName: filename,
+                    filename: filename,
+                    originalUrl: legacyPhoto.url || '',
+                    fileSize: legacyPhoto.fileSize || 0,
+                    fileSizeMB: legacyPhoto.fileSizeMB || (legacyPhoto.fileSize ? legacyPhoto.fileSize / (1024 * 1024) : 0),
+                    uploadedAt: legacyPhoto.uploadedAt || session.created_at,
+                    contentType: legacyPhoto.contentType || 'image/jpeg',
+                    isLegacy: true
+                };
+            }).filter(photo => photo.filename); // Filter out photos without filenames
+            
+        } else {
+            console.log(`📸 Found ${sessionFiles.filesByType.gallery.length} R2 gallery files for session: ${sessionId}`);
+            
+            // Transform gallery files into photo format for batch processing
+            photos = sessionFiles.filesByType.gallery.map(file => ({
+                fileName: file.filename,
+                filename: file.filename,
+                fileSize: file.fileSizeBytes,
+                fileSizeMB: file.fileSizeMB,
+                uploadedAt: file.uploadedAt,
+                contentType: file.contentType,
+                r2Key: file.r2Key,
+                isLegacy: false
+            }));
+        }
+        
+        if (photos.length === 0) {
+            console.log(`📸 No processable photos found for session: ${sessionId}`);
             return res.json({ photos: [] });
         }
 
-        // Transform gallery files into photo format expected by frontend
-        const photos = [];
+        console.log(`📸 Processing ${photos.length} photos using optimized batch method...`);
         
-        for (const file of sessionFiles.filesByType.gallery) {
-            try {
-                const photo = {
-                    fileName: file.filename,
-                    filename: file.filename,
-                    url: '', // Will be populated below
-                    fullUrl: '', // Will be populated below
-                    fileSize: file.fileSizeBytes,
-                    fileSizeMB: file.fileSizeMB,
-                    uploadedAt: file.uploadedAt,
-                    contentType: file.contentType
-                };
-
-                // Generate thumbnail URLs using same pattern as enhancePhotosWithThumbnails
-                const filename = file.filename;
-                const ext = filename.split('.').pop();
-                const baseName = filename.replace(`.${ext}`, '');
+        // Use optimized batch thumbnail URL generation (fixes 3N calls problem)
+        const batchResult = await r2FileManager.getBatchThumbnailUrls(r2UserId, sessionId, photos, 3600);
+        
+        if (!batchResult.success) {
+            console.error('❌ Batch thumbnail generation failed:', batchResult.error);
+            throw new Error('Failed to generate thumbnail URLs');
+        }
+        
+        // Identify photos that need thumbnail generation
+        const photosNeedingThumbnails = batchResult.results.filter(result => result.needsThumbnailGeneration);
+        
+        // Generate missing thumbnails on-demand if needed
+        if (photosNeedingThumbnails.length > 0) {
+            console.log(`📸 Generating ${photosNeedingThumbnails.length} missing thumbnails on-demand...`);
+            
+            const thumbnailGenResult = await r2FileManager.generateMissingThumbnails(
+                r2UserId, 
+                sessionId, 
+                photosNeedingThumbnails.map(p => ({ filename: p.filename }))
+            );
+            
+            if (thumbnailGenResult.success && thumbnailGenResult.generated > 0) {
+                console.log(`📸 Generated ${thumbnailGenResult.generated} new thumbnails, refreshing URLs...`);
                 
-                const thumbnails = {};
-                const thumbnailSizes = ['sm', 'md', 'lg'];
+                // Refresh thumbnail URLs for the photos that had thumbnails generated
+                const refreshResult = await r2FileManager.getBatchThumbnailUrls(
+                    r2UserId, 
+                    sessionId, 
+                    photosNeedingThumbnails.map(p => ({ filename: p.filename })), 
+                    3600
+                );
                 
-                for (const size of thumbnailSizes) {
-                    const thumbnailKey = `photographer-${r2UserId}/session-${sessionId}/thumbnails/${baseName}_${size}.jpg`;
-                    
-                    try {
-                        const thumbnailUrl = await r2FileManager.getSignedUrl(thumbnailKey, 3600);
-                        if (thumbnailUrl) {
-                            thumbnails[size === 'sm' ? 'small' : size === 'md' ? 'medium' : 'large'] = thumbnailUrl;
+                if (refreshResult.success) {
+                    // Merge the refreshed thumbnail URLs back into the main results
+                    refreshResult.results.forEach(refreshedPhoto => {
+                        const originalIndex = batchResult.results.findIndex(p => p.filename === refreshedPhoto.filename);
+                        if (originalIndex !== -1) {
+                            batchResult.results[originalIndex].thumbnails = refreshedPhoto.thumbnails;
+                            batchResult.results[originalIndex].needsThumbnailGeneration = false;
                         }
-                    } catch (err) {
-                        // Thumbnail might not exist yet, that's okay
-                        console.log(`Thumbnail not found: ${thumbnailKey}`);
-                    }
+                    });
                 }
-                
-                // Add thumbnails if we found any
-                if (Object.keys(thumbnails).length > 0) {
-                    photo.thumbnails = thumbnails;
-                }
-                
-                // Generate presigned URL for the main photo
-                const mainKey = file.r2Key || `photographer-${r2UserId}/session-${sessionId}/gallery/${filename}`;
-                try {
-                    const presignedUrl = await r2FileManager.getSignedUrl(mainKey, 3600);
-                    if (presignedUrl) {
-                        photo.url = presignedUrl;
-                        photo.fullUrl = presignedUrl;
-                    }
-                } catch (err) {
-                    console.log(`Main photo not found in R2: ${mainKey}`);
-                    // Fallback to thumbnail if main photo is not accessible
-                    if (photo.thumbnails && photo.thumbnails.large) {
-                        photo.url = photo.thumbnails.large;
-                        photo.fullUrl = photo.thumbnails.large;
-                    }
-                }
-                
-                photos.push(photo);
-                
-            } catch (error) {
-                console.error(`Error processing photo ${file.filename}:`, error);
             }
         }
+        
+        // Build final photo response with all URLs populated
+        const finalPhotos = [];
+        
+        for (let i = 0; i < photos.length; i++) {
+            const originalPhoto = photos[i];
+            const batchResultPhoto = batchResult.results[i];
+            
+            if (!batchResultPhoto) {
+                console.warn(`Missing batch result for photo: ${originalPhoto.filename}`);
+                continue;
+            }
+            
+            const finalPhoto = {
+                fileName: originalPhoto.filename,
+                filename: originalPhoto.filename,
+                url: batchResultPhoto.mainUrl || '',
+                fullUrl: batchResultPhoto.mainUrl || '',
+                fileSize: originalPhoto.fileSize,
+                fileSizeMB: originalPhoto.fileSizeMB,
+                uploadedAt: originalPhoto.uploadedAt,
+                contentType: originalPhoto.contentType
+            };
+            
+            // Add thumbnails if available
+            if (batchResultPhoto.thumbnails && Object.keys(batchResultPhoto.thumbnails).length > 0) {
+                finalPhoto.thumbnails = batchResultPhoto.thumbnails;
+            }
+            
+            // For legacy photos, handle special URL logic
+            if (originalPhoto.isLegacy) {
+                // If we don't have a main URL from R2, try to construct one or use original
+                if (!finalPhoto.url && originalPhoto.originalUrl) {
+                    if (originalPhoto.originalUrl.startsWith('http')) {
+                        // Use the original HTTP URL directly
+                        finalPhoto.url = originalPhoto.originalUrl;
+                        finalPhoto.fullUrl = originalPhoto.originalUrl;
+                    } else {
+                        // Try to construct R2 key and get presigned URL
+                        const r2Key = `photographer-${r2UserId}/session-${sessionId}/gallery/${originalPhoto.filename}`;
+                        try {
+                            const presignedUrl = await r2FileManager.getSignedUrl(r2Key, 3600);
+                            if (presignedUrl) {
+                                finalPhoto.url = presignedUrl;
+                                finalPhoto.fullUrl = presignedUrl;
+                            } else {
+                                // Fallback to original URL
+                                finalPhoto.url = originalPhoto.originalUrl;
+                                finalPhoto.fullUrl = originalPhoto.originalUrl;
+                            }
+                        } catch (err) {
+                            console.log(`Legacy photo not found in R2: ${r2Key}, using original URL`);
+                            finalPhoto.url = originalPhoto.originalUrl;
+                            finalPhoto.fullUrl = originalPhoto.originalUrl;
+                        }
+                    }
+                }
+                
+                // For legacy photos without thumbnails, use the main photo as fallback
+                if (!finalPhoto.thumbnails || Object.keys(finalPhoto.thumbnails).length === 0) {
+                    if (finalPhoto.url) {
+                        finalPhoto.thumbnails = {
+                            small: finalPhoto.url,
+                            medium: finalPhoto.url,
+                            large: finalPhoto.url
+                        };
+                    }
+                }
+            } else {
+                // For non-legacy photos, fallback to thumbnail if main photo is not accessible
+                if (!finalPhoto.url && finalPhoto.thumbnails && finalPhoto.thumbnails.large) {
+                    finalPhoto.url = finalPhoto.thumbnails.large;
+                    finalPhoto.fullUrl = finalPhoto.thumbnails.large;
+                }
+            }
+            
+            finalPhotos.push(finalPhoto);
+        }
 
-        console.log(`📸 Retrieved ${photos.length} photos for session ${sessionId}`);
-        res.json({ photos });
+        console.log(`📸 Successfully processed ${finalPhotos.length} photos for session ${sessionId} (${isLegacyPhotos ? 'legacy' : 'R2'} mode)`);
+        res.json({ photos: finalPhotos });
 
     } catch (error) {
         console.error('Error fetching session photos:', error);

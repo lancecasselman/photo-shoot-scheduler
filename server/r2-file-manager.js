@@ -1,7 +1,8 @@
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const sharp = require('sharp');
+const fetch = require('node-fetch');
 
 class R2FileManager {
   constructor(localBackup, pool = null) {
@@ -309,9 +310,9 @@ class R2FileManager {
   }
 
   // Generate thumbnail on-demand if it doesn't exist
-  async generateThumbnailOnDemand(userId, sessionId, originalFilename, requestedSize = '_md') {
+  async generateThumbnailOnDemand(userId, sessionId, originalFilename, requestedSize = '_md', legacyPhotoUrl = null) {
     try {
-      console.log(` Generating thumbnail on-demand for: ${originalFilename}`);
+      console.log(`🖼️ Generating thumbnail on-demand for: ${originalFilename}`);
       
       // Check if file type is supported for thumbnails
       const ext = originalFilename.split('.').pop().toLowerCase();
@@ -325,13 +326,39 @@ class R2FileManager {
         };
       }
       
-      // First download the original file
-      const originalFile = await this.downloadFile(userId, sessionId, originalFilename);
-      if (!originalFile.success) {
-        throw new Error('Could not download original file for thumbnail generation');
+      let originalFile = null;
+      
+      // Try to download from R2 first
+      try {
+        originalFile = await this.downloadFile(userId, sessionId, originalFilename);
+        console.log(`✅ Downloaded original from R2: ${originalFilename}`);
+      } catch (r2Error) {
+        console.log(`⚠️ R2 download failed for ${originalFilename}, trying legacy fetch: ${r2Error.message}`);
+        
+        // If R2 download fails and we have a legacy URL, try HTTP fetch
+        if (legacyPhotoUrl) {
+          const legacyResult = await this.fetchLegacyPhoto(legacyPhotoUrl);
+          if (legacyResult.success) {
+            originalFile = {
+              success: true,
+              buffer: legacyResult.buffer,
+              contentType: legacyResult.contentType,
+              filename: originalFilename
+            };
+            console.log(`✅ Downloaded original from legacy URL: ${originalFilename}`);
+          } else {
+            throw new Error(`Both R2 and legacy fetch failed: ${legacyResult.error}`);
+          }
+        } else {
+          throw new Error(`R2 download failed and no legacy URL provided: ${r2Error.message}`);
+        }
       }
       
-      // Generate thumbnail
+      if (!originalFile || !originalFile.success) {
+        throw new Error('Could not download original file from any source');
+      }
+      
+      // Generate thumbnail using the downloaded buffer
       const thumbnailResult = await this.generateThumbnail(
         originalFile.buffer, 
         originalFilename, 
@@ -344,18 +371,166 @@ class R2FileManager {
         if (thumbnailResult.skipped) {
           return thumbnailResult; // Return the skipped status
         }
-        throw new Error('Thumbnail generation failed');
+        throw new Error(`Thumbnail generation failed: ${thumbnailResult.error}`);
       }
       
-      // Return the requested size thumbnail
-      return await this.getThumbnail(userId, sessionId, originalFilename, requestedSize);
+      console.log(`✅ Successfully generated ${thumbnailResult.count || 0} thumbnails for: ${originalFilename}`);
+      
+      // Return success - thumbnails are now available in R2
+      return {
+        success: true,
+        thumbnails: thumbnailResult.thumbnails,
+        count: thumbnailResult.count
+      };
       
     } catch (error) {
-      console.error(`❌ On-demand thumbnail generation failed:`, error.message);
+      console.error(`❌ On-demand thumbnail generation failed for ${originalFilename}:`, error.message);
       return {
         success: false,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Check if a thumbnail exists in R2 storage using HeadObjectCommand
+   * This is the proper way to verify file existence without downloading
+   */
+  async checkThumbnailExists(userId, sessionId, originalFilename, size = '_md') {
+    try {
+      const ext = originalFilename.split('.').pop();
+      const baseName = originalFilename.replace(`.${ext}`, '');
+      const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size}.jpg`;
+      
+      const headCommand = new HeadObjectCommand({
+        Bucket: this.bucketName,
+        Key: thumbnailKey
+      });
+      
+      await this.s3Client.send(headCommand);
+      return true; // File exists
+      
+    } catch (error) {
+      if (error.name === 'NotFound' || error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+        return false; // File doesn't exist
+      }
+      // For other errors, assume file doesn't exist but log the issue
+      console.warn(`⚠️ Thumbnail existence check failed for ${originalFilename}: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Batch check thumbnail existence with concurrency control
+   * Efficiently checks multiple thumbnails without overwhelming R2
+   */
+  async batchCheckThumbnailsExist(userId, sessionId, photos) {
+    const CONCURRENCY_LIMIT = 10; // Prevent R2 rate limiting
+    const results = new Map();
+    
+    console.log(`🔍 Batch checking thumbnail existence for ${photos.length} photos`);
+    
+    // Process in batches to control concurrency
+    for (let i = 0; i < photos.length; i += CONCURRENCY_LIMIT) {
+      const batch = photos.slice(i, i + CONCURRENCY_LIMIT);
+      
+      const batchPromises = batch.map(async (photo) => {
+        const filename = photo.filename || photo.fileName;
+        const ext = filename.split('.').pop();
+        const baseName = filename.replace(`.${ext}`, '');
+        
+        const thumbnailChecks = ['_sm', '_md', '_lg'].map(async (size) => {
+          const exists = await this.checkThumbnailExists(userId, sessionId, filename, size);
+          return { size, exists };
+        });
+        
+        const thumbnailResults = await Promise.all(thumbnailChecks);
+        const photoThumbnails = {};
+        let hasAnyThumbnail = false;
+        
+        thumbnailResults.forEach(({ size, exists }) => {
+          photoThumbnails[size] = exists;
+          if (exists) hasAnyThumbnail = true;
+        });
+        
+        return {
+          filename,
+          thumbnails: photoThumbnails,
+          hasAnyThumbnail,
+          needsThumbnailGeneration: !hasAnyThumbnail && this.isImageFile(filename)
+        };
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      batchResults.forEach(result => {
+        results.set(result.filename, result);
+      });
+    }
+    
+    return results;
+  }
+
+  /**
+   * Fetch legacy photo from HTTP URL with proper error handling and limits
+   * This handles photos that haven't been migrated to R2 yet
+   */
+  async fetchLegacyPhoto(photoUrl, maxSizeBytes = 50 * 1024 * 1024) { // 50MB limit
+    try {
+      console.log(`🌐 Fetching legacy photo from: ${photoUrl.substring(0, 80)}...`);
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(photoUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'PhotoApp-Thumbnail-Generator/1.0'
+        }
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Check content length
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && parseInt(contentLength) > maxSizeBytes) {
+        throw new Error(`File too large: ${Math.round(parseInt(contentLength) / (1024 * 1024))}MB (max: ${Math.round(maxSizeBytes / (1024 * 1024))}MB)`);
+      }
+      
+      // Stream the response with size checking
+      const chunks = [];
+      let downloadedBytes = 0;
+      
+      for await (const chunk of response.body) {
+        downloadedBytes += chunk.length;
+        if (downloadedBytes > maxSizeBytes) {
+          throw new Error(`Download exceeded size limit: ${Math.round(downloadedBytes / (1024 * 1024))}MB`);
+        }
+        chunks.push(chunk);
+      }
+      
+      const buffer = Buffer.concat(chunks);
+      
+      console.log(`✅ Successfully fetched legacy photo: ${Math.round(buffer.length / 1024)}KB`);
+      
+      return {
+        success: true,
+        buffer: buffer,
+        contentType: response.headers.get('content-type') || 'image/jpeg',
+        size: buffer.length
+      };
+      
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error('❌ Legacy photo fetch timeout:', photoUrl.substring(0, 50));
+        return { success: false, error: 'Request timeout after 30 seconds' };
+      }
+      
+      console.error('❌ Legacy photo fetch failed:', error.message);
+      return { success: false, error: error.message };
     }
   }
 
@@ -622,6 +797,216 @@ class R2FileManager {
     } catch (error) {
       console.error('Error generating signed URL:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Batch generate signed URLs for multiple thumbnail sizes with proper existence checking
+   * Uses HeadObjectCommand to verify actual thumbnail existence in R2 storage
+   * Implements graceful degradation - omits thumbnail URLs if they don't exist
+   */
+  async getBatchThumbnailUrls(userId, sessionId, photos, expiresIn = 3600, options = {}) {
+    try {
+      console.log(`🖼️ Generating batch thumbnail URLs for ${photos.length} photos`);
+      
+      const results = [];
+      const { autoGenerateMissing = false, legacyPhotoUrls = new Map() } = options;
+      
+      // First, batch check thumbnail existence for all photos
+      const existenceResults = await this.batchCheckThumbnailsExist(userId, sessionId, photos);
+      
+      for (const photo of photos) {
+        const filename = photo.filename || photo.fileName;
+        const ext = filename.split('.').pop();
+        const baseName = filename.replace(`.${ext}`, '');
+        const existenceResult = existenceResults.get(filename);
+        
+        const photoResult = {
+          filename: filename,
+          thumbnails: {},
+          mainUrl: null,
+          needsThumbnailGeneration: existenceResult?.needsThumbnailGeneration || false
+        };
+        
+        // Generate URLs for existing thumbnails only
+        if (existenceResult && existenceResult.hasAnyThumbnail) {
+          const thumbnailSizes = [
+            { suffix: '_sm', name: 'small' },
+            { suffix: '_md', name: 'medium' },
+            { suffix: '_lg', name: 'large' }
+          ];
+          
+          for (const { suffix, name } of thumbnailSizes) {
+            if (existenceResult.thumbnails[suffix]) {
+              try {
+                const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${suffix}.jpg`;
+                const url = await this.getSignedUrl(thumbnailKey, expiresIn);
+                photoResult.thumbnails[name] = url;
+              } catch (error) {
+                console.warn(`⚠️ Failed to generate URL for existing thumbnail ${filename}${suffix}: ${error.message}`);
+                // Omit this thumbnail URL rather than returning a broken one
+              }
+            }
+          }
+        }
+        
+        // Get main photo URL with fallback strategy
+        const mainKey = photo.r2Key || `photographer-${userId}/session-${sessionId}/gallery/${filename}`;
+        try {
+          photoResult.mainUrl = await this.getSignedUrl(mainKey, expiresIn);
+        } catch (error) {
+          console.log(`⚠️ Main photo not accessible in R2: ${mainKey}`);
+          
+          // Try legacy URL fallback if available
+          const legacyUrl = legacyPhotoUrls.get(filename);
+          if (legacyUrl) {
+            console.log(`🔄 Using legacy URL fallback for: ${filename}`);
+            photoResult.mainUrl = legacyUrl;
+          } else {
+            console.warn(`❌ No fallback available for: ${filename}`);
+            // Don't set mainUrl - let the UI handle missing images gracefully
+          }
+        }
+        
+        results.push(photoResult);
+      }
+      
+      // If auto-generation is enabled, trigger thumbnail generation for missing ones
+      if (autoGenerateMissing) {
+        const photosNeedingThumbnails = results.filter(r => r.needsThumbnailGeneration);
+        if (photosNeedingThumbnails.length > 0) {
+          console.log(`🖼️ Auto-generating ${photosNeedingThumbnails.length} missing thumbnails`);
+          
+          // Don't await this - let it happen in the background
+          this.generateMissingThumbnails(userId, sessionId, photosNeedingThumbnails, legacyPhotoUrls)
+            .then(() => {
+              console.log(`✅ Background thumbnail generation completed for session ${sessionId}`);
+            })
+            .catch(error => {
+              console.error(`❌ Background thumbnail generation failed: ${error.message}`);
+            });
+        }
+      }
+      
+      const validResults = results.filter(r => r.mainUrl); // Only return photos with accessible URLs
+      const thumbnailCount = validResults.reduce((count, r) => count + Object.keys(r.thumbnails).length, 0);
+      
+      console.log(`🖼️ Generated URLs for ${validResults.length}/${results.length} photos with ${thumbnailCount} thumbnails, ${results.filter(r => r.needsThumbnailGeneration).length} need generation`);
+      
+      return {
+        success: true,
+        results: validResults,
+        stats: {
+          total: results.length,
+          accessible: validResults.length,
+          needingThumbnails: results.filter(r => r.needsThumbnailGeneration).length,
+          totalThumbnails: thumbnailCount
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Batch thumbnail URL generation failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        results: []
+      };
+    }
+  }
+
+  /**
+   * Generate thumbnails on-demand for photos that need them
+   * Called when batch URL generation identifies missing thumbnails
+   */
+  async generateMissingThumbnails(userId, sessionId, photosNeedingThumbnails, legacyPhotoUrls = new Map()) {
+    try {
+      console.log(`🖼️ Generating ${photosNeedingThumbnails.length} missing thumbnails on-demand`);
+      
+      const results = [];
+      
+      // Process thumbnails with limited concurrency to avoid overwhelming the system
+      const THUMBNAIL_CONCURRENCY = 3;
+      
+      for (let i = 0; i < photosNeedingThumbnails.length; i += THUMBNAIL_CONCURRENCY) {
+        const batch = photosNeedingThumbnails.slice(i, i + THUMBNAIL_CONCURRENCY);
+        
+        const batchPromises = batch.map(async (photo) => {
+          try {
+            const filename = photo.filename || photo.fileName;
+            
+            console.log(`🖼️ Generating on-demand thumbnail for: ${filename}`);
+            
+            const legacyUrl = legacyPhotoUrls.get(filename);
+            
+            console.log(`🖼️ Generating on-demand thumbnail for: ${filename}${legacyUrl ? ' (with legacy fallback)' : ''}`);
+            
+            // Use the updated generateThumbnailOnDemand method with legacy URL support
+            const result = await this.generateThumbnailOnDemand(userId, sessionId, filename, '_md', legacyUrl);
+            
+            if (result.success) {
+              // Generate URLs for all sizes after successful generation
+              const ext = filename.split('.').pop();
+              const baseName = filename.replace(`.${ext}`, '');
+              
+              const thumbnails = {};
+              const thumbnailSizes = ['sm', 'md', 'lg'];
+              
+              for (const size of thumbnailSizes) {
+                const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}_${size}.jpg`;
+                try {
+                  const url = await this.getSignedUrl(thumbnailKey, 3600);
+                  if (url) {
+                    thumbnails[size === 'sm' ? 'small' : size === 'md' ? 'medium' : 'large'] = url;
+                  }
+                } catch (err) {
+                  console.log(`Generated thumbnail not immediately available: ${thumbnailKey}`);
+                }
+              }
+              
+              return {
+                filename: filename,
+                success: true,
+                thumbnails: thumbnails
+              };
+            } else {
+              return {
+                filename: filename,
+                success: false,
+                error: result.error,
+                skipped: result.skipped
+              };
+            }
+            
+          } catch (error) {
+            console.error(`Error generating thumbnail for ${photo.filename}:`, error);
+            return {
+              filename: photo.filename,
+              success: false,
+              error: error.message
+            };
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+      }
+      
+      const successful = results.filter(r => r.success).length;
+      console.log(`🖼️ On-demand thumbnail generation complete: ${successful}/${results.length} successful`);
+      
+      return {
+        success: true,
+        results: results,
+        generated: successful
+      };
+      
+    } catch (error) {
+      console.error('❌ On-demand thumbnail generation failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        results: []
+      };
     }
   }
 
