@@ -77,36 +77,108 @@ function createR2Routes() {
   const syncService = new R2SyncService(r2Manager);
   const unifiedDeletion = new UnifiedFileDeletionService();
 
-  // Authentication middleware for all routes - compatible with main server auth
+  // Authentication middleware - simplified to work with main server's Passport auth
   router.use((req, res, next) => {
-    // Strict authentication check - no fallbacks that could be bypassed
-    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
+    // Check if user exists from main server auth (Passport or session)
+    const hasUser = req.user && (req.user.uid || req.user.id);
+    const hasSessionUser = req.session && req.session.user && (req.session.user.uid || req.session.user.id);
     
-    if (isAuthenticated && req.user && req.user.uid) {
-      // Primary authentication method
+    if (hasUser) {
+      // User authenticated via main server (Passport)
       return next();
     }
     
-    if (hasValidSession) {
-      // Secondary authentication via session - but verify user ID exists
+    if (hasSessionUser) {
+      // User in session but not in req.user (set it for consistency)
       req.user = req.session.user;
-      if (req.user.uid) {
-        return next();
-      }
+      return next();
     }
     
-    // Log failed authentication attempts for security monitoring
-    console.log('R2 API Auth failed - no valid session', {
-      hasIsAuthenticated: !!req.isAuthenticated,
-      isAuthenticated: isAuthenticated,
+    // Debug logging for failed auth
+    console.log('R2 API Auth failed', {
+      hasReqUser: !!req.user,
       hasSession: !!req.session,
-      hasSessionUser: !!(req.session && req.session.user),
-      hasUserUid: !!(req.user && req.user.uid),
-      userAgent: req.get('User-Agent'),
-      ip: req.ip
+      hasSessionUser: hasSessionUser,
+      userAgent: req.get('User-Agent')?.substring(0, 50),
+      path: req.path
     });
+    
     return res.status(401).json({ error: 'Authentication required' });
+  });
+
+  /**
+   * POST /api/r2/generate-thumbnail
+   * Generate a thumbnail for an uploaded image
+   */
+  router.post('/generate-thumbnail', async (req, res) => {
+    try {
+      const { sessionId, filename, r2Key } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!sessionId || !filename || !r2Key) {
+        return res.status(400).json({ error: 'Missing required parameters: sessionId, filename, and r2Key' });
+      }
+
+      console.log(`🖼️ Generating thumbnail for ${filename} in session ${sessionId}`);
+
+      // Get the original file from R2
+      const originalFile = await r2Manager.getFile(r2Key);
+      if (!originalFile || !originalFile.Body) {
+        return res.status(404).json({ error: 'Original file not found in R2' });
+      }
+
+      // Convert stream to buffer
+      const chunks = [];
+      for await (const chunk of originalFile.Body) {
+        chunks.push(chunk);
+      }
+      const fileBuffer = Buffer.concat(chunks);
+
+      // Generate thumbnail using the existing R2FileManager method
+      const thumbnailResult = await r2Manager.generateThumbnail(
+        fileBuffer,
+        filename,
+        userId,
+        sessionId,
+        'gallery'
+      );
+
+      if (!thumbnailResult || !thumbnailResult.success) {
+        // If thumbnail generation fails (e.g., for RAW files), return gracefully
+        return res.json({
+          success: false,
+          message: thumbnailResult?.error || 'Thumbnail generation not supported for this file type',
+          skipped: thumbnailResult?.skipped || false
+        });
+      }
+
+      // Get presigned URLs for the thumbnails
+      const thumbnailUrls = {};
+      if (thumbnailResult.thumbnails) {
+        for (const thumb of thumbnailResult.thumbnails) {
+          if (thumb.url) {
+            thumbnailUrls[thumb.suffix] = thumb.url;
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        thumbnails: thumbnailUrls,
+        message: `Successfully generated ${Object.keys(thumbnailUrls).length} thumbnail sizes`
+      });
+
+    } catch (error) {
+      console.error('❌ Thumbnail generation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate thumbnail', 
+        message: error.message 
+      });
+    }
   });
 
   /**
@@ -225,6 +297,184 @@ function createR2Routes() {
     } catch (error) {
       console.error('Error getting storage usage:', error);
       res.status(500).json({ error: 'Failed to get storage usage' });
+    }
+  });
+
+  /**
+   * POST /api/r2/sessions/:sessionId/upload-urls
+   * Generate pre-signed URLs for direct uploads to R2
+   * Body: { files: [{ filename: string, size: number }], folderType: 'gallery' | 'raw' }
+   */
+  router.post('/sessions/:sessionId/upload-urls', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { files, folderType = 'gallery' } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: 'No files specified' });
+      }
+      
+      console.log(`🚀 Generating ${files.length} pre-signed URLs for session ${sessionId}, folder: ${folderType}`);
+      
+      // Generate pre-signed URLs for each file
+      const urls = await r2Manager.generateBatchUploadUrls(
+        userId,
+        sessionId,
+        files  // Pass the full file objects with filename, contentType, and size
+      );
+      
+      if (!urls.success) {
+        console.error('❌ Failed to generate pre-signed URLs:', urls.error);
+        return res.status(500).json({ error: 'Failed to generate upload URLs' });
+      }
+      
+      console.log(`✅ Generated ${urls.urls.length} pre-signed URLs`);
+      
+      res.json({
+        success: true,
+        urls: urls.urls,
+        sessionId,
+        folderType
+      });
+      
+    } catch (error) {
+      console.error('❌ Pre-signed URL generation error:', error);
+      res.status(500).json({ error: 'Failed to generate upload URLs', message: error.message });
+    }
+  });
+
+  /**
+   * POST /api/r2/sessions/:sessionId/confirm-uploads
+   * Confirm that direct uploads to R2 have completed successfully
+   * Body: { uploads: [{ filename: string, key: string, size: number }] }
+   */
+  router.post('/sessions/:sessionId/confirm-uploads', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { uploads } = req.body;
+      const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      if (!uploads || !Array.isArray(uploads) || uploads.length === 0) {
+        return res.status(400).json({ error: 'No uploads to confirm' });
+      }
+      
+      console.log(`✅ Confirming ${uploads.length} direct R2 uploads for session ${sessionId}`);
+      
+      // Register each uploaded file in the database
+      for (const upload of uploads) {
+        try {
+          // Extract folder type from the key if available
+          const folderType = upload.key?.includes('/raw/') ? 'raw' : 'gallery';
+          
+          // Generate UUID for the record
+          const recordId = require('crypto').randomUUID();
+          
+          // Register the file in the database using correct schema column names
+          await pool.query(
+            `INSERT INTO r2_files (id, user_id, session_id, filename, original_filename, file_type, file_extension, file_size_bytes, file_size_mb, r2_key, upload_status, upload_completed_at, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW(), NOW())
+             ON CONFLICT (r2_key) DO UPDATE SET file_size_bytes = $8, file_size_mb = $9, updated_at = NOW()`,
+            [
+              recordId,
+              userId,
+              sessionId,
+              upload.filename,
+              upload.filename, // original_filename same as filename
+              folderType,
+              require('path').extname(upload.filename).toLowerCase(),
+              upload.size.toString(),
+              (upload.size / (1024 * 1024)).toFixed(2), // Convert bytes to MB
+              upload.key,
+              'completed'
+            ]
+          );
+          
+          console.log(`📝 Registered upload: ${upload.filename} (${upload.size} bytes)`);
+        } catch (dbError) {
+          console.error(`Failed to register upload ${upload.filename}:`, dbError);
+        }
+      }
+      
+      // Update session's last updated time
+      await pool.query(
+        'UPDATE photography_sessions SET updated_at = NOW() WHERE id = $1',
+        [sessionId]
+      );
+
+      // Trigger thumbnail generation for image files
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+      const thumbnailPromises = [];
+      
+      for (const upload of uploads) {
+        const ext = require('path').extname(upload.filename).toLowerCase();
+        if (imageExtensions.includes(ext)) {
+          console.log(`🖼️ Triggering thumbnail generation for: ${upload.filename}`);
+          
+          // Generate thumbnail asynchronously
+          const thumbnailPromise = (async () => {
+            try {
+              // First get the file from R2
+              const fileData = await r2Manager.getFile(upload.key);
+              if (!fileData || !fileData.Body) {
+                console.warn(`⚠️ Could not fetch file from R2 for thumbnail: ${upload.filename}`);
+                return null;
+              }
+              
+              // Convert stream to buffer
+              const chunks = [];
+              for await (const chunk of fileData.Body) {
+                chunks.push(chunk);
+              }
+              const fileBuffer = Buffer.concat(chunks);
+              
+              // Generate thumbnail
+              return await r2Manager.generateThumbnail(
+                fileBuffer,
+                upload.filename,
+                userId,
+                sessionId,
+                'gallery'
+              );
+            } catch (err) {
+              console.error(`⚠️ Thumbnail generation failed for ${upload.filename}:`, err.message);
+              return null;
+            }
+          })();
+          
+          thumbnailPromises.push(thumbnailPromise);
+        }
+      }
+
+      // Wait for thumbnails to generate (with timeout)
+      if (thumbnailPromises.length > 0) {
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve('timeout'), 5000));
+        await Promise.race([
+          Promise.all(thumbnailPromises),
+          timeoutPromise
+        ]).catch(err => {
+          console.error('⚠️ Some thumbnails failed to generate:', err);
+        });
+      }
+      
+      res.json({
+        success: true,
+        confirmed: uploads.length,
+        thumbnailsQueued: thumbnailPromises.length,
+        message: `Successfully confirmed ${uploads.length} uploads`
+      });
+      
+    } catch (error) {
+      console.error('❌ Upload confirmation error:', error);
+      res.status(500).json({ error: 'Failed to confirm uploads', message: error.message });
     }
   });
 

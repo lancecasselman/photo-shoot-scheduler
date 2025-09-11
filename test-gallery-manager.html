@@ -1269,8 +1269,9 @@
             }
             
             try {
-                const url = `/api/sessions/${sessionId}/photos?folder=${folderType}`;
-                console.log('📸 Fetching photos from:', url);
+                // USING TEST ENDPOINT WITHOUT AUTHENTICATION
+                const url = `/api/test/sessions/${sessionId}/photos?folder=${folderType}`;
+                console.log('📸 TEST: Fetching photos from test endpoint:', url);
                 console.log('Session ID:', sessionId, 'Folder Type:', folderType);
                 
                 // Check if we have session cookies
