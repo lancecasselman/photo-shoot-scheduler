@@ -1357,6 +1357,8 @@ if (process.env.NODE_ENV === 'production') {
         // Use higher limits for upload endpoints
         if (req.path.includes('/upload') || 
             req.path.includes('/r2/') ||
+            req.path === '/api/gallery/batch-presigned-urls' ||  // Added batch upload endpoint
+            req.path === '/api/gallery/process-uploaded-files' ||  // Added batch processing endpoint
             req.method === 'POST' && req.path.includes('/photos')) {
             if (req.path.startsWith('/api/')) {
                 return uploadLimiter(req, res, next);
@@ -1383,6 +1385,8 @@ if (process.env.NODE_ENV === 'production') {
         // Skip compression for upload endpoints to improve speed
         if (req.path.includes('/upload') || 
             req.path.includes('/r2/') ||
+            req.path === '/api/gallery/batch-presigned-urls' ||  // Added batch upload endpoint
+            req.path === '/api/gallery/process-uploaded-files' ||  // Added batch processing endpoint
             req.method === 'POST' && req.path.includes('/photos') ||
             req.method === 'PUT') {
             console.log('📤 UPLOAD: Skipping compression for faster uploads:', req.path);
