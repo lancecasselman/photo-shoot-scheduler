@@ -7130,7 +7130,7 @@ ${contract.contract_content}
                             <div class="file-action-buttons">
                                 <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
                                 <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">Open Raw Storage</button>
-                                <button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success"> Send to Client</button>
+                                ${sessionId !== 'd0892278-1882-4466-955f-fba2425e53ef' ? `<button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success"> Send to Client</button>` : ''}
                             </div>
                         </div>
 
