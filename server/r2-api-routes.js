@@ -1016,6 +1016,147 @@ function createR2Routes() {
   });
 
   /**
+   * POST /api/r2/generate-presigned-urls
+   * Generate presigned URLs for direct browser-to-R2 multipart uploads
+   * Optimized for large photography files
+   */
+  router.post('/generate-presigned-urls', async (req, res) => {
+    try {
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      const { sessionId, files } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: 'Files array is required' });
+      }
+      
+      console.log(`📤 Generating ${files.length} presigned URLs for session ${sessionId}`);
+      
+      const presignedUrls = [];
+      
+      for (const file of files) {
+        const { filename, fileType } = file;
+        
+        if (!filename) {
+          console.warn('Skipping file without filename');
+          continue;
+        }
+        
+        try {
+          // Generate presigned URL with extended expiration for large files
+          const result = await r2Manager.generateUploadPresignedUrl(
+            filename,
+            userId,
+            sessionId,
+            fileType || 'gallery',
+            7200 // 2 hours expiration for large file uploads
+          );
+          
+          presignedUrls.push({
+            filename,
+            url: result.url,
+            r2Key: result.r2Key,
+            fileType: result.fileType,
+            contentType: result.contentType,
+            expiresIn: result.expiresIn
+          });
+        } catch (urlError) {
+          console.error(`Failed to generate presigned URL for ${filename}:`, urlError);
+          presignedUrls.push({
+            filename,
+            error: urlError.message
+          });
+        }
+      }
+      
+      // Check storage limits before allowing upload
+      const storageInfo = await storageSystem.getStorageInfo(userId);
+      const totalUploadSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+      const totalGBAfterUpload = storageInfo.usage.totalGB + (totalUploadSize / (1024 * 1024 * 1024));
+      
+      // Check if user has enough storage
+      if (totalGBAfterUpload > storageInfo.quota.totalGB) {
+        return res.status(403).json({
+          error: 'Storage limit exceeded',
+          currentUsageGB: storageInfo.usage.totalGB,
+          quotaGB: storageInfo.quota.totalGB,
+          uploadSizeGB: totalUploadSize / (1024 * 1024 * 1024)
+        });
+      }
+      
+      res.json({
+        success: true,
+        urls: presignedUrls,
+        storageInfo: {
+          currentUsageGB: storageInfo.usage.totalGB,
+          quotaGB: storageInfo.quota.totalGB,
+          remainingGB: storageInfo.quota.totalGB - storageInfo.usage.totalGB
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error generating presigned URLs:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate presigned URLs',
+        details: error.message 
+      });
+    }
+  });
+
+  /**
+   * POST /api/r2/complete-upload
+   * Mark upload as complete and update database tracking
+   */
+  router.post('/complete-upload', async (req, res) => {
+    try {
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      const { sessionId, files } = req.body;
+      
+      if (!sessionId || !files) {
+        return res.status(400).json({ error: 'Session ID and files are required' });
+      }
+      
+      console.log(`✅ Completing upload for ${files.length} files in session ${sessionId}`);
+      
+      // Track each uploaded file in the database
+      for (const file of files) {
+        try {
+          await pool.query(`
+            INSERT INTO uploaded_photos (session_id, filename, file_size, file_type, uploaded_at)
+            VALUES ($1, $2, $3, $4, NOW())
+            ON CONFLICT (session_id, filename) DO UPDATE
+            SET file_size = $3, uploaded_at = NOW()
+          `, [sessionId, file.filename, file.size || 0, file.fileType || 'gallery']);
+        } catch (dbError) {
+          console.error(`Failed to track upload for ${file.filename}:`, dbError);
+        }
+      }
+      
+      // Update session edit status
+      await pool.query(`
+        UPDATE photography_sessions
+        SET edited = true, updated_at = NOW()
+        WHERE id = $1
+      `, [sessionId]);
+      
+      res.json({
+        success: true,
+        message: `Successfully tracked ${files.length} uploaded files`
+      });
+      
+    } catch (error) {
+      console.error('Error completing upload:', error);
+      res.status(500).json({ 
+        error: 'Failed to complete upload',
+        details: error.message 
+      });
+    }
+  });
+
+  /**
    * POST /api/r2/track-download
    * Track download activity for unified storage analytics
    */
