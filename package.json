@@ -29,6 +29,8 @@
     "@types/memoizee": "^0.4.12",
     "@types/node": "^24.3.0",
     "@types/passport": "^1.0.17",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
     "@uppy/aws-s3": "^4.3.2",
     "@uppy/core": "^4.5.2",
     "@uppy/dashboard": "^4.4.3",
