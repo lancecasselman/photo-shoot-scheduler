@@ -676,8 +676,9 @@ function createSessionCard(session) {
     depositBtn.onclick = function() {
         sendDepositInvoice(session);
     };
-    depositBtn.style.backgroundColor = '#fd7e14';
-    depositBtn.style.color = 'white';
+    depositBtn.style.backgroundColor = 'white';
+    depositBtn.style.color = '#374151';
+    depositBtn.style.border = '1px solid #d1d5db';
 
     // Payment Plan Button
     const paymentPlanBtn = document.createElement('button');

@@ -762,8 +762,9 @@ function createSessionCard(session) {
         console.log('DEBUG: Deposit button clicked with session:', session);
         sendDepositInvoice(session);
     };
-    depositBtn.style.backgroundColor = '#fd7e14';
-    depositBtn.style.color = 'white';
+    depositBtn.style.backgroundColor = 'white';
+    depositBtn.style.color = '#374151';
+    depositBtn.style.border = '1px solid #d1d5db';
     console.log('DEBUG: Deposit button created:', depositBtn.textContent);
 
     // Payment Plan Button
