@@ -71,21 +71,23 @@ class PrintServiceAPI {
       console.log(`- Consumer Key: ${this.oasKey ? this.oasKey.substring(0, 8) + '...' : 'NOT SET'}`);
       console.log(`- Consumer Secret: ${this.oasSecret ? 'SET' : 'NOT SET'}`);
       
-      // Build query parameters for GET request
-      const params = new URLSearchParams({
+      // Build request body parameters for POST request (secure)
+      const requestBody = new URLSearchParams({
         'grant_type': 'consumer_credentials',
         'consumer_key': this.oasKey,
         'consumer_secret': this.oasSecret
       });
       
-      // Only log the base URL without sensitive query parameters
+      // Log URL without exposing any sensitive data
       console.log(`- Request URL: ${authUrl}`);
+      console.log(`- Using POST method to protect consumer_secret`);
       
-      const response = await fetch(`${authUrl}?${params.toString()}`, {
-        method: 'GET',
+      const response = await fetch(authUrl, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: requestBody.toString()
       });
       
       console.log(`- Response status: ${response.status}`);

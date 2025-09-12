@@ -411,13 +411,30 @@
                     <span id="productSourceIndicator" style="font-size: 12px; font-weight: normal; color: #48bb78; margin-left: 10px;"></span>
                 </h3>
                 <div class="product-grid" id="productGrid">
-                    <div class="product-card selected" data-product="photographic">Photographic Print</div>
-                    <div class="product-card" data-product="fineart">Fine Art Print</div>
-                    <div class="product-card" data-product="canvas">Canvas Wrap</div>
-                    <div class="product-card" data-product="metal">Metal Print</div>
-                    <div class="product-card" data-product="acrylic">Acrylic Print</div>
+                    <!-- Standard Prints -->
+                    <div class="product-card selected" data-product="photographic">Photo Prints</div>
+                    <div class="product-card" data-product="fineart">Fine Art Prints</div>
+                    
+                    <!-- Canvas Products -->
+                    <div class="product-card" data-product="canvas">Canvas Prints</div>
+                    
+                    <!-- Metal & Acrylic -->
+                    <div class="product-card" data-product="metal">Metal Prints</div>
+                    <div class="product-card" data-product="acrylic">Acrylic Prints</div>
+                    
+                    <!-- Framed Products -->
+                    <div class="product-card" data-product="framed">Framed Prints</div>
+                    
+                    <!-- Albums & Books -->
+                    <div class="product-card" data-product="albums">Albums</div>
+                    <div class="product-card" data-product="books">Books</div>
+                    
+                    <!-- Cards & Specialty -->
+                    <div class="product-card" data-product="cards">Cards</div>
+                    <div class="product-card" data-product="specialty">Specialty Items</div>
+                    
+                    <!-- Additional Materials -->
                     <div class="product-card" data-product="bamboo">Bamboo Panel</div>
-                    <div class="product-card" data-product="framed">Framed Print</div>
                 </div>
             </div>
 
@@ -591,19 +608,47 @@
             
             // Map WHCC categories to our UI categories - FIXED: acrylic_prints now correctly maps to 'acrylic'
             const categoryMapping = {
-                'acrylic_prints': 'acrylic',  // FIXED: was incorrectly mapped to 'specialty'
+                // Acrylic products
+                'acrylic_prints': 'acrylic',
+                'acrylic': 'acrylic',
+                
+                // Albums and books (expanded to match WHCC catalog)
+                'album_prints': 'albums',
+                'albums': 'albums',
+                'books': 'books',
+                'press_printed_books': 'books',
+                
+                // Canvas products (all canvas types)
                 'canvas_prints': 'canvas',
                 'canvas': 'canvas',
+                'portrait_canvas': 'canvas',
+                'gallery_wraps': 'canvas',
+                'float_wraps': 'canvas',
+                
+                // Metal products
                 'metal_prints': 'metal', 
                 'metal': 'metal',
-                'fine_art_prints': 'fineart',  // Map to fineart for proper differentiation
-                'photographic_prints': 'photographic',  // Map to photographic for proper differentiation
+                
+                // Fine art and photographic prints
+                'fine_art_prints': 'fineart',
+                'photographic_prints': 'photographic',
+                'photo_prints': 'photographic',
                 'prints': 'photographic',
+                
+                // Framed products
+                'framed_prints': 'framed',
+                'framed': 'framed',
+                
+                // Cards and specialty items (matching WHCC categories)
+                'press_printed_cards': 'cards',
+                'cards': 'cards',
+                'ornaments': 'specialty',
+                'partner_photo_fulfillment': 'specialty',
+                'print_fulfillment': 'specialty',
                 'specialty_products': 'specialty',
-                'bamboo': 'bamboo',  // Add bamboo mapping
-                'albums': 'specialty',
-                'cards': 'prints',
-                'framed': 'framed'  // Add framed mapping
+                
+                // Other materials
+                'bamboo': 'bamboo'
             };
             
             // Group products by category and extract pricing
@@ -1123,13 +1168,30 @@
             // Function to update available sizes based on product
             function updateAvailableSizes() {
                 const categoryMap = {
-                    'photographic': 'prints',
-                    'fineart': 'prints',
+                    // Standard prints
+                    'photographic': 'photographic',
+                    'fineart': 'fineart',
+                    
+                    // Canvas products
                     'canvas': 'canvas',
+                    
+                    // Metal and acrylic
                     'metal': 'metal',
-                    'acrylic': 'specialty',
-                    'bamboo': 'specialty',
-                    'framed': 'prints'
+                    'acrylic': 'acrylic',
+                    
+                    // Framed products
+                    'framed': 'framed',
+                    
+                    // Albums and books
+                    'albums': 'albums',
+                    'books': 'books',
+                    
+                    // Cards and specialty
+                    'cards': 'cards',
+                    'specialty': 'specialty',
+                    
+                    // Additional materials
+                    'bamboo': 'bamboo'
                 };
                 
                 const category = categoryMap[currentSettings.product] || 'prints';
