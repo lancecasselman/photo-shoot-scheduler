@@ -1285,19 +1285,23 @@ window.emailAllClients = async function() {
     try {
         showMessage('Loading client emails...', 'info');
         
-        const response = await fetch('/api/clients/emails');
+        // Fetch all clients from the working endpoint
+        const response = await fetch('/api/clients');
         if (!response.ok) {
-            throw new Error('Failed to fetch client emails');
+            throw new Error('Failed to fetch clients');
         }
         
-        const data = await response.json();
+        const clients = await response.json();
         
-        if (!data.success || data.clients.length === 0) {
+        // Filter clients that have email addresses
+        const clientsWithEmail = clients.filter(client => client.email && client.email.trim() !== '');
+        
+        if (clientsWithEmail.length === 0) {
             showMessage('No client emails found to send to', 'warning');
             return;
         }
         
-        const clientEmails = data.clients.map(client => client.email).join(',');
+        const clientEmails = clientsWithEmail.map(client => client.email).join(',');
         
         const subject = 'Update from The Legacy Photography';
         const body = `Hi there!
@@ -1328,14 +1332,14 @@ P.S. I'd love to hear how your photos have been bringing joy to your life! `;
         if (mailtoUrl.length > 2000) {
             // Split into smaller groups if needed
             const emailChunks = [];
-            const emailArray = data.clients.map(client => client.email);
+            const emailArray = clientsWithEmail.map(client => client.email);
             const chunkSize = 20; // Send to 20 clients at a time
             
             for (let i = 0; i < emailArray.length; i += chunkSize) {
                 emailChunks.push(emailArray.slice(i, i + chunkSize));
             }
             
-            if (confirm(`You have ${data.clients.length} clients. Due to email client limitations, this will open ${emailChunks.length} separate email windows. Continue?`)) {
+            if (confirm(`You have ${clientsWithEmail.length} clients. Due to email client limitations, this will open ${emailChunks.length} separate email windows. Continue?`)) {
                 emailChunks.forEach((chunk, index) => {
                     setTimeout(() => {
                         const chunkEmails = chunk.join(',');
@@ -1351,7 +1355,7 @@ P.S. I'd love to hear how your photos have been bringing joy to your life! `;
                     }, index * 1000); // 1 second delay between each window
                 });
                 
-                showMessage(`Opening ${emailChunks.length} email windows for ${data.clients.length} clients`, 'success');
+                showMessage(`Opening ${emailChunks.length} email windows for ${clientsWithEmail.length} clients`, 'success');
             }
         } else {
             // Single email window for all clients
@@ -1363,7 +1367,7 @@ P.S. I'd love to hear how your photos have been bringing joy to your life! `;
             emailLink.click();
             document.body.removeChild(emailLink);
             
-            showMessage(`📧 Opening email client with ${data.clients.length} clients in BCC`, 'success');
+            showMessage(`📧 Opening email client with ${clientsWithEmail.length} clients in BCC`, 'success');
         }
         
     } catch (error) {
