@@ -12673,10 +12673,29 @@ END:VCALENDAR`;
                     
                     let clientsHTML = `
                         <div class="clients-header" style="padding: 20px; border-bottom: 1px solid #eee;">
-                            <h3 style="margin: 0; color: #333;">📋 Client Database (${clients.length} clients)</h3>
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
-                                Automatically imported from all photography sessions
-                            </p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div>
+                                    <h3 style="margin: 0; color: #333;">📋 Client Database (${clients.length} clients)</h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+                                        Automatically imported from all photography sessions
+                                    </p>
+                                </div>
+                                <button onclick="emailAllClients()" style="
+                                    background: #d4af37; 
+                                    color: white; 
+                                    border: none; 
+                                    padding: 10px 20px; 
+                                    border-radius: 5px; 
+                                    cursor: pointer; 
+                                    font-size: 14px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    white-space: nowrap;
+                                " title="Open your email app with all client emails">
+                                    📧 Email All Clients
+                                </button>
+                            </div>
                         </div>
                         <div class="clients-list" style="padding: 20px;">
                     `;
@@ -12750,6 +12769,48 @@ END:VCALENDAR`;
                         </div>
                     `;
                 }
+            }
+        }
+
+        // Email All Clients Function - opens native email app with all client emails
+        async function emailAllClients() {
+            try {
+                console.log('📧 Starting Email All Clients...');
+                
+                // Fetch all clients from the database
+                const clientsResponse = await fetch('/api/clients');
+                if (!clientsResponse.ok) {
+                    throw new Error('Failed to fetch clients');
+                }
+                
+                const clients = await clientsResponse.json();
+                console.log(`📧 Found ${clients.length} clients`);
+                
+                // Filter clients that have email addresses
+                const clientsWithEmail = clients.filter(client => client.email && client.email.trim() !== '');
+                console.log(`📧 ${clientsWithEmail.length} clients have email addresses`);
+                
+                if (clientsWithEmail.length === 0) {
+                    alert('No clients with email addresses found!');
+                    return;
+                }
+                
+                // Create BCC list with proper individual email encoding
+                const bccList = clientsWithEmail.map(client => encodeURIComponent(client.email.trim())).join(',');
+                console.log(`📧 Preparing to email ${clientsWithEmail.length} clients via BCC (emails protected)`);
+                
+                // Create mailto link with BCC to protect client privacy
+                const subject = encodeURIComponent('Update from Your Photographer');
+                const mailtoLink = `mailto:?bcc=${bccList}&subject=${subject}`;
+                
+                // Open default email client
+                window.location.href = mailtoLink;
+                
+                console.log('📧 Email app opened with all client emails');
+                
+            } catch (error) {
+                console.error('❌ Error in emailAllClients:', error);
+                alert('Error opening email app. Please try again.');
             }
         }
 
