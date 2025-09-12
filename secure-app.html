@@ -12770,9 +12770,14 @@ END:VCALENDAR`;
             }
             setActiveNavLink(tab);
             
-            // Handle client database loading BEFORE calling original function
+            // Call original switchTab FIRST to ensure tab content is rendered
+            if (originalSwitchTab) {
+                originalSwitchTab(tab);
+            }
+            
+            // Handle client database loading AFTER tab content is rendered
             if (tab === 'clientDatabase') {
-                // Ensure the container shows loading state
+                // Wait for tab content to be fully rendered
                 setTimeout(() => {
                     const container = document.getElementById('clientDatabaseList');
                     if (container) {
@@ -12781,23 +12786,19 @@ END:VCALENDAR`;
                                 Loading all clients...
                             </div>
                         `;
+                        
+                        // Load clients automatically after container is ready
+                        setTimeout(() => {
+                            try {
+                                loadClientDatabase().catch(error => {
+                                    console.error('Failed to load client database:', error);
+                                });
+                            } catch (error) {
+                                console.error('Error calling loadClientDatabase:', error);
+                            }
+                        }, 300);
                     }
-                    
-                    // Load clients automatically
-                    setTimeout(() => {
-                        try {
-                            loadClientDatabase().catch(error => {
-                                console.error('Failed to load client database:', error);
-                            });
-                        } catch (error) {
-                            console.error('Error calling loadClientDatabase:', error);
-                        }
-                    }, 200);
-                }, 100);
-            }
-            
-            if (originalSwitchTab) {
-                originalSwitchTab(tab);
+                }, 250);
             }
         };
 
