@@ -602,3 +602,45 @@ export type InsertCommunityMessage = typeof communityMessages.$inferInsert;
 export type CommunityMessage = typeof communityMessages.$inferSelect;
 export type InsertCommunityChallenge = typeof communityChallenges.$inferInsert;
 export type CommunityChallenge = typeof communityChallenges.$inferSelect;
+
+// Admin Content Edits table for inline editor
+export const adminContentEdits = pgTable("admin_content_edits", {
+  id: serial("id").primaryKey(),
+  page: varchar("page", { length: 255 }).notNull(),
+  selector: text("selector").notNull(),
+  content: text("content").notNull(),
+  contentType: varchar("content_type", { length: 50 }).default("text"),
+  editedBy: varchar("edited_by", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniquePageSelector: index("unique_page_selector").on(table.page, table.selector),
+}));
+
+// Photo For Sale Settings table for admin-configured pricing
+export const photoForSaleSettings = pgTable("photo_for_sale_settings", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  pageId: varchar("page_id").notNull(), // Which page/gallery this applies to
+  photoSelector: text("photo_selector").notNull(), // CSS selector or photo identifier
+  photoUrl: varchar("photo_url").notNull(),
+  photoFilename: varchar("photo_filename").notNull(),
+  isForSale: boolean("is_for_sale").default(true),
+  allowPrints: boolean("allow_prints").default(true),
+  allowDigital: boolean("allow_digital").default(true),
+  digitalPrice: decimal("digital_price", { precision: 10, scale: 2 }).notNull(),
+  printMarkupPercentage: decimal("print_markup_percentage", { precision: 5, scale: 2 }).default("25.00"), // Markup over WHCC base price
+  minPrintPrice: decimal("min_print_price", { precision: 10, scale: 2 }).default("5.00"), // Minimum print price floor
+  featuredProducts: jsonb("featured_products").default([]), // Array of featured WHCC product IDs
+  customPricing: jsonb("custom_pricing").default({}), // Custom per-product pricing overrides
+  saleDescription: text("sale_description"), // Optional description for this sale item
+  tags: jsonb("tags").default([]), // Tags for organization
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertAdminContentEdit = typeof adminContentEdits.$inferInsert;
+export type AdminContentEdit = typeof adminContentEdits.$inferSelect;
+export type InsertPhotoForSaleSetting = typeof photoForSaleSettings.$inferInsert;
+export type PhotoForSaleSetting = typeof photoForSaleSettings.$inferSelect;

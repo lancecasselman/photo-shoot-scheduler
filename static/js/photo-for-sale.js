@@ -24,16 +24,22 @@
         
         console.log(`Found ${forSalePhotos.length} for-sale photo(s)`);
         
-        // Add purchase functionality to each for-sale photo
-        forSalePhotos.forEach((photoBlock, index) => {
-            addPurchaseOptions(photoBlock, index);
+        // Add purchase functionality to each for-sale photo (async processing)
+        Promise.all(Array.from(forSalePhotos).map(async (photoBlock, index) => {
+            try {
+                await addPurchaseOptions(photoBlock, index);
+            } catch (error) {
+                console.error(`Error processing photo ${index + 1}:`, error);
+            }
+        })).then(() => {
+            console.log('✅ All for-sale photos processed');
         });
         
         // Add CSS for purchase options
         addSaleStyles();
     }
     
-    function addPurchaseOptions(photoBlock, index) {
+    async function addPurchaseOptions(photoBlock, index) {
         const img = photoBlock.querySelector('img');
         const caption = photoBlock.querySelector('.photo-caption');
         
@@ -43,7 +49,7 @@
         }
         
         // Get photo sale data from saved content or defaults
-        const saleData = extractSaleData(photoBlock);
+        const saleData = await extractSaleData(photoBlock);
         
         // Create purchase overlay
         const purchaseOverlay = document.createElement('div');
@@ -71,15 +77,79 @@
         console.log(`Added purchase options to photo ${index + 1}:`, saleData);
     }
     
-    function extractSaleData(photoBlock) {
-        // Try to extract sale data from admin content if available
-        // This would come from the saved photo block data
+    async function extractSaleData(photoBlock) {
+        const img = photoBlock.querySelector('img');
+        if (!img || !img.src) {
+            console.warn('⚠️ No image source found for photo block');
+            return getDefaultSaleData();
+        }
+        
+        try {
+            const photoUrl = encodeURIComponent(img.src);
+            
+            console.log('💰 Fetching sale data from server:', { photoUrl: img.src });
+            
+            // Fetch sale data from server API (userId now derived from session)
+            const response = await fetch(`/api/photo-sales/photo-settings/${photoUrl}`);
+            
+            if (!response.ok) {
+                console.warn('⚠️ Failed to fetch sale settings, using defaults:', response.statusText);
+                return getDefaultSaleData();
+            }
+            
+            const settings = await response.json();
+            
+            if (settings.success && settings.isForSale) {
+                console.log('✅ Loaded sale settings from server:', settings);
+                
+                return {
+                    basePrice: Math.max(settings.minPrintPrice, 15.00), // Use server settings
+                    allowPrints: settings.allowPrints,
+                    allowDigital: settings.allowDigital,
+                    digitalPrice: settings.digitalPrice,
+                    printMarkupPercentage: settings.printMarkupPercentage,
+                    minPrintPrice: settings.minPrintPrice,
+                    isForSale: true
+                };
+            } else {
+                // Photo is not configured for sale
+                return { isForSale: false };
+            }
+            
+        } catch (error) {
+            console.error('❌ Error fetching sale data:', error);
+            return getDefaultSaleData();
+        }
+    }
+    
+    function getDefaultSaleData() {
         return {
-            basePrice: 15.00, // Default values - in real implementation this would come from saved data
+            basePrice: 15.00,
             allowPrints: true,
             allowDigital: true,
-            digitalPrice: 25.00
+            digitalPrice: 25.00,
+            isForSale: false // Default to not for sale
         };
+    }
+    
+    function getCurrentUserId() {
+        // Try to extract user ID from various sources
+        if (typeof window.currentUser !== 'undefined' && window.currentUser) {
+            return window.currentUser.id;
+        }
+        
+        const sessionUser = sessionStorage.getItem('currentUser');
+        if (sessionUser) {
+            try {
+                return JSON.parse(sessionUser).id;
+            } catch (e) { /* ignore */ }
+        }
+        
+        const userId = document.body.dataset.userId || document.documentElement.dataset.userId;
+        if (userId) return userId;
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('userId') || urlParams.get('user') || null;
     }
     
     function addSaleStyles() {
