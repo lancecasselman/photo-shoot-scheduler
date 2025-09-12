@@ -273,6 +273,8 @@ class PaymentPlanManager {
 
       // Create Stripe invoice
       let stripeInvoice = null;
+      let invoiceSuccessfullySent = false;
+      
       if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 50) {
         try {
           // Check if photographer has Stripe Connect account
@@ -368,25 +370,36 @@ class PaymentPlanManager {
             status: sentInvoice.status
           };
 
+          // Mark as successfully sent only after finalize + send complete
+          invoiceSuccessfullySent = true;
           console.log(`SUCCESS: Stripe invoice sent for payment ${payment.paymentNumber}: ${sentInvoice.hosted_invoice_url}`);
+          
         } catch (stripeError) {
-          console.error('Stripe invoice error:', stripeError.message);
-          // Continue with email fallback
+          console.error(`❌ STRIPE ERROR for payment ${payment.paymentNumber}:`, stripeError.message);
+          // Don't continue - throw the error to prevent marking as sent
+          throw new Error(`Failed to send Stripe invoice: ${stripeError.message}`);
         }
+      } else {
+        // No Stripe configuration available
+        throw new Error('Stripe is not configured - cannot send invoice');
       }
 
-      // Update payment record
-      await db.update(paymentRecords)
-        .set({
-          invoiceSent: true,
-          invoiceSentAt: new Date(),
-          stripeInvoiceId: stripeInvoice?.id || null,
-          stripeInvoiceUrl: stripeInvoice?.url || null
-        })
-        .where(eq(paymentRecords.id, paymentId));
+      // Only update payment record if invoice was successfully sent
+      if (invoiceSuccessfullySent && stripeInvoice) {
+        await db.update(paymentRecords)
+          .set({
+            invoiceSent: true,
+            invoiceSentAt: new Date(),
+            stripeInvoiceId: stripeInvoice.id,
+            stripeInvoiceUrl: stripeInvoice.url
+          })
+          .where(eq(paymentRecords.id, paymentId));
 
-      console.log(`SUCCESS: Invoice sent for payment ${payment.paymentNumber}`);
-      return payment;
+        console.log(`SUCCESS: Invoice sent and recorded for payment ${payment.paymentNumber}`);
+        return payment;
+      } else {
+        throw new Error('Invoice was not successfully sent via Stripe');
+      }
 
     } catch (error) {
       console.error('Error sending payment invoice:', error);
