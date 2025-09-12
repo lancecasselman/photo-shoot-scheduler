@@ -18156,9 +18156,18 @@ END:VCALENDAR`;
                 // Update summary
                 updatePricingSummary();
                 
-                if (loading) loading.style.display = 'none';
-                if (grid) grid.style.display = 'block';
-                if (summary) summary.style.display = 'block';
+                if (loading) {
+                    loading.style.display = 'none';
+                    loading.style.visibility = 'hidden';
+                }
+                if (grid) {
+                    grid.style.display = 'block';
+                    grid.style.visibility = 'visible';
+                }
+                if (summary) {
+                    summary.style.display = 'block';
+                    summary.style.visibility = 'visible';
+                }
                 
             } catch (error) {
                 console.error('❌ Error loading lab products:', error);
@@ -18668,10 +18677,10 @@ END:VCALENDAR`;
         </div>
         
         <!-- Loading State -->
-        <div id="printLabLoading" style="text-align: center; padding: 60px; background: var(--bg-elevated); border-radius: var(--border-radius); margin: 20px 0;">
-            <div style="font-size: 3rem; margin-bottom: 16px;">🏷️</div>
-            <h3>Loading Print Lab...</h3>
-            <p style="color: #666; margin-top: 8px;">Setting up pricing management for WHCC products</p>
+        <div id="printLabLoading" style="text-align: center; padding: 20px; background: var(--bg-elevated); border-radius: var(--border-radius); margin: 20px 0;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🏷️</div>
+            <h3 style="margin: 0 0 8px 0;">Loading Print Lab...</h3>
+            <p style="color: #666; margin: 0; font-size: 0.9rem;">Setting up pricing management for WHCC products</p>
         </div>
         
         <!-- Print Lab Products Grid -->
