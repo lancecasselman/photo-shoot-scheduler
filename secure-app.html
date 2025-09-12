@@ -5464,6 +5464,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('printShop'); closeMobileMenu();">
+                            🖼️ Print Shop
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="#" class="nav-link" onclick="openPhotographersWebsite(); closeMobileMenu();">
                             Photographers Website
                         </a>
@@ -10333,6 +10338,10 @@ END:VCALENDAR`;
             } else if (tabName === 'businessManagement') {
                 // Initialize Business Management when tab is first opened
                 initializeBusinessManagement();
+            } else if (tabName === 'printShop') {
+                // Load WHCC print products when tab is opened
+                console.log('🖼️ Loading Print Shop...');
+                loadPrintProducts();
             } else if (tabName === 'businessSetup') {
                 // Check Stripe Connect status when tab is opened
                 checkStripeConnectStatus();
@@ -17873,7 +17882,281 @@ END:VCALENDAR`;
                 window.open('https://dashboard.stripe.com/express', '_blank');
             }
         }
+
+        // Print Shop Functionality
+        let allPrintProducts = [];
+        let filteredPrintProducts = [];
+
+        // Load WHCC print products
+        async function loadPrintProducts() {
+            console.log('🖼️ Loading WHCC print products...');
+            const loading = document.getElementById('printShopLoading');
+            const grid = document.getElementById('printProductsGrid');
+            const summary = document.getElementById('printSummary');
+            
+            if (loading) loading.style.display = 'block';
+            if (grid) grid.style.display = 'none';
+            if (summary) summary.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/print/products');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch print products: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                allPrintProducts = data.products || [];
+                filteredPrintProducts = [...allPrintProducts];
+                
+                console.log(`✅ Loaded ${allPrintProducts.length} print products`);
+                
+                // Update category filter
+                updateCategoryFilter();
+                
+                // Display products
+                displayPrintProducts();
+                
+                if (loading) loading.style.display = 'none';
+                if (grid) grid.style.display = 'block';
+                if (summary) summary.style.display = 'block';
+                
+            } catch (error) {
+                console.error('❌ Error loading print products:', error);
+                if (loading) {
+                    loading.innerHTML = `
+                        <div style="color: #dc3545; text-align: center; padding: 40px;">
+                            <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
+                            <h3>Failed to Load Print Catalog</h3>
+                            <p style="margin: 16px 0;">Unable to connect to WHCC print services</p>
+                            <button onclick="loadPrintProducts()" style="background: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">Try Again</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Update category filter dropdown
+        function updateCategoryFilter() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (!categoryFilter) return;
+            
+            // Get unique categories
+            const categories = [...new Set(allPrintProducts.map(p => p.category).filter(Boolean))];
+            categories.sort();
+            
+            // Clear existing options (except "All Categories")
+            categoryFilter.innerHTML = '<option value="">All Categories</option>';
+            
+            // Add category options
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        // Filter print products
+        function filterPrintProducts() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const priceFilter = document.getElementById('priceFilter');
+            
+            const selectedCategory = categoryFilter ? categoryFilter.value : '';
+            const selectedPriceRange = priceFilter ? priceFilter.value : '';
+            
+            filteredPrintProducts = allPrintProducts.filter(product => {
+                // Category filter
+                if (selectedCategory && product.category !== selectedCategory) {
+                    return false;
+                }
+                
+                // Price filter
+                if (selectedPriceRange) {
+                    const price = parseFloat(product.price) || 0;
+                    switch (selectedPriceRange) {
+                        case '0-10':
+                            if (price >= 10) return false;
+                            break;
+                        case '10-25':
+                            if (price < 10 || price >= 25) return false;
+                            break;
+                        case '25-50':
+                            if (price < 25 || price >= 50) return false;
+                            break;
+                        case '50-100':
+                            if (price < 50 || price >= 100) return false;
+                            break;
+                        case '100+':
+                            if (price < 100) return false;
+                            break;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayPrintProducts();
+        }
+
+        // Display print products in grid
+        function displayPrintProducts() {
+            const grid = document.getElementById('printProductsGrid');
+            if (!grid) return;
+            
+            if (filteredPrintProducts.length === 0) {
+                grid.innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: var(--bg-elevated); border-radius: var(--border-radius);">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
+                        <h3>No Products Found</h3>
+                        <p style="color: #666; margin-top: 8px;">Try adjusting your filters</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group products by category
+            const productsByCategory = {};
+            filteredPrintProducts.forEach(product => {
+                const category = product.category || 'uncategorized';
+                if (!productsByCategory[category]) {
+                    productsByCategory[category] = [];
+                }
+                productsByCategory[category].push(product);
+            });
+            
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.05)); border-radius: 12px; text-align: center;">
+                    <h3 style="margin: 0; color: #4f46e5;">Showing ${filteredPrintProducts.length} Print Products</h3>
+                </div>
+            `;
+            
+            // Display products by category
+            Object.keys(productsByCategory).sort().forEach(category => {
+                const products = productsByCategory[category];
+                const categoryName = category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
+                
+                html += `
+                    <div style="margin-bottom: 40px;">
+                        <h2 style="margin: 0 0 20px 0; padding: 15px 0; border-bottom: 2px solid var(--border-primary); color: #2d3748;">
+                            ${categoryName} (${products.length})
+                        </h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                `;
+                
+                products.slice(0, 20).forEach(product => { // Limit to 20 per category for performance
+                    const dimensions = product.dimensions ? `${product.dimensions.width}" × ${product.dimensions.height}"` : '';
+                    const attributes = product.attributes ? product.attributes.slice(0, 3).map(attr => attr.name).join(', ') : '';
+                    
+                    html += `
+                        <div style="background: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-soft); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-large)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-soft)'">
+                            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 12px;">
+                                <h4 style="margin: 0; color: #2d3748; font-size: 1.1rem; flex: 1;">${product.name}</h4>
+                                <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                                    $${parseFloat(product.price).toFixed(2)}
+                                </div>
+                            </div>
+                            ${product.description ? `<p style="margin: 8px 0; color: #666; font-size: 0.95rem;">${product.description}</p>` : ''}
+                            ${dimensions ? `<div style="margin: 8px 0; color: #4f46e5; font-weight: 600; font-size: 0.9rem;">📐 ${dimensions}</div>` : ''}
+                            ${attributes ? `<div style="margin: 8px 0; color: #666; font-size: 0.85rem; font-style: italic;">Options: ${attributes}</div>` : ''}
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-secondary); display: flex; gap: 10px;">
+                                <button onclick="showProductDetails('${product.id}')" style="flex: 1; background: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid #4f46e5; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                    View Details
+                                </button>
+                                <button onclick="addToCart('${product.id}')" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (products.length > 20) {
+                    html += `
+                        <div style="background: rgba(79, 70, 229, 0.05); border: 2px dashed rgba(79, 70, 229, 0.3); border-radius: 12px; padding: 30px; text-align: center; color: #4f46e5;">
+                            <div style="font-size: 1.5rem; margin-bottom: 8px;">📦</div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">+${products.length - 20} More Products</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">Use filters to narrow down options</div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        // Show product details (placeholder)
+        function showProductDetails(productId) {
+            const product = allPrintProducts.find(p => p.id === productId);
+            if (product) {
+                alert(`Product Details:\n\nName: ${product.name}\nPrice: $${product.price}\nCategory: ${product.category}\n\nFull product customization and ordering coming soon!`);
+            }
+        }
+
+        // Add to cart (placeholder)
+        function addToCart(productId) {
+            const product = allPrintProducts.find(p => p.id === productId);
+            if (product) {
+                showMessage(`📦 ${product.name} would be added to cart (cart functionality coming soon!)`, 'info');
+            }
+        }
     </script>
+
+    <!-- Print Shop Tab Content -->
+    <div id="printShopTab" class="tab-content">
+        <div class="content-header">
+            <h1>🖼️ Print Shop</h1>
+            <p>Professional printing services powered by WHCC - 537 products available</p>
+        </div>
+        
+        <!-- Print Shop Controls -->
+        <div class="print-shop-controls" style="background: var(--bg-elevated); border-radius: var(--border-radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-soft);">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                <div class="filter-group">
+                    <label for="categoryFilter" style="font-weight: 600; margin-right: 8px;">Category:</label>
+                    <select id="categoryFilter" onchange="filterPrintProducts()" style="padding: 8px 12px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="priceFilter" style="font-weight: 600; margin-right: 8px;">Price Range:</label>
+                    <select id="priceFilter" onchange="filterPrintProducts()" style="padding: 8px 12px; border: 1px solid var(--border-primary); border-radius: 8px;">
+                        <option value="">All Prices</option>
+                        <option value="0-10">Under $10</option>
+                        <option value="10-25">$10 - $25</option>
+                        <option value="25-50">$25 - $50</option>
+                        <option value="50-100">$50 - $100</option>
+                        <option value="100+">$100+</option>
+                    </select>
+                </div>
+                <button onclick="loadPrintProducts()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    🔄 Refresh Catalog
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="printShopLoading" style="text-align: center; padding: 60px; background: var(--bg-elevated); border-radius: var(--border-radius); margin: 20px 0;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">📦</div>
+            <h3>Loading WHCC Print Catalog...</h3>
+            <p style="color: #666; margin-top: 8px;">Fetching 537 professional print products</p>
+        </div>
+        
+        <!-- Print Products Grid -->
+        <div id="printProductsGrid" style="display: none;">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+        
+        <!-- Print Products Summary -->
+        <div id="printSummary" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.05)); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: var(--border-radius); padding: 20px; margin-top: 20px; text-align: center; display: none;">
+            <h4 style="margin: 0 0 8px 0; color: #4f46e5;">WHCC Professional Printing</h4>
+            <p style="margin: 0; color: #666;">High-quality prints, canvas, metal, and specialty products from White House Custom Colour</p>
+        </div>
+    </div>
 
     <!-- Booking Agreements System -->
     <link rel="stylesheet" href="booking-agreements-modal.css">
