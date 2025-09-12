@@ -5523,6 +5523,36 @@ app.delete('/api/clients/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get all client emails for bulk emailing
+app.get('/api/clients/emails', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const photographerId = normalizedUser.uid;
+        
+        const result = await pool.query(
+            `SELECT client_name, email 
+             FROM photographer_clients 
+             WHERE photographer_id = $1 AND email IS NOT NULL AND email != ''
+             ORDER BY client_name`,
+            [photographerId]
+        );
+        
+        const clients = result.rows.map(row => ({
+            name: row.client_name,
+            email: row.email
+        }));
+        
+        res.json({
+            success: true,
+            clients: clients,
+            count: clients.length
+        });
+    } catch (error) {
+        console.error('Error fetching client emails:', error);
+        res.status(500).json({ error: 'Failed to fetch client emails' });
+    }
+});
+
 // Auto-populate clients from existing sessions
 app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
     try {

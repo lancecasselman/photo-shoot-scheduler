@@ -1280,6 +1280,98 @@ Professional Photography Services
     showMessage(` Opening email client for ${session.clientName}`, 'success');
 }
 
+// Bulk email all clients using default email client
+window.emailAllClients = async function() {
+    try {
+        showMessage('Loading client emails...', 'info');
+        
+        const response = await fetch('/api/clients/emails');
+        if (!response.ok) {
+            throw new Error('Failed to fetch client emails');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || data.clients.length === 0) {
+            showMessage('No client emails found to send to', 'warning');
+            return;
+        }
+        
+        const clientEmails = data.clients.map(client => client.email).join(',');
+        
+        const subject = 'Update from The Legacy Photography';
+        const body = `Hi there!
+
+I hope this message finds you well. I wanted to reach out to share some exciting updates and let you know about upcoming opportunities.
+
+As a valued client of The Legacy Photography, you're always the first to know about:
+✨ New service offerings
+📸 Special session promotions  
+🎉 Seasonal photography opportunities
+💫 Behind-the-scenes updates
+
+Thank you for being part of The Legacy Photography family. Your trust in me to capture your most precious moments means the world to me.
+
+Feel free to reply to this email if you have any questions or if you'd like to schedule your next session!
+
+Best regards,
+Lance - The Legacy Photography
+Professional Photography Services
+📧 Email: lance@thelegacyphotography.com
+📱 Call/Text: Available in your session details
+
+P.S. I'd love to hear how your photos have been bringing joy to your life! `;
+
+        const mailtoUrl = `mailto:?bcc=${encodeURIComponent(clientEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
+        // Check if the mailto URL is too long (some email clients have limits)
+        if (mailtoUrl.length > 2000) {
+            // Split into smaller groups if needed
+            const emailChunks = [];
+            const emailArray = data.clients.map(client => client.email);
+            const chunkSize = 20; // Send to 20 clients at a time
+            
+            for (let i = 0; i < emailArray.length; i += chunkSize) {
+                emailChunks.push(emailArray.slice(i, i + chunkSize));
+            }
+            
+            if (confirm(`You have ${data.clients.length} clients. Due to email client limitations, this will open ${emailChunks.length} separate email windows. Continue?`)) {
+                emailChunks.forEach((chunk, index) => {
+                    setTimeout(() => {
+                        const chunkEmails = chunk.join(',');
+                        const chunkMailtoUrl = `mailto:?bcc=${encodeURIComponent(chunkEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        
+                        const emailLink = document.createElement('a');
+                        emailLink.href = chunkMailtoUrl;
+                        emailLink.target = '_blank';
+                        emailLink.style.display = 'none';
+                        document.body.appendChild(emailLink);
+                        emailLink.click();
+                        document.body.removeChild(emailLink);
+                    }, index * 1000); // 1 second delay between each window
+                });
+                
+                showMessage(`Opening ${emailChunks.length} email windows for ${data.clients.length} clients`, 'success');
+            }
+        } else {
+            // Single email window for all clients
+            const emailLink = document.createElement('a');
+            emailLink.href = mailtoUrl;
+            emailLink.target = '_blank';
+            emailLink.style.display = 'none';
+            document.body.appendChild(emailLink);
+            emailLink.click();
+            document.body.removeChild(emailLink);
+            
+            showMessage(`📧 Opening email client with ${data.clients.length} clients in BCC`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('Error opening bulk email:', error);
+        showMessage('Failed to open bulk email client', 'error');
+    }
+}
+
 // Copy gallery URL to clipboard
 // Function to view signed contract details
 window.viewSignedContract = async function viewSignedContract(sessionId, clientName) {
