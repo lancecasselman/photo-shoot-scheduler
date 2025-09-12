@@ -4607,6 +4607,43 @@ async function createSession(sessionData, userId) {
             sessionData.notifyGalleryReady || false
         ]);
 
+        // Automatically add client to client database if they don't exist
+        if (sessionData.clientName && sessionData.email) {
+            try {
+                // Check if client already exists for this photographer
+                const existingClient = await pool.query(
+                    `SELECT id FROM photographer_clients 
+                     WHERE photographer_id = $1 AND LOWER(client_name) = LOWER($2) AND email = $3`,
+                    [userId, sessionData.clientName, sessionData.email]
+                );
+                
+                // If client doesn't exist, create them automatically
+                if (existingClient.rows.length === 0) {
+                    const clientId = uuidv4();
+                    await pool.query(
+                        `INSERT INTO photographer_clients 
+                         (id, photographer_id, client_name, email, phone_number, notes, source, created_at, updated_at)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
+                        [
+                            clientId, 
+                            userId, 
+                            sessionData.clientName, 
+                            sessionData.email, 
+                            sessionData.phoneNumber || null,
+                            `Automatically added from ${sessionData.sessionType} session`,
+                            'Automatic Session Creation'
+                        ]
+                    );
+                    console.log(`✅ Automatically added client ${sessionData.clientName} to database from new session`);
+                } else {
+                    console.log(`📋 Client ${sessionData.clientName} already exists in database`);
+                }
+            } catch (clientError) {
+                console.error('Error adding client automatically:', clientError);
+                // Don't fail the session creation if client creation fails
+            }
+        }
+
         const row = result.rows[0];
         return {
             id: row.id,
