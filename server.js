@@ -6323,6 +6323,8 @@ app.post('/api/sessions/:id/confirm-uploads', isAuthenticated, async (req, res) 
 
     try {
         console.log(`📝 Confirming ${uploads.length} successful uploads for session ${sessionId}`);
+        console.log(`📝 User ID: ${userId}, Session ID: ${sessionId}`);
+        console.log(`📝 Uploads data:`, uploads.map(u => ({ filename: u.filename, key: u.key, size: u.size })));
         
         // Update session with new photos
         const photosArray = uploads.map(upload => ({
@@ -6331,44 +6333,171 @@ app.post('/api/sessions/:id/confirm-uploads', isAuthenticated, async (req, res) 
             originalName: upload.filename
         }));
 
+        // SPECIAL HANDLING: For Lance's unified account, check both user IDs
+        let dbUserId = userId;
+        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
+            console.log('🔄 UNIFIED LANCE ACCOUNT: Using unified account logic for confirm-uploads');
+            dbUserId = '44735007'; // Use the unified database user ID
+        }
+
+        console.log(`📝 Database query - Session: ${sessionId}, User: ${dbUserId}`);
+
         // Get existing session
         const result = await pool.query(
-            'SELECT photos FROM photography_sessions WHERE id = $1 AND user_id = $2',
-            [sessionId, userId]
+            'SELECT photos, user_id FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, dbUserId]
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Session not found' });
+            console.error(`❌ Session not found: ${sessionId} for user ${dbUserId}`);
+            console.log(`🔍 Checking if session exists with different user ID...`);
+            
+            // Debug: Check if session exists with any user ID
+            const debugResult = await pool.query('SELECT id, user_id FROM photography_sessions WHERE id = $1', [sessionId]);
+            if (debugResult.rows.length > 0) {
+                console.log(`📋 Session ${sessionId} exists with user_id: ${debugResult.rows[0].user_id}`);
+            } else {
+                console.log(`📋 Session ${sessionId} does not exist at all`);
+            }
+            
+            return res.status(404).json({ 
+                error: 'Session not found',
+                sessionId: sessionId,
+                userId: dbUserId
+            });
         }
+
+        console.log(`📋 Found session, current photos count: ${(result.rows[0].photos || []).length}`);
 
         const existingPhotos = result.rows[0].photos || [];
         const updatedPhotos = [...existingPhotos, ...photosArray];
 
+        console.log(`📋 Updating with ${photosArray.length} new photos, total will be: ${updatedPhotos.length}`);
+
         // Update session with new photos
-        await pool.query(
+        const updateResult = await pool.query(
             'UPDATE photography_sessions SET photos = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3',
-            [JSON.stringify(updatedPhotos), sessionId, userId]
+            [JSON.stringify(updatedPhotos), sessionId, dbUserId]
         );
+
+        console.log(`📋 Update result - rows affected: ${updateResult.rowCount}`);
 
         // Log storage usage
         const totalSize = uploads.reduce((sum, upload) => sum + upload.size, 0);
-        await storageSystem.logStorageChange(userId, sessionId, 'upload', totalSize, 'gallery', 'batch-upload');
+        await storageSystem.logStorageChange(dbUserId, sessionId, 'upload', totalSize, 'gallery', 'batch-upload');
         
         // Update storage quota cache
-        await storageSystem.calculateStorageUsage(userId);
+        await storageSystem.calculateStorageUsage(dbUserId);
 
-        console.log(`✅ Confirmed ${uploads.length} uploads for session ${sessionId}`);
+        console.log(`✅ Confirmed ${uploads.length} uploads for session ${sessionId}, total photos: ${updatedPhotos.length}`);
         
         res.json({
             success: true,
             uploaded: uploads.length,
-            totalPhotos: updatedPhotos.length
+            totalPhotos: updatedPhotos.length,
+            message: `Successfully confirmed ${uploads.length} uploads`
         });
 
     } catch (error) {
-        console.error('Error confirming uploads:', error);
+        console.error('❌ Error confirming uploads:', error);
         res.status(500).json({ 
             error: 'Failed to confirm uploads',
+            message: error.message,
+            sessionId: sessionId,
+            userId: userId
+        });
+    }
+});
+
+// SYNC FUNCTION: Populate photos arrays from session_files for existing sessions
+app.post('/api/admin/sync-photos-from-files', isAuthenticated, async (req, res) => {
+    const normalizedUser = normalizeUserForLance(req.user);
+    
+    // Only allow Lance's accounts to run this sync
+    if (!req.user.email || !['lancecasselman@icloud.com', 'lancecasselman2011@gmail.com', 'lance@thelegacyphotography.com'].includes(req.user.email.toLowerCase())) {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    try {
+        console.log('🔄 SYNC: Starting photos sync from session_files to photography_sessions...');
+        
+        // Find sessions with empty photos arrays but files in session_files
+        const sessionsToSync = await pool.query(`
+            SELECT DISTINCT ps.id, ps.user_id, ps.client_name, 
+                   COALESCE(jsonb_array_length(ps.photos), 0) as current_photo_count,
+                   COUNT(sf.id) as file_count
+            FROM photography_sessions ps
+            LEFT JOIN session_files sf ON ps.id = sf.session_id AND sf.folder_type = 'gallery'
+            WHERE (ps.photos IS NULL OR jsonb_array_length(ps.photos) = 0)
+              AND sf.id IS NOT NULL
+            GROUP BY ps.id, ps.user_id, ps.client_name, ps.photos
+            ORDER BY ps.created_at DESC
+        `);
+
+        console.log(`🔄 SYNC: Found ${sessionsToSync.rows.length} sessions to sync`);
+
+        let synced = 0;
+        let errors = 0;
+
+        for (const session of sessionsToSync.rows) {
+            try {
+                console.log(`🔄 SYNC: Processing session ${session.id} (${session.client_name}) - ${session.file_count} files`);
+                
+                // Get gallery files for this session
+                const filesResult = await pool.query(`
+                    SELECT filename, r2_key, file_size_bytes, uploaded_at
+                    FROM session_files
+                    WHERE session_id = $1 AND folder_type = 'gallery'
+                    ORDER BY uploaded_at DESC
+                `, [session.id]);
+
+                if (filesResult.rows.length > 0) {
+                    // Create photos array from session_files
+                    const photosArray = filesResult.rows.map(file => ({
+                        url: `/r2/file/${file.r2_key}`,
+                        filename: file.filename,
+                        originalName: file.filename,
+                        uploadedAt: file.uploaded_at,
+                        size: file.file_size_bytes
+                    }));
+
+                    // Update the session with photos
+                    const updateResult = await pool.query(`
+                        UPDATE photography_sessions 
+                        SET photos = $1, updated_at = NOW() 
+                        WHERE id = $2
+                    `, [JSON.stringify(photosArray), session.id]);
+
+                    if (updateResult.rowCount > 0) {
+                        console.log(`✅ SYNC: Updated session ${session.id} with ${photosArray.length} photos`);
+                        synced++;
+                    } else {
+                        console.error(`❌ SYNC: Failed to update session ${session.id}`);
+                        errors++;
+                    }
+                } else {
+                    console.log(`⚠️ SYNC: No gallery files found for session ${session.id}`);
+                }
+            } catch (sessionError) {
+                console.error(`❌ SYNC: Error processing session ${session.id}:`, sessionError);
+                errors++;
+            }
+        }
+
+        console.log(`🎉 SYNC: Completed - ${synced} sessions synced, ${errors} errors`);
+        
+        res.json({
+            success: true,
+            message: `Photos sync completed`,
+            synced: synced,
+            errors: errors,
+            totalProcessed: sessionsToSync.rows.length
+        });
+
+    } catch (error) {
+        console.error('❌ SYNC: Error during photos sync:', error);
+        res.status(500).json({ 
+            error: 'Failed to sync photos',
             message: error.message 
         });
     }

@@ -2406,7 +2406,8 @@ function setupUploadModal(sessionId) {
             console.log(`🎉 Successfully uploaded ${successfulUploads.length} files directly to R2!`);
             
             // Step 3: Notify server of completed uploads
-            await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
+            console.log(`📝 Confirming ${successfulUploads.length} uploads with server...`);
+            const confirmResponse = await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -2414,6 +2415,15 @@ function setupUploadModal(sessionId) {
                 },
                 body: JSON.stringify({ uploads: successfulUploads })
             });
+
+            if (!confirmResponse.ok) {
+                const errorText = await confirmResponse.text();
+                console.error('❌ Failed to confirm uploads:', confirmResponse.status, errorText);
+                throw new Error(`Failed to confirm uploads: ${confirmResponse.status} ${errorText}`);
+            }
+
+            const confirmResult = await confirmResponse.json();
+            console.log(`✅ Confirmed uploads successfully:`, confirmResult);
 
             return { success: true, count: successfulUploads.length };
 
