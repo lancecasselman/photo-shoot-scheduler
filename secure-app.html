@@ -12703,8 +12703,8 @@ END:VCALENDAR`;
                                     </span>
                                 </div>
                                 <div class="client-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; color: #666;">
-                                    <div><strong>📧 Email:</strong> ${email}</div>
-                                    <div><strong>📱 Phone:</strong> ${phone}</div>
+                                    <div><strong>📧 Email:</strong> ${client.email ? `<a href="mailto:${client.email}" style="color: #d4af37; text-decoration: none;">${client.email}</a>` : 'No email'}</div>
+                                    <div><strong>📱 Phone:</strong> ${client.phone_number ? `<a href="tel:${client.phone_number}" style="color: #d4af37; text-decoration: none;">${client.phone_number}</a>` : 'No phone'}</div>
                                     <div><strong>📅 Added:</strong> ${createdDate}</div>
                                     <div><strong>📊 Sessions:</strong> ${client.total_sessions || 0}</div>
                                 </div>
