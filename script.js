@@ -563,7 +563,7 @@ async function updateStorageUsage() {
             storageUsageDiv.innerHTML = `
                 <div style="color: #dc3545;">
                     Failed to load storage information. 
-                    <button onclick="updateStorageUsage()" style="margin-left: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <button onclick="updateStorageUsage()" style="margin-left: 10px; padding: 5px 10px; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer;">
                         Retry
                     </button>
                 </div>
@@ -687,7 +687,9 @@ function createSessionCard(session) {
     emailClientBtn.className = 'btn btn-primary';
     emailClientBtn.textContent = ' Email Client';
     emailClientBtn.onclick = () => openEmailClient(session);
-    emailClientBtn.style.backgroundColor = '#007bff';
+    emailClientBtn.style.backgroundColor = 'white';
+    emailClientBtn.style.color = '#374151';
+    emailClientBtn.style.border = '1px solid #d1d5db';
     emailClientBtn.style.marginBottom = '5px';
 
     const galleryBtn = document.createElement('button');

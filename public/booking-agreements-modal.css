@@ -339,48 +339,58 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .btn-secondary {
-    background: #6b7280;
-    color: white;
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .btn-secondary:hover {
-    background: #4b5563;
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #059669, #047857);
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .btn-info {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .btn-info:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white;
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .btn-warning:hover {
-    background: linear-gradient(135deg, #d97706, #b45309);
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .btn-danger {
