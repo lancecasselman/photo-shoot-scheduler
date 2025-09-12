@@ -5608,7 +5608,6 @@
                     </label>
                     <button onclick="clearAllFilters()" class="btn-secondary">Clear Filters</button>
                     <button onclick="exportAllSessions()" class="btn-primary"> Export All Sessions</button>
-                    <button onclick="emailAllClients()" class="btn btn-success" style="background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important;">📧 Email All Clients</button>
                 </div>
             </div>
         </div>
@@ -13132,6 +13131,9 @@ END:VCALENDAR`;
                         </button>
                         <button onclick="migrateClientsFromSessions()" class="btn-secondary" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 20px;">📥</span> Import from Sessions
+                        </button>
+                        <button onclick="emailAllClients()" class="btn-success" style="background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important; padding: 12px 24px; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">📧</span> Email All Clients
                         </button>
                     </div>
                     
