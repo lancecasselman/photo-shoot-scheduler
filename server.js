@@ -5456,20 +5456,9 @@ app.get('/api/clients', isAuthenticated, async (req, res) => {
         const photographerId = normalizedUser.uid;
         
         const result = await pool.query(
-            `SELECT 
-                pc.*,
-                COALESCE(ps.session_count, 0) as total_sessions
-             FROM photographer_clients pc
-             LEFT JOIN (
-                SELECT 
-                    client_id, 
-                    COUNT(*) as session_count
-                FROM photography_sessions 
-                WHERE user_id = $1 AND client_id IS NOT NULL
-                GROUP BY client_id
-             ) ps ON pc.id = ps.client_id
-             WHERE pc.photographer_id = $1 
-             ORDER BY LOWER(pc.client_name) ASC`,
+            `SELECT * FROM photographer_clients 
+             WHERE photographer_id = $1 
+             ORDER BY LOWER(client_name) ASC`,
             [photographerId]
         );
         
@@ -5523,69 +5512,7 @@ app.post('/api/clients', isAuthenticated, async (req, res) => {
             [clientId, photographerId, clientName, email, phoneNumber, notes, tags || [], source]
         );
         
-        const newClient = result.rows[0];
-        
-        // Link existing sessions to this client (fixes session count issue)
-        try {
-            let linkedSessions = 0;
-            
-            // Build conditions for matching sessions
-            const conditions = ['user_id = $1'];
-            const params = [photographerId];
-            let paramIndex = 2;
-            
-            // Match by email (primary)
-            if (email && email.trim()) {
-                conditions.push(`LOWER(email) = LOWER($${paramIndex})`);
-                params.push(email.trim());
-                paramIndex++;
-            }
-            
-            // Match by phone (secondary) 
-            if (phoneNumber && phoneNumber.trim()) {
-                const normalizedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
-                if (normalizedPhone) {
-                    conditions.push(`REGEXP_REPLACE(phone_number, '[^0-9]', '', 'g') = $${paramIndex}`);
-                    params.push(normalizedPhone);
-                    paramIndex++;
-                }
-            }
-            
-            // Match by client name (fallback)
-            if (clientName && clientName.trim()) {
-                conditions.push(`LOWER(client_name) = LOWER($${paramIndex})`);
-                params.push(clientName.trim());
-                paramIndex++;
-            }
-            
-            // Update sessions to link to this client (only if no client_id already set)
-            if (conditions.length > 1) { // More than just user_id
-                const linkResult = await pool.query(
-                    `UPDATE photography_sessions 
-                     SET client_id = $${paramIndex}
-                     WHERE (${conditions.join(' OR ')})
-                     AND client_id IS NULL
-                     RETURNING id`,
-                    [...params, clientId]
-                );
-                
-                linkedSessions = linkResult.rows.length;
-                console.log(`✅ Linked ${linkedSessions} existing sessions to client ${clientName}`);
-            }
-            
-            // Return client with session count
-            res.status(201).json({
-                ...newClient,
-                total_sessions: linkedSessions,
-                linked_sessions: linkedSessions
-            });
-            
-        } catch (linkError) {
-            console.error('Error linking sessions to client:', linkError);
-            // Still return success for client creation
-            res.status(201).json(newClient);
-        }
-        
+        res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Error creating client:', error);
         res.status(500).json({ error: 'Failed to create client' });
