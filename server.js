@@ -14333,7 +14333,10 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Serve specific public files that need to be accessible
 app.get('/icon-192.png', (req, res) => {
-    res.sendFile(path.join(__dirname, 'icon-192.png'));
+    res.sendFile(path.join(__dirname, 'public', 'icon-192.png'));
+});
+app.get('/icon-512.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'icon-512.png'));
 });
 app.get('/manifest.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'manifest.json'));
