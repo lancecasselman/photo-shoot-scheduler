@@ -10334,7 +10334,23 @@ END:VCALENDAR`;
                 checkStripeConnectStatus();
             } else if (tabName === 'clientDatabase') {
                 // Load clients when tab is opened
-                loadClientDatabase();
+                console.log('Switching to clientDatabase tab...');
+                
+                // Ensure the container shows loading state
+                const container = document.getElementById('clientDatabaseList');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
+                            Loading clients...
+                        </div>
+                    `;
+                }
+                
+                // Small delay to ensure tab content is rendered
+                setTimeout(() => {
+                    console.log('Starting client database load...');
+                    loadClientDatabase();
+                }, 100);
             }
         }
 
@@ -10555,6 +10571,14 @@ END:VCALENDAR`;
 
         function renderClientList() {
             const listContainer = document.getElementById('clientDatabaseList');
+            
+            // Debug: Check if container exists
+            if (!listContainer) {
+                console.error('clientDatabaseList container not found!');
+                return;
+            }
+            
+            console.log(`Rendering ${filteredClients.length} clients to container`);
             
             if (filteredClients.length === 0) {
                 listContainer.innerHTML = `
