@@ -1319,21 +1319,31 @@ if (process.env.NODE_ENV === 'production') {
     // Trust proxy for Replit/production deployment
     app.set('trust proxy', 1);
     
-    // Security headers with Helmet
+    // Security headers with Helmet - Relaxed CSP for development compatibility
     app.use(helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://fonts.googleapis.com"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://fonts.googleapis.com", "https://unpkg.com"],
                 styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
                 imgSrc: ["'self'", "data:", "https:", "blob:"],
-                connectSrc: ["'self'", "https://api.stripe.com"],
-                frameSrc: ["'self'", "https://js.stripe.com"]
+                connectSrc: ["'self'", "https://api.stripe.com", "wss:", "ws:"],
+                frameSrc: ["'self'", "https://js.stripe.com"],
+                objectSrc: ["'none'"],
+                baseUri: ["'self'"]
             }
         },
         crossOriginEmbedderPolicy: false
     }));
+    
+    // Additional headers to prevent tracking issues
+    app.use((req, res, next) => {
+        res.setHeader('Permissions-Policy', 'interest-cohort=()');
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+        res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+        next();
+    });
     
     // CORS for production
     app.use(cors(PRODUCTION_CONFIG.cors));
