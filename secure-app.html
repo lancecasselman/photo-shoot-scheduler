@@ -10338,22 +10338,33 @@ END:VCALENDAR`;
                 checkStripeConnectStatus();
             } else if (tabName === 'clientDatabase') {
                 // Load clients when tab is opened
-                console.log('Switching to clientDatabase tab...');
+                console.log('🔍 DEBUG: Switching to clientDatabase tab...');
                 
                 // Ensure the container shows loading state
                 const container = document.getElementById('clientDatabaseList');
+                console.log('🔍 DEBUG: Client container found:', !!container);
                 if (container) {
                     container.innerHTML = `
                         <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
                             Loading clients...
                         </div>
                     `;
+                    console.log('🔍 DEBUG: Loading message set in container');
                 }
                 
                 // Small delay to ensure tab content is rendered
                 setTimeout(() => {
-                    console.log('Starting client database load...');
-                    loadClientDatabase();
+                    console.log('🔍 DEBUG: About to call loadClientDatabase...');
+                    console.log('🔍 DEBUG: loadClientDatabase function exists:', typeof loadClientDatabase);
+                    try {
+                        loadClientDatabase().then(() => {
+                            console.log('🔍 DEBUG: loadClientDatabase completed successfully');
+                        }).catch(error => {
+                            console.error('🔍 DEBUG: loadClientDatabase failed:', error);
+                        });
+                    } catch (error) {
+                        console.error('🔍 DEBUG: Error calling loadClientDatabase:', error);
+                    }
                 }, 100);
             }
         }
@@ -12730,6 +12741,8 @@ END:VCALENDAR`;
         // Override switchTab function to work with new navigation
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tab) {
+            console.log('🔍 DEBUG: switchTab called with tab:', tab);
+            
             // Close mobile menu when switching tabs
             const mobileMenu = document.getElementById('mobileMenu');
             const hamburgerBtn = document.querySelector('.hamburger-menu');
@@ -12738,6 +12751,41 @@ END:VCALENDAR`;
                 hamburgerBtn.classList.remove('active');
             }
             setActiveNavLink(tab);
+            
+            // Handle client database loading BEFORE calling original function
+            if (tab === 'clientDatabase') {
+                console.log('🔍 DEBUG: Client database tab detected, setting up auto-load...');
+                
+                // Ensure the container shows loading state
+                setTimeout(() => {
+                    const container = document.getElementById('clientDatabaseList');
+                    console.log('🔍 DEBUG: Client container found:', !!container);
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
+                                Loading clients...
+                            </div>
+                        `;
+                        console.log('🔍 DEBUG: Loading message set in container');
+                    }
+                    
+                    // Load clients automatically
+                    setTimeout(() => {
+                        console.log('🔍 DEBUG: About to call loadClientDatabase...');
+                        console.log('🔍 DEBUG: loadClientDatabase function exists:', typeof loadClientDatabase);
+                        try {
+                            loadClientDatabase().then(() => {
+                                console.log('🔍 DEBUG: loadClientDatabase completed successfully');
+                            }).catch(error => {
+                                console.error('🔍 DEBUG: loadClientDatabase failed:', error);
+                            });
+                        } catch (error) {
+                            console.error('🔍 DEBUG: Error calling loadClientDatabase:', error);
+                        }
+                    }, 200);
+                }, 100);
+            }
+            
             if (originalSwitchTab) {
                 originalSwitchTab(tab);
             }
