@@ -228,55 +228,169 @@ class PrintServiceAPI {
                 description: product.Description || category.Name,
                 category: category.Name?.toLowerCase().replace(/\s+/g, '_') || 'prints',
                 productUID: product.ProductUID || product.Id,
-                attributes: []
+                attributes: [],
+                sizes: [] // Will contain all available sizes
               };
               
-              // Calculate pricing based on print dimensions (standard industry pricing)
-              let price = 19.99; // Base price
-              
-              // Extract dimensions from product name or nodes
+              // Extract ALL ProductNodes to capture all available sizes
               if (product.ProductNodes && product.ProductNodes.length > 0) {
-                const node = product.ProductNodes[0];
-                const area = (node.H || 0) * (node.W || 0); // Calculate print area in square inches
+                console.log(`📏 Processing ${product.ProductNodes.length} size options for ${baseProduct.name}`);
                 
-                // Price calculation based on square inches (typical print lab pricing)
-                if (area > 0) {
-                  if (area <= 35) price = 4.99;        // Small prints (5x7)
-                  else if (area <= 80) price = 9.99;   // Medium prints (8x10)
-                  else if (area <= 154) price = 14.99; // Large prints (11x14)
-                  else if (area <= 192) price = 19.99; // X-Large prints (12x16)
-                  else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
-                  else if (area <= 480) price = 39.99; // Jumbo prints (20x24)
-                  else if (area <= 720) price = 59.99; // Super prints (24x30)
-                  else if (area <= 1200) price = 89.99; // Mega prints (30x40)
-                  else price = 129.99; // Ultra prints (40x60+)
+                product.ProductNodes.forEach((node, index) => {
+                  const width = node.W || 0;
+                  const height = node.H || 0;
+                  const area = width * height;
+                  
+                  // Price calculation based on square inches (typical print lab pricing)
+                  let price = 19.99; // Base price
+                  if (area > 0) {
+                    if (area <= 35) price = 4.99;        // Small prints (5x7)
+                    else if (area <= 80) price = 9.99;   // Medium prints (8x10)
+                    else if (area <= 154) price = 14.99; // Large prints (11x14)
+                    else if (area <= 192) price = 19.99; // X-Large prints (12x16)
+                    else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
+                    else if (area <= 480) price = 39.99; // Jumbo prints (20x24)
+                    else if (area <= 720) price = 59.99; // Super prints (24x30)
+                    else if (area <= 1200) price = 89.99; // Mega prints (30x40)
+                    else price = 129.99; // Ultra prints (40x60+)
+                  }
+                  
+                  // Create size option with full WHCC metadata
+                  const sizeOption = {
+                    id: `${baseProduct.id}_${width}x${height}`,
+                    label: `${width}"×${height}"`,
+                    width: width,
+                    height: height,
+                    area: area,
+                    price: price,
+                    productUID: product.ProductUID || product.Id,
+                    productNodeUID: node.ProductNodeUID || node.Id || index,
+                    nodeIndex: index,
+                    whccNodeData: node // Store full WHCC node data for ordering
+                  };
+                  
+                  baseProduct.sizes.push(sizeOption);
+                });
+                
+                // Sort sizes by area (smallest to largest)
+                baseProduct.sizes.sort((a, b) => a.area - b.area);
+                
+                console.log(`✅ Extracted ${baseProduct.sizes.length} sizes: ${baseProduct.sizes.map(s => s.label).join(', ')}`);
+                
+                // Set default dimensions and price from smallest size
+                if (baseProduct.sizes.length > 0) {
+                  const defaultSize = baseProduct.sizes[0];
+                  baseProduct.dimensions = {
+                    width: defaultSize.width,
+                    height: defaultSize.height,
+                    area: defaultSize.area
+                  };
+                  baseProduct.price = defaultSize.price;
+                } else {
+                  // Fallback if no sizes found
+                  baseProduct.price = 19.99;
+                  baseProduct.dimensions = { width: 8, height: 10, area: 80 };
                 }
-                
-                // Store dimensions
-                baseProduct.dimensions = {
-                  width: node.W,
-                  height: node.H,
-                  area: area
-                };
+              } else {
+                // No ProductNodes - create standard fallback size
+                console.log(`⚠️ No ProductNodes found for ${baseProduct.name}, using fallback size`);
+                baseProduct.price = 19.99;
+                baseProduct.dimensions = { width: 8, height: 10, area: 80 };
+                baseProduct.sizes = [{
+                  id: `${baseProduct.id}_8x10`,
+                  label: '8"×10"',
+                  width: 8,
+                  height: 10,
+                  area: 80,
+                  price: 19.99,
+                  productUID: baseProduct.productUID,
+                  productNodeUID: 'fallback',
+                  nodeIndex: 0
+                }];
               }
               
-              // Extract display options from AttributeCategories
+              // Enhanced AttributeCategories processing for proper WHCC integration
+              baseProduct.attributeCategories = {};
+              baseProduct.attributesForDisplay = [];
+              
               if (product.AttributeCategories && Array.isArray(product.AttributeCategories)) {
+                console.log(`📋 Processing ${product.AttributeCategories.length} attribute categories for ${baseProduct.name}`);
+                
                 product.AttributeCategories.forEach(attrCat => {
                   if (attrCat.Attributes && Array.isArray(attrCat.Attributes)) {
+                    const categoryName = attrCat.AttributeCategoryName || 'Options';
+                    const categoryKey = this.normalizeAttributeCategoryName(categoryName);
+                    
+                    // Initialize category if not exists
+                    if (!baseProduct.attributeCategories[categoryKey]) {
+                      baseProduct.attributeCategories[categoryKey] = {
+                        name: categoryName,
+                        displayName: this.getDisplayNameForCategory(categoryKey),
+                        options: [],
+                        required: attrCat.Required || false,
+                        sortOrder: attrCat.SortOrder || 999
+                      };
+                    }
+                    
+                    // Process all attributes in this category
                     attrCat.Attributes.forEach(attr => {
+                      const attributeOption = {
+                        id: attr.Id || attr.AttributeUID,
+                        attributeUID: attr.AttributeUID || attr.Id,
+                        name: attr.AttributeName || attr.Name,
+                        description: attr.Description || '',
+                        price: attr.Price || 0,
+                        priceModifier: attr.PriceModifier || 0,
+                        sortOrder: attr.SortOrder || 999,
+                        isDefault: attr.IsDefault || false,
+                        available: attr.Available !== false // Default to true unless explicitly false
+                      };
+                      
+                      baseProduct.attributeCategories[categoryKey].options.push(attributeOption);
+                      
+                      // Also add to legacy format for backwards compatibility
                       baseProduct.attributes.push({
-                        id: attr.Id,
-                        name: attr.AttributeName,
-                        category: attrCat.AttributeCategoryName,
-                        sortOrder: attr.SortOrder
+                        id: attributeOption.id,
+                        name: attributeOption.name,
+                        category: categoryName,
+                        sortOrder: attributeOption.sortOrder,
+                        attributeUID: attributeOption.attributeUID
                       });
+                    });
+                    
+                    // Sort options by sortOrder
+                    baseProduct.attributeCategories[categoryKey].options.sort((a, b) => 
+                      (a.sortOrder || 999) - (b.sortOrder || 999)
+                    );
+                    
+                    console.log(`  ✅ ${categoryName}: ${baseProduct.attributeCategories[categoryKey].options.length} options`);
+                  }
+                });
+                
+                // Create display-friendly attribute list grouped by category
+                Object.keys(baseProduct.attributeCategories).forEach(categoryKey => {
+                  const category = baseProduct.attributeCategories[categoryKey];
+                  if (category.options.length > 0) {
+                    baseProduct.attributesForDisplay.push({
+                      categoryKey: categoryKey,
+                      categoryName: category.name,
+                      displayName: category.displayName,
+                      required: category.required,
+                      options: category.options,
+                      sortOrder: category.sortOrder
                     });
                   }
                 });
+                
+                // Sort display categories by logical order
+                baseProduct.attributesForDisplay.sort((a, b) => this.getAttributeCategoryPriority(a.categoryKey) - this.getAttributeCategoryPriority(b.categoryKey));
+                
+                console.log(`📋 Final attribute structure for ${baseProduct.name}:`, 
+                  baseProduct.attributesForDisplay.map(cat => `${cat.displayName} (${cat.options.length} options)`).join(', ')
+                );
+              } else {
+                console.log(`⚠️ No AttributeCategories found for ${baseProduct.name}`);
               }
-              
-              baseProduct.price = price;
               
               products.push(baseProduct);
             });
@@ -311,6 +425,125 @@ class PrintServiceAPI {
     };
   }
   
+  // Normalize attribute category names to consistent keys
+  normalizeAttributeCategoryName(categoryName) {
+    return categoryName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  }
+
+  // Get user-friendly display names for attribute categories
+  getDisplayNameForCategory(categoryKey) {
+    const displayNames = {
+      // Surface/Material Options
+      'surface': 'Surface Finish',
+      'surface_finish': 'Surface Finish',
+      'paper_type': 'Paper Type',
+      'paper': 'Paper Type',
+      'material': 'Material',
+      'finish': 'Finish',
+      
+      // Display & Mounting Options
+      'display_options': 'Display Options',
+      'acrylic_display_options': 'Acrylic Display Options',
+      'mounting': 'Mounting Options',
+      'mount': 'Mounting Options',
+      'backing': 'Backing Options',
+      'float_mount': 'Float Mount',
+      
+      // Canvas Options
+      'wrap_depth': 'Wrap Depth',
+      'canvas_depth': 'Canvas Depth',
+      'edge_finish': 'Edge Finish',
+      'canvas_options': 'Canvas Options',
+      
+      // Framing Options
+      'frame': 'Frame Options',
+      'frame_style': 'Frame Style',
+      'frame_color': 'Frame Color',
+      'mat': 'Mat Options',
+      'matting': 'Mat Options',
+      
+      // Size & Format
+      'size': 'Size Options',
+      'orientation': 'Orientation',
+      'aspect_ratio': 'Aspect Ratio',
+      
+      // Specialty Options
+      'lamination': 'Lamination',
+      'coating': 'Protective Coating',
+      'edge_treatment': 'Edge Treatment',
+      'hardware': 'Hanging Hardware',
+      'corners': 'Corner Options',
+      
+      // Album/Book Options
+      'cover': 'Cover Options',
+      'binding': 'Binding Style',
+      'pages': 'Page Options',
+      'paper_weight': 'Paper Weight'
+    };
+    
+    return displayNames[categoryKey] || categoryKey.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  }
+
+  // Define logical priority order for attribute categories
+  getAttributeCategoryPriority(categoryKey) {
+    const priorityOrder = {
+      // Core material/surface options first
+      'surface': 1,
+      'surface_finish': 2,
+      'paper_type': 3,
+      'paper': 3,
+      'material': 4,
+      'finish': 5,
+      
+      // Display options
+      'display_options': 10,
+      'acrylic_display_options': 11,
+      'mounting': 12,
+      'mount': 12,
+      'backing': 13,
+      'float_mount': 14,
+      
+      // Canvas specific
+      'wrap_depth': 20,
+      'canvas_depth': 21,
+      'edge_finish': 22,
+      'canvas_options': 23,
+      
+      // Framing
+      'frame': 30,
+      'frame_style': 31,
+      'frame_color': 32,
+      'mat': 33,
+      'matting': 33,
+      
+      // Size formatting
+      'size': 40,
+      'orientation': 41,
+      'aspect_ratio': 42,
+      
+      // Specialty/advanced options
+      'lamination': 50,
+      'coating': 51,
+      'edge_treatment': 52,
+      'hardware': 53,
+      'corners': 54,
+      
+      // Album/book options
+      'cover': 60,
+      'binding': 61,
+      'pages': 62,
+      'paper_weight': 63
+    };
+    
+    return priorityOrder[categoryKey] || 999; // Unknown categories go to the end
+  }
+
   // Professional fallback products
   getProfessionalFallbackProducts() {
     return [

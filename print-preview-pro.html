@@ -223,6 +223,108 @@
             border-color: transparent;
         }
 
+        /* Dynamic Attribute Sections */
+        .attribute-sections {
+            margin: 0;
+            padding: 0;
+        }
+
+        .attribute-category {
+            margin-bottom: 25px;
+            padding: 0;
+        }
+
+        .attribute-category .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .attribute-category .section-title.required::after {
+            content: "*";
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .attribute-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .attribute-grid.single-column {
+            grid-template-columns: 1fr;
+        }
+
+        .attribute-grid.three-column {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .attribute-option {
+            padding: 12px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 50px;
+        }
+
+        .attribute-option:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .attribute-option.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .attribute-option.unavailable {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+
+        .attribute-option .option-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .attribute-option .option-price {
+            font-size: 11px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        .attribute-option.selected .option-price {
+            opacity: 1;
+        }
+
+        .attribute-option .option-description {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+
         .frame-selector {
             display: flex;
             gap: 10px;
@@ -438,13 +540,13 @@
                 </div>
             </div>
 
-            <div class="section" id="paperSection" style="display: block;">
-                <h3 class="section-title">Paper Type</h3>
-                <div class="paper-selector">
-                    <div class="paper-option selected" data-paper="lustre">Lustre</div>
-                    <div class="paper-option" data-paper="glossy">Glossy</div>
-                    <div class="paper-option" data-paper="matte">Deep Matte</div>
-                    <div class="paper-option" data-paper="metallic">Metallic</div>
+            <!-- Dynamic WHCC Attribute Sections -->
+            <div id="attributeSections" class="attribute-sections">
+                <!-- Attribute categories will be rendered here dynamically based on selected product -->
+                <div class="section">
+                    <div class="section-title" style="color: #64748b; font-style: italic;">
+                        Select a product to see available options
+                    </div>
                 </div>
             </div>
 
@@ -651,7 +753,7 @@
                 'bamboo': 'bamboo'
             };
             
-            // Group products by category and extract pricing
+            // Group products by category and extract all sizes from the new sizes array
             whccProducts.forEach(product => {
                 // Map API category to our UI category
                 const apiCategory = product.category ? product.category.toLowerCase().replace(/ /g, '_') : 'prints';
@@ -682,42 +784,69 @@
                     pricing[category][paperType] = {};
                 }
                 
-                // Extract size from product name (e.g., "Acrylic Print 10x20")
-                const sizeMatch = product.name.match(/(\d+)[x×](\d+)/);
-                if (sizeMatch) {
-                    const width = parseInt(sizeMatch[1]);
-                    const height = parseInt(sizeMatch[2]);
-                    // Standardize size format (smaller dimension first)
-                    const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
+                // NEW: Process all sizes from the sizes array (instead of parsing product name)
+                if (product.sizes && Array.isArray(product.sizes)) {
+                    console.log(`📐 Processing ${product.sizes.length} sizes for ${product.name} (${category})`);
                     
-                    // Store price with paper type variant preserved
-                    if (product.price) {
-                        pricing[category][paperType][size] = product.price;
+                    product.sizes.forEach(sizeData => {
+                        const width = Math.floor(sizeData.width);
+                        const height = Math.floor(sizeData.height);
+                        // Standardize size format (smaller dimension first)
+                        const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
                         
-                        if (!productSizes[category].includes(size)) {
-                            productSizes[category].push(size);
+                        // Store price for this size
+                        if (sizeData.price) {
+                            pricing[category][paperType][size] = sizeData.price;
+                            
+                            // Add to available sizes list if not already present
+                            if (!productSizes[category].includes(size)) {
+                                productSizes[category].push(size);
+                                console.log(`✨ Added new size option: ${size} = $${sizeData.price} for ${category}/${paperType}`);
+                            }
+                        }
+                    });
+                }
+                // FALLBACK: If no sizes array, try old method for compatibility
+                else {
+                    console.log(`⚠️ No sizes array for ${product.name}, trying fallback parsing`);
+                    
+                    // Extract size from product name (e.g., "Acrylic Print 10x20")
+                    const sizeMatch = product.name.match(/(\d+)[x×](\d+)/);
+                    if (sizeMatch) {
+                        const width = parseInt(sizeMatch[1]);
+                        const height = parseInt(sizeMatch[2]);
+                        // Standardize size format (smaller dimension first)
+                        const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
+                        
+                        // Store price with paper type variant preserved
+                        if (product.price) {
+                            pricing[category][paperType][size] = product.price;
+                            
+                            if (!productSizes[category].includes(size)) {
+                                productSizes[category].push(size);
+                            }
                         }
                     }
-                }
-                
-                // Also check for dimensions object if size not found in name
-                if (!sizeMatch && product.dimensions) {
-                    const width = Math.floor(product.dimensions.width);
-                    const height = Math.floor(product.dimensions.height);
-                    // Standardize size format (smaller dimension first)
-                    const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
                     
-                    if (product.price) {
-                        pricing[category][paperType][size] = product.price;
+                    // Also check for dimensions object if size not found in name
+                    if (!sizeMatch && product.dimensions) {
+                        const width = Math.floor(product.dimensions.width);
+                        const height = Math.floor(product.dimensions.height);
+                        // Standardize size format (smaller dimension first)
+                        const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
                         
-                        if (!productSizes[category].includes(size)) {
-                            productSizes[category].push(size);
+                        if (product.price) {
+                            pricing[category][paperType][size] = product.price;
+                            
+                            if (!productSizes[category].includes(size)) {
+                                productSizes[category].push(size);
+                            }
                         }
                     }
                 }
             });
             
-            // Sort sizes numerically
+            // Sort sizes numerically by area
             Object.keys(productSizes).forEach(category => {
                 productSizes[category].sort((a, b) => {
                     const [w1, h1] = a.split('x').map(Number);
@@ -726,9 +855,83 @@
                 });
             });
             
-            console.log('Processed pricing:', pricing);
-            console.log('Available sizes:', productSizes);
-            console.log('Total products loaded:', whccProducts.length);
+            console.log('✅ Processed WHCC products with all sizes:', {
+                categories: Object.keys(productSizes),
+                totalSizes: Object.values(productSizes).reduce((total, sizes) => total + sizes.length, 0),
+                sizesPerCategory: Object.fromEntries(
+                    Object.entries(productSizes).map(([cat, sizes]) => [cat, sizes.length])
+                )
+            });
+            console.log('📏 Available sizes by category:', productSizes);
+            console.log('💰 Pricing structure:', pricing);
+            
+            // Update size grid after processing new data
+            updateSizeGrid();
+        }
+        
+        // NEW: Dynamic size grid update function
+        function updateSizeGrid() {
+            const sizeGrid = document.getElementById('sizeGrid');
+            if (!sizeGrid) return;
+            
+            console.log('🔄 Updating size grid with dynamic WHCC sizes...');
+            
+            // Get current product category
+            const category = currentSettings.product || 'photographic';
+            const availableSizes = productSizes[category] || [];
+            
+            console.log(`📏 Available sizes for ${category}:`, availableSizes);
+            
+            // Clear existing hardcoded size options
+            sizeGrid.innerHTML = '';
+            
+            if (availableSizes.length === 0) {
+                sizeGrid.innerHTML = '<div style="grid-column: span 3; text-align: center; color: #64748b; padding: 20px;">No sizes available for this product</div>';
+                return;
+            }
+            
+            // Create size options dynamically from API data
+            availableSizes.forEach((size, index) => {
+                const sizeOption = document.createElement('div');
+                sizeOption.className = 'size-option';
+                sizeOption.dataset.size = size;
+                sizeOption.textContent = size.replace('x', '×') + '"';
+                
+                // Set first available size as selected if current size not available
+                if (index === 0 && !availableSizes.includes(currentSettings.size)) {
+                    sizeOption.classList.add('selected');
+                    currentSettings.size = size;
+                }
+                // Keep current selection if still available
+                else if (size === currentSettings.size) {
+                    sizeOption.classList.add('selected');
+                }
+                
+                // Add click handler for dynamic size options
+                sizeOption.addEventListener('click', async function() {
+                    document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    currentSettings.size = this.dataset.size;
+                    
+                    // Reset crop position when changing sizes
+                    currentSettings.crop.x = 0;
+                    currentSettings.crop.y = 0;
+                    document.getElementById('xSlider').value = 0;
+                    document.getElementById('ySlider').value = 0;
+                    document.getElementById('xValue').textContent = '0';
+                    document.getElementById('yValue').textContent = '0';
+                    
+                    console.log(`🎯 Selected size: ${this.dataset.size} for ${category}`);
+                    await updatePreview();
+                });
+                
+                sizeGrid.appendChild(sizeOption);
+            });
+            
+            console.log(`✅ Created ${availableSizes.length} dynamic size options`);
+            
+            // Update pricing after grid rebuild
+            updatePrice();
         }
         
         // Load fallback products if API fails
@@ -1218,31 +1421,172 @@
                 }
             }
             
-            // Product selector
+            // Dynamic WHCC attribute rendering functions
+            function renderAttributeSections(productData) {
+                const attributeSections = document.getElementById('attributeSections');
+                if (!attributeSections) return;
+                
+                console.log('🎨 Rendering attribute sections for product:', productData);
+                
+                // Clear existing content
+                attributeSections.innerHTML = '';
+                
+                if (!productData || !productData.attributesForDisplay || productData.attributesForDisplay.length === 0) {
+                    console.log('⚠️ No attribute data available, showing fallback message');
+                    attributeSections.innerHTML = `
+                        <div class="section">
+                            <div class="section-title" style="color: #64748b; font-style: italic;">
+                                No additional options available for this product
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Render each attribute category
+                productData.attributesForDisplay.forEach(category => {
+                    console.log(`  📋 Rendering category: ${category.displayName} (${category.options.length} options)`);
+                    
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'section attribute-category';
+                    categorySection.setAttribute('data-category', category.categoryKey);
+                    
+                    // Determine grid layout based on number of options
+                    let gridClass = 'attribute-grid';
+                    if (category.options.length === 1) {
+                        gridClass += ' single-column';
+                    } else if (category.options.length <= 3) {
+                        gridClass += ' three-column';
+                    }
+                    
+                    // Create section title
+                    const titleClass = category.required ? 'section-title required' : 'section-title';
+                    
+                    categorySection.innerHTML = `
+                        <h3 class="${titleClass}">${category.displayName}</h3>
+                        <div class="${gridClass}" data-category-key="${category.categoryKey}">
+                            ${category.options.map(option => {
+                                const priceText = option.price > 0 ? `+$${option.price.toFixed(2)}` : 
+                                                option.priceModifier !== 0 ? (option.priceModifier > 0 ? `+$${option.priceModifier.toFixed(2)}` : `$${option.priceModifier.toFixed(2)}`) : '';
+                                
+                                return `
+                                    <div class="attribute-option ${option.isDefault ? 'selected' : ''} ${!option.available ? 'unavailable' : ''}" 
+                                         data-attribute-uid="${option.attributeUID}" 
+                                         data-category="${category.categoryKey}"
+                                         data-price="${option.price || option.priceModifier || 0}">
+                                        <div class="option-name">${option.name}</div>
+                                        ${priceText ? `<div class="option-price">${priceText}</div>` : ''}
+                                        ${option.description ? `<div class="option-description">${option.description}</div>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                    
+                    attributeSections.appendChild(categorySection);
+                });
+                
+                // Add event listeners to all new attribute options
+                setupAttributeEventListeners();
+                
+                console.log(`✅ Rendered ${productData.attributesForDisplay.length} attribute categories`);
+            }
+            
+            function setupAttributeEventListeners() {
+                document.querySelectorAll('.attribute-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        if (this.classList.contains('unavailable')) return;
+                        
+                        const category = this.dataset.category;
+                        const attributeUID = this.dataset.attributeUid;
+                        const price = parseFloat(this.dataset.price) || 0;
+                        
+                        // Clear other selections in this category
+                        document.querySelectorAll(`.attribute-option[data-category="${category}"]`).forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        
+                        // Select this option
+                        this.classList.add('selected');
+                        
+                        // Store selection in currentSettings
+                        if (!currentSettings.attributes) {
+                            currentSettings.attributes = {};
+                        }
+                        currentSettings.attributes[category] = {
+                            attributeUID: attributeUID,
+                            name: this.querySelector('.option-name').textContent,
+                            price: price
+                        };
+                        
+                        console.log(`🎯 Selected attribute: ${category} = ${attributeUID} (${this.querySelector('.option-name').textContent})`);
+                        
+                        // Update preview and pricing
+                        updatePreview();
+                    });
+                });
+            }
+            
+            function getProductDataByCategory(category) {
+                if (!whccProducts || whccProducts.length === 0) {
+                    console.log('⚠️ No WHCC products loaded');
+                    return null;
+                }
+                
+                // Find products that match the selected category
+                const matchingProducts = whccProducts.filter(product => {
+                    const productCategory = (product.category || '').toLowerCase();
+                    const categoryMap = {
+                        'photographic': ['photographic_prints', 'photo_prints', 'prints'],
+                        'fineart': ['fine_art_prints', 'fineart'],
+                        'canvas': ['canvas_prints', 'canvas', 'gallery_wraps'],
+                        'metal': ['metal_prints', 'metal'],
+                        'acrylic': ['acrylic_prints', 'acrylic'],
+                        'framed': ['framed_prints', 'framed'],
+                        'albums': ['albums', 'album_prints'],
+                        'books': ['books', 'press_printed_books'],
+                        'cards': ['cards', 'press_printed_cards'],
+                        'specialty': ['specialty_products', 'ornaments'],
+                        'bamboo': ['bamboo']
+                    };
+                    
+                    const validCategories = categoryMap[category] || [category];
+                    return validCategories.some(cat => productCategory.includes(cat));
+                });
+                
+                if (matchingProducts.length === 0) {
+                    console.log(`⚠️ No products found for category: ${category}`);
+                    return null;
+                }
+                
+                // Return the first product with the most attributes
+                const productWithMostAttributes = matchingProducts.reduce((best, current) => {
+                    const bestAttrCount = (best.attributesForDisplay || []).length;
+                    const currentAttrCount = (current.attributesForDisplay || []).length;
+                    return currentAttrCount > bestAttrCount ? current : best;
+                });
+                
+                console.log(`📦 Found product data for ${category}:`, productWithMostAttributes.name, 
+                           `with ${(productWithMostAttributes.attributesForDisplay || []).length} attribute categories`);
+                
+                return productWithMostAttributes;
+            }
+
+            // Product selector - UPDATED to use WHCC attributes
             document.querySelectorAll('.product-card').forEach(card => {
                 card.addEventListener('click', async function() {
                     document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
                     currentSettings.product = this.dataset.product;
                     
-                    // Handle paper section visibility
-                    const paperSection = document.getElementById('paperSection');
-                    if (this.dataset.product === 'photographic') {
-                        paperSection.style.display = 'block';
-                    } else if (this.dataset.product === 'fineart') {
-                        paperSection.style.display = 'block';
-                        // Update paper options for fine art
-                        document.querySelectorAll('.paper-option').forEach(p => {
-                            if (p.dataset.paper === 'lustre' || p.dataset.paper === 'glossy') {
-                                p.textContent = p.dataset.paper === 'lustre' ? 'Smooth Matte' : 'Torchon';
-                                p.dataset.paper = p.dataset.paper === 'lustre' ? 'smooth' : 'torchon';
-                            }
-                        });
-                    } else {
-                        paperSection.style.display = 'none';
-                    }
+                    // Clear previous attribute selections
+                    currentSettings.attributes = {};
                     
-                    // Handle frame section visibility
+                    // Get WHCC product data for this category and render attributes
+                    const productData = getProductDataByCategory(currentSettings.product);
+                    renderAttributeSections(productData);
+                    
+                    // Handle frame section visibility (keep existing logic for framed products)
                     const frameSection = document.getElementById('frameSection');
                     if (this.dataset.product === 'framed') {
                         frameSection.style.display = 'block';
@@ -1363,15 +1707,121 @@
             window.location.href = `/print-checkout.html?token=${galleryToken}`;
         }
         
+        // NEW: Get ProductNode data for current selection (for WHCC ordering)
+        function getProductNodeData() {
+            const currentProduct = currentSettings.product;
+            const currentSize = currentSettings.size;
+            const currentPaper = currentSettings.paper || 'standard';
+            
+            // Find matching product in whccProducts array
+            const matchingProduct = whccProducts.find(product => {
+                const apiCategory = product.category ? product.category.toLowerCase().replace(/ /g, '_') : 'prints';
+                const categoryMapping = {
+                    'acrylic_prints': 'acrylic', 'acrylic': 'acrylic',
+                    'canvas_prints': 'canvas', 'canvas': 'canvas', 'portrait_canvas': 'canvas', 'gallery_wraps': 'canvas', 'float_wraps': 'canvas',
+                    'metal_prints': 'metal', 'metal': 'metal',
+                    'fine_art_prints': 'fineart', 'photographic_prints': 'photographic', 'photo_prints': 'photographic', 'prints': 'photographic',
+                    'framed_prints': 'framed', 'framed': 'framed',
+                    'press_printed_cards': 'cards', 'cards': 'cards', 'ornaments': 'specialty', 'specialty_products': 'specialty',
+                    'bamboo': 'bamboo'
+                };
+                const category = categoryMapping[apiCategory] || 'photographic';
+                
+                // Check if this product matches current category and has the size we need
+                if (category === currentProduct && product.sizes && product.sizes.length > 0) {
+                    const hasSize = product.sizes.some(sizeData => {
+                        const width = Math.floor(sizeData.width);
+                        const height = Math.floor(sizeData.height);
+                        const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
+                        return size === currentSize;
+                    });
+                    return hasSize;
+                }
+                return false;
+            });
+            
+            if (matchingProduct && matchingProduct.sizes) {
+                // Find the specific size data within this product
+                const sizeData = matchingProduct.sizes.find(sizeInfo => {
+                    const width = Math.floor(sizeInfo.width);
+                    const height = Math.floor(sizeInfo.height);
+                    const size = width <= height ? `${width}x${height}` : `${height}x${width}`;
+                    return size === currentSize;
+                });
+                
+                if (sizeData) {
+                    console.log('🎯 Found ProductNode data for ordering:', {
+                        productName: matchingProduct.name,
+                        size: currentSize,
+                        productUID: sizeData.productUID,
+                        productNodeUID: sizeData.productNodeUID,
+                        price: sizeData.price
+                    });
+                    
+                    return {
+                        productUID: sizeData.productUID,
+                        productNodeUID: sizeData.productNodeUID,
+                        nodeIndex: sizeData.nodeIndex,
+                        whccNodeData: sizeData.whccNodeData,
+                        productName: matchingProduct.name,
+                        width: sizeData.width,
+                        height: sizeData.height,
+                        actualPrice: sizeData.price
+                    };
+                }
+            }
+            
+            console.warn('⚠️ Could not find ProductNode data for current selection:', {
+                product: currentProduct,
+                size: currentSize,
+                paper: currentPaper
+            });
+            return null;
+        }
+        
         // Add to cart
         function addToCart() {
+            // Get ProductNode data for WHCC ordering
+            const productNodeData = getProductNodeData();
+            
+            // Get price using existing pricing structure
+            const category = currentSettings.product;
+            const paperType = currentSettings.paper || 'standard';
+            const size = currentSettings.size;
+            
+            let price = 19.99; // Default fallback
+            if (pricing[category]) {
+                if (pricing[category][paperType] && pricing[category][paperType][size]) {
+                    price = pricing[category][paperType][size];
+                } else if (pricing[category]['standard'] && pricing[category]['standard'][size]) {
+                    price = pricing[category]['standard'][size];
+                }
+            }
+            
+            // Use actual WHCC price if available from ProductNode
+            if (productNodeData && productNodeData.actualPrice) {
+                price = productNodeData.actualPrice;
+            }
+            
             const cartItem = {
                 ...currentSettings,
-                price: pricing[currentSettings.product][currentSettings.size],
+                price: price,
                 photoUrl: photoUrl,
                 filename: filename,
                 galleryToken: galleryToken,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                // NEW: Include ProductNode data for WHCC ordering
+                whccData: productNodeData ? {
+                    productUID: productNodeData.productUID,
+                    productNodeUID: productNodeData.productNodeUID,
+                    nodeIndex: productNodeData.nodeIndex,
+                    productName: productNodeData.productName,
+                    dimensions: {
+                        width: productNodeData.width,
+                        height: productNodeData.height
+                    },
+                    whccNodeData: productNodeData.whccNodeData
+                } : null
             };
             
             let cart = JSON.parse(localStorage.getItem('printCart') || '[]');
