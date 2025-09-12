@@ -6223,26 +6223,26 @@ ${contract.contract_content}
             modalDiv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2147483647;';
             
             modalDiv.innerHTML = `
-                <div style="background:#1a1a1a;border:2px solid #d4af37;border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;color:#f5f5f5;">
-                    <div style="background:linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);color:#1a1a1a;padding:20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                <div style="background:white;border:2px solid #d1d5db;border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;color:#374151;">
+                    <div style="background:white;color:#374151;padding:20px;border-radius:14px 14px 0 0;border-bottom:1px solid #d1d5db;display:flex;justify-content:space-between;align-items:center;">
                         <h3 style="margin:0;font-size:1.5rem;"> Payment Plan Setup</h3>
-                        <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:none;border:none;font-size:2rem;color:#1a1a1a;cursor:pointer;">&times;</button>
+                        <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:none;border:none;font-size:2rem;color:#374151;cursor:pointer;">&times;</button>
                     </div>
                     <div style="padding:30px;">
-                        <div style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin-bottom:25px;text-align:center;">
-                            <h4 style="color:#000000;margin:0 0 10px 0;">${session.clientName}</h4>
-                            <p style="margin:0;opacity:0.8;">${session.sessionType} - ${new Date(session.dateTime).toLocaleDateString()}</p>
-                            <p style="margin:0;opacity:0.8;"> ${session.email} |  ${session.phoneNumber}</p>
+                        <div style="background:#f9fafb;border:1px solid #d1d5db;border-radius:12px;padding:20px;margin-bottom:25px;text-align:center;">
+                            <h4 style="color:#374151;margin:0 0 10px 0;">${session.clientName}</h4>
+                            <p style="margin:0;opacity:0.8;color:#6b7280;">${session.sessionType} - ${new Date(session.dateTime).toLocaleDateString()}</p>
+                            <p style="margin:0;opacity:0.8;color:#6b7280;"> ${session.email} |  ${session.phoneNumber}</p>
                         </div>
                         
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Total Amount</label>
-                            <input type="number" value="${session.price}" readonly style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <label style="display:block;color:#374151;font-weight:600;margin-bottom:8px;">Total Amount</label>
+                            <input type="number" value="${session.price}" readonly style="width:100%;padding:12px;background:white;border:2px solid #d1d5db;border-radius:8px;color:#374151;box-sizing:border-box;">
                         </div>
                         
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Payment Frequency</label>
-                            <select id="paymentFrequency" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <label style="display:block;color:#374151;font-weight:600;margin-bottom:8px;">Payment Frequency</label>
+                            <select id="paymentFrequency" style="width:100%;padding:12px;background:white;border:2px solid #d1d5db;border-radius:8px;color:#374151;box-sizing:border-box;">
                                 <option value="weekly">Weekly</option>
                                 <option value="biweekly">Bi-Weekly</option>
                                 <option value="monthly" selected>Monthly</option>
@@ -6250,31 +6250,31 @@ ${contract.contract_content}
                         </div>
                         
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Start Date</label>
-                            <input type="date" id="startDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <label style="display:block;color:#374151;font-weight:600;margin-bottom:8px;">Start Date</label>
+                            <input type="date" id="startDate" style="width:100%;padding:12px;background:white;border:2px solid #d1d5db;border-radius:8px;color:#374151;box-sizing:border-box;">
                         </div>
                         
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">End Date</label>
-                            <input type="date" id="endDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <label style="display:block;color:#374151;font-weight:600;margin-bottom:8px;">End Date</label>
+                            <input type="date" id="endDate" style="width:100%;padding:12px;background:white;border:2px solid #d1d5db;border-radius:8px;color:#374151;box-sizing:border-box;">
                         </div>
                         
                         <div style="text-align:center;margin:20px 0;">
-                            <button onclick="calculatePayments()" style="background:#4CAF50;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;"> Calculate Payments</button>
+                            <button onclick="calculatePayments()" style="background:white;color:#374151;border:2px solid #d1d5db;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;"> Calculate Payments</button>
                         </div>
                         
-                        <div id="paymentCalculation" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin:20px 0;text-align:center;display:none;">
-                            <h5 style="color:#000000;margin:0 0 15px 0;"> Payment Breakdown</h5>
+                        <div id="paymentCalculation" style="background:#f9fafb;border:1px solid #d1d5db;border-radius:12px;padding:20px;margin:20px 0;text-align:center;display:none;">
+                            <h5 style="color:#374151;margin:0 0 15px 0;"> Payment Breakdown</h5>
                             <div id="calculationResults"></div>
                         </div>
                         
                         <div style="margin:20px 0;text-align:center;">
-                            <button onclick="createPaymentPlan('${session.id}')" style="background:linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;transition:all 0.3s ease;"> Create Payment Plan</button>
-                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:#666;color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;">Cancel</button>
+                            <button onclick="createPaymentPlan('${session.id}')" style="background:white;color:#374151;border:2px solid #d1d5db;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;transition:all 0.3s ease;"> Create Payment Plan</button>
+                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:white;color:#374151;border:2px solid #d1d5db;padding:15px 30px;border-radius:8px;cursor:pointer;">Cancel</button>
                         </div>
                         
                         <div style="display:flex;gap:15px;justify-content:flex-end;margin-top:30px;">
-                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="padding:12px 24px;background:var(--primary-accent);color:white;border:2px solid var(--primary-accent);border-radius:8px;cursor:pointer;transition:all 0.3s ease;">Close</button>
+                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="padding:12px 24px;background:white;color:#374151;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;transition:all 0.3s ease;">Close</button>
                         </div>
                     </div>
                 </div>
