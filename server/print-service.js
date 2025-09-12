@@ -16,7 +16,8 @@ class PrintServiceAPI {
     // Editor API endpoints for WHCC
     this.editorBaseUrl = 'https://studio.whcc.com/editor/api';
     
-    this.isSandbox = true; // Start in sandbox mode for testing
+    // Configure environment mode - production default
+    this.isSandbox = process.env.WHCC_ENV === 'sandbox';
   }
 
   // Generate OAS API signature
@@ -772,18 +773,29 @@ class PrintServiceAPI {
           Zip: orderData.shipping.zip,
           Country: orderData.shipping.country || 'US'
         },
-        Items: orderData.items.map(item => ({
-          ProductUID: item.productUID,
-          Quantity: item.quantity,
-          LayoutUID: 0, // Default layout
-          Attributes: item.attributes || [],
-          Assets: [{
-            AssetPath: item.imageUrl,
-            PrintedFileName: item.fileName || 'print.jpg',
-            ImageHash: item.imageHash || '',
-            DP2NodeID: item.nodeId || 10000
-          }]
-        })),
+        Items: orderData.items.map(item => {
+          const orderItem = {
+            ProductUID: item.productUID,
+            Quantity: item.quantity,
+            LayoutUID: 0, // Default layout
+            Attributes: item.attributes || [],
+            Assets: [{
+              AssetPath: item.imageUrl,
+              PrintedFileName: item.fileName || 'print.jpg',
+              ImageHash: item.imageHash || '',
+              DP2NodeID: item.nodeId || 10000
+            }]
+          };
+          
+          // Add Editor Project UID if this item was customized
+          if (item.editorProjectUID) {
+            console.log('📝 Adding Editor Project UID to order item:', item.editorProjectUID);
+            orderItem.EditorProjectUID = item.editorProjectUID;
+            orderItem.IsCustomized = true;
+          }
+          
+          return orderItem;
+        }),
         ShippingMethod: orderData.shippingMethod || 'Standard',
         PaymentMethod: 'Prepaid', // We handle payment via Stripe
         Comments: orderData.comments || ''
@@ -949,6 +961,150 @@ class PrintServiceAPI {
     }
   }
   
+  // Create WHCC Editor session for product customization
+  async createEditorSession(sessionData) {
+    try {
+      console.log('🎨 Creating WHCC Editor session...');
+      
+      const {
+        productUID,
+        productNodeUID,
+        attributeUIDs = {},
+        imageUrl,
+        userId,
+        sessionId,
+        callbackUrl
+      } = sessionData;
+      
+      const headers = this.getEditorAuthHeader();
+      
+      // Prepare the editor project data according to WHCC Editor API spec
+      const editorProjectData = {
+        ProductUID: productUID,
+        ProductNodeUID: productNodeUID,
+        ProjectName: `Project_${userId}_${Date.now()}`,
+        
+        // Source image configuration
+        SourceAssets: [{
+          AssetUrl: imageUrl,
+          AssetType: 'Image',
+          IsPrimary: true
+        }],
+        
+        // Product attribute configuration
+        Attributes: Object.entries(attributeUIDs).map(([categoryUID, attributeUID]) => ({
+          CategoryUID: categoryUID,
+          AttributeUID: attributeUID
+        })),
+        
+        // Editor session configuration
+        EditorConfig: {
+          ReturnUrl: callbackUrl,
+          AllowDownload: false,
+          AllowSave: true,
+          ShowProductInfo: true,
+          Theme: 'light'
+        },
+        
+        // Project metadata
+        Metadata: {
+          userId: userId,
+          sessionId: sessionId,
+          createdAt: new Date().toISOString()
+        }
+      };
+      
+      console.log('📤 Sending editor project data:', {
+        productUID,
+        productNodeUID,
+        attributeCount: Object.keys(attributeUIDs).length,
+        hasImage: !!imageUrl
+      });
+      
+      const response = await fetch(`${this.editorBaseUrl}/sessions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(editorProjectData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Editor session creation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500)
+        });
+        throw new Error(`Failed to create editor session: ${response.status} - ${errorText.substring(0, 200)}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Editor session created:', {
+        projectId: result.ProjectId,
+        editorUrl: result.EditorUrl ? `${result.EditorUrl.substring(0, 50)}...` : 'NO_URL',
+        sessionId: result.SessionId
+      });
+      
+      return {
+        success: true,
+        projectId: result.ProjectId,
+        editorUrl: result.EditorUrl,
+        sessionId: result.SessionId,
+        projectUID: result.ProjectUID,
+        expiresAt: result.ExpiresAt,
+        metadata: {
+          productUID,
+          productNodeUID,
+          userId,
+          sessionId: sessionId
+        }
+      };
+      
+    } catch (error) {
+      console.error('❌ Error creating WHCC editor session:', error.message);
+      console.error('- Full error:', error);
+      throw error;
+    }
+  }
+  
+  // Complete editor session and get final project UID
+  async completeEditorSession(editorProjectId) {
+    try {
+      console.log('✅ Completing WHCC editor session:', editorProjectId);
+      
+      const headers = this.getEditorAuthHeader();
+      
+      const response = await fetch(`${this.editorBaseUrl}/projects/${editorProjectId}/complete`, {
+        method: 'POST',
+        headers
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Editor session completion failed:', errorText);
+        throw new Error(`Failed to complete editor session: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Editor session completed:', {
+        projectUID: result.ProjectUID,
+        finalImageUrl: result.FinalImageUrl,
+        status: result.Status
+      });
+      
+      return {
+        success: true,
+        projectUID: result.ProjectUID,
+        finalImageUrl: result.FinalImageUrl,
+        status: result.Status,
+        completedAt: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error('❌ Error completing WHCC editor session:', error.message);
+      throw error;
+    }
+  }
+
   // Calculate shipping costs
   async calculateShipping(orderData) {
     try {
@@ -997,6 +1153,124 @@ class PrintServiceAPI {
         ]
       };
     }
+  }
+
+  // SECURITY: WHCC Webhook Signature Verification (HMAC-SHA256)
+  // This is critical for production security - prevents forged webhook callbacks
+  verifyWhccSignature(rawPayload, receivedSignature, webhookSecret) {
+    try {
+      console.log('🔐 Verifying WHCC webhook signature...');
+      
+      // Security check: Require webhook secret in production
+      if (!webhookSecret) {
+        console.error('❌ SECURITY ALERT: WHCC_WEBHOOK_SECRET not configured');
+        return false;
+      }
+
+      // Security check: Require signature header
+      if (!receivedSignature) {
+        console.error('❌ SECURITY ALERT: No signature header provided in WHCC webhook');
+        return false;
+      }
+
+      // Extract signature from header (WHCC uses x-whcc-signature or x-signature-sha256)
+      let signature = receivedSignature;
+      if (signature.startsWith('sha256=')) {
+        signature = signature.substring(7); // Remove 'sha256=' prefix
+      }
+
+      // Generate expected signature using HMAC-SHA256 
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(rawPayload, 'utf8')
+        .digest('hex');
+
+      console.log('🔐 Signature verification:', {
+        secretConfigured: !!webhookSecret,
+        signatureProvided: !!receivedSignature,
+        signatureLength: signature.length,
+        expectedLength: expectedSignature.length,
+        match: signature === expectedSignature
+      });
+
+      // Use timing-safe comparison to prevent timing attacks
+      const signatureBuffer = Buffer.from(signature, 'hex');
+      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      
+      // Ensure buffers are same length to prevent timing attacks
+      if (signatureBuffer.length !== expectedBuffer.length) {
+        console.error('❌ SECURITY: Signature length mismatch');
+        return false;
+      }
+
+      const isValid = crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+      
+      if (isValid) {
+        console.log('✅ WHCC webhook signature verified successfully');
+      } else {
+        console.error('❌ SECURITY ALERT: WHCC webhook signature verification FAILED');
+      }
+
+      return isValid;
+
+    } catch (error) {
+      console.error('❌ SECURITY ERROR: WHCC signature verification failed:', error.message);
+      return false;
+    }
+  }
+
+  // Production security validation - called at startup
+  static validateProductionSecurity() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isSandbox = process.env.WHCC_ENV === 'sandbox';
+    const hasWebhookSecret = !!process.env.WHCC_WEBHOOK_SECRET;
+    
+    console.log('🔒 WHCC Security Configuration Check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      WHCC_ENV: process.env.WHCC_ENV || 'production (default)',
+      isSandbox: isSandbox,
+      isProduction: isProduction,
+      webhookSecretConfigured: hasWebhookSecret
+    });
+
+    // CRITICAL: In production mode (not sandbox), webhook secret is MANDATORY
+    if (!isSandbox && !hasWebhookSecret) {
+      const errorMsg = `
+🚨 CRITICAL SECURITY ERROR: Production WHCC deployment blocked!
+
+The WHCC webhook secret is not configured, which allows forged webhook callbacks.
+This is a serious security vulnerability that could allow attackers to:
+- Manipulate order statuses
+- Access sensitive order information
+- Disrupt payment processing
+
+REQUIRED ACTION:
+1. Set WHCC_WEBHOOK_SECRET environment variable with your WHCC webhook secret
+2. Or set WHCC_ENV=sandbox for development/testing
+
+Production deployment will not start without proper webhook security.
+      `.trim();
+      
+      console.error(errorMsg);
+      
+      // Hard fail in production - refuse to start
+      if (isProduction) {
+        console.error('🛑 PRODUCTION STARTUP BLOCKED - Security requirements not met');
+        process.exit(1);
+      } else {
+        console.error('⚠️  DEVELOPMENT WARNING - Webhook security disabled');
+      }
+      
+      return false;
+    }
+
+    if (hasWebhookSecret) {
+      console.log('✅ WHCC webhook security: CONFIGURED AND ACTIVE');
+    } else if (isSandbox) {
+      console.log('🧪 WHCC sandbox mode: Webhook security disabled for testing');
+    }
+
+    return true;
   }
 }
 

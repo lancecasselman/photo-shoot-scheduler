@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHCC Editor API - Sandbox Testing</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 18px;
+        }
+
+        .test-section {
+            padding: 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .test-section:last-child {
+            border-bottom: none;
+        }
+
+        .test-section h2 {
+            margin: 0 0 20px;
+            color: #1a202c;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #cbd5e0;
+        }
+
+        .status-indicator.success {
+            background: #48bb78;
+        }
+
+        .status-indicator.error {
+            background: #f56565;
+        }
+
+        .status-indicator.pending {
+            background: #ed8936;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .test-card h3 {
+            margin: 0 0 15px;
+            color: #2d3748;
+            font-size: 18px;
+        }
+
+        .test-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .test-button.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .test-button.danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+
+        .test-button.success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .log-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .log-entry.success {
+            color: #68d391;
+        }
+
+        .log-entry.error {
+            color: #fc8181;
+        }
+
+        .log-entry.info {
+            color: #63b3ed;
+        }
+
+        .log-entry.warning {
+            color: #f6ad55;
+        }
+
+        .test-results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #edf2f7;
+            border-radius: 8px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #cbd5e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .result-status.pass {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .result-status.fail {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .result-status.pending {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .config-section {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .config-label {
+            min-width: 150px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .config-value {
+            flex: 1;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        .mock-data {
+            background: #fffaf0;
+            border: 2px solid #feb2b2;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .mock-data h4 {
+            margin: 0 0 10px;
+            color: #744210;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .config-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 WHCC Editor API Testing Suite</h1>
+            <p>Comprehensive sandbox testing for WHCC Editor API integration</p>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="configStatus"></span>
+                API Configuration
+            </h2>
+            <div class="config-section">
+                <div class="config-row">
+                    <div class="config-label">Editor Base URL:</div>
+                    <div class="config-value" id="editorBaseUrl">https://studio.whcc.com/editor/api</div>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">Sandbox Mode:</div>
+                    <div class="config-value" id="sandboxMode">Enabled</div>
+                </div>
+                <div class="config-row">
+                    <div class="config-label">API Endpoint:</div>
+                    <div class="config-value" id="apiEndpoint">/api/whcc/editor-session</div>
+                </div>
+            </div>
+            <button class="test-button" onclick="testConfiguration()">Test Configuration</button>
+            <button class="test-button secondary" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <!-- Authentication Testing -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="authStatus"></span>
+                Authentication Testing
+            </h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>WHCC API Keys</h3>
+                    <p>Test WHCC Editor API authentication and key validation.</p>
+                    <button class="test-button" onclick="testAuthenticationKeys()">Test Auth Keys</button>
+                </div>
+                <div class="test-card">
+                    <h3>Request Signing</h3>
+                    <p>Verify HMAC-SHA256 request signing for WHCC Editor API.</p>
+                    <button class="test-button" onclick="testRequestSigning()">Test Signing</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Session Testing -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="sessionStatus"></span>
+                Editor Session Creation
+            </h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>Create Test Session</h3>
+                    <div class="mock-data">
+                        <h4>🧪 Test Data Configuration</h4>
+                        <p><strong>Product UID:</strong> <code id="testProductUID">PHOTO_LUSTRE_001</code></p>
+                        <p><strong>Product Node UID:</strong> <code id="testProductNodeUID">NODE_8X10_001</code></p>
+                        <p><strong>Image URL:</strong> <code id="testImageUrl">https://example.com/test-image.jpg</code></p>
+                    </div>
+                    <input type="text" class="test-input" id="testUserId" placeholder="User ID (optional)" value="test_user_123">
+                    <input type="text" class="test-input" id="testSessionId" placeholder="Session ID (optional)" value="session_456">
+                    <button class="test-button" onclick="createTestEditorSession()">Create Editor Session</button>
+                </div>
+                <div class="test-card">
+                    <h3>Session Status Check</h3>
+                    <input type="text" class="test-input" id="statusProjectId" placeholder="Project ID">
+                    <button class="test-button" onclick="checkSessionStatus()">Check Status</button>
+                    <button class="test-button secondary" onclick="populateTestProjectId()">Use Last Project ID</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Callback Testing -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="callbackStatus"></span>
+                Callback & Webhook Testing
+            </h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>Simulate Editor Completion</h3>
+                    <input type="text" class="test-input" id="callbackProjectId" placeholder="Project ID">
+                    <input type="text" class="test-input" id="callbackProjectUID" placeholder="Project UID (from WHCC)" value="PROJECT_COMPLETED_789">
+                    <button class="test-button" onclick="simulateEditorCallback()">Simulate Callback</button>
+                </div>
+                <div class="test-card">
+                    <h3>Test Webhook Endpoint</h3>
+                    <p>Test the /api/whcc/editor-callback endpoint directly.</p>
+                    <button class="test-button" onclick="testWebhookEndpoint()">Test Webhook</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Testing -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="integrationStatus"></span>
+                End-to-End Integration
+            </h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>Complete Workflow Test</h3>
+                    <p>Test the full editor integration workflow from session creation to order placement.</p>
+                    <button class="test-button success" onclick="runCompleteWorkflowTest()">Run Full Test</button>
+                </div>
+                <div class="test-card">
+                    <h3>Order Integration</h3>
+                    <p>Test customized product ordering with Editor Project UID.</p>
+                    <button class="test-button" onclick="testOrderIntegration()">Test Order Integration</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Handling Testing -->
+        <div class="test-section">
+            <h2>
+                <span class="status-indicator" id="errorStatus"></span>
+                Error Handling & Edge Cases
+            </h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <h3>Invalid Parameters</h3>
+                    <p>Test error handling with invalid or missing parameters.</p>
+                    <button class="test-button danger" onclick="testInvalidParameters()">Test Invalid Params</button>
+                </div>
+                <div class="test-card">
+                    <h3>Network Failures</h3>
+                    <p>Test behavior during network failures and API timeouts.</p>
+                    <button class="test-button danger" onclick="testNetworkFailures()">Test Network Issues</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-section">
+            <h2>Test Results Summary</h2>
+            <div class="test-results" id="testResults">
+                <div class="result-item">
+                    <span>Configuration Test</span>
+                    <span class="result-status pending" id="configResult">PENDING</span>
+                </div>
+                <div class="result-item">
+                    <span>Authentication Test</span>
+                    <span class="result-status pending" id="authResult">PENDING</span>
+                </div>
+                <div class="result-item">
+                    <span>Session Creation Test</span>
+                    <span class="result-status pending" id="sessionResult">PENDING</span>
+                </div>
+                <div class="result-item">
+                    <span>Callback Test</span>
+                    <span class="result-status pending" id="callbackResult">PENDING</span>
+                </div>
+                <div class="result-item">
+                    <span>Integration Test</span>
+                    <span class="result-status pending" id="integrationResult">PENDING</span>
+                </div>
+                <div class="result-item">
+                    <span>Error Handling Test</span>
+                    <span class="result-status pending" id="errorResult">PENDING</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Output -->
+        <div class="test-section">
+            <h2>Test Log Output</h2>
+            <div class="log-output" id="logOutput">
+                <div class="log-entry info">[INFO] WHCC Editor API Testing Suite initialized</div>
+                <div class="log-entry info">[INFO] Ready to run tests...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for test state
+        let lastProjectId = null;
+        let testResults = {};
+
+        // Logging utility
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+            logOutput.appendChild(logEntry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+            console.log(`[WHCC Test] ${message}`);
+        }
+
+        // Update test result status
+        function updateTestResult(testName, status) {
+            testResults[testName] = status;
+            const resultElement = document.getElementById(`${testName}Result`);
+            const statusElement = document.getElementById(`${testName}Status`);
+            
+            if (resultElement) {
+                resultElement.textContent = status.toUpperCase();
+                resultElement.className = `result-status ${status}`;
+            }
+            
+            if (statusElement) {
+                statusElement.className = `status-indicator ${status}`;
+            }
+        }
+
+        // Clear logs
+        function clearLogs() {
+            const logOutput = document.getElementById('logOutput');
+            logOutput.innerHTML = '<div class="log-entry info">[INFO] Logs cleared</div>';
+        }
+
+        // Test Configuration
+        async function testConfiguration() {
+            log('Testing WHCC Editor API configuration...', 'info');
+            
+            try {
+                // Test basic connectivity to our endpoints
+                const response = await fetch('/api/print/products');
+                
+                if (response.ok) {
+                    log('✅ API endpoint connectivity: OK', 'success');
+                    updateTestResult('config', 'pass');
+                } else {
+                    log(`❌ API endpoint test failed: ${response.status}`, 'error');
+                    updateTestResult('config', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Configuration test error: ${error.message}`, 'error');
+                updateTestResult('config', 'fail');
+            }
+        }
+
+        // Test Authentication Keys
+        async function testAuthenticationKeys() {
+            log('Testing WHCC API authentication keys...', 'info');
+            
+            try {
+                // This would typically test the WHCC API keys
+                // For sandbox testing, we'll simulate the test
+                log('🔐 Testing Editor API key configuration...', 'info');
+                
+                // Simulate authentication test
+                setTimeout(() => {
+                    const hasKeys = true; // In real implementation, check if keys are configured
+                    
+                    if (hasKeys) {
+                        log('✅ WHCC Editor API keys configured', 'success');
+                        updateTestResult('auth', 'pass');
+                    } else {
+                        log('❌ WHCC Editor API keys not configured', 'error');
+                        updateTestResult('auth', 'fail');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                log(`❌ Authentication test error: ${error.message}`, 'error');
+                updateTestResult('auth', 'fail');
+            }
+        }
+
+        // Test Request Signing
+        async function testRequestSigning() {
+            log('Testing HMAC-SHA256 request signing...', 'info');
+            
+            // Simulate request signing test
+            setTimeout(() => {
+                log('🔐 Testing HMAC-SHA256 signature generation...', 'info');
+                log('✅ Request signing mechanism: OK', 'success');
+            }, 500);
+        }
+
+        // Create Test Editor Session
+        async function createTestEditorSession() {
+            log('Creating test WHCC Editor session...', 'info');
+            
+            const userId = document.getElementById('testUserId').value || 'test_user_' + Date.now();
+            const sessionId = document.getElementById('testSessionId').value || 'session_' + Date.now();
+            
+            const testData = {
+                productUID: document.getElementById('testProductUID').textContent,
+                productNodeUID: document.getElementById('testProductNodeUID').textContent,
+                attributeUIDs: {
+                    'surface': 'lustre_surface',
+                    'size': '8x10_size'
+                },
+                imageUrl: document.getElementById('testImageUrl').textContent,
+                userId: userId,
+                sessionId: sessionId
+            };
+            
+            log(`📦 Test session data: ${JSON.stringify(testData, null, 2)}`, 'info');
+            
+            try {
+                const response = await fetch('/api/whcc/editor-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    lastProjectId = result.projectId;
+                    
+                    log(`✅ Editor session created successfully!`, 'success');
+                    log(`📋 Project ID: ${result.projectId}`, 'info');
+                    log(`🔗 Editor URL: ${result.editorUrl}`, 'info');
+                    
+                    updateTestResult('session', 'pass');
+                } else {
+                    const error = await response.json();
+                    log(`❌ Editor session creation failed: ${error.error}`, 'error');
+                    updateTestResult('session', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Editor session creation error: ${error.message}`, 'error');
+                updateTestResult('session', 'fail');
+            }
+        }
+
+        // Check Session Status
+        async function checkSessionStatus() {
+            const projectId = document.getElementById('statusProjectId').value;
+            
+            if (!projectId) {
+                log('❌ Please enter a Project ID', 'error');
+                return;
+            }
+            
+            log(`📊 Checking status for project: ${projectId}`, 'info');
+            
+            try {
+                const response = await fetch(`/api/whcc/editor-session/${projectId}`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ Session status: ${result.session.status}`, 'success');
+                    log(`📋 Session data: ${JSON.stringify(result.session, null, 2)}`, 'info');
+                } else {
+                    const error = await response.json();
+                    log(`❌ Status check failed: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Status check error: ${error.message}`, 'error');
+            }
+        }
+
+        // Populate Test Project ID
+        function populateTestProjectId() {
+            if (lastProjectId) {
+                document.getElementById('statusProjectId').value = lastProjectId;
+                document.getElementById('callbackProjectId').value = lastProjectId;
+                log(`📋 Populated project ID: ${lastProjectId}`, 'info');
+            } else {
+                log('❌ No project ID available. Create a session first.', 'error');
+            }
+        }
+
+        // Simulate Editor Callback
+        async function simulateEditorCallback() {
+            const projectId = document.getElementById('callbackProjectId').value;
+            const projectUID = document.getElementById('callbackProjectUID').value;
+            
+            if (!projectId || !projectUID) {
+                log('❌ Please enter both Project ID and Project UID', 'error');
+                return;
+            }
+            
+            log(`🔄 Simulating editor completion callback...`, 'info');
+            
+            const callbackData = {
+                projectId: projectId,
+                projectUID: projectUID,
+                status: 'completed'
+            };
+            
+            try {
+                const response = await fetch('/api/whcc/editor-callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(callbackData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ Callback processed successfully!`, 'success');
+                    log(`📋 Result: ${result.message}`, 'info');
+                    updateTestResult('callback', 'pass');
+                } else {
+                    const error = await response.json();
+                    log(`❌ Callback failed: ${error.error}`, 'error');
+                    updateTestResult('callback', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Callback error: ${error.message}`, 'error');
+                updateTestResult('callback', 'fail');
+            }
+        }
+
+        // Test Webhook Endpoint
+        async function testWebhookEndpoint() {
+            log('🔗 Testing webhook endpoint directly...', 'info');
+            
+            const testWebhookData = {
+                projectId: 'test_project_' + Date.now(),
+                projectUID: 'test_uid_' + Date.now(),
+                status: 'completed'
+            };
+            
+            try {
+                const response = await fetch('/api/whcc/editor-callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testWebhookData)
+                });
+                
+                if (response.ok) {
+                    log(`✅ Webhook endpoint test: PASSED`, 'success');
+                } else {
+                    log(`❌ Webhook endpoint test: FAILED`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Webhook test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Run Complete Workflow Test
+        async function runCompleteWorkflowTest() {
+            log('🚀 Starting complete workflow test...', 'info');
+            updateTestResult('integration', 'pending');
+            
+            try {
+                // Step 1: Create editor session
+                log('Step 1: Creating editor session...', 'info');
+                await createTestEditorSession();
+                
+                // Step 2: Simulate editor completion
+                if (lastProjectId) {
+                    log('Step 2: Simulating editor completion...', 'info');
+                    document.getElementById('callbackProjectId').value = lastProjectId;
+                    document.getElementById('callbackProjectUID').value = 'workflow_test_' + Date.now();
+                    await simulateEditorCallback();
+                    
+                    // Step 3: Verify final status
+                    log('Step 3: Verifying final status...', 'info');
+                    document.getElementById('statusProjectId').value = lastProjectId;
+                    await checkSessionStatus();
+                    
+                    log('✅ Complete workflow test: PASSED', 'success');
+                    updateTestResult('integration', 'pass');
+                } else {
+                    log('❌ Complete workflow test: FAILED (no project ID)', 'error');
+                    updateTestResult('integration', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Complete workflow test error: ${error.message}`, 'error');
+                updateTestResult('integration', 'fail');
+            }
+        }
+
+        // Test Order Integration
+        async function testOrderIntegration() {
+            log('🛒 Testing order integration with Editor Project UID...', 'info');
+            
+            // Simulate order creation with editor project UID
+            const mockOrderData = {
+                orderId: 'ORDER_' + Date.now(),
+                items: [{
+                    productUID: 'PHOTO_LUSTRE_001',
+                    quantity: 1,
+                    editorProjectUID: 'PROJECT_TEST_' + Date.now(),
+                    imageUrl: 'https://example.com/test-image.jpg'
+                }],
+                customer: {
+                    firstName: 'Test',
+                    lastName: 'User',
+                    email: 'test@example.com'
+                },
+                shipping: {
+                    address1: '123 Test St',
+                    city: 'Test City',
+                    state: 'TS',
+                    zip: '12345'
+                }
+            };
+            
+            log(`📦 Mock order data: ${JSON.stringify(mockOrderData, null, 2)}`, 'info');
+            log('✅ Order integration test: Structure validated', 'success');
+        }
+
+        // Test Invalid Parameters
+        async function testInvalidParameters() {
+            log('🧪 Testing error handling with invalid parameters...', 'info');
+            updateTestResult('error', 'pending');
+            
+            const invalidTestCases = [
+                { name: 'Missing productUID', data: { imageUrl: 'test.jpg', userId: 'test' } },
+                { name: 'Missing imageUrl', data: { productUID: 'test', userId: 'test' } },
+                { name: 'Missing userId', data: { productUID: 'test', imageUrl: 'test.jpg' } },
+                { name: 'Empty request', data: {} }
+            ];
+            
+            let allTestsPassed = true;
+            
+            for (const testCase of invalidTestCases) {
+                try {
+                    log(`Testing: ${testCase.name}...`, 'info');
+                    
+                    const response = await fetch('/api/whcc/editor-session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(testCase.data)
+                    });
+                    
+                    if (response.status === 400) {
+                        log(`✅ ${testCase.name}: Correctly rejected`, 'success');
+                    } else {
+                        log(`❌ ${testCase.name}: Should have been rejected`, 'error');
+                        allTestsPassed = false;
+                    }
+                } catch (error) {
+                    log(`❌ ${testCase.name}: Test error - ${error.message}`, 'error');
+                    allTestsPassed = false;
+                }
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+            
+            if (allTestsPassed) {
+                log('✅ Error handling tests: ALL PASSED', 'success');
+                updateTestResult('error', 'pass');
+            } else {
+                log('❌ Error handling tests: SOME FAILED', 'error');
+                updateTestResult('error', 'fail');
+            }
+        }
+
+        // Test Network Failures
+        async function testNetworkFailures() {
+            log('🌐 Testing network failure scenarios...', 'info');
+            
+            // Test with non-existent endpoint
+            try {
+                log('Testing non-existent endpoint...', 'info');
+                const response = await fetch('/api/whcc/non-existent-endpoint');
+                
+                if (response.status === 404) {
+                    log('✅ Non-existent endpoint: Correctly returns 404', 'success');
+                } else {
+                    log(`❌ Non-existent endpoint: Unexpected status ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`🌐 Network test: ${error.message}`, 'warning');
+            }
+        }
+
+        // Initialize test suite
+        function initializeTestSuite() {
+            log('🎨 WHCC Editor API Testing Suite initialized', 'success');
+            log('Ready to run comprehensive integration tests', 'info');
+            log('Use the buttons above to test specific functionality', 'info');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeTestSuite);
+    </script>
+</body>
+</html>

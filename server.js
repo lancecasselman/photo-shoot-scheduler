@@ -5824,6 +5824,223 @@ app.get('/api/print/debug', async (req, res) => {
     }
 });
 
+// Create WHCC Editor session for product customization
+app.post('/api/whcc/editor-session', async (req, res) => {
+    try {
+        console.log('🎨 Creating WHCC Editor session...');
+        
+        const {
+            productUID,
+            productNodeUID,
+            attributeUIDs,
+            imageUrl,
+            userId,
+            sessionId
+        } = req.body;
+        
+        // Validate required parameters
+        if (!productUID || !imageUrl || !userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameters: productUID, imageUrl, userId'
+            });
+        }
+        
+        // Construct callback URL for when user completes editing
+        const callbackUrl = `${req.protocol}://${req.get('host')}/api/whcc/editor-callback`;
+        
+        const editorSession = await printService.createEditorSession({
+            productUID,
+            productNodeUID,
+            attributeUIDs: attributeUIDs || {},
+            imageUrl,
+            userId,
+            sessionId,
+            callbackUrl
+        });
+        
+        // Store editor session in database for tracking
+        const client = await pool.connect();
+        try {
+            await client.query(`
+                INSERT INTO editor_sessions (
+                    id, user_id, session_id, project_id, editor_url, 
+                    product_uid, product_node_uid, image_url, status, created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+            `, [
+                editorSession.projectId,
+                userId,
+                sessionId,
+                editorSession.projectId,
+                editorSession.editorUrl,
+                productUID,
+                productNodeUID,
+                imageUrl,
+                'created'
+            ]);
+        } finally {
+            client.release();
+        }
+        
+        res.json({
+            success: true,
+            editorUrl: editorSession.editorUrl,
+            projectId: editorSession.projectId,
+            sessionId: editorSession.sessionId,
+            message: 'Editor session created successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating WHCC editor session:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create editor session',
+            details: error.message
+        });
+    }
+});
+
+// WHCC webhook signature verification function
+function verifyWhccSignature(payload, signature, secret) {
+    if (!secret) {
+        console.warn('⚠️ WHCC_WEBHOOK_SECRET not configured - signature verification disabled');
+        return true; // Allow in development if secret not set
+    }
+    
+    if (!signature) {
+        console.error('❌ Missing WHCC signature header');
+        return false;
+    }
+    
+    try {
+        // Remove 'sha256=' prefix if present
+        const cleanSignature = signature.replace(/^sha256=/, '');
+        
+        // Generate expected signature using HMAC-SHA256
+        const expectedSignature = crypto
+            .createHmac('sha256', secret)
+            .update(payload, 'utf8')
+            .digest('hex');
+        
+        // Use constant-time comparison to prevent timing attacks
+        return crypto.timingSafeEqual(
+            Buffer.from(cleanSignature, 'hex'),
+            Buffer.from(expectedSignature, 'hex')
+        );
+    } catch (error) {
+        console.error('❌ Error verifying WHCC signature:', error.message);
+        return false;
+    }
+}
+
+// Handle WHCC Editor completion callback
+app.post('/api/whcc/editor-callback', async (req, res) => {
+    try {
+        // CRITICAL SECURITY: Verify webhook signature
+        const signature = req.headers['x-whcc-signature'] || req.headers['x-signature-sha256'] || req.headers['x-signature'];
+        const rawBody = JSON.stringify(req.body);
+        const webhookSecret = process.env.WHCC_WEBHOOK_SECRET;
+        
+        if (!verifyWhccSignature(rawBody, signature, webhookSecret)) {
+            console.error('❌ WHCC webhook signature verification failed');
+            console.error('- Signature header:', signature ? signature.substring(0, 20) + '...' : 'MISSING');
+            console.error('- Secret configured:', !!webhookSecret);
+            return res.status(401).json({
+                success: false,
+                error: 'Webhook signature verification failed'
+            });
+        }
+        
+        console.log('✅ WHCC Editor callback received (signature verified):', {
+            projectId: req.body.projectId,
+            projectUID: req.body.projectUID,
+            status: req.body.status
+        });
+        
+        const { projectId, projectUID, status } = req.body;
+        
+        if (!projectId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing projectId in callback'
+            });
+        }
+        
+        // Update editor session status
+        const client = await pool.connect();
+        try {
+            await client.query(`
+                UPDATE editor_sessions 
+                SET status = $1, project_uid = $2, completed_at = NOW()
+                WHERE project_id = $3
+            `, [status || 'completed', projectUID, projectId]);
+            
+            console.log('✅ Editor session updated:', { projectId, projectUID, status });
+        } finally {
+            client.release();
+        }
+        
+        res.json({
+            success: true,
+            message: 'Editor callback processed successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error processing editor callback:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process editor callback'
+        });
+    }
+});
+
+// Get editor session status
+app.get('/api/whcc/editor-session/:projectId', async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                'SELECT * FROM editor_sessions WHERE project_id = $1',
+                [projectId]
+            );
+            
+            if (result.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Editor session not found'
+                });
+            }
+            
+            const session = result.rows[0];
+            res.json({
+                success: true,
+                session: {
+                    projectId: session.project_id,
+                    projectUID: session.project_uid,
+                    status: session.status,
+                    editorUrl: session.editor_url,
+                    productUID: session.product_uid,
+                    productNodeUID: session.product_node_uid,
+                    createdAt: session.created_at,
+                    completedAt: session.completed_at
+                }
+            });
+            
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error fetching editor session:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch editor session'
+        });
+    }
+});
+
 // Get WHCC print products
 app.get('/api/print/products', async (req, res) => {
     try {
@@ -6216,12 +6433,88 @@ app.get('/api/print/order-status/:orderId', async (req, res) => {
     }
 });
 
-// Webhook endpoint for WHCC order status updates
-app.post('/api/webhooks/whcc', async (req, res) => {
+// SECURITY: WHCC Webhook endpoint with signature verification
+// This endpoint requires HMAC-SHA256 signature verification in production
+app.post('/api/webhooks/whcc', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
-        const event = req.body;
+        console.log('🔔 WHCC webhook received - validating security...');
         
-        console.log('🔔 WHCC webhook received:', event.type);
+        // SECURITY: Signature verification (critical for production)
+        const isSandbox = process.env.WHCC_ENV === 'sandbox';
+        const webhookSecret = process.env.WHCC_WEBHOOK_SECRET;
+        const receivedSignature = req.headers['x-whcc-signature'] || req.headers['x-signature-sha256'];
+        
+        // Log security context (without exposing secrets)
+        console.log('🔐 WHCC webhook security check:', {
+            isSandbox: isSandbox,
+            hasWebhookSecret: !!webhookSecret,
+            hasSignature: !!receivedSignature,
+            signatureHeader: receivedSignature ? 'provided' : 'MISSING',
+            contentType: req.headers['content-type'],
+            userAgent: req.headers['user-agent']
+        });
+
+        // CRITICAL: In production (not sandbox), signature verification is MANDATORY
+        if (!isSandbox) {
+            if (!webhookSecret) {
+                console.error('🚨 SECURITY ALERT: WHCC webhook called but WHCC_WEBHOOK_SECRET not configured!');
+                console.error('- This allows forged webhook callbacks in production');
+                console.error('- Request blocked for security');
+                return res.status(401).json({
+                    error: 'Webhook security not configured',
+                    message: 'WHCC_WEBHOOK_SECRET required in production'
+                });
+            }
+
+            if (!receivedSignature) {
+                console.error('🚨 SECURITY ALERT: WHCC webhook missing signature header');
+                console.error('- Possible forged webhook attempt');
+                console.error('- Request blocked for security');
+                return res.status(401).json({
+                    error: 'Missing webhook signature',
+                    message: 'x-whcc-signature or x-signature-sha256 header required'
+                });
+            }
+
+            // Verify signature using our secure verification function
+            const printService = require('./server/print-service.js');
+            const printServiceInstance = new printService();
+            const isValidSignature = printServiceInstance.verifyWhccSignature(
+                req.body, // Raw payload
+                receivedSignature,
+                webhookSecret
+            );
+
+            if (!isValidSignature) {
+                console.error('🚨 SECURITY ALERT: WHCC webhook signature verification FAILED');
+                console.error('- Possible webhook forgery attempt');
+                console.error('- Request blocked for security');
+                return res.status(401).json({
+                    error: 'Invalid webhook signature',
+                    message: 'Webhook signature verification failed'
+                });
+            }
+
+            console.log('✅ WHCC webhook signature verified - processing event');
+        } else {
+            console.log('🧪 WHCC sandbox mode - signature verification skipped for testing');
+        }
+
+        // Parse the JSON payload (now that security is verified)
+        let event;
+        try {
+            event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } catch (parseError) {
+            console.error('❌ WHCC webhook JSON parse error:', parseError.message);
+            return res.status(400).json({ error: 'Invalid JSON payload' });
+        }
+        
+        console.log('📦 Processing WHCC webhook event:', {
+            type: event.type,
+            orderId: event.data?.orderId,
+            status: event.data?.status,
+            verified: !isSandbox ? 'SIGNATURE_VERIFIED' : 'SANDBOX_MODE'
+        });
         
         // Handle different event types
         switch (event.type) {
@@ -6229,24 +6522,38 @@ app.post('/api/webhooks/whcc', async (req, res) => {
             case 'order.rejected':
             case 'order.shipped':
             case 'order.cancelled':
+                console.log(`📋 Updating order ${event.data.orderId} status to: ${event.data.status}`);
+                
                 await pool.query(
                     'UPDATE print_orders SET status = $1, updated_at = NOW() WHERE whcc_order_id = $2',
                     [event.data.status, event.data.orderId]
                 );
                 
                 if (event.data.trackingNumber) {
+                    console.log(`📦 Adding tracking number: ${event.data.trackingNumber}`);
                     await pool.query(
                         'UPDATE print_orders SET tracking_number = $1 WHERE whcc_order_id = $2',
                         [event.data.trackingNumber, event.data.orderId]
                     );
                 }
+                
+                console.log(`✅ WHCC webhook processed: ${event.type} for order ${event.data.orderId}`);
+                break;
+                
+            default:
+                console.log(`⚠️ Unknown WHCC webhook event type: ${event.type}`);
                 break;
         }
         
-        res.json({ received: true });
+        res.json({ 
+            received: true, 
+            verified: !isSandbox,
+            eventType: event.type 
+        });
         
     } catch (error) {
         console.error('❌ Error processing WHCC webhook:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({ error: 'Webhook processing failed' });
     }
 });
@@ -14226,8 +14533,54 @@ async function startServer() {
     // Start server first, then initialize database in background
     ensureStaticSitesDirectory();
 
+    // WHCC Environment Validation - Critical for Production
+    function validateWhccEnvironment() {
+        const requiredVars = {
+            'OAS_CONSUMER_KEY': process.env.OAS_CONSUMER_KEY,
+            'OAS_CONSUMER_SECRET': process.env.OAS_CONSUMER_SECRET,
+            'EDITOR_API_KEY_ID': process.env.EDITOR_API_KEY_ID,
+            'EDITOR_API_KEY_SECRET': process.env.EDITOR_API_KEY_SECRET
+        };
+        
+        const optionalVars = {
+            'WHCC_WEBHOOK_SECRET': process.env.WHCC_WEBHOOK_SECRET,
+            'WHCC_ENV': process.env.WHCC_ENV || 'production',
+            'OAS_API_URL': process.env.OAS_API_URL
+        };
+        
+        // Check required variables
+        const missingRequired = Object.entries(requiredVars)
+            .filter(([key, value]) => !value)
+            .map(([key]) => key);
+        
+        if (missingRequired.length > 0) {
+            console.error('❌ CRITICAL: Missing required WHCC environment variables:');
+            missingRequired.forEach(key => console.error(`  - ${key}`));
+            console.error('❌ WHCC integration will NOT work without these variables');
+            console.error('❌ Add these to your environment configuration before deployment');
+            // Don't exit in development, but log the warning clearly
+            if (process.env.NODE_ENV === 'production') {
+                console.error('❌ EXITING: Cannot run WHCC integration in production without required variables');
+                process.exit(1);
+            }
+        } else {
+            console.log('✅ WHCC environment variables: All required variables configured');
+        }
+        
+        // Log optional variable status
+        console.log('ℹ️ WHCC configuration:');
+        console.log(`  - Environment: ${optionalVars.WHCC_ENV}`);
+        console.log(`  - Webhook secret: ${optionalVars.WHCC_WEBHOOK_SECRET ? 'CONFIGURED' : 'NOT SET (signatures disabled)'}`);
+        console.log(`  - API URL override: ${optionalVars.OAS_API_URL || 'Using default'}`);
+        
+        return missingRequired.length === 0;
+    }
+    
     // Initialize notification services
     initializeNotificationServices();
+    
+    // Validate WHCC environment configuration
+    validateWhccEnvironment();
 
     // Start automated payment scheduler
     paymentScheduler.start();
@@ -14335,6 +14688,16 @@ async function startServer() {
             res.status(500).json({ error: 'Failed to complete onboarding' });
         }
     });
+
+    // SECURITY: Validate WHCC production security BEFORE server starts
+    console.log('🔒 Validating production security requirements...');
+    const PrintServiceAPI = require('./server/print-service.js');
+    const securityValidated = PrintServiceAPI.validateProductionSecurity();
+    
+    if (!securityValidated) {
+        console.error('🛑 CRITICAL: Server startup aborted due to security requirement failures');
+        process.exit(1);
+    }
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);

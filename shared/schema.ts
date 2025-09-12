@@ -549,6 +549,28 @@ export const printCarts = pgTable("print_carts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// WHCC Editor Sessions table for tracking print project customization
+export const editorSessions = pgTable("editor_sessions", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  sessionId: varchar("session_id"), // Photography session ID (optional)
+  projectId: varchar("project_id").notNull(), // WHCC Editor Project ID
+  projectUID: varchar("project_uid"), // WHCC Project UID (after completion)
+  productUID: varchar("product_uid").notNull(), // WHCC Product UID
+  productNodeUID: varchar("product_node_uid"), // WHCC Product Node UID
+  editorUrl: varchar("editor_url"), // WHCC Editor URL
+  imageUrl: varchar("image_url").notNull(), // Source image URL
+  status: varchar("status").notNull().default("pending"), // pending, in_progress, completed, failed
+  attributeUIDs: jsonb("attribute_uids").default({}), // Selected product attributes
+  finalImageUrl: varchar("final_image_url"), // Final customized image URL
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at"),
+  callbackData: jsonb("callback_data").default({}), // Webhook callback data
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Photographer Clients type exports
 export type InsertPhotographerClient = typeof photographerClients.$inferInsert;
 export type PhotographerClient = typeof photographerClients.$inferSelect;
@@ -560,6 +582,8 @@ export type InsertPrintProduct = typeof printProducts.$inferInsert;
 export type PrintProduct = typeof printProducts.$inferSelect;
 export type InsertPrintCart = typeof printCarts.$inferInsert;
 export type PrintCart = typeof printCarts.$inferSelect;
+export type InsertEditorSession = typeof editorSessions.$inferInsert;
+export type EditorSession = typeof editorSessions.$inferSelect;
 
 // Community type exports
 export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;

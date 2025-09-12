@@ -65,6 +65,28 @@ STRIPE_PUBLIC_KEY=pk_live_your_stripe_public_key
 SENDGRID_API_KEY=SG.your_sendgrid_api_key
 ```
 
+### WHCC Print Service (CRITICAL FOR PRODUCTION SECURITY)
+```
+# WHCC API Credentials
+OAS_CONSUMER_KEY=your_whcc_consumer_key
+OAS_CONSUMER_SECRET=your_whcc_consumer_secret
+EDITOR_API_KEY_ID=your_whcc_editor_key_id
+EDITOR_API_KEY_SECRET=your_whcc_editor_key_secret
+
+# PRODUCTION SECURITY: Webhook Signature Verification
+WHCC_WEBHOOK_SECRET=your_whcc_webhook_secret_from_dashboard
+
+# Environment Mode (MANDATORY for security)
+WHCC_ENV=production  # Use 'sandbox' only for testing
+OAS_API_URL=https://apps.whcc.com  # Production URL (default)
+```
+
+**⚠️ CRITICAL SECURITY WARNING:**
+- WHCC_WEBHOOK_SECRET is MANDATORY for production deployment
+- Missing webhook secret allows forged webhook callbacks
+- Server will refuse to start in production without this secret
+- Use WHCC_ENV=sandbox only for development/testing
+
 ### Application Config
 ```
 NODE_ENV=production

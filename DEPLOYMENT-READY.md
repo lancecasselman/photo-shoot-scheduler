@@ -62,6 +62,17 @@ VITE_STRIPE_PUBLIC_KEY=pk_live_your_production_key
 # Email Service
 SENDGRID_API_KEY=SG.your_production_sendgrid_key
 
+# WHCC Print Service (CRITICAL FOR PRODUCTION)
+OAS_CONSUMER_KEY=your_whcc_consumer_key
+OAS_CONSUMER_SECRET=your_whcc_consumer_secret
+EDITOR_API_KEY_ID=your_whcc_editor_key_id
+EDITOR_API_KEY_SECRET=your_whcc_editor_key_secret
+
+# 🚨 PRODUCTION SECURITY: MANDATORY WEBHOOK SECRET
+WHCC_WEBHOOK_SECRET=your_whcc_webhook_secret_from_dashboard
+WHCC_ENV=production  # NEVER use 'sandbox' in production
+OAS_API_URL=https://apps.whcc.com
+
 # Optional Services
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
@@ -72,6 +83,8 @@ OPENAI_API_KEY=sk-your_openai_key
 ### ✅ Security Configuration
 - [ ] All secrets use production/live keys (not test keys)
 - [ ] SESSION_SECRET is a strong, unique value
+- [ ] WHCC_WEBHOOK_SECRET is configured (MANDATORY for production)
+- [ ] WHCC_ENV is set to 'production' (never 'sandbox' in production)
 - [ ] CORS origins are set to your production domain
 - [ ] SSL/TLS certificates are properly configured
 

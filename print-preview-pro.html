@@ -454,6 +454,23 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
+        .btn-editor {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-editor:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-editor:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-secondary {
             background: #f1f5f9;
             color: #475569;
@@ -622,6 +639,9 @@
             <div class="action-buttons" style="display: flex; gap: 12px;">
                 <button class="btn btn-primary" onclick="addToCart()" style="flex: 1;">
                     🛒 Add to Cart
+                </button>
+                <button class="btn btn-editor" onclick="customizeInEditor()" style="flex: 1;">
+                    🎨 Customize in Editor
                 </button>
                 <button class="btn btn-secondary" onclick="viewCart()" style="flex: 1;">
                     View Cart
@@ -1779,6 +1799,388 @@
             return null;
         }
         
+        // Open WHCC Editor for product customization
+        async function customizeInEditor() {
+            try {
+                console.log('🎨 Opening WHCC Editor...');
+                
+                // Get current product configuration
+                const productNodeData = getProductNodeData();
+                if (!productNodeData) {
+                    throw new Error('Product configuration not available');
+                }
+                
+                // Collect selected attributes for WHCC Editor
+                const attributeUIDs = {};
+                
+                // Gather attribute UIDs from current selections
+                document.querySelectorAll('.attribute-option.selected').forEach(option => {
+                    const categoryUID = option.dataset.categoryUid;
+                    const attributeUID = option.dataset.attributeUid;
+                    if (categoryUID && attributeUID) {
+                        attributeUIDs[categoryUID] = attributeUID;
+                    }
+                });
+                
+                console.log('📦 Product config for editor:', {
+                    productUID: productNodeData.productUID,
+                    productNodeUID: productNodeData.productNodeUID,
+                    attributeCount: Object.keys(attributeUIDs).length,
+                    imageUrl: photoUrl
+                });
+                
+                // Prepare editor session data
+                const editorSessionData = {
+                    productUID: productNodeData.productUID,
+                    productNodeUID: productNodeData.productNodeUID,
+                    attributeUIDs: attributeUIDs,
+                    imageUrl: photoUrl,
+                    userId: window.currentUserId || 'anonymous_' + Date.now(),
+                    sessionId: galleryToken || 'session_' + Date.now()
+                };
+                
+                // Call our server endpoint to create WHCC Editor session
+                const response = await fetch('/api/whcc/editor-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(editorSessionData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create editor session');
+                }
+                
+                const result = await response.json();
+                console.log('✅ Editor session created:', result);
+                
+                // Store editor session info for later use
+                localStorage.setItem('whccEditorSession', JSON.stringify({
+                    projectId: result.projectId,
+                    productConfig: productNodeData,
+                    attributeUIDs: attributeUIDs,
+                    originalSettings: currentSettings,
+                    photoUrl: photoUrl,
+                    filename: filename,
+                    galleryToken: galleryToken
+                }));
+                
+                // Show editor launch modal
+                showEditorLaunchModal(result.editorUrl, result.projectId);
+                
+            } catch (error) {
+                console.error('❌ Error launching WHCC Editor:', error);
+                showEditorError(error.message);
+            }
+        }
+        
+        // Show editor launch modal
+        function showEditorLaunchModal(editorUrl, projectId) {
+            const modal = document.createElement('div');
+            modal.id = 'editorLaunchModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 40px;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    max-width: 500px;
+                    width: 90%;
+                    text-align: center;
+                ">
+                    <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #1a202c;">
+                        🎨 Launch WHCC Editor
+                    </div>
+                    <div style="font-size: 16px; color: #4a5568; margin-bottom: 30px; line-height: 1.5;">
+                        Your editor session has been created! Click below to open the WHCC Editor and customize your print.
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="closeEditorModal()" style="
+                            background: #e2e8f0;
+                            color: #4a5568;
+                            padding: 12px 24px;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Cancel</button>
+                        <button onclick="openEditor('${editorUrl}', '${projectId}')" style="
+                            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                            color: white;
+                            padding: 12px 24px;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+                        ">Open Editor</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Open WHCC Editor in new window/tab
+        function openEditor(editorUrl, projectId) {
+            console.log('🚀 Opening WHCC Editor:', editorUrl);
+            
+            // Open editor in new window
+            const editorWindow = window.open(editorUrl, 'whccEditor', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            if (!editorWindow) {
+                alert('Please allow pop-ups to open the WHCC Editor');
+                return;
+            }
+            
+            // Close the modal
+            closeEditorModal();
+            
+            // Start polling for editor completion
+            const pollInterval = setInterval(async () => {
+                try {
+                    // Check if editor window is closed
+                    if (editorWindow.closed) {
+                        clearInterval(pollInterval);
+                        await handleEditorCompletion(projectId);
+                        return;
+                    }
+                    
+                    // Poll our server for editor session status
+                    const response = await fetch(`/api/whcc/editor-session/${projectId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.session.status === 'completed' && data.session.projectUID) {
+                            clearInterval(pollInterval);
+                            editorWindow.close();
+                            await handleEditorCompletion(projectId, data.session.projectUID);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling editor status:', error);
+                }
+            }, 3000); // Poll every 3 seconds
+            
+            // Stop polling after 30 minutes
+            setTimeout(() => {
+                clearInterval(pollInterval);
+            }, 30 * 60 * 1000);
+        }
+        
+        // Handle editor completion
+        async function handleEditorCompletion(projectId, projectUID = null) {
+            console.log('✅ Editor session completed:', { projectId, projectUID });
+            
+            if (projectUID) {
+                // Editor was completed successfully - show success message
+                showEditorSuccess(projectUID);
+            } else {
+                // Editor was closed without completion
+                console.log('Editor closed without completion');
+            }
+        }
+        
+        // Show editor success message
+        function showEditorSuccess(projectUID) {
+            const completionMessage = document.createElement('div');
+            completionMessage.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                max-width: 400px;
+            `;
+            completionMessage.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 10px;">🎨 Customization Complete!</div>
+                <div style="font-size: 14px; margin-bottom: 15px;">Your design has been saved. You can now add it to your cart.</div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="addCustomizedToCart('${projectUID}')" style="
+                        background: white;
+                        color: #38a169;
+                        padding: 8px 16px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                    ">Add Customized Print to Cart</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: rgba(255,255,255,0.2);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">Close</button>
+                </div>
+            `;
+            document.body.appendChild(completionMessage);
+            
+            // Store the project UID for cart addition
+            const editorSession = JSON.parse(localStorage.getItem('whccEditorSession') || '{}');
+            editorSession.projectUID = projectUID;
+            localStorage.setItem('whccEditorSession', JSON.stringify(editorSession));
+        }
+        
+        // Show editor error message
+        function showEditorError(errorMessage) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                max-width: 400px;
+            `;
+            errorDiv.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 10px;">❌ Editor Launch Failed</div>
+                <div style="font-size: 14px; opacity: 0.9;">${errorMessage}</div>
+                <button onclick="this.parentElement.remove()" style="
+                    background: rgba(255,255,255,0.2);
+                    border: 1px solid rgba(255,255,255,0.3);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    margin-top: 10px;
+                ">Close</button>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 8000);
+        }
+        
+        // Add customized product to cart
+        function addCustomizedToCart(projectUID) {
+            const editorSession = JSON.parse(localStorage.getItem('whccEditorSession') || '{}');
+            
+            if (!editorSession.productConfig) {
+                console.error('No editor session data found');
+                return;
+            }
+            
+            // Create cart item with editor project UID
+            const cartItem = {
+                ...editorSession.originalSettings,
+                price: editorSession.productConfig.actualPrice || 19.99,
+                photoUrl: editorSession.photoUrl,
+                filename: editorSession.filename,
+                galleryToken: editorSession.galleryToken,
+                timestamp: new Date().toISOString(),
+                isCustomized: true,
+                editorProjectUID: projectUID,
+                whccData: {
+                    ...editorSession.productConfig,
+                    editorProjectUID: projectUID,
+                    attributeUIDs: editorSession.attributeUIDs
+                }
+            };
+            
+            let cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+            cart.push(cartItem);
+            localStorage.setItem('printCart', JSON.stringify(cart));
+            
+            // Clear editor session
+            localStorage.removeItem('whccEditorSession');
+            
+            // Show success message and hide completion message
+            document.querySelectorAll('[style*="position: fixed"]').forEach(el => {
+                if (el.textContent.includes('Customization Complete')) {
+                    el.remove();
+                }
+            });
+            
+            // Show standard success message
+            showCartSuccessMessage('Customized print added to cart!');
+        }
+        
+        // Show cart success message
+        function showCartSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            successDiv.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 10px;">✓ ${message}</div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="backToGallery()" style="
+                        background: rgba(255,255,255,0.2);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                    ">Continue Shopping</button>
+                    <button onclick="viewCart()" style="
+                        background: white;
+                        color: #38a169;
+                        padding: 8px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                    ">View Cart</button>
+                </div>
+            `;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => successDiv.remove(), 300);
+            }, 5000);
+        }
+        
+        // Close editor modal
+        function closeEditorModal() {
+            const modal = document.getElementById('editorLaunchModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
         // Add to cart
         function addToCart() {
             // Get ProductNode data for WHCC ordering
@@ -1895,6 +2297,15 @@
             to {
                 transform: translateX(100%);
                 opacity: 0;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
             }
         }
     </style>
