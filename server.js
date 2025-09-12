@@ -2447,6 +2447,52 @@ app.post('/api/auth/mobile-session', async (req, res) => {
     }
 });
 
+// === LEGACY R2 PHOTO COMPATIBILITY ROUTE ===
+// Handle legacy photo URLs: /r2/file/photographer-{userId}/session-{sessionId}/{folderType}/{fileName}
+app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName', async (req, res) => {
+    try {
+        const { userId, sessionId, folderType, fileName } = req.params;
+        
+        // Security: Validate folderType allowlist
+        const allowedFolderTypes = ['gallery', 'raw'];
+        if (!allowedFolderTypes.includes(folderType)) {
+            console.log('⚠️ LEGACY R2: Invalid folder type blocked:', { folderType, fileName });
+            return res.status(404).send('Not found');
+        }
+        
+        // Security: Basic filename sanitization (prevent path traversal)
+        const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '');
+        if (sanitizedFileName !== fileName) {
+            console.log('⚠️ LEGACY R2: Suspicious filename blocked:', { original: fileName, sanitized: sanitizedFileName });
+            return res.status(404).send('Not found');
+        }
+        
+        // Construct R2 key matching the upload structure
+        const r2Key = `photographer-${userId}/session-${sessionId}/${folderType}/${fileName}`;
+        
+        // Generate short-lived signed URL (5 minutes)
+        const signedUrl = await r2FileManager.getSignedUrl(r2Key, 300);
+        
+        if (!signedUrl) {
+            console.log('❌ LEGACY R2: File not found in storage:', { r2Key });
+            return res.status(404).send('Not found');
+        }
+        
+        console.log('✅ LEGACY R2: Redirecting to signed URL:', { 
+            r2Key: r2Key.substring(0, 50) + '...',
+            expiresIn: 300,
+            fileName 
+        });
+        
+        // 302 redirect to the signed R2 URL
+        return res.redirect(302, signedUrl);
+        
+    } catch (error) {
+        console.error('Error handling legacy R2 photo URL:', error);
+        return res.status(404).send('Not found');
+    }
+});
+
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
 
@@ -9642,6 +9688,137 @@ app.get('/gallery/:id', async (req, res) => {
     } catch (error) {
         console.error('Error serving gallery:', error);
         res.status(500).send('<h1>Error loading gallery</h1>');
+    }
+});
+
+// API endpoint for gallery verification (required by client-gallery.html)
+app.get('/api/gallery/:token/verify', async (req, res) => {
+    const galleryToken = req.params.token;
+    
+    try {
+        console.log('🔍 API: Verifying gallery access for token:', galleryToken);
+        
+        // Verify gallery token exists and get photos
+        const client = await pool.connect();
+        const galleryQuery = await client.query(`
+            SELECT 
+                id, 
+                client_name, 
+                session_type,
+                date_time,
+                photos,
+                gallery_access_token,
+                jsonb_array_length(photos) as photo_count
+            FROM photography_sessions 
+            WHERE gallery_access_token = $1
+        `, [galleryToken]);
+        client.release();
+
+        if (galleryQuery.rows.length === 0) {
+            console.log('❌ API: Gallery token not found:', galleryToken);
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Gallery not found' 
+            });
+        }
+
+        const session = galleryQuery.rows[0];
+        const photos = session.photos || [];
+
+        console.log('✅ API: Gallery verification successful:', {
+            sessionId: session.id,
+            clientName: session.client_name,
+            photoCount: photos.length,
+            token: galleryToken
+        });
+
+        res.json({
+            success: true,
+            session: {
+                id: session.id,
+                clientName: session.client_name,
+                sessionType: session.session_type,
+                dateTime: session.date_time,
+                photoCount: photos.length
+            }
+        });
+
+    } catch (error) {
+        console.error('Error verifying gallery access:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to verify gallery access' 
+        });
+    }
+});
+
+// API endpoint for getting gallery photos (required by client-gallery.html)
+app.get('/api/gallery/:token/photos', async (req, res) => {
+    const galleryToken = req.params.token;
+    
+    try {
+        console.log('📸 API: Getting photos for gallery token:', galleryToken);
+        
+        // Get photos from database (not from R2 file manager)
+        const client = await pool.connect();
+        const galleryQuery = await client.query(`
+            SELECT 
+                id, 
+                client_name, 
+                session_type,
+                photos,
+                gallery_access_token
+            FROM photography_sessions 
+            WHERE gallery_access_token = $1
+        `, [galleryToken]);
+        client.release();
+
+        if (galleryQuery.rows.length === 0) {
+            console.log('❌ API: Gallery token not found:', galleryToken);
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Gallery not found' 
+            });
+        }
+
+        const session = galleryQuery.rows[0];
+        const photos = session.photos || [];
+
+        if (photos.length === 0) {
+            console.log('❌ API: No photos available for session:', {
+                sessionId: session.id,
+                clientName: session.client_name,
+                token: galleryToken
+            });
+            return res.status(404).json({ 
+                success: false, 
+                error: 'No photos available in gallery' 
+            });
+        }
+
+        console.log('✅ API: Serving photos:', {
+            sessionId: session.id,
+            clientName: session.client_name,
+            photoCount: photos.length,
+            token: galleryToken
+        });
+
+        res.json({
+            success: true,
+            photos: photos,
+            session: {
+                id: session.id,
+                clientName: session.client_name,
+                sessionType: session.session_type
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting gallery photos:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to get gallery photos' 
+        });
     }
 });
 
