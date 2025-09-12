@@ -12606,6 +12606,153 @@ END:VCALENDAR`;
             showMessage('PDF export feature coming soon!', 'info');
         }
 
+        // ==================== CLIENT DATABASE FUNCTIONS ====================
+        
+        async function loadClientDatabase() {
+            try {
+                console.log('🔄 Starting automatic client database loading...');
+                const container = document.getElementById('clientDatabaseList');
+                
+                if (!container) {
+                    console.error('❌ Client database container not found');
+                    return;
+                }
+                
+                // Show loading state
+                container.innerHTML = `
+                    <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">📥 Loading all clients...</div>
+                        <div style="font-size: 14px;">Auto-importing from sessions and loading database...</div>
+                    </div>
+                `;
+                
+                // Step 1: Auto-populate clients from sessions first
+                console.log('📥 Auto-populating clients from sessions...');
+                try {
+                    const autoPopulateResponse = await fetch('/api/clients/auto-populate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (autoPopulateResponse.ok) {
+                        const autoData = await autoPopulateResponse.json();
+                        console.log('✅ Auto-populate completed:', autoData.message);
+                    } else {
+                        console.warn('⚠️ Auto-populate failed, continuing with existing clients');
+                    }
+                } catch (autoError) {
+                    console.warn('⚠️ Auto-populate error:', autoError);
+                }
+                
+                // Step 2: Load all clients from database
+                console.log('📋 Loading clients from database...');
+                const clientsResponse = await fetch('/api/clients');
+                
+                if (!clientsResponse.ok) {
+                    throw new Error('Failed to fetch clients');
+                }
+                
+                const clients = await clientsResponse.json();
+                console.log(`✅ Loaded ${clients.length} clients from database`);
+                
+                // Step 3: Display clients in UI
+                if (clients.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-clients-message" style="text-align: center; padding: 40px; color: #666;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">👥</div>
+                            <h3>No Clients Found</h3>
+                            <p>Clients are automatically added when you create photography sessions.</p>
+                            <p>Once you have sessions with client information, they'll appear here.</p>
+                        </div>
+                    `;
+                } else {
+                    // Sort clients alphabetically by name
+                    clients.sort((a, b) => a.client_name.localeCompare(b.client_name));
+                    
+                    let clientsHTML = `
+                        <div class="clients-header" style="padding: 20px; border-bottom: 1px solid #eee;">
+                            <h3 style="margin: 0; color: #333;">📋 Client Database (${clients.length} clients)</h3>
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+                                Automatically imported from all photography sessions
+                            </p>
+                        </div>
+                        <div class="clients-list" style="padding: 20px;">
+                    `;
+                    
+                    clients.forEach(client => {
+                        const createdDate = client.created_at ? new Date(client.created_at).toLocaleDateString() : 'Unknown';
+                        const email = client.email || 'No email';
+                        const phone = client.phone_number || 'No phone';
+                        const source = client.source || 'Unknown';
+                        
+                        clientsHTML += `
+                            <div class="client-card" style="
+                                border: 1px solid #ddd; 
+                                border-radius: 8px; 
+                                padding: 15px; 
+                                margin-bottom: 15px; 
+                                background: white;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            ">
+                                <div class="client-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <h4 style="margin: 0; color: #333; font-size: 16px;">👤 ${client.client_name}</h4>
+                                    <span style="background: #e8f5e8; color: #2d5a2d; padding: 3px 8px; border-radius: 12px; font-size: 12px;">
+                                        ${source}
+                                    </span>
+                                </div>
+                                <div class="client-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; color: #666;">
+                                    <div><strong>📧 Email:</strong> ${email}</div>
+                                    <div><strong>📱 Phone:</strong> ${phone}</div>
+                                    <div><strong>📅 Added:</strong> ${createdDate}</div>
+                                    <div><strong>📊 Sessions:</strong> ${client.total_sessions || 0}</div>
+                                </div>
+                                ${client.notes ? `
+                                    <div class="client-notes" style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 13px; color: #555;">
+                                        <strong>📝 Notes:</strong> ${client.notes}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    clientsHTML += `
+                        </div>
+                        <div class="clients-footer" style="padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; text-align: center; color: #666; font-size: 13px;">
+                            ✨ Clients are automatically added when you create new photography sessions
+                        </div>
+                    `;
+                    
+                    container.innerHTML = clientsHTML;
+                }
+                
+                console.log('✅ Client database loaded successfully');
+                
+            } catch (error) {
+                console.error('❌ Error loading client database:', error);
+                const container = document.getElementById('clientDatabaseList');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-message" style="text-align: center; padding: 40px; color: #d32f2f;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                            <h3>Error Loading Clients</h3>
+                            <p>Unable to load client database. Please try again.</p>
+                            <button onclick="loadClientDatabase()" style="
+                                background: #d4af37; 
+                                color: white; 
+                                border: none; 
+                                padding: 10px 20px; 
+                                border-radius: 5px; 
+                                cursor: pointer;
+                                margin-top: 10px;
+                            ">Try Again</button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
     </script>
 
     <!-- Contract Modal -->
