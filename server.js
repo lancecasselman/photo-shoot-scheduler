@@ -2512,6 +2512,10 @@ app.use('/api/r2', createR2Routes());
 const createBookingAgreementRoutes = require('./server/booking-agreements-routes');
 const { initializeTemplates } = require('./server/booking-agreement-templates');
 app.use('/api/booking', createBookingAgreementRoutes(pool));
+
+// Photo Sales API routes for WHCC print integration
+const photoSalesRoutes = require('./server/photo-sales-routes');
+app.use('/api/print', photoSalesRoutes);
 // Initialize templates on startup (non-blocking)
 (async () => {
     try {

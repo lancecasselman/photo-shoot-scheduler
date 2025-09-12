@@ -962,6 +962,70 @@
                 font-size: 12px;
             }
             
+            .photo-control-toggle {
+                background: #1a1a1a;
+                color: #d4af37;
+                border: 1px solid #d4af37;
+                padding: 5px 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            
+            .photo-control-toggle input[type="checkbox"] {
+                margin: 0;
+            }
+            
+            .photo-control-toggle:hover {
+                background: #d4af37;
+                color: #1a1a1a;
+            }
+            
+            .photo-sale-options {
+                margin-top: 15px;
+                padding: 15px;
+                background: rgba(212, 175, 55, 0.1);
+                border-radius: 8px;
+                border: 1px solid #d4af37;
+            }
+            
+            .sale-option {
+                margin-bottom: 10px;
+            }
+            
+            .sale-option label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+                color: #333;
+            }
+            
+            .sale-option input[type="number"] {
+                width: 80px;
+                padding: 4px 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 13px;
+            }
+            
+            .sale-option input[type="checkbox"] {
+                margin: 0;
+            }
+            
+            .photo-block.for-sale {
+                border-color: #10b981;
+                background: rgba(16, 185, 129, 0.1);
+            }
+            
+            .photo-block.for-sale.has-image {
+                background: transparent;
+                border-style: solid;
+            }
+            
             @keyframes fadeInOut {
                 0% { opacity: 0; transform: translateY(10px); }
                 20% { opacity: 1; transform: translateY(0); }
@@ -979,12 +1043,27 @@
         photoBlock.innerHTML = `
             <div class="photo-controls">
                 <button class="photo-control-btn" onclick="this.closest('.photo-block').remove()">Delete</button>
+                <label class="photo-control-toggle">
+                    <input type="checkbox" class="for-sale-toggle" onchange="togglePhotoForSale(this)">
+                    <span class="toggle-text">🛒 For Sale</span>
+                </label>
             </div>
             <div class="photo-upload-area">
                 <p>Click to upload photo or drag & drop</p>
                 <input type="file" accept="image/*" style="display: none;">
             </div>
             <div class="photo-caption admin-editable" contenteditable="true" placeholder="Enter caption..."></div>
+            <div class="photo-sale-options" style="display: none;">
+                <div class="sale-option">
+                    <label>Starting Price: $<input type="number" class="base-price" value="15.00" min="1" step="0.01"></label>
+                </div>
+                <div class="sale-option">
+                    <label><input type="checkbox" class="allow-prints" checked> Allow Print Orders</label>
+                </div>
+                <div class="sale-option">
+                    <label><input type="checkbox" class="allow-digital" checked> Allow Digital Downloads ($<input type="number" class="digital-price" value="25.00" min="1" step="0.01">)</label>
+                </div>
+            </div>
         `;
         
         // Find the main content area
@@ -1095,10 +1174,20 @@
     function savePhotoBlock(photoBlock) {
         const img = photoBlock.querySelector('img');
         const caption = photoBlock.querySelector('.photo-caption');
+        const forSaleToggle = photoBlock.querySelector('.for-sale-toggle');
+        const basePriceInput = photoBlock.querySelector('.base-price');
+        const allowPrintsInput = photoBlock.querySelector('.allow-prints');
+        const allowDigitalInput = photoBlock.querySelector('.allow-digital');
+        const digitalPriceInput = photoBlock.querySelector('.digital-price');
         
         const data = {
             imageSrc: img ? img.src : null,
-            caption: caption.innerHTML
+            caption: caption.innerHTML,
+            forSale: forSaleToggle ? forSaleToggle.checked : false,
+            basePrice: basePriceInput ? parseFloat(basePriceInput.value) || 15.00 : 15.00,
+            allowPrints: allowPrintsInput ? allowPrintsInput.checked : true,
+            allowDigital: allowDigitalInput ? allowDigitalInput.checked : true,
+            digitalPrice: digitalPriceInput ? parseFloat(digitalPriceInput.value) || 25.00 : 25.00
         };
         
         saveContent(photoBlock, 'photoBlock');
@@ -1113,16 +1202,34 @@
         if (parsedData.imageSrc) {
             photoBlock.classList.add('has-image');
         }
+        if (parsedData.forSale) {
+            photoBlock.classList.add('for-sale');
+        }
         
         photoBlock.innerHTML = `
             <div class="photo-controls">
                 <button class="photo-control-btn" onclick="this.closest('.photo-block').remove()">Delete</button>
+                <label class="photo-control-toggle">
+                    <input type="checkbox" class="for-sale-toggle" onchange="togglePhotoForSale(this)" ${parsedData.forSale ? 'checked' : ''}>
+                    <span class="toggle-text">🛒 For Sale</span>
+                </label>
             </div>
             ${parsedData.imageSrc ? 
                 `<div class="photo-upload-area"><img src="${parsedData.imageSrc}" alt="Photo"></div>` :
                 `<div class="photo-upload-area"><p>Click to upload photo</p><input type="file" accept="image/*" style="display: none;"></div>`
             }
             <div class="photo-caption admin-editable">${parsedData.caption || 'Enter caption...'}</div>
+            <div class="photo-sale-options" style="display: ${parsedData.forSale ? 'block' : 'none'};">
+                <div class="sale-option">
+                    <label>Starting Price: $<input type="number" class="base-price" value="${parsedData.basePrice || 15.00}" min="1" step="0.01"></label>
+                </div>
+                <div class="sale-option">
+                    <label><input type="checkbox" class="allow-prints" ${parsedData.allowPrints !== false ? 'checked' : ''}> Allow Print Orders</label>
+                </div>
+                <div class="sale-option">
+                    <label><input type="checkbox" class="allow-digital" ${parsedData.allowDigital !== false ? 'checked' : ''}> Allow Digital Downloads ($<input type="number" class="digital-price" value="${parsedData.digitalPrice || 25.00}" min="1" step="0.01">)</label>
+                </div>
+            </div>
         `;
         
         if (before) {
@@ -1245,6 +1352,9 @@
         }
         
         console.log(`Save complete: ${savedCount} of ${checkedCount} elements saved`);
+        
+        // Check if page contains for-sale photos and auto-include required script
+        await ensurePhotoSaleScript();
         
         // Show confirmation
         const toast = document.createElement('div');
@@ -2599,6 +2709,75 @@
             }
         `;
         document.head.appendChild(style);
+    }
+    
+    // Toggle photo for sale functionality
+    function togglePhotoForSale(toggleElement) {
+        const photoBlock = toggleElement.closest('.photo-block');
+        const saleOptions = photoBlock.querySelector('.photo-sale-options');
+        
+        if (toggleElement.checked) {
+            photoBlock.classList.add('for-sale');
+            saleOptions.style.display = 'block';
+        } else {
+            photoBlock.classList.remove('for-sale');
+            saleOptions.style.display = 'none';
+        }
+        
+        // Save the updated photo block
+        savePhotoBlock(photoBlock);
+        
+        // Add change listeners to price inputs to auto-save
+        const priceInputs = saleOptions.querySelectorAll('input[type="number"], input[type="checkbox"]');
+        priceInputs.forEach(input => {
+            input.addEventListener('change', () => savePhotoBlock(photoBlock));
+        });
+    }
+    
+    // Ensure photo sale script is included when for-sale photos are present
+    async function ensurePhotoSaleScript() {
+        const forSalePhotos = document.querySelectorAll('.photo-block.for-sale');
+        
+        if (forSalePhotos.length === 0) {
+            console.log('📷 No for-sale photos found, skipping script inclusion');
+            return;
+        }
+        
+        console.log(`🛒 Found ${forSalePhotos.length} for-sale photo(s), ensuring script is included`);
+        
+        // Check if script is already included
+        const existingScript = document.querySelector('script[src*="photo-for-sale.js"]');
+        if (existingScript) {
+            console.log('✅ Photo sale script already included');
+            return;
+        }
+        
+        // Add script to page head
+        const script = document.createElement('script');
+        script.src = '/static/js/photo-for-sale.js';
+        script.async = true;
+        script.id = 'photo-sale-script';
+        
+        // Add to head
+        document.head.appendChild(script);
+        
+        console.log('✅ Photo sale script automatically included');
+        
+        // Also save this script inclusion to the page content so it persists on published sites
+        try {
+            await fetch('/api/admin/auto-include-script', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    page: currentPage,
+                    script: '/static/js/photo-for-sale.js',
+                    reason: 'for-sale photos detected'
+                })
+            });
+            console.log('✅ Script inclusion saved to database');
+        } catch (error) {
+            console.log('⚠️ Could not save script inclusion to database:', error);
+        }
     }
     
     // Initialize when DOM is ready
