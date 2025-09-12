@@ -10659,10 +10659,10 @@ END:VCALENDAR`;
                                     <td style="padding: 12px; border-right: 1px solid #dee2e6;">
                                         ${(client.phone_number || client.phoneNumber || client.phone) ? `
                                             <div style="display: flex; gap: 10px; align-items: center;">
-                                                <a href="tel:+1${(client.phone_number || client.phoneNumber || client.phone).replace(/\D/g, '')}" style="color: var(--gold-muted); text-decoration: none;">
-                                                    ${formatPhoneForDisplay(client.phone_number || client.phoneNumber || client.phone)}
+                                                <a href="tel:${client.phone_number || client.phoneNumber || client.phone}" style="color: var(--gold-muted); text-decoration: none;">
+                                                    ${client.phone_number || client.phoneNumber || client.phone}
                                                 </a>
-                                                <a href="sms:+1${(client.phone_number || client.phoneNumber || client.phone).replace(/\D/g, '')}" 
+                                                <a href="sms:${client.phone_number || client.phoneNumber || client.phone}" 
                                                    style="background: var(--gold-muted); color: white; padding: 2px 8px; border-radius: 4px; text-decoration: none; font-size: 12px;">
                                                     SMS
                                                 </a>
@@ -10799,55 +10799,6 @@ END:VCALENDAR`;
             } catch (error) {
                 console.error('Error saving client:', error);
                 showMessage('Failed to save client', 'error');
-            }
-        }
-
-        // Format phone number for display
-        function formatPhoneForDisplay(phoneNumber) {
-            if (!phoneNumber) return '';
-            
-            // Remove all non-digits
-            const cleaned = phoneNumber.replace(/\D/g, '');
-            
-            // Format as (XXX) XXX-XXXX for US numbers
-            if (cleaned.length === 10) {
-                return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-            } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-                return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
-            } else {
-                // Return original if not standard US format
-                return phoneNumber;
-            }
-        }
-
-        // Edit client function
-        function editClient(clientId) {
-            // Find the client in the filteredClients array
-            const client = filteredClients.find(c => c.id === clientId);
-            if (!client) {
-                showMessage('Client not found', 'error');
-                return;
-            }
-            
-            // Populate the modal with client data
-            document.getElementById('clientName').value = client.client_name || client.clientName || client.name || '';
-            document.getElementById('clientEmail').value = client.email || '';
-            document.getElementById('clientPhone').value = client.phone_number || client.phoneNumber || client.phone || '';
-            document.getElementById('clientNotes').value = client.notes || '';
-            
-            // Set the modal to edit mode
-            currentClientId = clientId;
-            
-            // Update modal title
-            const modalTitle = document.querySelector('#clientModal .modal-title');
-            if (modalTitle) {
-                modalTitle.textContent = 'Edit Client';
-            }
-            
-            // Show the modal
-            const modal = document.getElementById('clientModal');
-            if (modal) {
-                modal.style.display = 'block';
             }
         }
 
