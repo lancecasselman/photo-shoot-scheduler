@@ -10344,18 +10344,23 @@ END:VCALENDAR`;
 
         async function loadClientDatabase() {
             try {
+                console.log('Loading client database...');
+                
                 const response = await fetch('/api/clients', {
+                    credentials: 'include', // Use session-based auth instead of Bearer token
                     headers: {
-                        'Authorization': `Bearer ${await getAuthToken()}`
+                        'Cache-Control': 'no-cache'
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to load clients');
+                    throw new Error(`Failed to load clients: ${response.status}`);
                 }
 
                 allClients = await response.json();
                 filteredClients = [...allClients];
+                
+                console.log(`Loaded ${allClients.length} clients from database`);
                 
                 // Sort alphabetically by name
                 filteredClients.sort((a, b) => {
@@ -10366,13 +10371,18 @@ END:VCALENDAR`;
                 
                 renderClientList();
                 
-                // Check if we need to migrate clients from sessions
+                // Only show migration prompt if truly no clients exist AND this seems like a fresh setup
                 if (allClients.length === 0) {
+                    console.log('No clients found, checking if migration is needed...');
                     checkAndMigrateClientsFromSessions();
+                } else {
+                    console.log(`Client database loaded successfully with ${allClients.length} clients`);
                 }
             } catch (error) {
                 console.error('Error loading clients:', error);
-                showMessage('Failed to load clients', 'error');
+                showMessage('Failed to load clients. Please refresh the page.', 'error');
+                // Show empty state message instead of leaving it loading
+                renderClientList();
             }
         }
         
@@ -10380,8 +10390,9 @@ END:VCALENDAR`;
             try {
                 // Load all sessions
                 const sessionsResponse = await fetch('/api/sessions', {
+                    credentials: 'include', // Use session-based auth
                     headers: {
-                        'Authorization': `Bearer ${await getAuthToken()}`
+                        'Cache-Control': 'no-cache'
                     }
                 });
                 
@@ -10393,12 +10404,16 @@ END:VCALENDAR`;
                 const sessions = await sessionsResponse.json();
                 
                 if (sessions.length > 0) {
+                    // Since we now have automatic client creation, this should only show for legacy setups
+                    console.log(`Found ${sessions.length} sessions but no clients - automatic system should have handled this`);
                     // Show migration prompt
                     const migrate = confirm('We found ' + sessions.length + ' sessions but no clients in your database. Would you like to import your clients from your existing sessions?');
                     
                     if (migrate) {
                         await migrateClientsFromSessions();
                     }
+                } else {
+                    console.log('No sessions found either - this is a fresh account');
                 }
             } catch (error) {
                 console.error('Error checking for migration:', error);
@@ -10412,8 +10427,9 @@ END:VCALENDAR`;
                 
                 // First, load existing clients to avoid duplicates
                 const existingClientsResponse = await fetch('/api/clients', {
+                    credentials: 'include', // Use session-based auth
                     headers: {
-                        'Authorization': `Bearer ${await getAuthToken()}`
+                        'Cache-Control': 'no-cache'
                     }
                 });
                 
