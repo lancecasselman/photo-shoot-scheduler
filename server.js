@@ -1556,6 +1556,15 @@ app.use((req, res, next) => {
 // REMOVED: Root level static serving to prevent bypassing secure routes
 // This was serving index.html directly and bypassing our secure landing page route
 
+// API root endpoint to handle health check HEAD requests
+app.all('/api', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        message: 'Photography Management System API'
+    });
+});
+
 // Auth status endpoint for checking if user is authenticated
 app.get('/api/auth/status', (req, res) => {
     if (req.session && req.session.user) {
