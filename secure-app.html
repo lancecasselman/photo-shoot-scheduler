@@ -10375,8 +10375,28 @@ END:VCALENDAR`;
 
         async function loadClientDatabase() {
             try {
-                console.log('Loading client database...');
+                console.log('🔄 Loading ALL clients (deleted and present) from sessions...');
                 
+                // STEP 1: First auto-populate ALL clients from sessions to ensure nothing is missing
+                console.log('🔄 Step 1: Auto-populating clients from ALL sessions...');
+                const autoPopulateResponse = await fetch('/api/clients/auto-populate', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
+                if (autoPopulateResponse.ok) {
+                    const populateResult = await autoPopulateResponse.json();
+                    console.log('✅ Auto-populate result:', populateResult.message);
+                } else {
+                    console.warn('⚠️ Auto-populate failed, continuing with existing clients...');
+                }
+
+                // STEP 2: Now load the complete client database
+                console.log('🔄 Step 2: Loading complete client database...');
                 const response = await fetch('/api/clients', {
                     credentials: 'include', // Use session-based auth instead of Bearer token
                     headers: {
@@ -10391,7 +10411,7 @@ END:VCALENDAR`;
                 allClients = await response.json();
                 filteredClients = [...allClients];
                 
-                console.log(`Loaded ${allClients.length} clients from database`);
+                console.log(`✅ Loaded ${allClients.length} total clients (all sessions included)`);
                 
                 // Sort alphabetically by name
                 filteredClients.sort((a, b) => {
@@ -12741,8 +12761,6 @@ END:VCALENDAR`;
         // Override switchTab function to work with new navigation
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tab) {
-            console.log('🔍 DEBUG: switchTab called with tab:', tab);
-            
             // Close mobile menu when switching tabs
             const mobileMenu = document.getElementById('mobileMenu');
             const hamburgerBtn = document.querySelector('.hamburger-menu');
@@ -12754,33 +12772,25 @@ END:VCALENDAR`;
             
             // Handle client database loading BEFORE calling original function
             if (tab === 'clientDatabase') {
-                console.log('🔍 DEBUG: Client database tab detected, setting up auto-load...');
-                
                 // Ensure the container shows loading state
                 setTimeout(() => {
                     const container = document.getElementById('clientDatabaseList');
-                    console.log('🔍 DEBUG: Client container found:', !!container);
                     if (container) {
                         container.innerHTML = `
                             <div class="loading-message" style="text-align: center; padding: 40px; color: #666;">
-                                Loading clients...
+                                Loading all clients...
                             </div>
                         `;
-                        console.log('🔍 DEBUG: Loading message set in container');
                     }
                     
                     // Load clients automatically
                     setTimeout(() => {
-                        console.log('🔍 DEBUG: About to call loadClientDatabase...');
-                        console.log('🔍 DEBUG: loadClientDatabase function exists:', typeof loadClientDatabase);
                         try {
-                            loadClientDatabase().then(() => {
-                                console.log('🔍 DEBUG: loadClientDatabase completed successfully');
-                            }).catch(error => {
-                                console.error('🔍 DEBUG: loadClientDatabase failed:', error);
+                            loadClientDatabase().catch(error => {
+                                console.error('Failed to load client database:', error);
                             });
                         } catch (error) {
-                            console.error('🔍 DEBUG: Error calling loadClientDatabase:', error);
+                            console.error('Error calling loadClientDatabase:', error);
                         }
                     }, 200);
                 }, 100);
