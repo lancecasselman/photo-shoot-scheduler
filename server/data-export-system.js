@@ -45,6 +45,9 @@ class DataExportSystem {
                 support: await this.getUserSupportHistory(userId),
                 activities: await this.getUserActivities(userId),
                 billing: await this.getUserBillingHistory(userId),
+                businessExpenses: await this.getUserBusinessExpenses(userId),
+                sessionProfits: await this.getUserSessionProfits(userId),
+                mileageTracking: await this.getUserMileageData(userId),
                 websites: await this.getUserWebsites(userId),
                 community: await this.getUserCommunityData(userId),
                 exportMetadata: {
@@ -58,7 +61,12 @@ class DataExportSystem {
             console.log(`📊 Collected data for user ${userId}:`, {
                 sessions: userData.sessions.length,
                 files: userData.files.length,
-                supportTickets: userData.support.length
+                supportTickets: userData.support.length,
+                businessExpenses: userData.businessExpenses.length,
+                sessionProfits: userData.sessionProfits.length,
+                mileageEntries: userData.mileageTracking.length,
+                websites: userData.websites.length,
+                communityPosts: userData.community.length
             });
 
             return userData;
@@ -255,6 +263,74 @@ class DataExportSystem {
         }
     }
 
+    // Get business expenses for tax and accounting purposes
+    async getUserBusinessExpenses(userId) {
+        try {
+            const expenses = await this.pool.query(`
+                SELECT 
+                    id, date, category, description, amount, 
+                    recurring, receipt_url, tax_deductible, 
+                    created_at, updated_at
+                FROM business_expenses
+                WHERE user_id = $1
+                ORDER BY date DESC
+            `, [userId]);
+
+            return expenses.rows;
+
+        } catch (error) {
+            console.error('Error fetching business expenses:', error);
+            return [];
+        }
+    }
+
+    // Get session profit data for business reporting
+    async getUserSessionProfits(userId) {
+        try {
+            const sessionProfits = await this.pool.query(`
+                SELECT 
+                    ps.id, ps.session_name, ps.client_name, ps.date,
+                    ps.session_fee, ps.deposit_amount, ps.balance_due,
+                    ps.photographer_profit, ps.expenses, ps.net_profit,
+                    ps.package_price, ps.additional_services_fee,
+                    ps.created_at, ps.updated_at
+                FROM photography_sessions ps
+                WHERE ps.user_id = $1
+                AND ps.photographer_profit IS NOT NULL
+                ORDER BY ps.date DESC
+            `, [userId]);
+
+            return sessionProfits.rows;
+
+        } catch (error) {
+            console.error('Error fetching session profits:', error);
+            return [];
+        }
+    }
+
+    // Get mileage tracking data for business tax deductions
+    async getUserMileageData(userId) {
+        try {
+            const mileage = await this.pool.query(`
+                SELECT 
+                    ps.id, ps.session_name, ps.client_name, ps.date,
+                    ps.location, ps.miles_to_location, ps.mileage_cost,
+                    ps.travel_time, ps.parking_fees, ps.tolls,
+                    ps.created_at
+                FROM photography_sessions ps
+                WHERE ps.user_id = $1
+                AND ps.miles_to_location IS NOT NULL
+                ORDER BY ps.date DESC
+            `, [userId]);
+
+            return mileage.rows;
+
+        } catch (error) {
+            console.error('Error fetching mileage data:', error);
+            return [];
+        }
+    }
+
     // Create ZIP export with all files
     async createZipExport(userData, exportId, userId) {
         try {
@@ -345,6 +421,24 @@ class DataExportSystem {
                 await fs.writeFile(path.join(tempDir, 'support-tickets.csv'), supportCsv);
             }
 
+            // Business expenses CSV
+            if (userData.businessExpenses && userData.businessExpenses.length > 0) {
+                const expensesCsv = this.convertToCSV(userData.businessExpenses);
+                await fs.writeFile(path.join(tempDir, 'business-expenses.csv'), expensesCsv);
+            }
+
+            // Session profits CSV
+            if (userData.sessionProfits && userData.sessionProfits.length > 0) {
+                const profitsCsv = this.convertToCSV(userData.sessionProfits);
+                await fs.writeFile(path.join(tempDir, 'session-profits.csv'), profitsCsv);
+            }
+
+            // Mileage tracking CSV
+            if (userData.mileageTracking && userData.mileageTracking.length > 0) {
+                const mileageCsv = this.convertToCSV(userData.mileageTracking);
+                await fs.writeFile(path.join(tempDir, 'mileage-tracking.csv'), mileageCsv);
+            }
+
         } catch (error) {
             console.error('Error creating CSV files:', error);
         }
@@ -412,22 +506,101 @@ class DataExportSystem {
         }
     }
 
-    // Convert data to CSV format
+    // Convert data to CSV format with security and data integrity fixes
     convertToCSV(data) {
         if (!data || data.length === 0) return '';
 
-        const headers = Object.keys(data[0]);
-        const csvRows = [headers.join(',')];
+        // Build consistent headers from union of all row keys (fixes column stability)
+        const allHeaders = new Set();
+        data.forEach(row => {
+            if (row && typeof row === 'object') {
+                Object.keys(row).forEach(key => allHeaders.add(key));
+            }
+        });
+        const headers = Array.from(allHeaders).sort();
 
+        // Create header row with proper CSV formatting
+        const csvRows = [headers.map(header => this.escapeCsvValue(header)).join(',')];
+
+        // Process each data row
         for (const row of data) {
             const values = headers.map(header => {
-                const value = row[header];
-                return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+                const rawValue = row ? row[header] : null;
+                return this.escapeCsvValue(rawValue);
             });
             csvRows.push(values.join(','));
         }
 
         return csvRows.join('\n');
+    }
+
+    // Escape and sanitize CSV values for security and data integrity
+    escapeCsvValue(value) {
+        // Handle null/undefined values
+        if (value === null || value === undefined) {
+            return '';
+        }
+
+        // Handle booleans
+        if (typeof value === 'boolean') {
+            return value ? 'true' : 'false';
+        }
+
+        // Handle numbers (including zero)
+        if (typeof value === 'number') {
+            return isNaN(value) ? '' : value.toString();
+        }
+
+        // Handle dates
+        if (value instanceof Date) {
+            return `"${value.toISOString()}"`;
+        }
+
+        // Handle objects and arrays by serializing to JSON
+        if (typeof value === 'object') {
+            try {
+                const jsonString = JSON.stringify(value);
+                return this.sanitizeAndQuoteCsvValue(jsonString);
+            } catch (error) {
+                // Fallback for non-serializable objects
+                return this.sanitizeAndQuoteCsvValue('[Complex Object]');
+            }
+        }
+
+        // Handle strings and convert other types to string
+        const stringValue = String(value);
+        return this.sanitizeAndQuoteCsvValue(stringValue);
+    }
+
+    // Sanitize and quote CSV values to prevent injection attacks
+    sanitizeAndQuoteCsvValue(str) {
+        if (!str || typeof str !== 'string') {
+            return '""';
+        }
+
+        // CSV Injection protection: Prefix dangerous characters that could trigger formula execution
+        const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+        let sanitizedValue = str;
+        
+        if (dangerousChars.some(char => str.startsWith(char))) {
+            // Prefix with apostrophe to prevent formula execution in Excel/Sheets
+            sanitizedValue = "'" + str;
+        }
+
+        // Handle special CSV characters that require quoting
+        const needsQuoting = sanitizedValue.includes(',') || 
+                           sanitizedValue.includes('"') || 
+                           sanitizedValue.includes('\n') || 
+                           sanitizedValue.includes('\r');
+
+        if (needsQuoting || sanitizedValue !== str) {
+            // Escape existing double quotes by doubling them
+            const escapedValue = sanitizedValue.replace(/"/g, '""');
+            return `"${escapedValue}"`;
+        }
+
+        // For simple values that don't need special handling, still quote for consistency
+        return `"${sanitizedValue}"`;
     }
 
     // Flatten nested user data for CSV export
@@ -447,6 +620,38 @@ class DataExportSystem {
             flattened.push({
                 type: 'session',
                 ...session
+            });
+        });
+
+        // Add business expenses
+        userData.businessExpenses.forEach(expense => {
+            flattened.push({
+                type: 'business_expense',
+                ...expense
+            });
+        });
+
+        // Add session profits
+        userData.sessionProfits.forEach(profit => {
+            flattened.push({
+                type: 'session_profit',
+                ...profit
+            });
+        });
+
+        // Add mileage tracking
+        userData.mileageTracking.forEach(mileage => {
+            flattened.push({
+                type: 'mileage',
+                ...mileage
+            });
+        });
+
+        // Add billing history
+        userData.billing.forEach(billing => {
+            flattened.push({
+                type: 'billing',
+                ...billing
             });
         });
 
