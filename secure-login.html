@@ -140,8 +140,8 @@
                 const idToken = await user.getIdToken(true); // Force refresh
                 console.log('🎫 TOKEN: Retrieved fresh ID token for verification');
                 
-                // First verify session with backend
-                const authResponse = await fetch('/api/verify-auth', {
+                // Create session with backend
+                const authResponse = await fetch('/auth/session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

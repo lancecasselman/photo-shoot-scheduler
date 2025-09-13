@@ -1565,6 +1565,70 @@ app.all('/api', (req, res) => {
     });
 });
 
+// Auth session endpoint for exchanging Firebase ID token for server session
+app.post('/auth/session', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        
+        if (!idToken) {
+            return res.status(400).json({ error: 'ID token is required' });
+        }
+
+        // Verify the Firebase ID token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        
+        // Create normalized user object with Lance normalization
+        const normalizedUser = normalizeUserForLance({
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            displayName: decodedToken.name || decodedToken.email,
+            photoURL: decodedToken.picture
+        });
+
+        // Set the user in the session
+        req.session.user = normalizedUser;
+        req.user = normalizedUser;
+
+        // Store Android auth info for mobile compatibility
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        if (isAndroid || isCapacitor) {
+            req.session.androidAuth = {
+                idToken,
+                timestamp: Date.now()
+            };
+        }
+
+        // Save the session
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ error: 'Failed to save session' });
+            }
+
+            console.log('✅ AUTH SESSION: Created session for', normalizedUser.email);
+            res.json({
+                success: true,
+                user: {
+                    uid: normalizedUser.uid,
+                    email: normalizedUser.email,
+                    displayName: normalizedUser.displayName,
+                    photoURL: normalizedUser.photoURL
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('Authentication error:', error);
+        res.status(401).json({ 
+            error: 'Invalid token',
+            details: error.message 
+        });
+    }
+});
+
 // Auth status endpoint for checking if user is authenticated
 app.get('/api/auth/status', (req, res) => {
     if (req.session && req.session.user) {
@@ -8956,6 +9020,11 @@ app.get('/api/raw-backups/status', isAuthenticated, async (req, res) => {
 // Serve storefront builder page
 app.get('/storefront', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'storefront.html'));
+});
+
+// Serve community dashboard page
+app.get('/community', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'community', 'community-dashboard.html'));
 });
 
 // Serve public invoice page (no authentication required)

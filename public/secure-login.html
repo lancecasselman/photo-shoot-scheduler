@@ -165,19 +165,13 @@
                 console.log('🖥️ Google authentication successful, creating session...');
                 
                 // Create session with backend
-                const response = await fetch('/api/auth/mobile-session', {
+                const response = await fetch('/auth/session', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
-                        isMobile: new URLSearchParams(window.location.search).get('mobile') === 'true',
-                        platform: new URLSearchParams(window.location.search).get('platform') || 'web'
+                        idToken: idToken
                     }),
                     credentials: 'include'
                 });

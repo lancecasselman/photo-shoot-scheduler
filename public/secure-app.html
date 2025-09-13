@@ -13839,18 +13839,13 @@ END:VCALENDAR`;
                     console.log('🖥️ DESKTOP: Google authentication successful, creating session...');
                     
                     // Create session with backend using the proper endpoint
-                    const response = await fetch('/api/auth/mobile-session', {
+                    const response = await fetch('/auth/session', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${idToken}`
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            uid: user.uid,
-                            email: user.email,
-                            displayName: user.displayName,
-                            photoURL: user.photoURL,
-                            isDesktop: true
+                            idToken: idToken
                         }),
                         credentials: 'include'
                     });

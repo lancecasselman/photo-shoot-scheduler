@@ -136,18 +136,13 @@ class NativeAuthHandler {
             const idToken = await firebaseUser.getIdToken();
             
             // Create session on backend
-            const response = await fetch('/api/auth/mobile-session', {
+            const response = await fetch('/auth/session', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${idToken}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL,
-                    isIOS: true
+                    idToken: idToken
                 }),
                 credentials: 'include'
             });
