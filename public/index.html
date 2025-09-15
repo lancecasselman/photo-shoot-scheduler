@@ -730,6 +730,89 @@
             alert('Thank you for your message! We\'ll get back to you soon.');
             this.reset();
         });
+
+        // Dynamic Homepage Content Loading
+        async function loadCustomHomepageContent() {
+            try {
+                const response = await fetch('/api/public/homepage-content');
+                const result = await response.json();
+                
+                if (result.success && result.content) {
+                    const content = result.content;
+                    
+                    // Update Hero Section
+                    if (content['hero-headline'] && content['hero-headline'].content) {
+                        const heroTitle = document.querySelector('.hero-content h1');
+                        if (heroTitle) {
+                            heroTitle.innerHTML = content['hero-headline'].content;
+                        }
+                    }
+                    
+                    if (content['hero-description'] && content['hero-description'].content) {
+                        const heroDesc = document.querySelector('.hero-content p');
+                        if (heroDesc) {
+                            heroDesc.innerHTML = content['hero-description'].content;
+                        }
+                    }
+                    
+                    // Update Features Section
+                    if (content['features-title'] && content['features-title'].content) {
+                        const featuresTitle = document.querySelector('#features .section-header h2');
+                        if (featuresTitle) {
+                            featuresTitle.innerHTML = content['features-title'].content;
+                        }
+                    }
+                    
+                    if (content['features-description'] && content['features-description'].content) {
+                        const featuresDesc = document.querySelector('#features .section-header p');
+                        if (featuresDesc) {
+                            featuresDesc.innerHTML = content['features-description'].content;
+                        }
+                    }
+                    
+                    // Update Pricing Section  
+                    if (content['pricing-title'] && content['pricing-title'].content) {
+                        const pricingTitle = document.querySelector('#pricing .section-header h2');
+                        if (pricingTitle) {
+                            pricingTitle.innerHTML = content['pricing-title'].content;
+                        }
+                    }
+                    
+                    if (content['pricing-subtitle'] && content['pricing-subtitle'].content) {
+                        const pricingSubtitle = document.querySelector('#pricing .section-header p');
+                        if (pricingSubtitle) {
+                            pricingSubtitle.innerHTML = content['pricing-subtitle'].content;
+                        }
+                    }
+                    
+                    // Update Contact Section
+                    if (content['contact-title'] && content['contact-title'].content) {
+                        const contactTitle = document.querySelector('#contact .section-header h2');
+                        if (contactTitle) {
+                            contactTitle.innerHTML = content['contact-title'].content;
+                        }
+                    }
+                    
+                    if (content['contact-description'] && content['contact-description'].content) {
+                        const contactDesc = document.querySelector('#contact .section-header p');
+                        if (contactDesc) {
+                            contactDesc.innerHTML = content['contact-description'].content;
+                        }
+                    }
+                    
+                    console.log('✅ Custom homepage content loaded successfully');
+                }
+            } catch (error) {
+                // Silently fail and use default content - no error messages on public page
+                console.log('Using default homepage content');
+            }
+        }
+        
+        // Load custom content after page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAndroidAuth();
+            loadCustomHomepageContent(); // Load custom content
+        });
     </script>
 </body>
 </html>

@@ -17085,6 +17085,102 @@ app.post('/api/stripe-connect/dashboard-link', isAuthenticated, async (req, res)
     }
 });
 
+// Homepage Content Management API Routes
+// Get homepage content for editing
+app.get('/api/homepage-content', isAuthenticated, async (req, res) => {
+    try {
+        const client = await pool.connect();
+        
+        // Get all homepage content sections
+        const result = await client.query(`
+            SELECT page, selector, content, content_type 
+            FROM admin_content_edits 
+            WHERE page = 'homepage'
+            ORDER BY selector
+        `);
+        
+        client.release();
+        
+        // Convert to object format for easy frontend consumption
+        const content = {};
+        result.rows.forEach(row => {
+            content[row.selector] = {
+                content: row.content,
+                type: row.content_type || 'text'
+            };
+        });
+        
+        res.json({ success: true, content });
+    } catch (error) {
+        console.error('Error fetching homepage content:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch homepage content' });
+    }
+});
+
+// Update homepage content
+app.post('/api/homepage-content', isAuthenticated, async (req, res) => {
+    try {
+        const { selector, content, contentType = 'text' } = req.body;
+        const userId = req.user?.uid || 'admin';
+        
+        if (!selector || content === undefined) {
+            return res.status(400).json({ success: false, error: 'Selector and content are required' });
+        }
+        
+        const client = await pool.connect();
+        
+        // Upsert the content
+        await client.query(`
+            INSERT INTO admin_content_edits (page, selector, content, content_type, edited_by, created_at, updated_at)
+            VALUES ('homepage', $1, $2, $3, $4, NOW(), NOW())
+            ON CONFLICT (page, selector) 
+            DO UPDATE SET 
+                content = EXCLUDED.content,
+                content_type = EXCLUDED.content_type,
+                edited_by = EXCLUDED.edited_by,
+                updated_at = NOW()
+        `, [selector, content, contentType, userId]);
+        
+        client.release();
+        
+        console.log(`📝 Homepage content updated: ${selector} by ${userId}`);
+        res.json({ success: true, message: 'Content updated successfully' });
+    } catch (error) {
+        console.error('Error updating homepage content:', error);
+        res.status(500).json({ success: false, error: 'Failed to update homepage content' });
+    }
+});
+
+// Get homepage content for public display (no auth required)
+app.get('/api/public/homepage-content', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        
+        const result = await client.query(`
+            SELECT page, selector, content, content_type 
+            FROM admin_content_edits 
+            WHERE page = 'homepage'
+            ORDER BY selector
+        `);
+        
+        client.release();
+        
+        // Convert to object format
+        const content = {};
+        result.rows.forEach(row => {
+            content[row.selector] = {
+                content: row.content,
+                type: row.content_type || 'text'
+            };
+        });
+        
+        res.json({ success: true, content });
+    } catch (error) {
+        console.error('Error fetching public homepage content:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch homepage content' });
+    }
+});
+
 // Global error handlers to prevent server crashes
 app.use((err, req, res, next) => {
     console.error('🔥 Unhandled application error:', {

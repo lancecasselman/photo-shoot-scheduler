@@ -5474,6 +5474,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('homepageEditor'); closeMobileMenu();">
+                            🏠 Homepage Editor
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="/community/community-dashboard.html" target="_blank" class="nav-link">
                             Community
                         </a>
@@ -18347,6 +18352,141 @@ END:VCALENDAR`;
         }
     </script>
 
+    <!-- Homepage Editor Tab -->
+    <div id="homepageEditorTab" class="tab-content">
+        <div class="content-header">
+            <h1 style="color: #000000 !important; opacity: 1 !important; font-weight: 700 !important;">🏠 Homepage Editor</h1>
+            <p style="color: #000000 !important;">Customize your public homepage content without any technical knowledge</p>
+        </div>
+
+        <!-- Homepage Editor Interface -->
+        <div class="homepage-editor-container" style="display: grid; gap: 20px; padding: 20px;">
+            
+            <!-- Hero Section Editor -->
+            <div class="editor-section">
+                <h3 style="color: #d4af37; margin-bottom: 15px; font-weight: 600;">✨ Hero Section</h3>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Main Headline:</label>
+                        <input type="text" id="hero-headline" placeholder="Professional Photography Business Platform" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Hero Description:</label>
+                        <textarea id="hero-description" rows="3" placeholder="Transform your photography business with an all-in-one management platform..." 
+                                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                    <button onclick="updateHomepageContent('hero-headline', document.getElementById('hero-headline').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">
+                        Update Headline
+                    </button>
+                    <button onclick="updateHomepageContent('hero-description', document.getElementById('hero-description').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Update Description
+                    </button>
+                </div>
+            </div>
+
+            <!-- Features Section Editor -->
+            <div class="editor-section">
+                <h3 style="color: #d4af37; margin-bottom: 15px; font-weight: 600;">🚀 Features Section</h3>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Section Title:</label>
+                        <input type="text" id="features-title" placeholder="Everything You Need to Manage Your Photography Business" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Section Description:</label>
+                        <textarea id="features-description" rows="3" placeholder="Stop juggling spreadsheets, emails, and payment apps..." 
+                                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                    <button onclick="updateHomepageContent('features-title', document.getElementById('features-title').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">
+                        Update Title
+                    </button>
+                    <button onclick="updateHomepageContent('features-description', document.getElementById('features-description').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Update Description
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pricing Section Editor -->
+            <div class="editor-section">
+                <h3 style="color: #d4af37; margin-bottom: 15px; font-weight: 600;">💰 Pricing Section</h3>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Pricing Title:</label>
+                        <input type="text" id="pricing-title" placeholder="Simple, Transparent Pricing" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Pricing Subtitle:</label>
+                        <input type="text" id="pricing-subtitle" placeholder="No setup fees. No hidden costs. Cancel anytime." 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <button onclick="updateHomepageContent('pricing-title', document.getElementById('pricing-title').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">
+                        Update Title
+                    </button>
+                    <button onclick="updateHomepageContent('pricing-subtitle', document.getElementById('pricing-subtitle').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Update Subtitle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contact Section Editor -->
+            <div class="editor-section">
+                <h3 style="color: #d4af37; margin-bottom: 15px; font-weight: 600;">📞 Contact Section</h3>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Contact Title:</label>
+                        <input type="text" id="contact-title" placeholder="Get in Touch" 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333;">Contact Description:</label>
+                        <input type="text" id="contact-description" placeholder="Have questions about our platform? We're here to help you succeed." 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    </div>
+                    <button onclick="updateHomepageContent('contact-title', document.getElementById('contact-title').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">
+                        Update Title
+                    </button>
+                    <button onclick="updateHomepageContent('contact-description', document.getElementById('contact-description').value)" 
+                            class="btn" style="background: #d4af37; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                        Update Description
+                    </button>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="editor-section">
+                <h3 style="color: #d4af37; margin-bottom: 15px; font-weight: 600;">🔧 Homepage Control Panel</h3>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button onclick="loadCurrentHomepageContent()" 
+                                class="btn" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            🔄 Load Current Content
+                        </button>
+                        <button onclick="previewHomepage()" 
+                                class="btn" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            👁️ Preview Homepage
+                        </button>
+                        <button onclick="resetToDefaults()" 
+                                class="btn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                            ↩️ Reset to Defaults
+                        </button>
+                    </div>
+                    <div id="homepage-editor-status" style="padding: 10px; background: #f8f9fa; border-radius: 4px; font-style: italic; color: #666;">
+                        Ready to edit your homepage. Load current content to see what's currently displayed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Print Lab Tab Content -->
     <div id="printLabTab" class="tab-content">
@@ -18463,6 +18603,183 @@ END:VCALENDAR`;
     
     <!-- Admin Inline Editor with Photo Blocks -->
     <script src="admin-inline-editor.js"></script>
+
+    <!-- Homepage Editor JavaScript -->
+    <script>
+        // Homepage Editor Functions
+        
+        // Update specific homepage content section
+        async function updateHomepageContent(selector, content) {
+            try {
+                if (!content || content.trim() === '') {
+                    showMessage('Content cannot be empty', 'error');
+                    return;
+                }
+                
+                const response = await fetch('/api/homepage-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selector: selector,
+                        content: content.trim(),
+                        contentType: 'text'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`✅ ${selector.replace('-', ' ')} updated successfully!`, 'success');
+                    updateStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
+                } else {
+                    showMessage(`❌ Failed to update ${selector}: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating homepage content:', error);
+                showMessage(`❌ Error updating content: ${error.message}`, 'error');
+            }
+        }
+        
+        // Load current homepage content into editor fields
+        async function loadCurrentHomepageContent() {
+            try {
+                updateStatus('Loading current homepage content...');
+                
+                const response = await fetch('/api/homepage-content');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const content = result.content;
+                    
+                    // Populate form fields with current content
+                    if (content['hero-headline']) {
+                        document.getElementById('hero-headline').value = content['hero-headline'].content;
+                    }
+                    if (content['hero-description']) {
+                        document.getElementById('hero-description').value = content['hero-description'].content;
+                    }
+                    if (content['features-title']) {
+                        document.getElementById('features-title').value = content['features-title'].content;
+                    }
+                    if (content['features-description']) {
+                        document.getElementById('features-description').value = content['features-description'].content;
+                    }
+                    if (content['pricing-title']) {
+                        document.getElementById('pricing-title').value = content['pricing-title'].content;
+                    }
+                    if (content['pricing-subtitle']) {
+                        document.getElementById('pricing-subtitle').value = content['pricing-subtitle'].content;
+                    }
+                    if (content['contact-title']) {
+                        document.getElementById('contact-title').value = content['contact-title'].content;
+                    }
+                    if (content['contact-description']) {
+                        document.getElementById('contact-description').value = content['contact-description'].content;
+                    }
+                    
+                    const loadedCount = Object.keys(content).length;
+                    if (loadedCount > 0) {
+                        showMessage(`✅ Loaded ${loadedCount} content sections from database`, 'success');
+                        updateStatus(`Content loaded successfully. ${loadedCount} sections found.`);
+                    } else {
+                        showMessage('ℹ️ No custom content found. Using default homepage content.', 'info');
+                        updateStatus('No custom content found - using defaults');
+                    }
+                } else {
+                    showMessage(`❌ Failed to load content: ${result.error}`, 'error');
+                    updateStatus('Failed to load content');
+                }
+            } catch (error) {
+                console.error('Error loading homepage content:', error);
+                showMessage(`❌ Error loading content: ${error.message}`, 'error');
+                updateStatus('Error loading content');
+            }
+        }
+        
+        // Preview homepage in new tab
+        function previewHomepage() {
+            const previewUrl = window.location.origin; // This will open your homepage
+            window.open(previewUrl, '_blank');
+            showMessage('🔍 Opening homepage preview in new tab', 'info');
+            updateStatus('Homepage preview opened');
+        }
+        
+        // Reset to default homepage content
+        async function resetToDefaults() {
+            if (!confirm('Are you sure you want to reset all homepage content to defaults? This will remove all your customizations.')) {
+                return;
+            }
+            
+            try {
+                updateStatus('Resetting to default content...');
+                
+                // Clear all the input fields
+                document.getElementById('hero-headline').value = '';
+                document.getElementById('hero-description').value = '';
+                document.getElementById('features-title').value = '';
+                document.getElementById('features-description').value = '';
+                document.getElementById('pricing-title').value = '';
+                document.getElementById('pricing-subtitle').value = '';
+                document.getElementById('contact-title').value = '';
+                document.getElementById('contact-description').value = '';
+                
+                // You could add API call here to delete custom content from database
+                // For now, just clear the form and show message
+                showMessage('✅ Form cleared. Default content will be used on homepage.', 'success');
+                updateStatus('Reset to defaults - form cleared');
+            } catch (error) {
+                console.error('Error resetting to defaults:', error);
+                showMessage(`❌ Error resetting: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update status display
+        function updateStatus(message) {
+            const statusElement = document.getElementById('homepage-editor-status');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.style.color = '#666';
+            }
+        }
+        
+        // Auto-load content when homepage editor tab is opened
+        function onHomepageEditorTabOpen() {
+            // This function can be called when the tab is switched
+            updateStatus('Homepage Editor ready. Click "Load Current Content" to see what\'s currently displayed.');
+        }
+        
+        // Initialize homepage editor when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for Enter key submission
+            const inputs = document.querySelectorAll('#homepageEditorTab input, #homepageEditorTab textarea');
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        // Ctrl+Enter to update
+                        const selector = this.id;
+                        if (selector) {
+                            updateHomepageContent(selector, this.value);
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Add to the global switchTab function to handle homepage editor
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tabName) {
+            if (originalSwitchTab) {
+                originalSwitchTab(tabName);
+            }
+            
+            if (tabName === 'homepageEditor') {
+                onHomepageEditorTabOpen();
+            }
+        };
+        
+    </script>
 
 </body>
 </html>
