@@ -18359,6 +18359,182 @@ END:VCALENDAR`;
             <p style="color: #000000 !important;">Customize your public homepage content without any technical knowledge</p>
         </div>
 
+        <!-- Homepage Editor JavaScript - Define functions first -->
+        <script>
+            // Homepage Editor Functions - Defined early so they're available for button clicks
+            
+            // Update specific homepage content section
+            async function updateHomepageContent(selector, content) {
+                try {
+                    if (!content || content.trim() === '') {
+                        showMessage('Content cannot be empty', 'error');
+                        return;
+                    }
+                    
+                    const response = await fetch('/api/homepage-content', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            selector: selector,
+                            content: content.trim(),
+                            contentType: 'text'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showMessage(`✅ ${selector.replace('-', ' ')} updated successfully!`, 'success');
+                        updateHomepageStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
+                    } else {
+                        showMessage(`❌ Failed to update ${selector}: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error updating homepage content:', error);
+                    showMessage(`❌ Error updating content: ${error.message}`, 'error');
+                }
+            }
+            
+            // Load current homepage content into editor fields
+            async function loadCurrentHomepageContent() {
+                try {
+                    updateHomepageStatus('Loading current homepage content...');
+                    
+                    const response = await fetch('/api/homepage-content');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const content = result.content;
+                        
+                        // Populate form fields with current content
+                        if (content['hero-headline']) {
+                            document.getElementById('hero-headline').value = content['hero-headline'].content;
+                        }
+                        if (content['hero-description']) {
+                            document.getElementById('hero-description').value = content['hero-description'].content;
+                        }
+                        if (content['features-title']) {
+                            document.getElementById('features-title').value = content['features-title'].content;
+                        }
+                        if (content['features-description']) {
+                            document.getElementById('features-description').value = content['features-description'].content;
+                        }
+                        if (content['pricing-title']) {
+                            document.getElementById('pricing-title').value = content['pricing-title'].content;
+                        }
+                        if (content['pricing-subtitle']) {
+                            document.getElementById('pricing-subtitle').value = content['pricing-subtitle'].content;
+                        }
+                        if (content['contact-title']) {
+                            document.getElementById('contact-title').value = content['contact-title'].content;
+                        }
+                        if (content['contact-description']) {
+                            document.getElementById('contact-description').value = content['contact-description'].content;
+                        }
+                        
+                        const loadedCount = Object.keys(content).length;
+                        if (loadedCount > 0) {
+                            showMessage(`✅ Loaded ${loadedCount} content sections from database`, 'success');
+                            updateHomepageStatus(`Content loaded successfully. ${loadedCount} sections found.`);
+                        } else {
+                            showMessage('ℹ️ No custom content found. Using default homepage content.', 'info');
+                            updateHomepageStatus('No custom content found - using defaults');
+                        }
+                    } else {
+                        showMessage(`❌ Failed to load content: ${result.error}`, 'error');
+                        updateHomepageStatus('Failed to load content');
+                    }
+                } catch (error) {
+                    console.error('Error loading homepage content:', error);
+                    showMessage(`❌ Error loading content: ${error.message}`, 'error');
+                    updateHomepageStatus('Error loading content');
+                }
+            }
+            
+            // Preview homepage in new tab
+            function previewHomepage() {
+                const previewUrl = window.location.origin; // This will open your homepage
+                window.open(previewUrl, '_blank');
+                showMessage('🔍 Opening homepage preview in new tab', 'info');
+                updateHomepageStatus('Homepage preview opened');
+            }
+            
+            // Reset to default homepage content
+            async function resetToDefaults() {
+                if (!confirm('Are you sure you want to reset all homepage content to defaults? This will remove all your customizations.')) {
+                    return;
+                }
+                
+                try {
+                    updateHomepageStatus('Resetting to default content...');
+                    
+                    // Clear all the input fields
+                    document.getElementById('hero-headline').value = '';
+                    document.getElementById('hero-description').value = '';
+                    document.getElementById('features-title').value = '';
+                    document.getElementById('features-description').value = '';
+                    document.getElementById('pricing-title').value = '';
+                    document.getElementById('pricing-subtitle').value = '';
+                    document.getElementById('contact-title').value = '';
+                    document.getElementById('contact-description').value = '';
+                    
+                    // You could add API call here to delete custom content from database
+                    // For now, just clear the form and show message
+                    showMessage('✅ Form cleared. Default content will be used on homepage.', 'success');
+                    updateHomepageStatus('Reset to defaults - form cleared');
+                } catch (error) {
+                    console.error('Error resetting to defaults:', error);
+                    showMessage(`❌ Error resetting: ${error.message}`, 'error');
+                }
+            }
+            
+            // Update status display
+            function updateHomepageStatus(message) {
+                const statusElement = document.getElementById('homepage-editor-status');
+                if (statusElement) {
+                    statusElement.textContent = message;
+                    statusElement.style.color = '#666';
+                }
+            }
+            
+            // Auto-load content when homepage editor tab is opened
+            function onHomepageEditorTabOpen() {
+                // This function can be called when the tab is switched
+                updateHomepageStatus('Homepage Editor ready. Click "Load Current Content" to see what\'s currently displayed.');
+            }
+            
+            // Initialize homepage editor when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add event listeners for Enter key submission
+                const inputs = document.querySelectorAll('#homepageEditorTab input, #homepageEditorTab textarea');
+                inputs.forEach(input => {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter' && e.ctrlKey) {
+                            // Ctrl+Enter to update
+                            const selector = this.id;
+                            if (selector) {
+                                updateHomepageContent(selector, this.value);
+                            }
+                        }
+                    });
+                });
+            });
+            
+            // Add to the global switchTab function to handle homepage editor
+            const originalSwitchTab = window.switchTab;
+            window.switchTab = function(tabName) {
+                if (originalSwitchTab) {
+                    originalSwitchTab(tabName);
+                }
+                
+                if (tabName === 'homepageEditor') {
+                    onHomepageEditorTabOpen();
+                }
+            };
+        </script>
+
         <!-- Homepage Editor Interface -->
         <div class="homepage-editor-container" style="display: grid; gap: 20px; padding: 20px;">
             
@@ -18488,182 +18664,6 @@ END:VCALENDAR`;
         </div>
     </div>
 
-    <!-- Homepage Editor JavaScript -->
-    <script>
-        // Homepage Editor Functions - Defined here so they're available for button clicks
-        
-        // Update specific homepage content section
-        async function updateHomepageContent(selector, content) {
-            try {
-                if (!content || content.trim() === '') {
-                    showMessage('Content cannot be empty', 'error');
-                    return;
-                }
-                
-                const response = await fetch('/api/homepage-content', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        selector: selector,
-                        content: content.trim(),
-                        contentType: 'text'
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage(`✅ ${selector.replace('-', ' ')} updated successfully!`, 'success');
-                    updateHomepageStatus(`Last updated: ${new Date().toLocaleTimeString()}`);
-                } else {
-                    showMessage(`❌ Failed to update ${selector}: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error updating homepage content:', error);
-                showMessage(`❌ Error updating content: ${error.message}`, 'error');
-            }
-        }
-        
-        // Load current homepage content into editor fields
-        async function loadCurrentHomepageContent() {
-            try {
-                updateHomepageStatus('Loading current homepage content...');
-                
-                const response = await fetch('/api/homepage-content');
-                const result = await response.json();
-                
-                if (result.success) {
-                    const content = result.content;
-                    
-                    // Populate form fields with current content
-                    if (content['hero-headline']) {
-                        document.getElementById('hero-headline').value = content['hero-headline'].content;
-                    }
-                    if (content['hero-description']) {
-                        document.getElementById('hero-description').value = content['hero-description'].content;
-                    }
-                    if (content['features-title']) {
-                        document.getElementById('features-title').value = content['features-title'].content;
-                    }
-                    if (content['features-description']) {
-                        document.getElementById('features-description').value = content['features-description'].content;
-                    }
-                    if (content['pricing-title']) {
-                        document.getElementById('pricing-title').value = content['pricing-title'].content;
-                    }
-                    if (content['pricing-subtitle']) {
-                        document.getElementById('pricing-subtitle').value = content['pricing-subtitle'].content;
-                    }
-                    if (content['contact-title']) {
-                        document.getElementById('contact-title').value = content['contact-title'].content;
-                    }
-                    if (content['contact-description']) {
-                        document.getElementById('contact-description').value = content['contact-description'].content;
-                    }
-                    
-                    const loadedCount = Object.keys(content).length;
-                    if (loadedCount > 0) {
-                        showMessage(`✅ Loaded ${loadedCount} content sections from database`, 'success');
-                        updateHomepageStatus(`Content loaded successfully. ${loadedCount} sections found.`);
-                    } else {
-                        showMessage('ℹ️ No custom content found. Using default homepage content.', 'info');
-                        updateHomepageStatus('No custom content found - using defaults');
-                    }
-                } else {
-                    showMessage(`❌ Failed to load content: ${result.error}`, 'error');
-                    updateHomepageStatus('Failed to load content');
-                }
-            } catch (error) {
-                console.error('Error loading homepage content:', error);
-                showMessage(`❌ Error loading content: ${error.message}`, 'error');
-                updateHomepageStatus('Error loading content');
-            }
-        }
-        
-        // Preview homepage in new tab
-        function previewHomepage() {
-            const previewUrl = window.location.origin; // This will open your homepage
-            window.open(previewUrl, '_blank');
-            showMessage('🔍 Opening homepage preview in new tab', 'info');
-            updateHomepageStatus('Homepage preview opened');
-        }
-        
-        // Reset to default homepage content
-        async function resetToDefaults() {
-            if (!confirm('Are you sure you want to reset all homepage content to defaults? This will remove all your customizations.')) {
-                return;
-            }
-            
-            try {
-                updateHomepageStatus('Resetting to default content...');
-                
-                // Clear all the input fields
-                document.getElementById('hero-headline').value = '';
-                document.getElementById('hero-description').value = '';
-                document.getElementById('features-title').value = '';
-                document.getElementById('features-description').value = '';
-                document.getElementById('pricing-title').value = '';
-                document.getElementById('pricing-subtitle').value = '';
-                document.getElementById('contact-title').value = '';
-                document.getElementById('contact-description').value = '';
-                
-                // You could add API call here to delete custom content from database
-                // For now, just clear the form and show message
-                showMessage('✅ Form cleared. Default content will be used on homepage.', 'success');
-                updateHomepageStatus('Reset to defaults - form cleared');
-            } catch (error) {
-                console.error('Error resetting to defaults:', error);
-                showMessage(`❌ Error resetting: ${error.message}`, 'error');
-            }
-        }
-        
-        // Update status display
-        function updateHomepageStatus(message) {
-            const statusElement = document.getElementById('homepage-editor-status');
-            if (statusElement) {
-                statusElement.textContent = message;
-                statusElement.style.color = '#666';
-            }
-        }
-        
-        // Auto-load content when homepage editor tab is opened
-        function onHomepageEditorTabOpen() {
-            // This function can be called when the tab is switched
-            updateHomepageStatus('Homepage Editor ready. Click "Load Current Content" to see what\'s currently displayed.');
-        }
-        
-        // Initialize homepage editor when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add event listeners for Enter key submission
-            const inputs = document.querySelectorAll('#homepageEditorTab input, #homepageEditorTab textarea');
-            inputs.forEach(input => {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && e.ctrlKey) {
-                        // Ctrl+Enter to update
-                        const selector = this.id;
-                        if (selector) {
-                            updateHomepageContent(selector, this.value);
-                        }
-                    }
-                });
-            });
-        });
-        
-        // Add to the global switchTab function to handle homepage editor
-        const originalSwitchTab = window.switchTab;
-        window.switchTab = function(tabName) {
-            if (originalSwitchTab) {
-                originalSwitchTab(tabName);
-            }
-            
-            if (tabName === 'homepageEditor') {
-                onHomepageEditorTabOpen();
-            }
-        };
-        
-    </script>
 
     <!-- Print Lab Tab Content -->
     <div id="printLabTab" class="tab-content">
