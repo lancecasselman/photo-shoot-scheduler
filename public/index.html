@@ -6,34 +6,26 @@
     <meta name="description" content="Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios.">
     <meta name="keywords" content="photography, business management, client portal, photo gallery, session scheduling, invoicing, professional photographer">
     <title>Photography Management System - Professional Photography Business Platform</title>
-    <!-- Cache buster: v2.0 -->
     
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
     <link rel="manifest" href="/manifest.json">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #7c3aed;
-            --primary-light: #a78bfa;
-            --primary-dark: #5b21b6;
-            --accent: #ec4899;
-            --accent-light: #f9a8d4;
-            --surface: #ffffff;
-            --surface-glass: rgba(255, 255, 255, 0.7);
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --border: rgba(203, 213, 225, 0.3);
-            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --shadow-soft: 0 4px 60px 0 rgba(0, 0, 0, 0.07);
-            --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.2);
+            --black: #000000;
+            --off-black: #0a0a0a;
+            --dark-gray: #1a1a1a;
+            --medium-gray: #2d2d2d;
+            --light-gray: #888888;
+            --off-white: #f5f5f5;
+            --white: #ffffff;
+            --accent: #d4af37;
+            --accent-light: #e4c566;
         }
 
         * {
@@ -42,1144 +34,758 @@
             box-sizing: border-box;
         }
 
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes blob {
-            0%, 100% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--white);
+            color: var(--off-black);
             line-height: 1.6;
-            color: var(--text-primary);
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
             overflow-x: hidden;
-            min-height: 100vh;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.92);
-            z-index: -1;
-        }
-
-        /* Blob Backgrounds */
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.7;
-            animation: blob 7s infinite;
-        }
-
-        .blob-1 {
-            top: -100px;
-            left: -100px;
-            width: 400px;
-            height: 400px;
-            background: var(--gradient-2);
-        }
-
-        .blob-2 {
-            top: 200px;
-            right: -150px;
-            width: 500px;
-            height: 500px;
-            background: var(--gradient-3);
-            animation-delay: 2s;
-        }
-
-        .blob-3 {
-            bottom: -100px;
-            left: 20%;
-            width: 350px;
-            height: 350px;
-            background: var(--gradient-4);
-            animation-delay: 4s;
         }
 
         /* Navigation */
         .navbar {
             position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 1200px;
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            padding: 1rem 2rem;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 0;
             z-index: 1000;
-            border-radius: 20px;
-            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+            mix-blend-mode: normal;
         }
 
         .nav-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--white);
+            text-decoration: none;
         }
 
-        .logo::after {
-            content: 'PRO';
-            position: absolute;
-            top: -5px;
-            right: -35px;
-            font-size: 0.6rem;
-            background: var(--gradient-2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 800;
+        .navbar.scrolled .logo {
+            color: var(--off-black);
         }
 
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 2rem;
+            gap: 3rem;
         }
 
         .nav-link {
-            color: var(--text-secondary);
+            color: var(--white);
             text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            transition: opacity 0.3s ease;
+        }
+
+        .navbar.scrolled .nav-link {
+            color: var(--medium-gray);
         }
 
         .nav-link:hover {
-            color: var(--primary);
+            opacity: 0.7;
         }
 
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
-            left: 50%;
-            background: var(--primary);
+        .navbar.scrolled .nav-link:hover {
+            color: var(--off-black);
+            opacity: 1;
+        }
+
+        .cta-nav {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.7rem 1.5rem;
+            border: 1px solid var(--white);
             transition: all 0.3s ease;
         }
 
-        .nav-link:hover::after {
-            width: 100%;
-            left: 0;
+        .navbar.scrolled .cta-nav {
+            color: var(--off-black);
+            border-color: var(--off-black);
         }
 
-        .cta-button {
-            background: var(--gradient-1);
-            color: white;
-            padding: 0.9rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 30px rgba(124, 58, 237, 0.3);
-            position: relative;
-            overflow: hidden;
+        .cta-nav:hover {
+            background: var(--white);
+            color: var(--black);
         }
 
-        .cta-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 7px 40px rgba(124, 58, 237, 0.4);
-        }
-
-        .cta-button:hover::before {
-            left: 100%;
+        .navbar.scrolled .cta-nav:hover {
+            background: var(--off-black);
+            color: var(--white);
         }
 
         /* Hero Section */
         .hero {
-            min-height: 100vh;
+            height: 100vh;
+            position: relative;
+            background: var(--black);
             display: flex;
             align-items: center;
-            position: relative;
-            overflow: visible;
-            padding-top: 120px;
+            justify-content: center;
         }
 
-        .floating-shapes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .shape {
-            position: absolute;
-            opacity: 0.1;
-        }
-
-        .shape-1 {
-            top: 10%;
-            left: 10%;
-            width: 100px;
-            height: 100px;
-            background: var(--gradient-1);
-            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .shape-2 {
-            top: 60%;
-            right: 10%;
-            width: 150px;
-            height: 150px;
-            background: var(--gradient-3);
-            border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
-            animation: float 8s ease-in-out infinite;
-            animation-delay: 2s;
-        }
-
-        .shape-3 {
-            bottom: 10%;
-            left: 30%;
-            width: 80px;
-            height: 80px;
-            background: var(--gradient-2);
-            border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
-            animation: float 7s ease-in-out infinite;
-            animation-delay: 4s;
-        }
-
-        .hero-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-content h1 {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            position: relative;
-        }
-
-        .hero-content h1::before {
-            content: 'NEW';
-            position: absolute;
-            top: -25px;
-            left: 0;
-            background: var(--gradient-2);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .hero-content p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            color: var(--text-secondary);
-            line-height: 1.8;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .btn-primary {
-            background: var(--gradient-1);
-            color: white;
-            padding: 1.2rem 3rem;
-            border-radius: 60px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary::after {
-            content: '→';
-            position: absolute;
-            right: 25px;
-            opacity: 0;
-            transition: all 0.3s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 15px 50px rgba(124, 58, 237, 0.4);
-            padding-right: 3.5rem;
-        }
-
-        .btn-primary:hover::after {
-            opacity: 1;
-            right: 30px;
-        }
-
-        .btn-secondary {
-            background: var(--surface-glass);
-            backdrop-filter: blur(10px);
-            color: var(--primary);
-            padding: 1.2rem 3rem;
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            border-radius: 60px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.4s ease;
-            position: relative;
-        }
-
-        .btn-secondary::before {
-            content: '';
+        .hero-bg {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            border-radius: 60px;
-            padding: 2px;
-            background: var(--gradient-1);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            z-index: -1;
+            overflow: hidden;
+        }
+
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, 
+                rgba(0, 0, 0, 0.3) 0%, 
+                rgba(0, 0, 0, 0.5) 50%,
+                rgba(0, 0, 0, 0.8) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 900px;
+            padding: 0 2rem;
+        }
+
+        .hero-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -2px;
+        }
+
+        .hero-content .tagline {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background: var(--off-white);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         .btn-secondary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--white);
         }
 
-        .hero-image {
+        /* Stats Bar */
+        .stats-bar {
+            background: var(--off-black);
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--dark-gray);
+        }
+
+        .stats-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+        }
+
+        .stat {
             text-align: center;
+            color: var(--white);
         }
 
-        .hero-image {
-            position: relative;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
         }
 
-        .hero-image img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 30px;
-            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.15);
-            transform: perspective(1000px) rotateY(-15deg);
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .hero-image:hover img {
-            transform: perspective(1000px) rotateY(0deg) scale(1.02);
-        }
-
-        .hero-image::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 100px;
-            height: 100px;
-            background: var(--gradient-2);
-            border-radius: 50%;
-            z-index: -1;
-            animation: blob 4s infinite;
+        .stat-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--light-gray);
         }
 
         /* Features Section */
         .features {
-            padding: 6rem 0;
-            background: var(--surface);
-        }
-
-        .features-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
+            padding: 8rem 0;
+            background: var(--white);
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 4rem;
+            max-width: 800px;
+            margin: 0 auto 5rem;
+            padding: 0 2rem;
         }
 
         .section-header h2 {
-            font-size: 2.5rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+            color: var(--off-black);
+            letter-spacing: -1px;
         }
 
         .section-header p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
+            font-size: 1.2rem;
+            color: var(--medium-gray);
             line-height: 1.8;
         }
 
         .features-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            position: relative;
-        }
-
-        .features-grid::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
-            z-index: -1;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
         }
 
         .feature-card {
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px);
-            padding: 2.5rem;
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: visible;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: var(--gradient-1);
-            border-radius: 30px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            padding: 3rem;
+            background: var(--off-white);
+            transition: all 0.3s ease;
+            text-align: center;
         }
 
         .feature-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.15);
+            background: var(--white);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
         }
 
-        .feature-card:hover::before {
-            opacity: 1;
-        }
-
-        .feature-card:nth-child(2n) {
-            transform: translateY(20px);
-        }
-
-        .feature-card:nth-child(3n) {
-            transform: translateY(-10px);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
+        .feature-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--accent);
             margin-bottom: 1.5rem;
-            background: var(--gradient-1);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.3rem;
-            position: relative;
-            transform: rotate(-5deg);
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover .feature-icon {
-            transform: rotate(0deg) scale(1.1);
-        }
-
-        .feature-icon::after {
-            content: '';
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 20px;
-            height: 20px;
-            background: var(--gradient-2);
-            border-radius: 50%;
-            opacity: 0.8;
+            font-weight: 300;
         }
 
         .feature-card h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-size: 1.3rem;
             margin-bottom: 1rem;
-            color: var(--text-primary);
+            color: var(--off-black);
+            font-weight: 600;
         }
 
         .feature-card p {
-            color: var(--text-secondary);
-            line-height: 1.8;
+            color: var(--medium-gray);
+            line-height: 1.7;
         }
 
-        /* About Section */
-        .about {
-            padding: 6rem 0;
-            background: var(--surface-dark);
+        /* Showcase Section */
+        .showcase {
+            padding: 8rem 0;
+            background: var(--off-black);
         }
 
-        .about-container {
-            max-width: 1200px;
+        .showcase-container {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 3rem;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4rem;
+            gap: 6rem;
             align-items: center;
         }
 
-        .about-content h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            letter-spacing: -0.02em;
+        .showcase-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--white);
+            margin-bottom: 2rem;
+            letter-spacing: -1px;
         }
 
-        .about-content p {
+        .showcase-content p {
             font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
             line-height: 1.8;
         }
 
-        /* Pricing Section */
+        .feature-list {
+            list-style: none;
+            margin-bottom: 3rem;
+        }
+
+        .feature-list li {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li::before {
+            content: '—';
+            color: var(--accent);
+            margin-right: 1rem;
+        }
+
+        .showcase-image {
+            position: relative;
+        }
+
+        .showcase-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Pricing */
         .pricing {
-            padding: 6rem 0;
-            background: var(--surface);
+            padding: 8rem 0;
+            background: var(--white);
         }
 
         .pricing-container {
-            max-width: 1000px;
+            max-width: 500px;
             margin: 0 auto;
-            padding: 0 2rem;
+            text-align: center;
         }
 
         .pricing-card {
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px);
-            padding: 3rem;
-            border-radius: 40px;
-            border: 2px solid transparent;
-            text-align: center;
-            max-width: 450px;
-            margin: 0 auto;
-            box-shadow: 0 30px 100px rgba(124, 58, 237, 0.2);
+            background: var(--off-black);
+            color: var(--white);
+            padding: 4rem 3rem;
             position: relative;
-            overflow: visible;
-            transform: perspective(1000px) rotateX(5deg);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .pricing-card::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: var(--gradient-1);
-            border-radius: 40px;
-            z-index: -1;
-        }
-
-        .pricing-card::after {
-            content: 'POPULAR';
-            position: absolute;
-            top: -15px;
-            right: 30px;
-            background: var(--gradient-2);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 20px rgba(236, 72, 153, 0.4);
-        }
-
-        .pricing-card:hover {
-            transform: perspective(1000px) rotateX(0deg) scale(1.05);
-            box-shadow: 0 40px 120px rgba(124, 58, 237, 0.3);
-        }
-
-        .pricing-card h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 1rem;
+        .plan-name {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--accent);
+            margin-bottom: 2rem;
         }
 
         .price {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        .price span {
+            font-size: 1.5rem;
+            color: var(--light-gray);
+        }
+
+        .price-period {
+            color: var(--light-gray);
+            margin-bottom: 3rem;
         }
 
         .pricing-features {
             list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .pricing-features {
+            margin-bottom: 3rem;
             text-align: left;
-            max-width: 300px;
-            margin: 0 auto 2rem;
         }
 
         .pricing-features li {
-            padding: 0.75rem 0;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            text-align: left;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .pricing-features li:hover {
-            color: var(--text-primary);
-            transform: translateX(5px);
-        }
-
-        .pricing-features li::before {
-            content: '';
-            width: 24px;
-            height: 24px;
-            background: var(--gradient-4);
-            border-radius: 8px;
-            margin-right: 1rem;
-            flex-shrink: 0;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pricing-features li::after {
-            content: '✓';
-            position: absolute;
-            left: 7px;
-            color: white;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        /* Contact Section */
-        .contact {
-            padding: 6rem 0;
-            background: var(--surface-dark);
-        }
-
-        .contact-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .contact-form {
-            background: var(--surface-glass);
-            backdrop-filter: blur(20px);
-            padding: 3rem;
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .contact-form::before {
-            content: '';
-            position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 200px;
-            height: 200px;
-            background: var(--gradient-3);
-            border-radius: 50%;
-            opacity: 0.1;
-        }
-
-        .form-group {
-            margin-bottom: 2rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 1.2rem;
-            border: 2px solid transparent;
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.8);
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
-            transform: translateY(-2px);
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         /* Footer */
         .footer {
-            background: linear-gradient(to bottom, var(--surface), var(--surface-dark));
-            padding: 4rem 0 2rem;
-            border-top: 1px solid var(--border);
+            background: var(--black);
+            padding: 5rem 0 2rem;
+            color: var(--white);
         }
 
         .footer-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 3rem;
         }
 
-        .footer-content {
+        .footer-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-bottom: 2rem;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
         }
 
-        .footer-section h3 {
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-weight: 600;
+        .footer-brand h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
-        .footer-section p,
-        .footer-section li {
-            color: var(--text-secondary);
-            line-height: 1.6;
+        .footer-brand p {
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.8;
         }
 
-        .footer-section ul {
+        .footer-column h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .footer-column ul {
             list-style: none;
         }
 
-        .footer-section a {
-            color: var(--text-secondary);
+        .footer-column li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-column a {
+            color: rgba(255, 255, 255, 0.6);
             text-decoration: none;
+            font-size: 0.95rem;
             transition: color 0.3s ease;
         }
 
-        .footer-section a:hover {
-            color: var(--primary);
+        .footer-column a:hover {
+            color: var(--white);
         }
 
         .footer-bottom {
             text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-secondary);
+            padding-top: 3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
         }
 
         /* Mobile Responsiveness */
-        /* Additional Animations */
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(124, 58, 237, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
-        }
-
-        /* Smooth Scroll */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--surface-dark);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--gradient-1);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gradient-2);
-        }
-
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
             }
 
-            .hero-container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                text-align: center;
-            }
-
             .hero-content h1 {
-                font-size: 2.5rem;
+                font-size: 3rem;
             }
 
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .about-container {
-                grid-template-columns: 1fr;
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
                 gap: 2rem;
-                text-align: center;
-            }
-
-            .section-header h2 {
-                font-size: 2rem;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
             }
-        }
 
+            .showcase-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <div class="logo">Photography Management System</div>
+            <a href="#" class="logo">PHOTO PRO</a>
             <ul class="nav-menu">
-                <li><a href="#home" class="nav-link">Home</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#showcase" class="nav-link">Platform</a></li>
                 <li><a href="#pricing" class="nav-link">Pricing</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
-            <a href="#" id="launchAppBtn" class="cta-button">Launch Application</a>
+            <a href="#" id="launchAppBtn" class="cta-nav">Get Started</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="floating-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
+    <section class="hero">
+        <div class="hero-bg">
+            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Professional Photography">
         </div>
-        <div class="hero-container">
-            <div class="hero-content">
-                <h1>Professional Photography Business Platform</h1>
-                <p>Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios, our platform handles everything from client bookings to final delivery.</p>
-                <div class="hero-buttons">
-                    <a href="#" id="getStartedBtn" class="btn-primary">Get Started</a>
-                    <a href="#features" class="btn-secondary">Learn More</a>
-                </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>Run Your Photography Business Like a Pro</h1>
+            <p class="tagline">Everything you need to manage sessions, deliver galleries, and get paid.</p>
+            <div class="hero-buttons">
+                <a href="#" id="getStartedBtn" class="btn btn-primary">Start Free Trial</a>
+                <a href="#features" class="btn btn-secondary">See Features</a>
             </div>
-            <div class="hero-image">
-                <div class="blob blob-1"></div>
-                <img src="https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Professional Photography Camera" />
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="stats-container">
+            <div class="stat">
+                <div class="stat-number">10K+</div>
+                <div class="stat-label">Sessions Managed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Photographers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2M+</div>
+                <div class="stat-label">Photos Delivered</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">99%</div>
+                <div class="stat-label">Uptime</div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
     <section id="features" class="features">
-        <div class="features-container">
-            <div class="section-header">
-                <h2>Everything You Need to Manage Your Photography Business</h2>
-                <p>Stop juggling spreadsheets, emails, and payment apps. Our comprehensive platform brings every aspect of your photography business into one seamless experience, accessible from anywhere on any device.</p>
+        <div class="section-header">
+            <h2>Built for Professional Photographers</h2>
+            <p>Stop juggling multiple apps. Manage your entire business from one powerful platform.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-number">01</div>
+                <h3>Session Management</h3>
+                <p>Schedule sessions, manage clients, track locations, and automate reminders. Keep everything organized in one place.</p>
             </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">SM</div>
-                    <h3>Session Management</h3>
-                    <p>Schedule and track photography sessions with comprehensive client management tools, automated reminders, and detailed session planning.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">GL</div>
-                    <h3>Gallery Management</h3>
-                    <p>Organize and share client galleries with secure access, download capabilities, and professional presentation tools.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">$$</div>
-                    <h3>Invoicing & Payments</h3>
-                    <p>Generate professional invoices, manage payments, and track financial performance with integrated billing systems.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">MR</div>
-                    <h3>Mobile Ready</h3>
-                    <p>Access your business on-the-go with our responsive design and dedicated mobile apps for iOS and Android.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">CS</div>
-                    <h3>Cloud Storage</h3>
-                    <p>Secure cloud storage with automatic backups, unlimited file management, and fast global delivery.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">AI</div>
-                    <h3>AI-Powered Tools</h3>
-                    <p>Generate blog content, optimize your workflow, and enhance productivity with intelligent automation features.</p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-number">02</div>
+                <h3>Gallery Delivery</h3>
+                <p>Create stunning client galleries with download controls, watermarking, and professional presentation.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">03</div>
+                <h3>Invoicing & Payments</h3>
+                <p>Send professional invoices, accept payments, manage deposits, and track your business finances.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">04</div>
+                <h3>Contract Management</h3>
+                <p>Digital contracts with e-signatures, automated sending, and secure storage for all your agreements.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">05</div>
+                <h3>Print Fulfillment</h3>
+                <p>Integrated WHCC print ordering. Let clients order prints directly from their galleries.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-number">06</div>
+                <h3>Website Builder</h3>
+                <p>Create your professional portfolio website with our drag-and-drop builder. No coding required.</p>
             </div>
         </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about" class="about">
-        <div class="about-container">
-            <div class="about-content">
-                <h2>Built for Growth</h2>
-                <p><strong>For Solo Photographers:</strong> Start with everything you need to run a professional photography business. No setup fees, no hidden costs.</p>
-                <p><strong>For Studios & Teams:</strong> Scale effortlessly with multi-photographer support, team collaboration tools, and unified billing through Stripe Connect. Each photographer maintains their individual brand while benefiting from shared infrastructure.</p>
-                <p><strong>Photographer-First Design:</strong> Every feature is crafted based on real photographer workflows. No unnecessary complexity - just tools that work the way you do.</p>
+    <!-- Showcase Section -->
+    <section id="showcase" class="showcase">
+        <div class="showcase-container">
+            <div class="showcase-content">
+                <h2>Everything in One Platform</h2>
+                <p>From first inquiry to final delivery, manage your entire workflow seamlessly.</p>
+                <ul class="feature-list">
+                    <li>Client portal for bookings and galleries</li>
+                    <li>Automated payment plans and invoicing</li>
+                    <li>RAW file backup with 100GB storage</li>
+                    <li>Mobile app for on-the-go management</li>
+                    <li>Business analytics and reporting</li>
+                    <li>Community platform for networking</li>
+                    <li>AI-powered blog content generation</li>
+                </ul>
+                <a href="#" class="btn btn-primary">See Live Demo</a>
             </div>
-            <div class="about-image" style="position: relative;">
-                <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Professional Photography Equipment" style="width: 100%; border-radius: 30px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2); transform: perspective(1000px) rotateY(10deg); transition: transform 0.6s ease;" onmouseover="this.style.transform='perspective(1000px) rotateY(0deg) scale(1.05)'" onmouseout="this.style.transform='perspective(1000px) rotateY(10deg)'"/>
-                <div style="position: absolute; top: -30px; left: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 50%; opacity: 0.6; animation: blob 6s infinite;"></div>
+            <div class="showcase-image">
+                <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Platform Screenshot">
             </div>
         </div>
     </section>
 
     <!-- Pricing Section -->
     <section id="pricing" class="pricing">
+        <div class="section-header">
+            <h2>Simple, Transparent Pricing</h2>
+            <p>One plan with everything you need. Add storage as you grow.</p>
+        </div>
         <div class="pricing-container">
-            <div class="section-header">
-                <h2>Simple, Transparent Pricing</h2>
-                <p>No setup fees. No hidden costs. Cancel anytime.</p>
-            </div>
             <div class="pricing-card">
-                <h3>Professional</h3>
-                <div class="price">$39<span style="font-size: 1rem; color: var(--text-muted);">/month</span></div>
+                <div class="plan-name">Professional</div>
+                <div class="price">$39<span>/mo</span></div>
+                <div class="price-period">Billed monthly. Cancel anytime.</div>
                 <ul class="pricing-features">
                     <li>Unlimited client sessions</li>
-                    <li>100GB cloud storage</li>
-                    <li>Professional invoicing</li>
-                    <li>Client gallery sharing</li>
+                    <li>100GB cloud storage included</li>
+                    <li>Professional invoicing & payments</li>
+                    <li>Client galleries with downloads</li>
+                    <li>Digital contracts & e-signatures</li>
+                    <li>Website builder included</li>
+                    <li>WHCC print integration</li>
                     <li>Mobile app access</li>
-                    <li>AI-powered tools</li>
                     <li>Email support</li>
-                    <li>Storage Add-ons: $25/TB/month</li>
+                    <li>Add storage: $25/TB monthly</li>
                 </ul>
-                <a href="#" class="btn-primary">Get Started</a>
+                <a href="#" class="btn btn-primary" style="width: 100%;">Start 3-Day Free Trial</a>
             </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="contact">
-        <div class="contact-container">
-            <div class="section-header">
-                <h2>Get in Touch</h2>
-                <p>Have questions about our platform? We're here to help you succeed.</p>
-            </div>
-            <form class="contact-form">
-                <div class="form-group">
-                    <label for="name">Name</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="subject">Subject</label>
-                    <input type="text" id="subject" name="subject" required>
-                </div>
-                <div class="form-group">
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">Send Message</button>
-            </form>
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Photography Management System</h3>
-                    <p>Transform your photography business with an all-in-one management platform designed by photographers, for photographers. Built to scale from solo professionals to multi-photographer studios.</p>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>PHOTO PRO</h3>
+                    <p>The complete photography business management platform. Built by photographers, for photographers.</p>
                 </div>
-                <div class="footer-section">
-                    <h3>Features</h3>
+                <div class="footer-column">
+                    <h4>Platform</h4>
                     <ul>
-                        <li><a href="#features">Session Management</a></li>
-                        <li><a href="#features">Gallery Management</a></li>
-                        <li><a href="#features">Invoicing & Payments</a></li>
-                        <li><a href="#features">Mobile Apps</a></li>
-                        <li><a href="#features">Cloud Storage</a></li>
-                        <li><a href="#features">Print Ordering Integration</a></li>
-                        <li><a href="#features">Website Builder</a></li>
-                        <li><a href="#features">Community Platform</a></li>
-                        <li><a href="#features">Booking Agreements</a></li>
-                        <li><a href="#features">Business Analytics</a></li>
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Demo</a></li>
+                        <li><a href="#">Support</a></li>
                     </ul>
                 </div>
-                <div class="footer-section">
-                    <h3>Legal</h3>
+                <div class="footer-column">
+                    <h4>Resources</h4>
                     <ul>
-                        <li><a href="/privacy-policy.html">Privacy Policy</a></li>
-                        <li><a href="/terms-of-service.html">Terms of Service</a></li>
-                        <li><a href="/security.html">Security</a></li>
-                        <li><a href="/gdpr-compliance.html">GDPR Compliance</a></li>
-                        <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Guides</a></li>
+                        <li><a href="#">API Docs</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Security</a></li>
+                        <li><a href="#">GDPR</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 Photography Pro. All rights reserved. | Professional Photography Business Platform</p>
+                <p>&copy; 2025 Photography Pro. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Android external browser authentication flow
-        function setupAndroidAuth() {
-            // Get both buttons
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Auth buttons
+        function setupAuth() {
             const launchAppBtn = document.getElementById('launchAppBtn');
             const getStartedBtn = document.getElementById('getStartedBtn');
             
-            // Add click handlers to both buttons
             [launchAppBtn, getStartedBtn].forEach(btn => {
                 if (btn) {
-                    btn.addEventListener('click', handleAuthClick);
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.location.href = '/secure-login.html';
+                    });
                 }
             });
         }
 
-        function handleAuthClick(e) {
-            e.preventDefault();
-            
-            console.log('Launch button clicked - redirecting to login/signup');
-            
-            // Redirect to login page for proper authentication flow
-            window.location.href = '/secure-login.html';
-        }
+        document.addEventListener('DOMContentLoaded', setupAuth);
 
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            setupAndroidAuth();
-        });
-
-        // Smooth scrolling for navigation links
+        // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const href = this.getAttribute('href');
-                // Validate that the href is not just '#'
                 if (href && href !== '#' && href.length > 1) {
-                    try {
-                        const target = document.querySelector(href);
-                        if (target) {
-                            target.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'start'
-                            });
-                        }
-                    } catch (err) {
-                        console.warn('Invalid selector:', href);
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
                     }
                 }
             });
-        });
-
-        // Contact form submission
-        document.querySelector('.contact-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Thank you for your message! We\'ll get back to you soon.');
-            this.reset();
         });
     </script>
 </body>
