@@ -5270,6 +5270,51 @@ app.use('/uploads', (req, res, next) => {
 // Get all sessions
 // This endpoint is defined earlier in the file - removing duplicate
 
+// Public contact form endpoint
+app.post('/api/contact', async (req, res) => {
+    try {
+        const { name, email, phone, interest, message } = req.body;
+        
+        // Validate required fields
+        if (!name || !email || !interest || !message) {
+            return res.status(400).json({ 
+                error: 'Please fill in all required fields' 
+            });
+        }
+        
+        // Get the email recipient from env or use a default
+        const recipientEmail = process.env.CONTACT_FORM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'admin@photomanagementsystem.com';
+        
+        // Send the email using the notification service
+        const { sendContactFormEmail } = require('./server/notifications');
+        const result = await sendContactFormEmail(recipientEmail, {
+            name,
+            email,
+            phone: phone || 'Not provided',
+            interest,
+            message
+        });
+        
+        if (result.success) {
+            console.log('✅ Contact form submission sent to:', recipientEmail);
+            res.json({ 
+                success: true, 
+                message: 'Thank you for your message. We will get back to you soon!' 
+            });
+        } else {
+            console.error('❌ Failed to send contact form email:', result.error);
+            res.status(500).json({ 
+                error: 'Failed to send message. Please try again later.' 
+            });
+        }
+    } catch (error) {
+        console.error('Error processing contact form:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while processing your request' 
+        });
+    }
+});
+
 // Public endpoint for session data for invoices (no authentication required)
 app.get('/api/sessions/:sessionId/public', async (req, res) => {
     try {

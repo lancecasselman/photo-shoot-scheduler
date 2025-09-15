@@ -99,6 +99,20 @@ Comprehensive photographer account management for platform administrators, offer
 ### Enterprise Support System
 Professional-grade client support infrastructure with automatic issue resolution, multi-channel support, a help center, ticket management, support analytics, and client communication.
 
+## Contact Form Configuration
+
+The home page features a contact form that forwards submissions to the administrator's email. To configure the recipient email:
+
+1. Set the `CONTACT_FORM_EMAIL` environment variable to your email address
+2. Alternatively, it will use the `SENDGRID_FROM_EMAIL` if configured
+3. As a fallback, it sends to `admin@photomanagementsystem.com`
+
+The contact form uses the existing SendGrid integration to send formatted emails containing:
+- Contact name and email
+- Phone number (if provided)
+- Interest area (Demo, Pricing, Features, Support, Other)
+- Full message text
+
 ## External Dependencies
 
 ### Core Services

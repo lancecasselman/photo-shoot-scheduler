@@ -425,6 +425,113 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Contact Section */
+        .contact-section {
+            padding: 8rem 0;
+            background: var(--off-black);
+        }
+
+        .contact-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 3rem;
+        }
+
+        .contact-section .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .contact-section h2 {
+            font-size: 3rem;
+            font-weight: 300;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .contact-section p {
+            color: var(--light-gray);
+            font-size: 1.1rem;
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            width: 100%;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: var(--white);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--light-gray);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group select option {
+            background: var(--off-black);
+            color: var(--white);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .contact-form .btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            margin-top: 1rem;
+        }
+
+        .contact-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+
+        .contact-status.success {
+            display: block;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .contact-status.error {
+            display: block;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
         /* Footer */
         .footer {
             background: var(--black);
@@ -613,6 +720,42 @@
         </div>
     </section>
 
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="contact-container">
+            <div class="section-header">
+                <h2>Get In Touch</h2>
+                <p>Ready to streamline your photography business? Let's talk.</p>
+            </div>
+            <form id="contactForm" class="contact-form">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="email" name="email" placeholder="Your Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="phone" name="phone" placeholder="Phone Number (Optional)">
+                </div>
+                <div class="form-group">
+                    <select id="interest" name="interest" required>
+                        <option value="">What are you interested in?</option>
+                        <option value="demo">Product Demo</option>
+                        <option value="pricing">Pricing Information</option>
+                        <option value="features">Feature Questions</option>
+                        <option value="support">Support</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <textarea id="message" name="message" placeholder="Tell us about your photography business..." rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+                <div id="contactStatus" class="contact-status"></div>
+            </form>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section id="pricing" class="pricing">
         <div class="section-header">
@@ -710,6 +853,54 @@
         }
 
         document.addEventListener('DOMContentLoaded', setupAuth);
+
+        // Contact form handler
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const statusEl = document.getElementById('contactStatus');
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                interest: document.getElementById('interest').value,
+                message: document.getElementById('message').value
+            };
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusEl.className = 'contact-status success';
+                    statusEl.textContent = 'Thank you! Your message has been sent. We\'ll get back to you soon.';
+                    this.reset();
+                } else {
+                    statusEl.className = 'contact-status error';
+                    statusEl.textContent = result.error || 'Something went wrong. Please try again.';
+                }
+            } catch (error) {
+                statusEl.className = 'contact-status error';
+                statusEl.textContent = 'Unable to send message. Please try again later.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            }
+        });
 
         // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {

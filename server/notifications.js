@@ -208,6 +208,62 @@ const emailTemplates = {
         `
     }),
 
+    contactForm: (formData) => ({
+        subject: `New Contact Form Submission - ${formData.interest}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px;">
+                    <h1 style="margin: 0; font-size: 24px;">📩 New Contact Form Submission</h1>
+                    <p style="margin: 10px 0 0; opacity: 0.9;">Someone is interested in Photography Pro!</p>
+                </div>
+                
+                <div style="padding: 30px; background: #f8f9fa; border-radius: 10px; margin: 20px 0;">
+                    <h2 style="color: #333; margin-top: 0;">Contact Details:</h2>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Name:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">${formData.name}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">
+                                    <a href="mailto:${formData.email}" style="color: #667eea;">${formData.email}</a>
+                                </td>
+                            </tr>
+                            ${formData.phone ? `
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Phone:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">
+                                    <a href="tel:${formData.phone}" style="color: #667eea;">${formData.phone}</a>
+                                </td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Interest:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right; color: #764ba2; font-weight: bold;">${formData.interest}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <h3 style="color: #333; margin-top: 30px;">Message:</h3>
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <p style="color: #666; line-height: 1.6; white-space: pre-line; margin: 0;">${formData.message}</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="mailto:${formData.email}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reply to ${formData.name}</a>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 14px;">
+                    <p>Received: ${new Date().toLocaleString()}</p>
+                </div>
+            </div>
+        `
+    }),
+
     contractForSignature: (clientName, sessionType, sessionDate, businessName, businessEmail, signingUrl) => ({
         subject: `Contract Ready for Signature - ${sessionType} Session with ${businessName}`,
         html: `
@@ -350,6 +406,31 @@ async function sendSMS(to, message) {
     };
 }
 
+// Contact form submission email
+async function sendContactFormEmail(toEmail, formData) {
+    if (!sendGridConfigured) {
+        console.log('❌ SendGrid not configured - cannot send contact form email');
+        return { success: false, error: 'Email service not configured' };
+    }
+
+    try {
+        const template = emailTemplates.contactForm(formData);
+        const msg = {
+            to: toEmail,
+            from: process.env.SENDGRID_FROM_EMAIL || 'no-reply@photomanagementsystem.com',
+            subject: template.subject,
+            html: template.html
+        };
+
+        await sgMail.send(msg);
+        console.log('✅ Contact form email sent to:', toEmail);
+        return { success: true, message: 'Contact form email sent successfully' };
+    } catch (error) {
+        console.error('❌ Error sending contact form email:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Subscriber notification functions
 async function sendWelcomeEmail(photographerEmail, photographerName, businessName) {
     return await sendEmail(photographerEmail, 'welcome', photographerName, businessName);
@@ -448,6 +529,7 @@ module.exports = {
     initializeNotificationServices,
     sendEmail,
     sendEmailWithSender,
+    sendContactFormEmail,
     sendWelcomeEmail,
     sendBillingNotification,
     sendFeatureUpdate,
