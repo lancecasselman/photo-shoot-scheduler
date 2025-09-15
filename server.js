@@ -5282,8 +5282,8 @@ app.post('/api/contact', async (req, res) => {
             });
         }
         
-        // Get the email recipient from env or use a default
-        const recipientEmail = process.env.CONTACT_FORM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'admin@photomanagementsystem.com';
+        // Send to Lance's email
+        const recipientEmail = 'lancecasselman@icloud.com';
         
         // Send the email using the notification service
         const { sendContactFormEmail } = require('./server/notifications');
