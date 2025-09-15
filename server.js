@@ -17093,7 +17093,7 @@ app.get('/api/homepage-content', isAuthenticated, async (req, res) => {
         
         // Get all homepage content sections
         const result = await client.query(`
-            SELECT page, selector, content, content_type 
+            SELECT page, selector, content, "contentType" as content_type 
             FROM admin_content_edits 
             WHERE page = 'homepage'
             ORDER BY selector
@@ -17131,14 +17131,14 @@ app.post('/api/homepage-content', isAuthenticated, async (req, res) => {
         
         // Upsert the content
         await client.query(`
-            INSERT INTO admin_content_edits (page, selector, content, content_type, edited_by, created_at, updated_at)
+            INSERT INTO admin_content_edits (page, selector, content, "contentType", "editedBy", "createdAt", "updatedAt")
             VALUES ('homepage', $1, $2, $3, $4, NOW(), NOW())
             ON CONFLICT (page, selector) 
             DO UPDATE SET 
                 content = EXCLUDED.content,
-                content_type = EXCLUDED.content_type,
-                edited_by = EXCLUDED.edited_by,
-                updated_at = NOW()
+                "contentType" = EXCLUDED."contentType",
+                "editedBy" = EXCLUDED."editedBy",
+                "updatedAt" = NOW()
         `, [selector, content, contentType, userId]);
         
         client.release();
@@ -17157,7 +17157,7 @@ app.get('/api/public/homepage-content', async (req, res) => {
         const client = await pool.connect();
         
         const result = await client.query(`
-            SELECT page, selector, content, content_type 
+            SELECT page, selector, content, "contentType" as content_type 
             FROM admin_content_edits 
             WHERE page = 'homepage'
             ORDER BY selector
