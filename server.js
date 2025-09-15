@@ -5270,7 +5270,7 @@ app.use('/uploads', (req, res, next) => {
 // Get all sessions
 // This endpoint is defined earlier in the file - removing duplicate
 
-// Public contact form endpoint
+// Public contact form endpoint for main site
 app.post('/api/contact', async (req, res) => {
     try {
         const { name, email, phone, interest, message } = req.body;
@@ -5282,7 +5282,7 @@ app.post('/api/contact', async (req, res) => {
             });
         }
         
-        // Send to Lance's email
+        // Send to Lance's email for main site contact forms
         const recipientEmail = 'lancecasselman@icloud.com';
         
         // Send the email using the notification service
@@ -5309,6 +5309,65 @@ app.post('/api/contact', async (req, res) => {
         }
     } catch (error) {
         console.error('Error processing contact form:', error);
+        res.status(500).json({ 
+            error: 'An error occurred while processing your request' 
+        });
+    }
+});
+
+// Public contact form endpoint for photographer websites
+app.post('/api/published-site-contact', async (req, res) => {
+    try {
+        const { subdomain, name, email, phone, message } = req.body;
+        
+        // Validate required fields
+        if (!subdomain || !name || !email || !message) {
+            return res.status(400).json({ 
+                error: 'Please fill in all required fields' 
+            });
+        }
+        
+        // Get photographer's email from database based on subdomain
+        const result = await pool.query(`
+            SELECT u.email as photographer_email, u.business_name, u.display_name
+            FROM published_websites pw
+            JOIN users u ON pw.user_id = u.id
+            WHERE pw.subdomain = $1 AND pw.is_published = true
+        `, [subdomain]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ 
+                error: 'Website not found' 
+            });
+        }
+        
+        const photographerEmail = result.rows[0].photographer_email;
+        const businessName = result.rows[0].business_name || result.rows[0].display_name || 'Photography Business';
+        
+        // Send the email to the photographer
+        const { sendContactFormEmail } = require('./server/notifications');
+        const emailResult = await sendContactFormEmail(photographerEmail, {
+            name,
+            email,
+            phone: phone || 'Not provided',
+            interest: `Contact from ${subdomain} website`,
+            message: `New contact from your website (${subdomain}.photomanagementsystem.com):\n\n${message}`
+        });
+        
+        if (emailResult.success) {
+            console.log(`✅ Contact form from ${subdomain} sent to photographer:`, photographerEmail);
+            res.json({ 
+                success: true, 
+                message: `Thank you for contacting ${businessName}. We will get back to you soon!` 
+            });
+        } else {
+            console.error(`❌ Failed to send contact form email for ${subdomain}:`, emailResult.error);
+            res.status(500).json({ 
+                error: 'Failed to send message. Please try again later.' 
+            });
+        }
+    } catch (error) {
+        console.error('Error processing published site contact form:', error);
         res.status(500).json({ 
             error: 'An error occurred while processing your request' 
         });
@@ -13397,6 +13456,69 @@ async function servePublishedWebsite(req, res, subdomain) {
                     // Handle page navigation for multi-page sites
                     console.log('Navigate to:', page);
                 }
+            });
+        });
+        
+        // Handle contact form submissions for photographer websites
+        document.addEventListener('DOMContentLoaded', function() {
+            const contactForms = document.querySelectorAll('.photographer-contact-form');
+            contactForms.forEach(form => {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const statusEl = form.querySelector('.contact-status');
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.textContent;
+                    
+                    // Get form data
+                    const formData = {
+                        subdomain: '${subdomain}',
+                        name: form.querySelector('input[name="name"]').value,
+                        email: form.querySelector('input[name="email"]').value,
+                        phone: form.querySelector('input[name="phone"]').value || '',
+                        message: form.querySelector('textarea[name="message"]').value
+                    };
+                    
+                    // Disable button and show loading
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Sending...';
+                    
+                    try {
+                        const response = await fetch('/api/published-site-contact', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            statusEl.style.display = 'block';
+                            statusEl.style.background = 'rgba(46, 204, 113, 0.1)';
+                            statusEl.style.border = '1px solid #2ecc71';
+                            statusEl.style.color = '#2ecc71';
+                            statusEl.textContent = result.message || 'Thank you! Your message has been sent.';
+                            form.reset();
+                        } else {
+                            statusEl.style.display = 'block';
+                            statusEl.style.background = 'rgba(231, 76, 60, 0.1)';
+                            statusEl.style.border = '1px solid #e74c3c';
+                            statusEl.style.color = '#e74c3c';
+                            statusEl.textContent = result.error || 'Something went wrong. Please try again.';
+                        }
+                    } catch (error) {
+                        statusEl.style.display = 'block';
+                        statusEl.style.background = 'rgba(231, 76, 60, 0.1)';
+                        statusEl.style.border = '1px solid #e74c3c';
+                        statusEl.style.color = '#e74c3c';
+                        statusEl.textContent = 'Unable to send message. Please try again later.';
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                });
             });
         });
     </script>

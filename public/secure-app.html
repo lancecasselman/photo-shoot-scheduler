@@ -17158,6 +17158,9 @@ END:VCALENDAR`;
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addButton()">
                                 <span>🔘</span> Button
                             </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addContactForm()">
+                                <span>✉️</span> Contact Form
+                            </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addDivider()">
                                 <span>➖</span> Divider
                             </button>
@@ -17334,7 +17337,51 @@ END:VCALENDAR`;
             addLightboxGallery() { this.addImage(); },
             addVideoBackground() { this.addText(); },
             addParallaxSection() { this.addText(); },
-            addTestimonialSlider() { this.addText(); }
+            addTestimonialSlider() { this.addText(); },
+            
+            // Add contact form for published websites
+            addContactForm() {
+                const canvas = document.getElementById('wb-canvas');
+                const contactSection = document.createElement('div');
+                contactSection.className = 'wb-editable contact-form-section';
+                contactSection.style.cssText = `
+                    padding: 60px 20px;
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    margin: 40px 0;
+                    border-radius: 12px;
+                `;
+                
+                contactSection.innerHTML = `
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <h2 style="text-align: center; margin-bottom: 10px; font-size: 2.5rem; color: #2d3748;">Get In Touch</h2>
+                        <p style="text-align: center; margin-bottom: 40px; color: #718096;">Let's discuss your photography needs</p>
+                        
+                        <form class="photographer-contact-form" style="display: flex; flex-direction: column; gap: 20px;">
+                            <input type="text" name="name" placeholder="Your Name" required 
+                                style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+                            
+                            <input type="email" name="email" placeholder="Your Email" required 
+                                style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+                            
+                            <input type="tel" name="phone" placeholder="Phone Number (Optional)" 
+                                style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+                            
+                            <textarea name="message" placeholder="Tell me about your project..." rows="5" required 
+                                style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                            
+                            <button type="submit" style="padding: 15px 30px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                                Send Message
+                            </button>
+                            
+                            <div class="contact-status" style="display: none; padding: 15px; border-radius: 8px; text-align: center;"></div>
+                        </form>
+                    </div>
+                `;
+                
+                canvas.appendChild(contactSection);
+                this.makeElementEditable(contactSection);
+                this.saveState();
+            }
         };
 
         // Initialize Website Builder when tab is shown
