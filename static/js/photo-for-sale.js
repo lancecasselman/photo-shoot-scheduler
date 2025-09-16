@@ -359,20 +359,24 @@
             return;
         }
         
-        // Check if WHCC print fulfillment is available
+        // Check if WHCC print fulfillment is available (using public status endpoint)
         try {
-            const response = await fetch('/api/photo-sales/whcc-products');
+            const response = await fetch('/api/print/whcc-status');
             const result = await response.json();
             
             if (result.comingSoon) {
                 // Show coming soon message with nice styling
                 showComingSoonModal('Print Fulfillment Coming Soon!', 
-                    'We\'re working hard to bring you professional print ordering through WHCC. ' +
+                    result.message || 'We\'re working hard to bring you professional print ordering through WHCC. ' +
                     'This feature will be available soon with a wide selection of high-quality print products.');
                 return;
             }
         } catch (error) {
             console.error('Error checking print availability:', error);
+            // Show coming soon on error to avoid exposing issues
+            showComingSoonModal('Print Fulfillment Coming Soon!', 
+                'Print ordering service is being prepared. Please check back soon!');
+            return;
         }
         
         // Create a professional print preview with WHCC integration

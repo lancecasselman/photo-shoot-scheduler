@@ -59,10 +59,22 @@ async function getWHCCCatalog() {
     
     try {
         console.log('🔄 Refreshing WHCC catalog cache...');
-        whccCatalogCache = await printService.getProducts();
+        const result = await printService.getProducts();
+        
+        // Handle coming soon response
+        if (result && result.comingSoon) {
+            console.log('🚧 WHCC catalog is in coming soon mode');
+            whccCatalogCache = [];
+            catalogCacheExpiry = now + (5 * 60 * 1000); // Shorter cache time for coming soon
+            return [];
+        }
+        
+        // Extract products array from result
+        const products = Array.isArray(result) ? result : (result.products || []);
+        whccCatalogCache = products;
         catalogCacheExpiry = now + CATALOG_CACHE_DURATION;
-        console.log(`✅ WHCC catalog cached with ${whccCatalogCache.length} products`);
-        return whccCatalogCache;
+        console.log(`✅ WHCC catalog cached with ${products.length} products`);
+        return products;
     } catch (error) {
         console.error('❌ Failed to refresh WHCC catalog cache:', error);
         // Return cached data if available, otherwise empty array
@@ -196,6 +208,41 @@ async function getDigitalPhotoPrice(userId, photoUrl) {
     }
 }
 
+// Public endpoint for WHCC status check (no auth required)
+router.get('/whcc-status', async (req, res) => {
+    try {
+        console.log('🔍 Checking WHCC status (public endpoint)...');
+        
+        const result = await printService.getProducts();
+        
+        // Check if coming soon
+        if (result && result.comingSoon) {
+            console.log('🚧 WHCC Print Fulfillment: Coming Soon (public check)');
+            return res.json({
+                success: true,
+                comingSoon: true,
+                message: result.message || 'Print fulfillment feature coming soon!'
+            });
+        }
+        
+        // Service is available
+        return res.json({
+            success: true,
+            comingSoon: false,
+            message: 'Print fulfillment service is available'
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to check WHCC status:', error);
+        // Return coming soon on error to avoid exposing issues
+        res.json({
+            success: false,
+            comingSoon: true,
+            message: 'Print fulfillment service temporarily unavailable'
+        });
+    }
+});
+
 // Simple authentication middleware for photo sales
 const requireAuth = (req, res, next) => {
     const userId = req.user?.uid || req.session?.user?.uid;
@@ -205,7 +252,7 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-// Apply authentication middleware to all routes
+// Apply authentication middleware to all protected routes
 router.use(requireAuth);
 
 // Digital photo purchase endpoint
@@ -361,7 +408,7 @@ router.post('/print-order', async (req, res) => {
     }
 });
 
-// WHCC product catalog endpoint
+// WHCC product catalog endpoint (requires auth)
 router.get('/whcc-products', async (req, res) => {
     try {
         console.log('📦 Fetching WHCC product catalog...');
@@ -369,7 +416,7 @@ router.get('/whcc-products', async (req, res) => {
         const result = await printService.getProducts();
         
         // Check if coming soon
-        if (result.comingSoon) {
+        if (result && result.comingSoon) {
             console.log('🚧 WHCC Print Fulfillment: Coming Soon');
             return res.json({
                 products: [],
@@ -379,7 +426,7 @@ router.get('/whcc-products', async (req, res) => {
             });
         }
         
-        const products = result.products || result;
+        const products = Array.isArray(result) ? result : (result.products || []);
         
         console.log(`✅ Retrieved ${products.length} WHCC products`);
         
