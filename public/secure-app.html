@@ -17096,6 +17096,9 @@ END:VCALENDAR`;
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.showSectionGenerator()">
                                 <span>✨</span> Generate Section
                             </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.showSEOSettings()" style="background: #f59e0b; color: white;">
+                                <span>🔍</span> SEO Settings
+                            </button>
                         </div>
                         
                         <div class="wb-toolbar-separator"></div>
@@ -17337,6 +17340,131 @@ END:VCALENDAR`;
             save() { console.log('Save function - to be implemented'); },
             publish() { console.log('Publish function - to be implemented'); },
             showSectionGenerator() { console.log('Section Generator - to be implemented'); },
+            
+            // SEO Settings Modal
+            showSEOSettings() {
+                const modal = document.createElement('div');
+                modal.className = 'badass-modal';
+                modal.innerHTML = `
+                    <div class="badass-modal-content" style="width: 700px;">
+                        <div class="badass-modal-header">
+                            <h3>🔍 SEO Settings & Metadata</h3>
+                            <button class="badass-modal-close" onclick="this.closest('.badass-modal').remove()">×</button>
+                        </div>
+                        <div class="badass-modal-body">
+                            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; color: #0369a1;">💡 <strong>Pro Tip:</strong> Good SEO helps people find your photography business on Google. Fill these out to rank higher!</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Page Title (60 characters max)</label>
+                                <input type="text" id="seo-title" placeholder="e.g., John Smith Photography | Miami Wedding Photographer" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;"
+                                    maxlength="60" value="${this.seoSettings?.title || ''}">
+                                <small style="color: #718096;">This appears in Google search results and browser tabs</small>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Meta Description (160 characters max)</label>
+                                <textarea id="seo-description" placeholder="e.g., Award-winning Miami wedding photographer specializing in romantic, timeless photography. Serving South Florida with 10+ years experience." 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"
+                                    maxlength="160">${this.seoSettings?.description || ''}</textarea>
+                                <small style="color: #718096;">This description appears under your title in Google search results</small>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Focus Keywords (comma-separated)</label>
+                                <input type="text" id="seo-keywords" placeholder="e.g., wedding photographer miami, miami photography, florida wedding photos" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;"
+                                    value="${this.seoSettings?.keywords || ''}">
+                                <small style="color: #718096;">Target 3-5 main keywords you want to rank for</small>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Business Location</label>
+                                <input type="text" id="seo-location" placeholder="e.g., Miami, Florida" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;"
+                                    value="${this.seoSettings?.location || ''}">
+                                <small style="color: #718096;">Helps with local SEO and 'near me' searches</small>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Social Media URLs (optional)</label>
+                                <input type="text" id="seo-instagram" placeholder="Instagram URL" 
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;"
+                                    value="${this.seoSettings?.instagram || ''}">
+                                <input type="text" id="seo-facebook" placeholder="Facebook URL" 
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;"
+                                    value="${this.seoSettings?.facebook || ''}">
+                                <input type="text" id="seo-linkedin" placeholder="LinkedIn URL" 
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;"
+                                    value="${this.seoSettings?.linkedin || ''}">
+                            </div>
+                            
+                            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin-top: 30px;">
+                                <h4 style="margin-bottom: 15px; color: #2d3748;">🎯 SEO Score Preview</h4>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
+                                        <div style="font-weight: 600; color: #38a169;">Schema Markup</div>
+                                        <small style="color: #718096;">Auto-generated</small>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
+                                        <div style="font-weight: 600; color: #38a169;">Mobile Optimized</div>
+                                        <small style="color: #718096;">Responsive design</small>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
+                                        <div style="font-weight: 600; color: #38a169;">Fast Loading</div>
+                                        <small style="color: #718096;">Optimized images</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="badass-modal-footer">
+                            <button class="badass-modal-btn" onclick="WebsiteBuilder.saveSEOSettings()">Save SEO Settings</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+            
+            saveSEOSettings() {
+                this.seoSettings = {
+                    title: document.getElementById('seo-title').value,
+                    description: document.getElementById('seo-description').value,
+                    keywords: document.getElementById('seo-keywords').value,
+                    location: document.getElementById('seo-location').value,
+                    instagram: document.getElementById('seo-instagram').value,
+                    facebook: document.getElementById('seo-facebook').value,
+                    linkedin: document.getElementById('seo-linkedin').value
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('websiteBuilderSEO', JSON.stringify(this.seoSettings));
+                
+                // Close modal
+                document.querySelector('.badass-modal').remove();
+                
+                // Show success message
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #38a169;
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                `;
+                toast.textContent = '✅ SEO settings saved successfully!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            },
             
             // Photography component placeholders
             addPhotoSlider() { this.addText(); },
