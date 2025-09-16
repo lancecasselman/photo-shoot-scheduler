@@ -9157,6 +9157,23 @@ app.get('/invoice.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
 });
 
+// Serve legal pages (no authentication required)
+app.get('/privacy.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
+app.get('/terms.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
+app.get('/security.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'security.html'));
+});
+
+app.get('/gdpr.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'gdpr.html'));
+});
+
 // Serve payment success page (no authentication required for Stripe redirect)
 app.get('/payment-success', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'payment-success.html'));
