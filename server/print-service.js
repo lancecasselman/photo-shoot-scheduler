@@ -3,6 +3,9 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 class PrintServiceAPI {
   constructor() {
+    // COMING SOON FLAG - Set to true to enable coming soon mode
+    this.isComingSoon = true; // WHCC integration coming soon
+    
     this.oasKey = process.env.OAS_CONSUMER_KEY;
     this.oasSecret = process.env.OAS_CONSUMER_SECRET;
     this.editorKeyId = process.env.EDITOR_API_KEY_ID;
@@ -123,6 +126,16 @@ class PrintServiceAPI {
   // Get available print products using WHCC Order Submit API
   async getProducts(categoryId = null) {
     console.log('📦 Fetching WHCC product catalog...');
+    
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        products: []
+      };
+    }
     
     try {
       // First, get access token
@@ -609,6 +622,16 @@ class PrintServiceAPI {
 
   // Create a print order
   async createOrder(orderData) {
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        orderId: null
+      };
+    }
+    
     try {
       const endpoint = '/orders';
       const headers = this.getOASAuthHeader('POST', endpoint);
@@ -664,6 +687,16 @@ class PrintServiceAPI {
 
   // Create a print project in Editor API
   async createPrintProject(projectData) {
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        projectId: null
+      };
+    }
+    
     try {
       const headers = this.getEditorAuthHeader();
       
@@ -709,6 +742,16 @@ class PrintServiceAPI {
 
   // Calculate shipping rates
   async calculateShipping(shippingData) {
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        methods: []
+      };
+    }
+    
     try {
       const endpoint = '/shipping/calculate';
       const headers = this.getOASAuthHeader('POST', endpoint);
@@ -733,6 +776,16 @@ class PrintServiceAPI {
 
   // Validate address
   async validateAddress(address) {
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        valid: false
+      };
+    }
+    
     try {
       const endpoint = '/address/validate';
       const headers = this.getOASAuthHeader('POST', endpoint);
@@ -965,6 +1018,16 @@ class PrintServiceAPI {
   
   // Create WHCC Editor session for product customization
   async createEditorSession(sessionData) {
+    // Check if coming soon mode is enabled
+    if (this.isComingSoon) {
+      console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+      return {
+        comingSoon: true,
+        message: 'Print fulfillment feature coming soon!',
+        sessionUrl: null
+      };
+    }
+    
     try {
       console.log('🎨 Creating WHCC Editor session...');
       
