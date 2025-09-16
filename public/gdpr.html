@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR Compliance - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-light: #f9fafb;
+            --border: #e5e7eb;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .back-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+        
+        h2 {
+            color: var(--text);
+            margin: 30px 0 15px;
+            font-size: 24px;
+        }
+        
+        h3 {
+            color: var(--text);
+            margin: 20px 0 10px;
+            font-size: 20px;
+        }
+        
+        p, li {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        
+        ul {
+            margin-left: 30px;
+        }
+        
+        .rights-box {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .rights-box h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .footer {
+            background: var(--bg-light);
+            padding: 40px 0;
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+        }
+        
+        .contact-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .contact-box a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">Photography Management System</div>
+            <a href="/" class="back-link">Back to Home</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <h1>GDPR Compliance</h1>
+        <p>Photography Management System by Legacy Photography is committed to protecting the privacy and rights of individuals in accordance with the General Data Protection Regulation (GDPR). This page outlines how we comply with GDPR requirements and your rights as a data subject.</p>
+        
+        <h2>Our GDPR Commitment</h2>
+        <p>We are committed to:</p>
+        <ul>
+            <li>Processing personal data lawfully, fairly, and transparently</li>
+            <li>Collecting data only for specified, explicit, and legitimate purposes</li>
+            <li>Ensuring data is adequate, relevant, and limited to what is necessary</li>
+            <li>Keeping personal data accurate and up to date</li>
+            <li>Storing data only for as long as necessary</li>
+            <li>Processing data securely with appropriate technical and organizational measures</li>
+        </ul>
+        
+        <h2>Legal Basis for Processing</h2>
+        <p>We process personal data based on the following legal grounds:</p>
+        <ul>
+            <li><strong>Contract Performance:</strong> To provide our photography management services</li>
+            <li><strong>Legitimate Interests:</strong> For business operations and service improvements</li>
+            <li><strong>Legal Obligations:</strong> To comply with laws and regulations</li>
+            <li><strong>Consent:</strong> Where you have explicitly agreed to specific processing</li>
+        </ul>
+        
+        <h2>Your Rights Under GDPR</h2>
+        
+        <div class="rights-box">
+            <h3>1. Right to Access</h3>
+            <p>You have the right to request a copy of the personal data we hold about you. This includes:</p>
+            <ul>
+                <li>What personal data we have</li>
+                <li>Why we're processing it</li>
+                <li>Who we share it with</li>
+                <li>How long we keep it</li>
+            </ul>
+        </div>
+        
+        <div class="rights-box">
+            <h3>2. Right to Rectification</h3>
+            <p>You can request that we correct any inaccurate or incomplete personal data. We will update your information promptly and notify any third parties if required.</p>
+        </div>
+        
+        <div class="rights-box">
+            <h3>3. Right to Erasure ("Right to be Forgotten")</h3>
+            <p>You can request deletion of your personal data when:</p>
+            <ul>
+                <li>The data is no longer necessary for the original purpose</li>
+                <li>You withdraw consent and there's no other legal basis</li>
+                <li>You object to processing and there are no overriding legitimate grounds</li>
+                <li>The data was unlawfully processed</li>
+            </ul>
+        </div>
+        
+        <div class="rights-box">
+            <h3>4. Right to Data Portability</h3>
+            <p>You can request your personal data in a structured, commonly used, and machine-readable format. You can also request we transfer this data directly to another service provider where technically feasible.</p>
+        </div>
+        
+        <div class="rights-box">
+            <h3>5. Right to Restrict Processing</h3>
+            <p>You can request we limit how we use your personal data while we:</p>
+            <ul>
+                <li>Verify the accuracy of data you've contested</li>
+                <li>Determine legitimate grounds for processing you've objected to</li>
+                <li>Preserve data for legal claims</li>
+            </ul>
+        </div>
+        
+        <div class="rights-box">
+            <h3>6. Right to Object</h3>
+            <p>You can object to processing based on legitimate interests or for direct marketing purposes. We will stop processing unless we can demonstrate compelling legitimate grounds.</p>
+        </div>
+        
+        <h2>Data Protection for Photographers</h2>
+        <p>As a photographer using our platform, you act as a data controller for your clients' data. We provide tools to help you comply with GDPR:</p>
+        <ul>
+            <li><strong>Client Consent Management:</strong> Tools to obtain and document consent</li>
+            <li><strong>Data Export:</strong> Export client data in portable formats</li>
+            <li><strong>Deletion Tools:</strong> Remove client data when requested</li>
+            <li><strong>Security Features:</strong> Encryption and access controls to protect data</li>
+            <li><strong>Privacy Settings:</strong> Control what client data is collected and how it's used</li>
+        </ul>
+        
+        <h2>International Data Transfers</h2>
+        <p>When we transfer data outside the European Economic Area (EEA), we ensure appropriate safeguards:</p>
+        <ul>
+            <li>Standard Contractual Clauses (SCCs) with data processors</li>
+            <li>Adequacy decisions where applicable</li>
+            <li>Additional security measures for data protection</li>
+        </ul>
+        
+        <h2>Data Retention</h2>
+        <p>We retain personal data based on:</p>
+        <ul>
+            <li><strong>Active Accounts:</strong> Data kept while account is active</li>
+            <li><strong>Legal Requirements:</strong> Financial records kept for 7 years</li>
+            <li><strong>Deleted Accounts:</strong> Most data deleted within 90 days</li>
+            <li><strong>Backups:</strong> Backup data retained for 90 days for recovery purposes</li>
+        </ul>
+        
+        <h2>Children's Privacy</h2>
+        <p>Our services are not directed at children under 16. We do not knowingly collect data from children. If we discover we have collected data from a child, we will promptly delete it.</p>
+        
+        <h2>Data Protection Officer</h2>
+        <p>For GDPR-related inquiries, contact our Data Protection team:</p>
+        <ul>
+            <li>Email: dpo@photomanagementsystem.com</li>
+            <li>Response time: Within 30 days</li>
+        </ul>
+        
+        <h2>How to Exercise Your Rights</h2>
+        <p>To exercise any of your GDPR rights:</p>
+        <ol>
+            <li>Contact us at privacy@photomanagementsystem.com</li>
+            <li>Provide proof of identity for security</li>
+            <li>Specify which right(s) you wish to exercise</li>
+            <li>We will respond within 30 days</li>
+        </ol>
+        
+        <h2>Automated Decision Making</h2>
+        <p>We do not use automated decision-making or profiling that produces legal or similarly significant effects on individuals.</p>
+        
+        <h2>Data Breach Notification</h2>
+        <p>In the unlikely event of a data breach:</p>
+        <ul>
+            <li>We will notify affected users within 72 hours</li>
+            <li>We will notify relevant supervisory authorities as required</li>
+            <li>We will provide information about the breach and our response</li>
+            <li>We will take immediate steps to mitigate harm</li>
+        </ul>
+        
+        <h2>Cookies and Tracking</h2>
+        <p>We use cookies in compliance with GDPR:</p>
+        <ul>
+            <li>Essential cookies for platform functionality</li>
+            <li>Analytics cookies with consent</li>
+            <li>Clear cookie policy and management options</li>
+            <li>Respect for Do Not Track signals</li>
+        </ul>
+        
+        <h2>Third-Party Processors</h2>
+        <p>We work with GDPR-compliant processors:</p>
+        <ul>
+            <li><strong>Stripe:</strong> Payment processing (PCI DSS compliant)</li>
+            <li><strong>SendGrid:</strong> Email delivery (Privacy Shield certified)</li>
+            <li><strong>Twilio:</strong> SMS services (GDPR compliant)</li>
+            <li><strong>Cloudflare:</strong> Storage and CDN (GDPR compliant)</li>
+            <li><strong>Firebase:</strong> Authentication (Google Cloud GDPR compliance)</li>
+        </ul>
+        
+        <h2>Supervisory Authority</h2>
+        <p>You have the right to lodge a complaint with your local supervisory authority if you believe we have not handled your data appropriately. Find your local authority at: <a href="https://edpb.europa.eu/about-edpb/board/members_en" style="color: var(--primary);">https://edpb.europa.eu</a></p>
+        
+        <div class="contact-box">
+            <h3>GDPR Questions or Requests?</h3>
+            <p>Contact our Data Protection team:</p>
+            <p>Email: <a href="mailto:dpo@photomanagementsystem.com">dpo@photomanagementsystem.com</a></p>
+            <p>We aim to respond to all GDPR requests within 30 days.</p>
+        </div>
+        
+        <h2>Updates to GDPR Compliance</h2>
+        <p>We regularly review and update our GDPR compliance measures. This page was last updated on January 1, 2025. We will notify users of significant changes to our data protection practices.</p>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2025 Photography Management System by Legacy Photography. All rights reserved.</p>
+    </footer>
+</body>
+</html>
