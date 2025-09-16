@@ -4463,12 +4463,136 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
 
 // Duplicate logout endpoint removed - using the one at line 1058
 
-// Health check endpoint for Docker
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'healthy', 
+// Enhanced health check endpoints for deployment readiness
+app.get('/health', async (req, res) => {
+    const healthCheck = {
+        status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
+        uptime: Math.floor(process.uptime()),
+        environment: process.env.NODE_ENV || 'development'
+    };
+
+    // Quick basic health check - responds immediately for load balancer
+    res.status(200).json(healthCheck);
+});
+
+// Detailed health check for monitoring systems
+app.get('/health/detailed', async (req, res) => {
+    const startTime = Date.now();
+    const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        uptime: Math.floor(process.uptime()),
+        environment: process.env.NODE_ENV || 'development',
+        checks: {}
+    };
+
+    try {
+        // Database connectivity check (with timeout)
+        try {
+            const dbStart = Date.now();
+            const dbResult = await Promise.race([
+                pool.query('SELECT NOW()'),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 3000))
+            ]);
+            healthStatus.checks.database = {
+                status: 'healthy',
+                responseTime: Date.now() - dbStart,
+                timestamp: dbResult.rows[0]?.now
+            };
+        } catch (dbError) {
+            healthStatus.checks.database = {
+                status: 'unhealthy',
+                error: dbError.message,
+                responseTime: Date.now() - startTime
+            };
+            healthStatus.status = 'degraded';
+        }
+
+        // Firebase check
+        try {
+            healthStatus.checks.firebase = {
+                status: admin.apps.length > 0 ? 'healthy' : 'disabled',
+                apps: admin.apps.length
+            };
+        } catch (firebaseError) {
+            healthStatus.checks.firebase = {
+                status: 'unhealthy',
+                error: firebaseError.message
+            };
+        }
+
+        // R2 storage check
+        try {
+            healthStatus.checks.storage = {
+                status: r2FileManager ? 'healthy' : 'disabled',
+                type: 'cloudflare_r2'
+            };
+        } catch (storageError) {
+            healthStatus.checks.storage = {
+                status: 'unhealthy',
+                error: storageError.message
+            };
+        }
+
+        // Memory and process health
+        const memUsage = process.memoryUsage();
+        healthStatus.checks.memory = {
+            status: memUsage.heapUsed < (memUsage.heapTotal * 0.9) ? 'healthy' : 'warning',
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+            external: Math.round(memUsage.external / 1024 / 1024)
+        };
+
+        healthStatus.totalResponseTime = Date.now() - startTime;
+        
+        // Set HTTP status based on overall health
+        const status = healthStatus.status === 'healthy' ? 200 : 
+                      healthStatus.status === 'degraded' ? 503 : 500;
+        
+        res.status(status).json(healthStatus);
+
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(500).json({
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            error: error.message,
+            totalResponseTime: Date.now() - startTime
+        });
+    }
+});
+
+// Readiness probe for Kubernetes/Cloud Run
+app.get('/ready', async (req, res) => {
+    try {
+        // Quick database ping to ensure readiness
+        await Promise.race([
+            pool.query('SELECT 1'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+        ]);
+        
+        res.status(200).json({ 
+            status: 'ready',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(503).json({ 
+            status: 'not_ready',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Liveness probe for Kubernetes/Cloud Run
+app.get('/live', (req, res) => {
+    res.status(200).json({ 
+        status: 'alive',
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime())
     });
 });
 
@@ -14890,17 +15014,15 @@ async function startServer() {
             .map(([key]) => key);
         
         if (missingRequired.length > 0) {
-            console.error('❌ CRITICAL: Missing required WHCC environment variables:');
-            missingRequired.forEach(key => console.error(`  - ${key}`));
-            console.error('❌ WHCC integration will NOT work without these variables');
-            console.error('❌ Add these to your environment configuration before deployment');
-            // Don't exit in development, but log the warning clearly
-            if (process.env.NODE_ENV === 'production') {
-                console.error('❌ EXITING: Cannot run WHCC integration in production without required variables');
-                process.exit(1);
-            }
+            console.warn('⚠️ WHCC: Missing required environment variables:');
+            missingRequired.forEach(key => console.warn(`  - ${key}`));
+            console.warn('⚠️ WHCC integration disabled - server will continue without print features');
+            console.warn('⚠️ Add these variables to enable WHCC print integration');
+            // Don't exit in production - allow server to start without WHCC
+            return false; // Return false to indicate WHCC is disabled
         } else {
             console.log('✅ WHCC environment variables: All required variables configured');
+            return true; // Return true to indicate WHCC is enabled
         }
         
         // Log optional variable status
@@ -14912,14 +15034,29 @@ async function startServer() {
         return missingRequired.length === 0;
     }
     
-    // Initialize notification services
-    initializeNotificationServices();
+    // Initialize notification services with error handling
+    try {
+        initializeNotificationServices();
+        console.log('✅ Notification services initialized');
+    } catch (error) {
+        console.warn('⚠️ Notification services failed to initialize:', error.message);
+        console.warn('⚠️ Server will continue without notification features');
+    }
     
-    // Validate WHCC environment configuration
-    validateWhccEnvironment();
+    // Validate WHCC environment configuration (non-blocking)
+    const whccEnabled = validateWhccEnvironment();
+    if (!whccEnabled) {
+        console.log('ℹ️ WHCC: Integration disabled - continuing without print features');
+    }
 
-    // Start automated payment scheduler
-    paymentScheduler.start();
+    // Start automated payment scheduler with error handling
+    try {
+        paymentScheduler.start();
+        console.log('✅ Payment scheduler started successfully');
+    } catch (error) {
+        console.warn('⚠️ Payment scheduler failed to start:', error.message);
+        console.warn('⚠️ Server will continue without automated payment processing');
+    }
     
     // Register subscription management routes (webhook is handled separately before body parsers)
     app.use('/api/subscriptions', createSubscriptionRoutes(pool));
