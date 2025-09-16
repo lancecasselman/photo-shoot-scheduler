@@ -248,8 +248,106 @@
         document.head.appendChild(style);
     }
     
+    // Show coming soon modal for WHCC features
+    function showComingSoonModal(title, message) {
+        // Remove any existing modal
+        const existingModal = document.getElementById('coming-soon-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.id = 'coming-soon-modal';
+        modal.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            ">
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 30px;
+                    max-width: 500px;
+                    margin: 20px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    animation: slideIn 0.3s ease;
+                ">
+                    <h2 style="
+                        margin: 0 0 15px 0;
+                        color: #333;
+                        font-size: 24px;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    ">
+                        🚧 ${title}
+                    </h2>
+                    <p style="
+                        margin: 0 0 25px 0;
+                        color: #666;
+                        line-height: 1.6;
+                        font-size: 16px;
+                    ">
+                        ${message}
+                    </p>
+                    <button onclick="document.getElementById('coming-soon-modal').remove()" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 30px;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                        width: 100%;
+                    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        Got It!
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add animation styles
+        const animationStyle = document.createElement('style');
+        animationStyle.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(animationStyle);
+        
+        // Add modal to body
+        document.body.appendChild(modal);
+        
+        // Close modal on background click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal.firstElementChild) {
+                modal.remove();
+            }
+        });
+    }
+    
+    // Make showComingSoonModal globally available
+    window.showComingSoonModal = showComingSoonModal;
+    
     // Global functions for purchase actions
-    window.startPrintOrder = function(photoIndex) {
+    window.startPrintOrder = async function(photoIndex) {
         const photoBlock = document.querySelector(`[data-photo-index="${photoIndex}"]`);
         if (!photoBlock) return;
         
@@ -259,6 +357,22 @@
         if (!img) {
             alert('Photo not available for ordering');
             return;
+        }
+        
+        // Check if WHCC print fulfillment is available
+        try {
+            const response = await fetch('/api/photo-sales/whcc-products');
+            const result = await response.json();
+            
+            if (result.comingSoon) {
+                // Show coming soon message with nice styling
+                showComingSoonModal('Print Fulfillment Coming Soon!', 
+                    'We\'re working hard to bring you professional print ordering through WHCC. ' +
+                    'This feature will be available soon with a wide selection of high-quality print products.');
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking print availability:', error);
         }
         
         // Create a professional print preview with WHCC integration
