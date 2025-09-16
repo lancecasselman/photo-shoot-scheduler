@@ -366,13 +366,27 @@ router.get('/whcc-products', async (req, res) => {
     try {
         console.log('📦 Fetching WHCC product catalog...');
         
-        const products = await printService.getProducts();
+        const result = await printService.getProducts();
+        
+        // Check if coming soon
+        if (result.comingSoon) {
+            console.log('🚧 WHCC Print Fulfillment: Coming Soon');
+            return res.json({
+                products: [],
+                success: false,
+                comingSoon: true,
+                message: result.message || 'Print fulfillment feature coming soon!'
+            });
+        }
+        
+        const products = result.products || result;
         
         console.log(`✅ Retrieved ${products.length} WHCC products`);
         
         res.json({
             products: products,
-            success: true
+            success: true,
+            comingSoon: false
         });
         
     } catch (error) {
