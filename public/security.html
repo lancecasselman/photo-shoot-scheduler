@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-light: #f9fafb;
+            --border: #e5e7eb;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .back-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+        
+        h2 {
+            color: var(--text);
+            margin: 30px 0 15px;
+            font-size: 24px;
+        }
+        
+        h3 {
+            color: var(--text);
+            margin: 20px 0 10px;
+            font-size: 20px;
+        }
+        
+        p, li {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        
+        ul {
+            margin-left: 30px;
+        }
+        
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-light);
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+        
+        .security-badge svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent);
+        }
+        
+        .footer {
+            background: var(--bg-light);
+            padding: 40px 0;
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">Photography Management System</div>
+            <a href="/" class="back-link">Back to Home</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <h1>Security at Photography Management System</h1>
+        <p>Your security and the protection of your business data are our top priorities. We implement industry-leading security measures to ensure your photography business operates safely on our platform.</p>
+        
+        <h2>Infrastructure Security</h2>
+        
+        <h3>Cloud Infrastructure</h3>
+        <ul>
+            <li><strong>Cloudflare R2 Storage:</strong> Enterprise-grade cloud storage with built-in DDoS protection</li>
+            <li><strong>PostgreSQL Database:</strong> Hosted on secure, encrypted servers with automatic backups</li>
+            <li><strong>Firebase Authentication:</strong> Google's secure authentication infrastructure</li>
+            <li><strong>SSL/TLS Encryption:</strong> All data transmitted using HTTPS with modern TLS protocols</li>
+        </ul>
+        
+        <h3>Data Centers</h3>
+        <ul>
+            <li>SOC 2 Type II certified facilities</li>
+            <li>24/7 physical security monitoring</li>
+            <li>Redundant power and network connectivity</li>
+            <li>Geographic distribution for disaster recovery</li>
+        </ul>
+        
+        <h2>Data Protection</h2>
+        
+        <h3>Encryption</h3>
+        <ul>
+            <li><strong>In Transit:</strong> TLS 1.3 encryption for all API calls and data transfers</li>
+            <li><strong>At Rest:</strong> AES-256 encryption for stored photos and client data</li>
+            <li><strong>Database:</strong> Encrypted connections and encrypted storage</li>
+            <li><strong>Backups:</strong> All backups are encrypted before storage</li>
+        </ul>
+        
+        <h3>Access Control</h3>
+        <ul>
+            <li>Multi-factor authentication available</li>
+            <li>Role-based access control (RBAC)</li>
+            <li>Session management with automatic timeout</li>
+            <li>Password strength requirements enforced</li>
+            <li>OAuth 2.0 integration with Google</li>
+        </ul>
+        
+        <h2>Application Security</h2>
+        
+        <h3>Security Features</h3>
+        <ul>
+            <li><strong>CSRF Protection:</strong> Cross-site request forgery prevention on all forms</li>
+            <li><strong>XSS Protection:</strong> Input sanitization and output encoding</li>
+            <li><strong>SQL Injection Prevention:</strong> Parameterized queries via Drizzle ORM</li>
+            <li><strong>Rate Limiting:</strong> API rate limiting to prevent abuse</li>
+            <li><strong>Security Headers:</strong> Helmet.js implementation for secure headers</li>
+        </ul>
+        
+        <h3>Authentication & Sessions</h3>
+        <ul>
+            <li>Firebase Authentication for secure user management</li>
+            <li>Secure session tokens with httpOnly cookies</li>
+            <li>Automatic session expiration</li>
+            <li>Password reset with secure token generation</li>
+        </ul>
+        
+        <h2>Payment Security</h2>
+        
+        <h3>PCI Compliance</h3>
+        <ul>
+            <li><strong>Stripe Integration:</strong> PCI DSS Level 1 certified payment processing</li>
+            <li>No credit card data stored on our servers</li>
+            <li>Tokenized payment methods</li>
+            <li>Secure checkout with Stripe's hosted payment forms</li>
+            <li>3D Secure authentication support</li>
+        </ul>
+        
+        <h2>Privacy & Compliance</h2>
+        
+        <h3>Data Privacy</h3>
+        <ul>
+            <li>GDPR compliant data handling</li>
+            <li>CCPA compliance for California residents</li>
+            <li>Data portability and export tools</li>
+            <li>Right to deletion implementation</li>
+            <li>Privacy by design principles</li>
+        </ul>
+        
+        <h3>Audit & Monitoring</h3>
+        <ul>
+            <li>Comprehensive activity logging</li>
+            <li>Real-time security monitoring</li>
+            <li>Automated threat detection</li>
+            <li>Regular security audits</li>
+            <li>Incident response team</li>
+        </ul>
+        
+        <h2>Backup & Recovery</h2>
+        
+        <h3>Automated Backups</h3>
+        <ul>
+            <li>Daily automated database backups</li>
+            <li>Weekly full system backups</li>
+            <li>Point-in-time recovery capabilities</li>
+            <li>Geographic backup distribution</li>
+            <li>90-day backup retention</li>
+        </ul>
+        
+        <h3>Disaster Recovery</h3>
+        <ul>
+            <li>Recovery Time Objective (RTO): 4 hours</li>
+            <li>Recovery Point Objective (RPO): 24 hours</li>
+            <li>Regular disaster recovery testing</li>
+            <li>Automated failover capabilities</li>
+        </ul>
+        
+        <h2>Third-Party Security</h2>
+        
+        <h3>Vendor Security</h3>
+        <ul>
+            <li><strong>Stripe:</strong> PCI Level 1 certified payment processing</li>
+            <li><strong>SendGrid:</strong> SOC 2 Type II certified email delivery</li>
+            <li><strong>Twilio:</strong> ISO 27001 certified communications</li>
+            <li><strong>Cloudflare:</strong> Enterprise security with DDoS protection</li>
+            <li><strong>Firebase:</strong> Google Cloud security infrastructure</li>
+        </ul>
+        
+        <h2>Your Security Responsibilities</h2>
+        
+        <h3>Best Practices</h3>
+        <ul>
+            <li>Use strong, unique passwords</li>
+            <li>Enable two-factor authentication when available</li>
+            <li>Keep your account information confidential</li>
+            <li>Regularly review account activity</li>
+            <li>Report suspicious activity immediately</li>
+            <li>Keep your browser and devices updated</li>
+        </ul>
+        
+        <h2>Security Updates</h2>
+        <ul>
+            <li>Regular security patches and updates</li>
+            <li>Dependency vulnerability scanning</li>
+            <li>Proactive security improvements</li>
+            <li>Transparent communication about security issues</li>
+        </ul>
+        
+        <h2>Reporting Security Issues</h2>
+        <p>If you discover a security vulnerability, please report it responsibly:</p>
+        <ul>
+            <li>Email: security@photomanagementsystem.com</li>
+            <li>We aim to respond within 24 hours</li>
+            <li>We appreciate responsible disclosure</li>
+        </ul>
+        
+        <h2>Certifications & Standards</h2>
+        <ul>
+            <li>OWASP Top 10 compliance</li>
+            <li>HTTPS everywhere policy</li>
+            <li>Regular penetration testing</li>
+            <li>Security-first development practices</li>
+        </ul>
+        
+        <h2>Questions?</h2>
+        <p>If you have questions about our security practices, please contact us at security@photomanagementsystem.com</p>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2025 Photography Management System by Legacy Photography. All rights reserved.</p>
+    </footer>
+</body>
+</html>
