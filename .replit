@@ -16,8 +16,24 @@ author = "agent"
 task = "workflow.run"
 args = "Photography Management System"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Server"
+
 [[workflows.workflow]]
 name = "Photography Management System"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "WHCC_ENV=sandbox node server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
