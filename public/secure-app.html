@@ -17144,6 +17144,12 @@ END:VCALENDAR`;
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addTestimonialSlider()">
                                 <span>💬</span> Testimonials
                             </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addLocationPage()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                <span>📍</span> Location Page
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addBlogPost()" style="background: linear-gradient(135deg, #48bb78, #38a169); color: white;">
+                                <span>📝</span> Blog Post
+                            </button>
                         </div>
                         
                         <div class="wb-toolbar-separator"></div>
@@ -17338,6 +17344,387 @@ END:VCALENDAR`;
             addVideoBackground() { this.addText(); },
             addParallaxSection() { this.addText(); },
             addTestimonialSlider() { this.addText(); },
+            
+            // SEO Location Page Generator
+            async addLocationPage() {
+                const modal = document.createElement('div');
+                modal.className = 'badass-modal';
+                modal.innerHTML = `
+                    <div class="badass-modal-content" style="width: 600px;">
+                        <div class="badass-modal-header">
+                            <h3>🗺️ Generate Location Page</h3>
+                            <button class="badass-modal-close" onclick="this.closest('.badass-modal').remove()">×</button>
+                        </div>
+                        <div class="badass-modal-body">
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Service Type</label>
+                                <select id="location-service" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                                    <option value="wedding">Wedding Photography</option>
+                                    <option value="portrait">Portrait Photography</option>
+                                    <option value="family">Family Photography</option>
+                                    <option value="event">Event Photography</option>
+                                    <option value="commercial">Commercial Photography</option>
+                                    <option value="real-estate">Real Estate Photography</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Location/City</label>
+                                <input type="text" id="location-city" placeholder="e.g., Miami, Downtown Boston, Brooklyn" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Popular Venues/Landmarks (optional)</label>
+                                <textarea id="location-venues" placeholder="e.g., Central Park, The Plaza Hotel, Brooklyn Bridge" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Your Unique Selling Points</label>
+                                <textarea id="location-usp" placeholder="e.g., 10+ years experience, Award-winning, Same-day edits" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 60px;"></textarea>
+                            </div>
+                        </div>
+                        <div class="badass-modal-footer">
+                            <button class="badass-modal-btn" onclick="WebsiteBuilder.generateLocationPage()">Generate Location Page</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+            
+            // Blog Post Template Generator
+            async addBlogPost() {
+                const modal = document.createElement('div');
+                modal.className = 'badass-modal';
+                modal.innerHTML = `
+                    <div class="badass-modal-content" style="width: 650px;">
+                        <div class="badass-modal-header">
+                            <h3>📝 Generate SEO Blog Post</h3>
+                            <button class="badass-modal-close" onclick="this.closest('.badass-modal').remove()">×</button>
+                        </div>
+                        <div class="badass-modal-body">
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Blog Template Type</label>
+                                <select id="blog-template" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;" onchange="WebsiteBuilder.updateBlogFields(this.value)">
+                                    <option value="venue-guide">Venue Guide (Top Wedding Venues in [Area])</option>
+                                    <option value="location-spotlight">Location Spotlight (Best Photo Spots)</option>
+                                    <option value="seasonal">Seasonal Content (Fall/Spring/Summer/Winter Photography)</option>
+                                    <option value="tips">Photography Tips (What to Wear, How to Prepare)</option>
+                                    <option value="real-wedding">Real Wedding/Session Feature</option>
+                                    <option value="faq">FAQ/Educational (Common Questions Answered)</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Title/Main Topic</label>
+                                <input type="text" id="blog-title" placeholder="e.g., Top 10 Wedding Venues in Miami" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">SEO Keywords (comma-separated)</label>
+                                <input type="text" id="blog-keywords" placeholder="e.g., wedding photographer miami, miami wedding venues" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <div style="margin-bottom: 20px;" id="blog-specific-fields">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Venue/Location Names</label>
+                                <textarea id="blog-details" placeholder="List the venues or locations you want to feature" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                            </div>
+                        </div>
+                        <div class="badass-modal-footer">
+                            <button class="badass-modal-btn" onclick="WebsiteBuilder.generateBlogPost()">Generate Blog Post</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+            
+            updateBlogFields(template) {
+                const fieldContainer = document.getElementById('blog-specific-fields');
+                const titleInput = document.getElementById('blog-title');
+                
+                switch(template) {
+                    case 'venue-guide':
+                        titleInput.placeholder = 'e.g., Top 10 Wedding Venues in Miami';
+                        fieldContainer.innerHTML = `
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Venue Names & Details</label>
+                            <textarea id="blog-details" placeholder="List the venues with any specific details (capacity, style, etc.)" 
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                        `;
+                        break;
+                    case 'real-wedding':
+                        titleInput.placeholder = 'e.g., Sarah & John’s Romantic Beach Wedding';
+                        fieldContainer.innerHTML = `
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Wedding Details</label>
+                            <textarea id="blog-details" placeholder="Couple names, venue, date, special moments, vendor list" 
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                        `;
+                        break;
+                    case 'seasonal':
+                        titleInput.placeholder = 'e.g., Best Fall Photography Locations in New England';
+                        fieldContainer.innerHTML = `
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Season & Location Details</label>
+                            <textarea id="blog-details" placeholder="Season specifics, best months, weather considerations, location tips" 
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                        `;
+                        break;
+                    default:
+                        fieldContainer.innerHTML = `
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Additional Details</label>
+                            <textarea id="blog-details" placeholder="Any specific details you want to include" 
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px;"></textarea>
+                        `;
+                }
+            },
+            
+            async generateBlogPost() {
+                const template = document.getElementById('blog-template').value;
+                const title = document.getElementById('blog-title').value;
+                const keywords = document.getElementById('blog-keywords').value;
+                const details = document.getElementById('blog-details').value;
+                
+                if (!title) {
+                    alert('Please enter a title for your blog post');
+                    return;
+                }
+                
+                // Close modal
+                document.querySelector('.badass-modal').remove();
+                
+                // Generate blog post based on template
+                let blogHTML = '';
+                
+                if (template === 'venue-guide') {
+                    blogHTML = `
+                        <article class="blog-post" style="padding: 60px 20px; max-width: 900px; margin: 0 auto;">
+                            <header style="margin-bottom: 40px;">
+                                <h1 style="font-size: 2.8rem; margin-bottom: 20px; color: #2d3748; line-height: 1.2;">${title}</h1>
+                                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
+                                    ${keywords.split(',').map(kw => 
+                                        `<span style="padding: 5px 15px; background: #f7fafc; border-radius: 20px; color: #718096; font-size: 0.9rem;">#${kw.trim().replace(/\s+/g, '')}</span>`
+                                    ).join('')}
+                                </div>
+                            </header>
+                            
+                            <div class="blog-content" style="line-height: 1.8; color: #4a5568;">
+                                <p style="font-size: 1.2rem; margin-bottom: 30px; font-style: italic; color: #718096;">
+                                    Choosing the perfect wedding venue is one of the most important decisions you'll make. 
+                                    As a local photographer who has captured countless beautiful moments at these locations, 
+                                    I'm sharing my insider's guide to the best wedding venues in the area.
+                                </p>
+                                
+                                ${details ? details.split('\n').map((venue, index) => `
+                                    <div style="margin: 40px 0; padding: 30px; background: #f7fafc; border-left: 4px solid #667eea; border-radius: 8px;">
+                                        <h2 style="font-size: 1.8rem; margin-bottom: 15px; color: #2d3748;">${index + 1}. ${venue.trim()}</h2>
+                                        <p style="margin-bottom: 15px;">This stunning venue offers incredible photo opportunities with its unique architecture and beautiful surroundings. 
+                                        The natural lighting here is absolutely perfect for romantic portraits.</p>
+                                        <div style="margin-top: 20px;">
+                                            <strong style="color: #667eea;">Photography Highlights:</strong>
+                                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                                <li>Golden hour shots on the terrace</li>
+                                                <li>Dramatic interior architecture</li>
+                                                <li>Beautiful garden backgrounds</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                `).join('') : ''}
+                                
+                                <div style="margin-top: 50px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; text-align: center;">
+                                    <h3 style="font-size: 1.6rem; margin-bottom: 15px;">Ready to Book Your Wedding Photography?</h3>
+                                    <p style="margin-bottom: 20px; opacity: 0.95;">Let's capture your special day at one of these amazing venues</p>
+                                    <button style="padding: 12px 30px; background: white; color: #667eea; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Get in Touch</button>
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                } else if (template === 'real-wedding') {
+                    blogHTML = `
+                        <article class="blog-post" style="padding: 60px 20px; max-width: 900px; margin: 0 auto;">
+                            <header style="margin-bottom: 40px; text-align: center;">
+                                <h1 style="font-size: 3rem; margin-bottom: 20px; color: #2d3748; font-family: 'Playfair Display', serif;">${title}</h1>
+                                <p style="color: #718096; font-size: 1.1rem;">${details.split('\n')[0] || 'A Beautiful Wedding Story'}</p>
+                            </header>
+                            
+                            <div class="blog-content" style="line-height: 1.8; color: #4a5568;">
+                                <div style="padding: 40px; background: #fef5e7; border-radius: 12px; margin-bottom: 40px;">
+                                    <h2 style="font-size: 1.8rem; margin-bottom: 20px; color: #2d3748; text-align: center;">The Love Story</h2>
+                                    <p style="font-size: 1.1rem; text-align: center; font-style: italic;">
+                                        Every wedding tells a unique story, and this celebration was filled with 
+                                        heartfelt moments, joyful tears, and endless laughter. From the emotional 
+                                        first look to the epic dance floor moments, every second was pure magic.
+                                    </p>
+                                </div>
+                                
+                                <div style="margin: 40px 0;">
+                                    <h2 style="font-size: 1.6rem; margin-bottom: 20px; color: #2d3748;">Wedding Details</h2>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px; background: #f7fafc; border-radius: 8px;">
+                                        <div><strong>Venue:</strong> ${details.includes('venue') ? 'Beautiful Location' : 'Stunning Venue'}</div>
+                                        <div><strong>Season:</strong> Perfect Weather</div>
+                                        <div><strong>Theme:</strong> Romantic Elegance</div>
+                                        <div><strong>Guest Count:</strong> Intimate Celebration</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin: 40px 0;">
+                                    <h2 style="font-size: 1.6rem; margin-bottom: 20px; color: #2d3748;">Favorite Moments</h2>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li style="margin-bottom: 15px; padding-left: 30px; position: relative;">
+                                            <span style="position: absolute; left: 0;">❤️</span>
+                                            The emotional first look that brought everyone to tears
+                                        </li>
+                                        <li style="margin-bottom: 15px; padding-left: 30px; position: relative;">
+                                            <span style="position: absolute; left: 0;">💐</span>
+                                            The personalized vows that perfectly captured their love
+                                        </li>
+                                        <li style="margin-bottom: 15px; padding-left: 30px; position: relative;">
+                                            <span style="position: absolute; left: 0;">🎉</span>
+                                            The surprise flash mob during the reception
+                                        </li>
+                                        <li style="margin-bottom: 15px; padding-left: 30px; position: relative;">
+                                            <span style="position: absolute; left: 0;">✨</span>
+                                            The magical sparkler exit under the stars
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 50px; padding: 30px; background: #f0f4f8; border-radius: 12px; text-align: center;">
+                                    <h3 style="font-size: 1.6rem; margin-bottom: 15px; color: #2d3748;">Planning Your Dream Wedding?</h3>
+                                    <p style="margin-bottom: 20px; color: #718096;">Let's create beautiful memories together</p>
+                                    <button style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Start Your Journey</button>
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                } else {
+                    // Generic blog template for other types
+                    blogHTML = `
+                        <article class="blog-post" style="padding: 60px 20px; max-width: 900px; margin: 0 auto;">
+                            <header style="margin-bottom: 40px;">
+                                <h1 style="font-size: 2.8rem; margin-bottom: 20px; color: #2d3748; line-height: 1.2;">${title}</h1>
+                                <div style="display: flex; gap: 10px; align-items: center; color: #718096; margin-bottom: 20px;">
+                                    <span>📅 ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    <span>•</span>
+                                    <span>📷 Photography Tips</span>
+                                </div>
+                            </header>
+                            
+                            <div class="blog-content" style="line-height: 1.8; color: #4a5568;">
+                                <p style="font-size: 1.2rem; margin-bottom: 30px; font-weight: 500;">
+                                    ${details || 'Professional insights and tips for amazing photography sessions.'}
+                                </p>
+                                
+                                <div style="margin: 40px 0; padding: 30px; background: #f7fafc; border-radius: 12px;">
+                                    <h2 style="font-size: 1.6rem; margin-bottom: 20px; color: #2d3748;">Key Takeaways</h2>
+                                    <ul style="list-style: disc; padding-left: 20px; line-height: 2;">
+                                        <li>Professional photography makes all the difference</li>
+                                        <li>Preparation is key to stunning results</li>
+                                        <li>Trust your photographer's expertise and vision</li>
+                                        <li>Natural moments create the best memories</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 50px; text-align: center;">
+                                    <p style="font-size: 1.1rem; color: #718096; margin-bottom: 20px;">Ready to create something beautiful?</p>
+                                    <button style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Book Your Session</button>
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                }
+                
+                // Add to canvas
+                const canvas = document.getElementById('wb-canvas');
+                canvas.insertAdjacentHTML('beforeend', blogHTML);
+                this.setupEditableElements();
+                this.saveState();
+            },
+            
+            async generateLocationPage() {
+                const service = document.getElementById('location-service').value;
+                const city = document.getElementById('location-city').value;
+                const venues = document.getElementById('location-venues').value;
+                const usp = document.getElementById('location-usp').value;
+                
+                if (!city) {
+                    alert('Please enter a location/city');
+                    return;
+                }
+                
+                // Close modal
+                document.querySelector('.badass-modal').remove();
+                
+                // Generate SEO-optimized content
+                const serviceMap = {
+                    'wedding': 'Wedding',
+                    'portrait': 'Portrait',
+                    'family': 'Family',
+                    'event': 'Event',
+                    'commercial': 'Commercial',
+                    'real-estate': 'Real Estate'
+                };
+                
+                const serviceName = serviceMap[service];
+                const title = `${serviceName} Photographer in ${city}`;
+                
+                // Create location page HTML with SEO optimization
+                const locationPageHTML = `
+                    <section class="location-page-section" style="padding: 80px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div style="max-width: 1200px; margin: 0 auto; text-align: center; color: white;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 20px; font-weight: 700;">${title}</h1>
+                            <p style="font-size: 1.3rem; margin-bottom: 40px; opacity: 0.95;">Professional ${serviceName.toLowerCase()} photography services in ${city}</p>
+                            <button style="padding: 18px 40px; background: white; color: #667eea; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">Book Your Session</button>
+                        </div>
+                    </section>
+                    
+                    <section style="padding: 60px 20px; background: white;">
+                        <div style="max-width: 900px; margin: 0 auto;">
+                            <h2 style="font-size: 2.5rem; margin-bottom: 30px; text-align: center; color: #2d3748;">Why Choose a Local ${city} ${serviceName} Photographer?</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-top: 40px;">
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3rem; margin-bottom: 15px;">📍</div>
+                                    <h3 style="margin-bottom: 10px; color: #2d3748;">Local Expertise</h3>
+                                    <p style="color: #718096;">Deep knowledge of ${city}'s best photo locations${venues ? ' including ' + venues.split(',')[0].trim() : ''}</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3rem; margin-bottom: 15px;">🏆</div>
+                                    <h3 style="margin-bottom: 10px; color: #2d3748;">Professional Quality</h3>
+                                    <p style="color: #718096;">${usp || 'Years of experience capturing perfect moments'}</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3rem; margin-bottom: 15px;">💼</div>
+                                    <h3 style="margin-bottom: 10px; color: #2d3748;">Full Service</h3>
+                                    <p style="color: #718096;">From planning to final edits, complete ${serviceName.toLowerCase()} photography service</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    ${venues ? `
+                    <section style="padding: 60px 20px; background: #f7fafc;">
+                        <div style="max-width: 900px; margin: 0 auto;">
+                            <h2 style="font-size: 2.2rem; margin-bottom: 30px; text-align: center; color: #2d3748;">Popular ${city} Photography Locations</h2>
+                            <p style="text-align: center; color: #718096; margin-bottom: 30px;">I frequently work at these stunning ${city} venues:</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                                ${venues.split(',').map(venue => 
+                                    `<span style="padding: 10px 20px; background: white; border-radius: 25px; color: #4a5568; border: 1px solid #e2e8f0;">${venue.trim()}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </section>` : ''}
+                    
+                    <section style="padding: 60px 20px; background: white;">
+                        <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+                            <h2 style="font-size: 2.2rem; margin-bottom: 20px; color: #2d3748;">Book Your ${city} ${serviceName} Session</h2>
+                            <p style="color: #718096; margin-bottom: 30px;">Ready to capture your special moments? Let's create something beautiful together.</p>
+                            <button style="padding: 15px 35px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">Get Started Today</button>
+                        </div>
+                    </section>
+                `;
+                
+                // Add to canvas
+                const canvas = document.getElementById('wb-canvas');
+                canvas.insertAdjacentHTML('beforeend', locationPageHTML);
+                this.setupEditableElements();
+                this.saveState();
+            },
             
             // Add contact form for published websites
             addContactForm() {

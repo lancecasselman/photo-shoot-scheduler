@@ -13358,6 +13358,42 @@ async function servePublishedWebsite(req, res, subdomain) {
         const metadata = website.metadata || {};
         const theme = website.theme || {};
         
+        // Get photographer info for schema markup
+        const photographerResult = await pool.query(
+            'SELECT business_name, phone, website, specialty, bio FROM users WHERE id = $1',
+            [website.user_id]
+        );
+        const photographer = photographerResult.rows[0] || {};
+        
+        // Generate Schema Markup for SEO
+        const schemaMarkup = {
+            "@context": "https://schema.org",
+            "@type": "ProfessionalService",
+            "@id": `https://photomanagementsystem.com/site/${subdomain}#business`,
+            "name": photographer.business_name || metadata.title || 'Photography Studio',
+            "url": `https://photomanagementsystem.com/site/${subdomain}`,
+            "description": photographer.bio || metadata.description || 'Professional photography services',
+            "priceRange": "$$",
+            "telephone": photographer.phone || '',
+            "serviceType": "Photography Services",
+            "knowsAbout": [
+                photographer.specialty || "Photography",
+                "Portrait Photography",
+                "Event Photography",
+                "Commercial Photography"
+            ].filter(Boolean),
+            "areaServed": {
+                "@type": "City",
+                "name": metadata.location || "Local Area"
+            },
+            "sameAs": [
+                photographer.website,
+                metadata.instagram,
+                metadata.facebook,
+                metadata.linkedin
+            ].filter(Boolean)
+        };
+        
         // Render the published website
         const html = `
 <!DOCTYPE html>
@@ -13367,6 +13403,16 @@ async function servePublishedWebsite(req, res, subdomain) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${metadata.title || 'Photography Portfolio'}</title>
     <meta name="description" content="${metadata.description || 'Professional photography portfolio'}">
+    <meta name="keywords" content="${metadata.keywords || 'photographer, photography, portfolio, professional photography'}">
+    <meta property="og:title" content="${metadata.title || 'Photography Portfolio'}">
+    <meta property="og:description" content="${metadata.description || 'Professional photography portfolio'}">
+    <meta property="og:url" content="https://photomanagementsystem.com/site/${subdomain}">
+    <meta property="og:type" content="website">
+    
+    <!-- Schema.org Structured Data for SEO -->
+    <script type="application/ld+json">
+    ${JSON.stringify(schemaMarkup, null, 2)}
+    </script>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@400;500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
