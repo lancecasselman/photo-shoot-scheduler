@@ -9,15 +9,17 @@ class PrintServiceAPI {
     this.editorKeySecret = process.env.EDITOR_API_KEY_SECRET;
     
     // WHCC (WhiteHouse Custom Color) API endpoints
+    // Configure environment mode - check this FIRST
+    this.isSandbox = process.env.WHCC_ENV === 'sandbox';
+    
     // Using the correct WHCC sandbox endpoint
     this.oasBaseUrl = process.env.OAS_API_URL || 'https://apps.whcc.com';
     this.sandboxUrl = process.env.OAS_API_URL || 'https://sandbox.apps.whcc.com';
     
-    // Editor API endpoints for WHCC
-    this.editorBaseUrl = 'https://studio.whcc.com/editor/api';
-    
-    // Configure environment mode - production default
-    this.isSandbox = process.env.WHCC_ENV === 'sandbox';
+    // Editor API endpoints for WHCC - use sandbox when in sandbox mode
+    this.editorBaseUrl = this.isSandbox 
+      ? 'https://sandbox.apps.whcc.com/editor/api' 
+      : 'https://studio.whcc.com/editor/api';
   }
 
   // Generate OAS API signature
