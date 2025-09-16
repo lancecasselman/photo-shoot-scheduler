@@ -5879,6 +5879,27 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
 const PrintServiceAPI = require('./server/print-service.js');
 const printService = new PrintServiceAPI();
 
+// Get WHCC product catalog
+app.get('/api/whcc/catalog', async (req, res) => {
+    try {
+        console.log('📦 Fetching WHCC product catalog...');
+        const products = await printService.getProducts();
+        res.json({
+            success: true,
+            products: products,
+            count: products.length,
+            environment: process.env.WHCC_ENV || 'sandbox'
+        });
+    } catch (error) {
+        console.error('❌ Error fetching WHCC catalog:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Using fallback catalog due to configuration'
+        });
+    }
+});
+
 // Test print service connection
 app.get('/api/print/test', async (req, res) => {
     try {
