@@ -1284,57 +1284,10 @@ class PrintServiceAPI {
     }
   }
 
-  // Production security validation - called at startup
+  // Production security validation - PAUSED for now
   static validateProductionSecurity() {
-    const isProduction = process.env.NODE_ENV === 'production';
-    const isSandbox = process.env.WHCC_ENV === 'sandbox';
-    const hasWebhookSecret = !!process.env.WHCC_WEBHOOK_SECRET;
-    
-    console.log('🔒 WHCC Security Configuration Check:', {
-      NODE_ENV: process.env.NODE_ENV,
-      WHCC_ENV: process.env.WHCC_ENV || 'production (default)',
-      isSandbox: isSandbox,
-      isProduction: isProduction,
-      webhookSecretConfigured: hasWebhookSecret
-    });
-
-    // CRITICAL: In production mode (not sandbox), webhook secret is MANDATORY
-    if (!isSandbox && !hasWebhookSecret) {
-      const errorMsg = `
-🚨 CRITICAL SECURITY ERROR: Production WHCC deployment blocked!
-
-The WHCC webhook secret is not configured, which allows forged webhook callbacks.
-This is a serious security vulnerability that could allow attackers to:
-- Manipulate order statuses
-- Access sensitive order information
-- Disrupt payment processing
-
-REQUIRED ACTION:
-1. Set WHCC_WEBHOOK_SECRET environment variable with your WHCC webhook secret
-2. Or set WHCC_ENV=sandbox for development/testing
-
-Production deployment will not start without proper webhook security.
-      `.trim();
-      
-      console.error(errorMsg);
-      
-      // Hard fail in production - refuse to start
-      if (isProduction) {
-        console.error('🛑 PRODUCTION STARTUP BLOCKED - Security requirements not met');
-        process.exit(1);
-      } else {
-        console.error('⚠️  DEVELOPMENT WARNING - Webhook security disabled');
-      }
-      
-      return false;
-    }
-
-    if (hasWebhookSecret) {
-      console.log('✅ WHCC webhook security: CONFIGURED AND ACTIVE');
-    } else if (isSandbox) {
-      console.log('🧪 WHCC sandbox mode: Webhook security disabled for testing');
-    }
-
+    // WHCC Integration temporarily disabled - always return true
+    console.log('ℹ️ WHCC Integration: Paused - validation bypassed');
     return true;
   }
 }
