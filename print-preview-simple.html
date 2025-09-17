@@ -89,37 +89,32 @@
             padding: 30px;
         }
 
-        /* Product Tabs */
-        .product-tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            flex-wrap: wrap;
-        }
-
-        .product-tab {
-            padding: 10px 20px;
-            background: #f8f8f8;
+        /* Dropdown Styles */
+        .dropdown-select {
+            width: 100%;
+            padding: 14px 16px;
+            background: white;
             border: 1px solid #e5e5e5;
-            border-radius: 30px;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            transition: all 0.2s;
-        }
-
-        .product-tab:hover {
-            background: #f0f0f0;
             color: #333;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
         }
 
-        .product-tab.active {
-            background: #333;
-            color: white;
+        .dropdown-select:hover {
+            border-color: #999;
+        }
+
+        .dropdown-select:focus {
             border-color: #333;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
         }
 
         /* Section Headers */
@@ -136,76 +131,7 @@
             margin-bottom: 15px;
         }
 
-        /* Size Grid */
-        .size-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 30px;
-        }
 
-        .size-option {
-            padding: 12px;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 4px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .size-option:hover {
-            border-color: #999;
-        }
-
-        .size-option.active {
-            background: #333;
-            color: white;
-            border-color: #333;
-        }
-
-        .size-option.disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        /* Paper Type */
-        .paper-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .paper-option {
-            padding: 15px;
-            background: white;
-            border: 1px solid #e5e5e5;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .paper-option:hover {
-            border-color: #999;
-        }
-
-        .paper-option.active {
-            background: #f8f8f8;
-            border-color: #333;
-        }
-
-        .paper-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .paper-desc {
-            font-size: 12px;
-            color: #666;
-        }
 
         /* Quantity */
         .quantity-selector {
@@ -353,21 +279,6 @@
                 flex: 1;
             }
 
-            .size-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .product-tabs {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-                gap: 10px;
-                padding-bottom: 15px;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .product-tab {
-                flex-shrink: 0;
-            }
         }
     </style>
 </head>
@@ -398,47 +309,38 @@
                 <!-- Product Type -->
                 <div class="section">
                     <div class="section-title">Product Type</div>
-                    <div class="product-tabs">
-                        <div class="product-tab active" data-product="prints">Prints</div>
-                        <div class="product-tab" data-product="canvas">Canvas</div>
-                        <div class="product-tab" data-product="metal">Metal</div>
-                        <div class="product-tab" data-product="albums">Albums</div>
-                    </div>
+                    <select class="dropdown-select" id="productSelect">
+                        <option value="prints">Photo Prints</option>
+                        <option value="canvas">Canvas Prints</option>
+                        <option value="metal">Metal Prints</option>
+                        <option value="albums">Photo Albums</option>
+                    </select>
                 </div>
 
                 <!-- Size Selection -->
                 <div class="section">
                     <div class="section-title">Size</div>
-                    <div class="size-grid">
-                        <div class="size-option" data-size="4x6">4×6"</div>
-                        <div class="size-option" data-size="5x7">5×7"</div>
-                        <div class="size-option active" data-size="8x10">8×10"</div>
-                        <div class="size-option" data-size="11x14">11×14"</div>
-                        <div class="size-option" data-size="16x20">16×20"</div>
-                        <div class="size-option" data-size="20x30">20×30"</div>
-                        <div class="size-option" data-size="24x36">24×36"</div>
-                        <div class="size-option" data-size="30x40">30×40"</div>
-                        <div class="size-option" data-size="custom">Custom</div>
-                    </div>
+                    <select class="dropdown-select" id="sizeSelect">
+                        <option value="4x6">4×6 inches</option>
+                        <option value="5x7">5×7 inches</option>
+                        <option value="8x10" selected>8×10 inches</option>
+                        <option value="11x14">11×14 inches</option>
+                        <option value="16x20">16×20 inches</option>
+                        <option value="20x30">20×30 inches</option>
+                        <option value="24x36">24×36 inches</option>
+                        <option value="30x40">30×40 inches</option>
+                        <option value="custom">Custom Size</option>
+                    </select>
                 </div>
 
                 <!-- Paper Type (for prints) -->
                 <div class="section" id="paperSection">
                     <div class="section-title">Paper Type</div>
-                    <div class="paper-options">
-                        <div class="paper-option active" data-paper="lustre">
-                            <div class="paper-name">Lustre</div>
-                            <div class="paper-desc">Professional finish with minimal glare</div>
-                        </div>
-                        <div class="paper-option" data-paper="glossy">
-                            <div class="paper-name">Glossy</div>
-                            <div class="paper-desc">Vibrant colors with high shine</div>
-                        </div>
-                        <div class="paper-option" data-paper="matte">
-                            <div class="paper-name">Matte</div>
-                            <div class="paper-desc">No glare, perfect for framing</div>
-                        </div>
-                    </div>
+                    <select class="dropdown-select" id="paperSelect">
+                        <option value="lustre">Lustre - Professional finish with minimal glare</option>
+                        <option value="glossy">Glossy - Vibrant colors with high shine</option>
+                        <option value="matte">Matte - No glare, perfect for framing</option>
+                    </select>
                 </div>
 
                 <!-- Quantity -->
@@ -601,61 +503,69 @@
         }
 
         function setupEventListeners() {
-            // Product tabs
-            document.querySelectorAll('.product-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.product-tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    currentSettings.product = this.dataset.product;
-                    updateAvailableSizes();
-                    updateDisplay();
-                });
+            // Product dropdown
+            document.getElementById('productSelect').addEventListener('change', function() {
+                currentSettings.product = this.value;
+                updateAvailableSizes();
+                updateDisplay();
             });
 
-            // Size options
-            document.querySelectorAll('.size-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    if (!this.classList.contains('disabled')) {
-                        document.querySelectorAll('.size-option').forEach(o => o.classList.remove('active'));
-                        this.classList.add('active');
-                        currentSettings.size = this.dataset.size;
-                        updateDisplay();
-                    }
-                });
+            // Size dropdown
+            document.getElementById('sizeSelect').addEventListener('change', function() {
+                currentSettings.size = this.value;
+                updateDisplay();
             });
 
-            // Paper options
-            document.querySelectorAll('.paper-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.paper-option').forEach(o => o.classList.remove('active'));
-                    this.classList.add('active');
-                    currentSettings.paper = this.dataset.paper;
-                    updateDisplay();
-                });
+            // Paper dropdown
+            document.getElementById('paperSelect').addEventListener('change', function() {
+                currentSettings.paper = this.value;
+                updateDisplay();
             });
         }
 
         function updateAvailableSizes() {
             const product = currentSettings.product;
             const availableSizes = Object.keys(basePrices[product] || basePrices.prints);
+            const sizeSelect = document.getElementById('sizeSelect');
             
-            document.querySelectorAll('.size-option').forEach(option => {
-                const size = option.dataset.size;
-                if (availableSizes.includes(size)) {
-                    option.classList.remove('disabled');
-                } else {
-                    option.classList.add('disabled');
-                    if (option.classList.contains('active')) {
-                        option.classList.remove('active');
-                        // Select first available size
-                        const firstAvailable = document.querySelector('.size-option:not(.disabled)');
-                        if (firstAvailable) {
-                            firstAvailable.classList.add('active');
-                            currentSettings.size = firstAvailable.dataset.size;
-                        }
-                    }
-                }
+            // Store current selection
+            const currentSelection = sizeSelect.value;
+            
+            // Clear and rebuild options
+            sizeSelect.innerHTML = '';
+            
+            // Size display names
+            const sizeNames = {
+                '4x6': '4×6 inches',
+                '5x7': '5×7 inches',
+                '8x10': '8×10 inches',
+                '8x8': '8×8 inches',
+                '10x10': '10×10 inches',
+                '11x14': '11×14 inches',
+                '12x12': '12×12 inches',
+                '16x20': '16×20 inches',
+                '20x30': '20×30 inches',
+                '24x36': '24×36 inches',
+                '30x40': '30×40 inches',
+                'custom': 'Custom Size'
+            };
+            
+            // Add available sizes
+            availableSizes.forEach(size => {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = sizeNames[size] || size;
+                sizeSelect.appendChild(option);
             });
+            
+            // Try to restore previous selection or select first
+            if (availableSizes.includes(currentSelection)) {
+                sizeSelect.value = currentSelection;
+                currentSettings.size = currentSelection;
+            } else {
+                sizeSelect.value = availableSizes[0];
+                currentSettings.size = availableSizes[0];
+            }
 
             // Show/hide paper section for non-print products
             const paperSection = document.getElementById('paperSection');
