@@ -441,6 +441,7 @@ try {
         // Initialize Community Platform after Firebase is ready (non-blocking)
         (async () => {
             try {
+                console.log('🚀 Initializing Community Platform...');
                 const initializeCommunityServices = require('./community/community-routes');
                 // Pass R2 configuration to community services
                 communityRoutes = initializeCommunityServices(pool, {
@@ -450,8 +451,10 @@ try {
                     bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
                     publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
                 });
+                console.log('✅ Community Platform routes initialized successfully');
 
             } catch (error) {
+                console.error('❌ Community Platform initialization failed:', error);
                 console.warn('Community Platform initialization skipped:', error.message);
                 // Continue without community features if initialization fails
             }
@@ -2011,7 +2014,14 @@ app.get('/api/auth/user', (req, res) => {
 // Simple auth check for invoice pages
 app.get('/api/check-auth', (req, res) => {
     if (req.session && req.session.user) {
-        res.status(200).json({ authenticated: true });
+        res.status(200).json({ 
+            authenticated: true,
+            user: {
+                email: req.session.user.email,
+                uid: req.session.user.uid || req.session.user.id,
+                displayName: req.session.user.displayName
+            }
+        });
     } else {
         res.status(401).json({ authenticated: false });
     }
@@ -2594,8 +2604,10 @@ app.use('/api/print', photoSalesRoutes);
 // Community Platform routes (initialized after Firebase)
 app.use('/api/community', (req, res, next) => {
     if (communityRoutes) {
-        communityRoutes(req, res, next);
+        // communityRoutes is an Express Router, not a function
+        return communityRoutes(req, res, next);
     } else {
+        console.log('Community platform not yet initialized');
         res.status(503).json({ error: 'Community platform is initializing...' });
     }
 });
@@ -9274,6 +9286,64 @@ app.get('/storefront', isAuthenticated, (req, res) => {
 // Serve community dashboard page
 app.get('/community', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'community', 'community-dashboard.html'));
+});
+
+// Test page for community posts
+app.get('/test-community', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-community-post.html'));
+});
+
+// Fix community auth page
+app.get('/fix-community-auth', (req, res) => {
+    res.sendFile(path.join(__dirname, 'fix-community-auth.html'));
+});
+
+// Debug endpoint to test community post creation directly
+app.post('/api/test-community-post', async (req, res) => {
+    console.log('🔍 TEST: Community post test endpoint called');
+    
+    // Mock session for testing
+    if (!req.session) {
+        req.session = {};
+    }
+    if (!req.session.user) {
+        req.session.user = {
+            uid: 'test-user-123',
+            email: 'test@example.com',
+            displayName: 'Test User'
+        };
+    }
+    
+    console.log('🔍 TEST: Session user:', req.session.user);
+    
+    // Check if community routes are available
+    if (!communityRoutes) {
+        console.error('❌ TEST: Community routes not initialized');
+        return res.status(503).json({ 
+            error: 'Community routes not initialized',
+            debug: 'communityRoutes is null or undefined'
+        });
+    }
+    
+    console.log('✅ TEST: Community routes are available');
+    
+    // Create a simple test post
+    const testData = {
+        type: 'text',
+        title: 'Test Post from Debug Endpoint',
+        content: 'This is a test post created to verify the community posting functionality.',
+        tags: ['test', 'debug']
+    };
+    
+    console.log('📝 TEST: Test post data:', testData);
+    
+    res.json({ 
+        message: 'Test endpoint reached successfully',
+        communityRoutesInitialized: !!communityRoutes,
+        sessionUser: req.session.user,
+        testData: testData,
+        info: 'To complete the test, try posting to /api/community/posts with this data'
+    });
 });
 
 // Serve public invoice page (no authentication required)

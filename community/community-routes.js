@@ -144,6 +144,12 @@ router.get('/posts/:postId', async (req, res) => {
 
 // Create post
 router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) => {
+    console.log('📝 Community: Creating new post', { 
+        userId: req.session?.user?.uid || req.session?.user?.id, 
+        type: req.body?.type,
+        hasImages: req.files?.length > 0 
+    });
+    
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const userEmail = req.session.user.email;
@@ -224,15 +230,20 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
             }
         }
 
+        console.log('📝 Community: Post data prepared', postData);
+        
         const post = await db.createPost(postData);
+
+        console.log('✅ Community: Post created successfully', { postId: post.id });
 
         // Update user's post count - will be handled by database trigger
         // or we can update it separately after post creation
 
         res.json(post);
     } catch (error) {
-        console.error('Error creating post:', error);
-        res.status(500).json({ error: 'Failed to create post' });
+        console.error('❌ Community: Error creating post:', error);
+        console.error('Error details:', error.stack);
+        res.status(500).json({ error: 'Failed to create post', details: error.message });
     }
 });
 
