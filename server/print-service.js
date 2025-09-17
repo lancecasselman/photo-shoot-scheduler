@@ -3,8 +3,8 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 class PrintServiceAPI {
   constructor() {
-    // COMING SOON FLAG - Set to true to enable coming soon mode
-    this.isComingSoon = true; // WHCC integration coming soon
+    // COMING SOON FLAG - Set to false to enable WHCC integration
+    this.isComingSoon = false; // WHCC integration enabled
     
     this.oasKey = process.env.OAS_CONSUMER_KEY;
     this.oasSecret = process.env.OAS_CONSUMER_SECRET;
@@ -811,7 +811,7 @@ class PrintServiceAPI {
   // Create a print order in WHCC system
   async createOrder(orderData) {
     try {
-      const token = await this.getWHCCAccessToken();
+      const token = await this.getAccessToken();
       
       // Format order for WHCC OrderImport API
       const whccOrder = {
@@ -898,7 +898,7 @@ class PrintServiceAPI {
   // Submit order for production
   async submitOrder(whccOrderId) {
     try {
-      const token = await this.getWHCCAccessToken();
+      const token = await this.getAccessToken();
       
       console.log('🚀 Submitting WHCC order for production:', whccOrderId);
       
@@ -940,7 +940,7 @@ class PrintServiceAPI {
   // Get order status from WHCC
   async getOrderStatus(whccOrderId) {
     try {
-      const token = await this.getWHCCAccessToken();
+      const token = await this.getAccessToken();
       
       const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Orders/${whccOrderId}`, {
         method: 'GET',
@@ -973,7 +973,7 @@ class PrintServiceAPI {
   // Register webhook for order status updates
   async registerWebhook(webhookUrl) {
     try {
-      const token = await this.getWHCCAccessToken();
+      const token = await this.getAccessToken();
       
       const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Webhooks`, {
         method: 'POST',
@@ -1173,7 +1173,7 @@ class PrintServiceAPI {
   // Calculate shipping costs
   async calculateShipping(orderData) {
     try {
-      const token = await this.getWHCCAccessToken();
+      const token = await this.getAccessToken();
       
       const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/Shipping/Calculate`, {
         method: 'POST',
