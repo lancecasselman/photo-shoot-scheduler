@@ -232,7 +232,7 @@ class PrintServiceAPI {
                 id: `whcc_${product.ProductUID || product.Id || Math.random()}`,
                 name: product.Name || product.Description || 'WHCC Product',
                 description: product.Description || category.Name,
-                category: category.Name?.toLowerCase().replace(/\s+/g, '_') || 'prints',
+                category: this.normalizeProductCategory(product.Name, category.Name),
                 productUID: product.ProductUID || product.Id,
                 attributes: [],
                 sizes: [] // Will contain all available sizes
@@ -431,6 +431,51 @@ class PrintServiceAPI {
     };
   }
   
+  // Normalize product category based on product name and category
+  normalizeProductCategory(productName, categoryName) {
+    const nameLower = (productName || '').toLowerCase();
+    const catLower = (categoryName || '').toLowerCase();
+    
+    // Check for albums
+    if (nameLower.includes('album') || catLower.includes('album')) {
+      return 'albums';
+    }
+    
+    // Check for books (including yearbooks)
+    if (nameLower.includes('book') || nameLower.includes('yearbook') || 
+        nameLower.includes('photo print 2up') || catLower.includes('book')) {
+      return 'books';
+    }
+    
+    // Check for metal prints
+    if (nameLower.includes('metal') || nameLower.includes('dog tag') || catLower.includes('metal')) {
+      return 'metal_prints';
+    }
+    
+    // Check for canvas
+    if (nameLower.includes('canvas') || catLower.includes('canvas')) {
+      return 'canvas_prints';
+    }
+    
+    // Check for acrylic
+    if (nameLower.includes('acrylic') || catLower.includes('acrylic')) {
+      return 'acrylic_prints';
+    }
+    
+    // Check for cards
+    if (nameLower.includes('card') || catLower.includes('card')) {
+      return 'press_printed_cards';
+    }
+    
+    // Check for gallery wraps
+    if (nameLower.includes('gallery') || nameLower.includes('wrap') || catLower.includes('gallery')) {
+      return 'gallery_wraps';
+    }
+    
+    // Default fallback - use original category name normalized
+    return categoryName?.toLowerCase().replace(/\s+/g, '_') || 'partner_photo_fulfillment';
+  }
+
   // Normalize attribute category names to consistent keys
   normalizeAttributeCategoryName(categoryName) {
     return categoryName
