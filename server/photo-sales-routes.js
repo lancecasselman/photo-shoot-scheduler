@@ -61,13 +61,6 @@ async function getWHCCCatalog() {
         console.log('🔄 Refreshing WHCC catalog cache...');
         const result = await printService.getProducts();
         
-        // Handle coming soon response
-        if (result && result.comingSoon) {
-            console.log('🚧 WHCC catalog is in coming soon mode');
-            whccCatalogCache = [];
-            catalogCacheExpiry = now + (5 * 60 * 1000); // Shorter cache time for coming soon
-            return [];
-        }
         
         // Extract products array from result
         const products = Array.isArray(result) ? result : (result.products || []);
@@ -215,29 +208,17 @@ router.get('/whcc-status', async (req, res) => {
         
         const result = await printService.getProducts();
         
-        // Check if coming soon
-        if (result && result.comingSoon) {
-            console.log('🚧 WHCC Print Fulfillment: Coming Soon (public check)');
-            return res.json({
-                success: true,
-                comingSoon: true,
-                message: result.message || 'Print fulfillment feature coming soon!'
-            });
-        }
-        
         // Service is available
         return res.json({
             success: true,
-            comingSoon: false,
             message: 'Print fulfillment service is available'
         });
         
     } catch (error) {
         console.error('❌ Failed to check WHCC status:', error);
-        // Return coming soon on error to avoid exposing issues
+        // Return error response
         res.json({
             success: false,
-            comingSoon: true,
             message: 'Print fulfillment service temporarily unavailable'
         });
     }
@@ -415,16 +396,6 @@ router.get('/whcc-products', async (req, res) => {
         
         const result = await printService.getProducts();
         
-        // Check if coming soon
-        if (result && result.comingSoon) {
-            console.log('🚧 WHCC Print Fulfillment: Coming Soon');
-            return res.json({
-                products: [],
-                success: false,
-                comingSoon: true,
-                message: result.message || 'Print fulfillment feature coming soon!'
-            });
-        }
         
         const products = Array.isArray(result) ? result : (result.products || []);
         
@@ -432,8 +403,7 @@ router.get('/whcc-products', async (req, res) => {
         
         res.json({
             products: products,
-            success: true,
-            comingSoon: false
+            success: true
         });
         
     } catch (error) {
