@@ -1375,35 +1375,30 @@
             
             // Function to update available sizes based on product - UPDATED FOR DROPDOWN
             function updateAvailableSizes() {
-                const categoryMap = {
-                    // Standard prints
-                    'photographic': 'photographic',
-                    'fineart': 'fineart',
-                    
-                    // Canvas products
-                    'canvas': 'canvas',
-                    
-                    // Metal and acrylic
-                    'metal': 'metal',
-                    'acrylic': 'acrylic',
-                    
-                    // Framed products
-                    'framed': 'framed',
-                    
-                    // Albums and books
-                    'albums': 'albums',
-                    'books': 'books',
-                    
-                    // Cards and specialty
-                    'cards': 'cards',
-                    'specialty': 'specialty',
-                    
-                    // Additional materials
-                    'bamboo': 'bamboo'
+                // Default sizes for each category if not loaded from WHCC
+                const defaultSizes = {
+                    'photographic': ['4x6', '5x7', '8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40'],
+                    'fineart': ['8x10', '8x12', '11x14', '12x18', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40', '30x45'],
+                    'canvas': ['8x10', '11x14', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40'],
+                    'metal': ['8x10', '11x14', '16x20', '16x24', '20x24', '20x30', '24x30', '24x36', '30x40'],
+                    'acrylic': ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                    'framed': ['8x10', '11x14', '16x20', '20x24', '24x30', '30x40'],
+                    'albums': ['8x8', '10x10', '12x12'],
+                    'books': ['8x8', '10x10', '12x12'],
+                    'cards': ['5x7', '4x6'],
+                    'specialty': ['8x10', '11x14'],
+                    'bamboo': ['8x10', '11x14', '16x20', '20x24']
                 };
                 
-                const category = categoryMap[currentSettings.product] || 'prints';
-                const availableSizes = productSizes[category] || [];
+                const category = currentSettings.product;
+                // Use productSizes from WHCC if available, otherwise use defaults
+                let availableSizes = productSizes[category] || defaultSizes[category] || [];
+                
+                // If still no sizes, provide a basic set
+                if (availableSizes.length === 0) {
+                    availableSizes = ['8x10', '11x14', '16x20', '20x24'];
+                }
+                
                 const sizeSelect = document.getElementById('sizeSelect');
                 
                 // Clear and rebuild size options
@@ -1415,13 +1410,16 @@
                 defaultOption.textContent = 'Select a size...';
                 sizeSelect.appendChild(defaultOption);
                 
-                // Size display names
+                // Size display names  
                 const sizeNames = {
                     '4x6': '4×6 inches',
                     '5x7': '5×7 inches',
+                    '8x8': '8×8 inches',
                     '8x10': '8×10 inches',
                     '8x12': '8×12 inches',
+                    '10x10': '10×10 inches',
                     '11x14': '11×14 inches',
+                    '12x12': '12×12 inches',
                     '12x18': '12×18 inches',
                     '16x20': '16×20 inches',
                     '16x24': '16×24 inches',
@@ -1444,6 +1442,8 @@
                 // Reset selection
                 sizeSelect.value = '';
                 currentSettings.size = null;
+                
+                console.log(`📏 Updated sizes for ${category}: ${availableSizes.length} options available`);
             }
             
             // Dynamic WHCC attribute rendering functions
