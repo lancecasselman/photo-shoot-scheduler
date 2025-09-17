@@ -247,18 +247,60 @@ class PrintServiceAPI {
                   const height = node.H || 0;
                   const area = width * height;
                   
-                  // Price calculation based on square inches (typical print lab pricing)
+                  // Price calculation based on product type and size
                   let price = 19.99; // Base price
-                  if (area > 0) {
-                    if (area <= 35) price = 4.99;        // Small prints (5x7)
-                    else if (area <= 80) price = 9.99;   // Medium prints (8x10)
-                    else if (area <= 154) price = 14.99; // Large prints (11x14)
-                    else if (area <= 192) price = 19.99; // X-Large prints (12x16)
-                    else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
-                    else if (area <= 480) price = 39.99; // Jumbo prints (20x24)
-                    else if (area <= 720) price = 59.99; // Super prints (24x30)
-                    else if (area <= 1200) price = 89.99; // Mega prints (30x40)
-                    else price = 129.99; // Ultra prints (40x60+)
+                  
+                  // Special pricing for albums and books
+                  const productCategory = this.normalizeProductCategory(baseProduct.name, category.Name);
+                  
+                  if (productCategory === 'albums') {
+                    // Album pricing based on size (albums are typically more expensive)
+                    if (width <= 8 && height <= 8) price = 149.99;      // Small albums (8x8)
+                    else if (width <= 10 && height <= 10) price = 199.99; // Medium albums (10x10)
+                    else if (width <= 11 && height <= 14) price = 249.99; // Large albums (11x14)
+                    else if (width <= 12 && height <= 12) price = 299.99; // X-Large albums (12x12)
+                    else price = 349.99; // Premium albums
+                    
+                    // Check for price from WHCC node data if available
+                    if (node.Price) price = node.Price;
+                  }
+                  else if (productCategory === 'books') {
+                    // Book pricing (typically less than albums but more than prints)
+                    price = 99.99; // Base price for books
+                    if (width <= 8 && height <= 10) price = 89.99;
+                    else if (width >= 11) price = 129.99;
+                    
+                    // Check for price from WHCC node data if available
+                    if (node.Price) price = node.Price;
+                  }
+                  else if (productCategory === 'metal_prints') {
+                    // Metal print pricing (premium product)
+                    if (area <= 80) price = 59.99;       // Small metal (8x10)
+                    else if (area <= 154) price = 89.99; // Medium metal (11x14)
+                    else if (area <= 320) price = 129.99; // Large metal (16x20)
+                    else if (area <= 480) price = 179.99; // X-Large metal (20x24)
+                    else if (area <= 720) price = 249.99; // XX-Large metal (24x30)
+                    else price = 379.99; // Ultra metal
+                    
+                    // Check for price from WHCC node data if available
+                    if (node.Price) price = node.Price;
+                  }
+                  else {
+                    // Standard print pricing based on area
+                    if (area > 0) {
+                      if (area <= 35) price = 4.99;        // Small prints (5x7)
+                      else if (area <= 80) price = 9.99;   // Medium prints (8x10)
+                      else if (area <= 154) price = 14.99; // Large prints (11x14)
+                      else if (area <= 192) price = 19.99; // X-Large prints (12x16)
+                      else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
+                      else if (area <= 480) price = 39.99; // Jumbo prints (20x24)
+                      else if (area <= 720) price = 59.99; // Super prints (24x30)
+                      else if (area <= 1200) price = 89.99; // Mega prints (30x40)
+                      else price = 129.99; // Ultra prints (40x60+)
+                    }
+                    
+                    // Check for price from WHCC node data if available
+                    if (node.Price) price = node.Price;
                   }
                   
                   // Create size option with full WHCC metadata
