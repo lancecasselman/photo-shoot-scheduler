@@ -14,10 +14,11 @@ class PrintServiceAPI {
     // WHCC (WhiteHouse Custom Color) API endpoints
     // Configure environment mode - check this FIRST
     this.isSandbox = process.env.WHCC_ENV === 'sandbox';
+    console.log(`🔧 WHCC Environment: ${process.env.WHCC_ENV} (isSandbox: ${this.isSandbox})`);
     
-    // Using the correct WHCC sandbox endpoint
-    this.oasBaseUrl = process.env.OAS_API_URL || 'https://apps.whcc.com';
-    this.sandboxUrl = process.env.OAS_API_URL || 'https://sandbox.apps.whcc.com';
+    // Set the correct URL based on environment
+    this.oasBaseUrl = 'https://apps.whcc.com';
+    this.sandboxUrl = 'https://sandbox.apps.whcc.com';
     
     // Editor API endpoints for WHCC - use sandbox when in sandbox mode
     this.editorBaseUrl = this.isSandbox 
