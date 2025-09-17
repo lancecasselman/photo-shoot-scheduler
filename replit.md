@@ -121,6 +121,7 @@ The contact form uses the existing SendGrid integration to send formatted emails
 - **Stripe**: Payment processing, subscription management, Stripe Connect.
 - **SendGrid**: Email delivery service.
 - **Cloudflare R2**: Primary cloud storage.
+- **WHCC**: Print fulfillment service (Customer #443225) - provides complete product catalog including albums, books, metal prints, canvas prints, and cards.
 
 ### Development & Deployment
 - **Drizzle ORM**: Type-safe database operations.
