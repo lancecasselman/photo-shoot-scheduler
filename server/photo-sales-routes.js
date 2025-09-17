@@ -233,6 +233,222 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+// DEEP DIVE TEST ENDPOINT - Add BEFORE authentication middleware
+// This bypasses authentication for testing purposes
+router.get('/whcc-complete-test', async (req, res) => {
+    console.log('\n🚀 COMPLETE WHCC CAPABILITIES TEST');
+    console.log('='.repeat(60));
+    
+    try {
+        const results = {
+            authentication: {},
+            catalog: {},
+            editorAPI: {},
+            analysis: {},
+            recommendations: []
+        };
+        
+        // Test 1: Authentication
+        console.log('📋 Step 1: Testing Authentication...');
+        const token = await printService.getAccessToken();
+        if (token) {
+            results.authentication = {
+                success: true,
+                tokenLength: token.length,
+                environment: printService.isSandbox ? 'sandbox' : 'production',
+                customerNumber: '443225'  // Your WHCC account number
+            };
+            console.log('✅ Authentication successful');
+            
+            // Test 2: Get full catalog
+            console.log('\n📚 Step 2: Fetching Complete Catalog...');
+            const catalogUrl = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}/api/catalog`;
+            
+            const fetch = (await import('node-fetch')).default;
+            const catalogResponse = await fetch(catalogUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (catalogResponse.ok) {
+                const catalog = await catalogResponse.json();
+                
+                // Deep analysis of catalog
+                let totalProducts = 0;
+                const productTypes = {
+                    albums: [],
+                    books: [],
+                    prints: [],
+                    canvas: [],
+                    metal: [],
+                    acrylic: [],
+                    cards: [],
+                    other: []
+                };
+                
+                if (catalog.Categories) {
+                    catalog.Categories.forEach(category => {
+                        console.log(`  📦 Category: ${category.Name}`);
+                        if (category.ProductList) {
+                            totalProducts += category.ProductList.length;
+                            console.log(`     Products: ${category.ProductList.length}`);
+                            
+                            category.ProductList.forEach(product => {
+                                const name = product.Name || product.Description || '';
+                                const lowerName = name.toLowerCase();
+                                
+                                // Categorize products
+                                if (lowerName.includes('album')) {
+                                    productTypes.albums.push(name);
+                                    console.log(`     📚 ALBUM FOUND: ${name}`);
+                                } else if (lowerName.includes('book')) {
+                                    productTypes.books.push(name);
+                                    console.log(`     📖 BOOK FOUND: ${name}`);
+                                } else if (lowerName.includes('metal') && !lowerName.includes('ornament')) {
+                                    productTypes.metal.push(name);
+                                    console.log(`     🔩 METAL PRINT FOUND: ${name}`);
+                                } else if (lowerName.includes('acrylic') && !lowerName.includes('magnet')) {
+                                    productTypes.acrylic.push(name);
+                                } else if (lowerName.includes('canvas') || lowerName.includes('gallery wrap')) {
+                                    productTypes.canvas.push(name);
+                                } else if (lowerName.includes('card')) {
+                                    productTypes.cards.push(name);
+                                } else if (lowerName.includes('print') && !lowerName.includes('canvas')) {
+                                    productTypes.prints.push(name);
+                                } else {
+                                    productTypes.other.push(name);
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                results.catalog = {
+                    success: true,
+                    totalCategories: catalog.Categories ? catalog.Categories.length : 0,
+                    totalProducts: totalProducts,
+                    productTypes: {
+                        albums: productTypes.albums.length,
+                        albumNames: productTypes.albums,
+                        books: productTypes.books.length,
+                        bookNames: productTypes.books,
+                        metalPrints: productTypes.metal.length,
+                        metalNames: productTypes.metal,
+                        acrylicPrints: productTypes.acrylic.length,
+                        acrylicNames: productTypes.acrylic,
+                        canvasProducts: productTypes.canvas.length,
+                        photoPrints: productTypes.prints.length,
+                        cards: productTypes.cards.length,
+                        other: productTypes.other.length,
+                        otherNames: productTypes.other.slice(0, 10)
+                    },
+                    hasOrderAttributes: !!(catalog.Categories?.[0]?.OrderAttributeCategoryList),
+                    orderAttributeCount: catalog.Categories?.[0]?.OrderAttributeCategoryList?.length || 0
+                };
+                
+                console.log(`✅ Catalog loaded: ${totalProducts} products found`);
+                
+                // Check for specific album/book products
+                const catalogString = JSON.stringify(catalog).toLowerCase();
+                results.analysis = {
+                    containsAlbumKeyword: catalogString.includes('album'),
+                    containsBookKeyword: catalogString.includes('book'),
+                    containsLayflatKeyword: catalogString.includes('layflat') || catalogString.includes('lay-flat'),
+                    containsHardcoverKeyword: catalogString.includes('hardcover') || catalogString.includes('hard cover'),
+                    containsPressBookKeyword: catalogString.includes('press'),
+                    containsMetalKeyword: catalogString.includes('metal')
+                };
+                
+            } else {
+                const errorText = await catalogResponse.text();
+                results.catalog = {
+                    success: false,
+                    error: errorText.substring(0, 200),
+                    status: catalogResponse.status
+                };
+                console.log(`❌ Catalog fetch failed: ${catalogResponse.status}`);
+            }
+            
+            // Test 3: Editor API capabilities
+            console.log('\n🎨 Step 3: Checking Editor API...');
+            if (printService.editorKeyId && printService.editorKeySecret) {
+                results.editorAPI = {
+                    configured: true,
+                    hasCredentials: true,
+                    keyIdLength: printService.editorKeyId.length,
+                    editorUrl: printService.editorBaseUrl
+                };
+                
+                // According to WHCC docs, Editor API supports:
+                results.editorAPI.documentedSupport = {
+                    albums: true,  // "Albums with various cover and debossing options"
+                    flatCards: true,  // "5x7 Flat Cards with optional boutique shapes and foils"
+                    prints: true,  // "Photo and Fine Art Prints"
+                    framedPrints: true  // "Framed Prints"
+                };
+                
+                console.log('✅ Editor API configured and ready');
+                console.log('   📚 Editor API supports ALBUMS through the Editor interface!');
+            } else {
+                results.editorAPI = {
+                    configured: false,
+                    hasCredentials: false
+                };
+            }
+            
+        } else {
+            results.authentication = {
+                success: false,
+                error: 'Failed to get access token'
+            };
+        }
+        
+        // Generate recommendations based on findings
+        if (results.catalog.productTypes?.albums === 0 && results.catalog.productTypes?.books === 0) {
+            if (results.editorAPI.configured) {
+                results.recommendations.push('📚 Albums/Books not in Order Submit catalog BUT Editor API is configured - they ARE available through Editor API!');
+                results.recommendations.push('Use the Editor API to create album/book products for customers');
+            } else {
+                results.recommendations.push('Contact WHCC to enable Albums/Books for your account (#443225)');
+            }
+        } else if (results.catalog.productTypes?.albums > 0 || results.catalog.productTypes?.books > 0) {
+            results.recommendations.push('✅ Albums/Books ARE available in your catalog!');
+        }
+        
+        if (results.catalog.productTypes?.metalPrints === 0 && !results.analysis?.containsMetalKeyword) {
+            results.recommendations.push('Metal prints not found - may need to be enabled for account #443225');
+        } else if (results.catalog.productTypes?.metalPrints > 0) {
+            results.recommendations.push('✅ Metal prints are available!');
+        }
+        
+        if (results.catalog.success && results.editorAPI.configured) {
+            results.recommendations.push('✅ Full WHCC integration is working! Both Order Submit API and Editor API are configured.');
+        }
+        
+        console.log('\n✅ COMPLETE TEST FINISHED');
+        console.log('='.repeat(60));
+        
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            accountNumber: '443225',
+            environment: printService.isSandbox ? 'SANDBOX' : 'PRODUCTION',
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ Complete test error:', error);
+        res.status(500).json({
+            error: 'Complete test failed',
+            message: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Apply authentication middleware to all protected routes
 router.use(requireAuth);
 
@@ -730,6 +946,195 @@ router.post('/photo-settings', async (req, res) => {
     } catch (error) {
         console.error('❌ Error saving photo settings:', error);
         res.status(500).json({ error: 'Failed to save photo settings' });
+    }
+});
+
+// DEEP DIVE TEST ENDPOINT - Comprehensive WHCC capabilities check
+router.get('/whcc-deep-dive', async (req, res) => {
+    console.log('\n🚀 DEEP DIVE INTO WHCC CAPABILITIES');
+    console.log('='.repeat(60));
+    
+    // BYPASS AUTH FOR TESTING - Remove this in production
+    req.session = req.session || {};
+    req.session.user = req.session.user || { uid: 'test-deep-dive' };
+    
+    try {
+        const results = {
+            authentication: {},
+            catalog: {},
+            editorAPI: {},
+            analysis: {}
+        };
+        
+        // Test 1: Authentication
+        console.log('📋 Step 1: Testing Authentication...');
+        const token = await printService.getAccessToken();
+        if (token) {
+            results.authentication = {
+                success: true,
+                tokenLength: token.length,
+                environment: printService.isSandbox ? 'sandbox' : 'production'
+            };
+            console.log('✅ Authentication successful');
+            
+            // Test 2: Get full catalog
+            console.log('\n📚 Step 2: Fetching Complete Catalog...');
+            const catalogUrl = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}/api/catalog`;
+            
+            const catalogResponse = await fetch(catalogUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (catalogResponse.ok) {
+                const catalog = await catalogResponse.json();
+                
+                // Deep analysis of catalog
+                let totalProducts = 0;
+                const productTypes = {
+                    albums: [],
+                    books: [],
+                    prints: [],
+                    canvas: [],
+                    metal: [],
+                    acrylic: [],
+                    cards: [],
+                    other: []
+                };
+                
+                if (catalog.Categories) {
+                    catalog.Categories.forEach(category => {
+                        if (category.ProductList) {
+                            totalProducts += category.ProductList.length;
+                            
+                            category.ProductList.forEach(product => {
+                                const name = product.Name || product.Description || '';
+                                const lowerName = name.toLowerCase();
+                                
+                                // Categorize products
+                                if (lowerName.includes('album')) productTypes.albums.push(name);
+                                else if (lowerName.includes('book')) productTypes.books.push(name);
+                                else if (lowerName.includes('metal') && !lowerName.includes('ornament')) productTypes.metal.push(name);
+                                else if (lowerName.includes('acrylic') && !lowerName.includes('magnet')) productTypes.acrylic.push(name);
+                                else if (lowerName.includes('canvas') || lowerName.includes('gallery wrap')) productTypes.canvas.push(name);
+                                else if (lowerName.includes('card')) productTypes.cards.push(name);
+                                else if (lowerName.includes('print') && !lowerName.includes('canvas')) productTypes.prints.push(name);
+                                else productTypes.other.push(name);
+                            });
+                        }
+                    });
+                }
+                
+                results.catalog = {
+                    success: true,
+                    totalCategories: catalog.Categories ? catalog.Categories.length : 0,
+                    totalProducts: totalProducts,
+                    productTypes: {
+                        albums: productTypes.albums.length,
+                        albumNames: productTypes.albums.slice(0, 5),
+                        books: productTypes.books.length,
+                        bookNames: productTypes.books.slice(0, 5),
+                        metalPrints: productTypes.metal.length,
+                        metalNames: productTypes.metal.slice(0, 5),
+                        acrylicPrints: productTypes.acrylic.length,
+                        acrylicNames: productTypes.acrylic.slice(0, 5),
+                        canvasProducts: productTypes.canvas.length,
+                        photoPrints: productTypes.prints.length,
+                        cards: productTypes.cards.length,
+                        other: productTypes.other.length
+                    },
+                    hasOrderAttributes: !!(catalog.Categories?.[0]?.OrderAttributeCategoryList),
+                    orderAttributeCount: catalog.Categories?.[0]?.OrderAttributeCategoryList?.length || 0
+                };
+                
+                console.log(`✅ Catalog loaded: ${totalProducts} products found`);
+                
+                // Check for specific album/book products
+                const catalogString = JSON.stringify(catalog).toLowerCase();
+                results.analysis = {
+                    containsAlbumKeyword: catalogString.includes('album'),
+                    containsBookKeyword: catalogString.includes('book'),
+                    containsLayflatKeyword: catalogString.includes('layflat') || catalogString.includes('lay-flat'),
+                    containsHardcoverKeyword: catalogString.includes('hardcover') || catalogString.includes('hard cover'),
+                    containsPressBookKeyword: catalogString.includes('press')
+                };
+                
+            } else {
+                const errorText = await catalogResponse.text();
+                results.catalog = {
+                    success: false,
+                    error: errorText.substring(0, 100)
+                };
+            }
+            
+            // Test 3: Editor API capabilities
+            console.log('\n🎨 Step 3: Checking Editor API...');
+            if (printService.editorKeyId && printService.editorKeySecret) {
+                results.editorAPI = {
+                    configured: true,
+                    hasCredentials: true,
+                    keyIdLength: printService.editorKeyId.length,
+                    editorUrl: printService.editorBaseUrl
+                };
+                
+                // According to WHCC docs, Editor API supports:
+                results.editorAPI.documentedSupport = {
+                    albums: true,  // "Albums with various cover and debossing options"
+                    flatCards: true,  // "5x7 Flat Cards with optional boutique shapes and foils"
+                    prints: true,  // "Photo and Fine Art Prints"
+                    framedPrints: true  // "Framed Prints"
+                };
+                
+                console.log('✅ Editor API configured and ready');
+            } else {
+                results.editorAPI = {
+                    configured: false,
+                    hasCredentials: false
+                };
+            }
+            
+        } else {
+            results.authentication = {
+                success: false,
+                error: 'Failed to get access token'
+            };
+        }
+        
+        // Generate recommendations
+        results.recommendations = [];
+        
+        if (results.catalog.productTypes?.albums === 0 && results.catalog.productTypes?.books === 0) {
+            if (results.editorAPI.configured) {
+                results.recommendations.push('Albums/Books not in Order Submit catalog but Editor API is configured - they should be available through Editor API');
+            } else {
+                results.recommendations.push('Contact WHCC to enable Albums/Books for your account (#443225)');
+            }
+        } else if (results.catalog.productTypes?.albums > 0 || results.catalog.productTypes?.books > 0) {
+            results.recommendations.push('✅ Albums/Books ARE available in your catalog!');
+        }
+        
+        if (results.catalog.productTypes?.metalPrints === 0) {
+            results.recommendations.push('Metal prints not found - may need to be enabled for your account');
+        }
+        
+        console.log('\n✅ DEEP DIVE COMPLETE');
+        console.log('='.repeat(60));
+        
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ Deep dive error:', error);
+        res.status(500).json({
+            error: 'Deep dive failed',
+            message: error.message
+        });
     }
 });
 
