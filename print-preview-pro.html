@@ -167,35 +167,41 @@
             border-bottom-color: #3b82f6;
         }
 
-        /* Simplified size selector */
-        .size-selector {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 25px;
-        }
-
-        .size-option {
-            padding: 12px;
-            background: #f8fafc;
+        /* Dropdown Styles */
+        .dropdown-select {
+            width: 100%;
+            padding: 14px 16px;
+            background: white;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
-            text-align: center;
+            font-size: 14px;
+            color: #333;
             cursor: pointer;
+            outline: none;
             transition: all 0.2s;
-            font-size: 13px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
             font-weight: 500;
         }
 
-        .size-option:hover {
-            background: white;
-            transform: translateY(-1px);
+        .dropdown-select:hover {
+            border-color: #3b82f6;
         }
 
-        .size-option.selected {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border-color: transparent;
+        .dropdown-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .dropdown-select option {
+            padding: 10px;
+            background: white;
+            color: #333;
         }
 
         .paper-selector {
@@ -533,32 +539,20 @@
                     Product Type
                     <span id="productSourceIndicator" style="font-size: 12px; font-weight: normal; color: #48bb78; margin-left: 10px;"></span>
                 </h3>
-                <div class="product-grid" id="productGrid">
-                    <!-- Standard Prints -->
-                    <div class="product-card selected" data-product="photographic">Photo Prints</div>
-                    <div class="product-card" data-product="fineart">Fine Art Prints</div>
-                    
-                    <!-- Canvas Products -->
-                    <div class="product-card" data-product="canvas">Canvas Prints</div>
-                    
-                    <!-- Metal & Acrylic -->
-                    <div class="product-card" data-product="metal">Metal Prints</div>
-                    <div class="product-card" data-product="acrylic">Acrylic Prints</div>
-                    
-                    <!-- Framed Products -->
-                    <div class="product-card" data-product="framed">Framed Prints</div>
-                    
-                    <!-- Albums & Books -->
-                    <div class="product-card" data-product="albums">Albums</div>
-                    <div class="product-card" data-product="books">Books</div>
-                    
-                    <!-- Cards & Specialty -->
-                    <div class="product-card" data-product="cards">Cards</div>
-                    <div class="product-card" data-product="specialty">Specialty Items</div>
-                    
-                    <!-- Additional Materials -->
-                    <div class="product-card" data-product="bamboo">Bamboo Panel</div>
-                </div>
+                <select class="dropdown-select" id="productSelect">
+                    <option value="">Select a product type...</option>
+                    <option value="photographic">Photo Prints</option>
+                    <option value="fineart">Fine Art Prints</option>
+                    <option value="canvas">Canvas Prints</option>
+                    <option value="metal">Metal Prints</option>
+                    <option value="acrylic">Acrylic Prints</option>
+                    <option value="framed">Framed Prints</option>
+                    <option value="albums">Albums</option>
+                    <option value="books">Books</option>
+                    <option value="cards">Cards</option>
+                    <option value="specialty">Specialty Items</option>
+                    <option value="bamboo">Bamboo Panel</option>
+                </select>
             </div>
 
             <!-- Dynamic WHCC Attribute Sections -->
@@ -571,24 +565,11 @@
                 </div>
             </div>
 
-            <div class="section">
+            <div class="section" id="sizeSection" style="display: none;">
                 <h3 class="section-title">Print Size</h3>
-                <div class="size-grid" id="sizeGrid">
-                    <div class="size-option" data-size="4x6">4×6"</div>
-                    <div class="size-option" data-size="5x7">5×7"</div>
-                    <div class="size-option" data-size="8x10">8×10"</div>
-                    <div class="size-option" data-size="8x12">8×12"</div>
-                    <div class="size-option" data-size="11x14">11×14"</div>
-                    <div class="size-option" data-size="12x18">12×18"</div>
-                    <div class="size-option selected" data-size="16x20">16×20"</div>
-                    <div class="size-option" data-size="16x24">16×24"</div>
-                    <div class="size-option" data-size="20x24">20×24"</div>
-                    <div class="size-option" data-size="20x30">20×30"</div>
-                    <div class="size-option" data-size="24x30">24×30"</div>
-                    <div class="size-option" data-size="24x36">24×36"</div>
-                    <div class="size-option" data-size="30x40">30×40"</div>
-                    <div class="size-option" data-size="30x45">30×45"</div>
-                </div>
+                <select class="dropdown-select" id="sizeSelect">
+                    <option value="">Select a size...</option>
+                </select>
             </div>
 
             <div class="section" id="frameSection">
@@ -1392,7 +1373,7 @@
             // Hide loading state
             hideLoadingState();
             
-            // Function to update available sizes based on product
+            // Function to update available sizes based on product - UPDATED FOR DROPDOWN
             function updateAvailableSizes() {
                 const categoryMap = {
                     // Standard prints
@@ -1423,26 +1404,46 @@
                 
                 const category = categoryMap[currentSettings.product] || 'prints';
                 const availableSizes = productSizes[category] || [];
-                const sizeGrid = document.getElementById('sizeGrid');
+                const sizeSelect = document.getElementById('sizeSelect');
                 
-                // Update each size option
-                document.querySelectorAll('.size-option').forEach(option => {
-                    const size = option.dataset.size;
-                    if (availableSizes.includes(size)) {
-                        option.style.display = 'block';
-                        option.classList.remove('disabled');
-                    } else {
-                        option.style.display = 'none';
-                        option.classList.add('disabled');
-                    }
+                // Clear and rebuild size options
+                sizeSelect.innerHTML = '';
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a size...';
+                sizeSelect.appendChild(defaultOption);
+                
+                // Size display names
+                const sizeNames = {
+                    '4x6': '4×6 inches',
+                    '5x7': '5×7 inches',
+                    '8x10': '8×10 inches',
+                    '8x12': '8×12 inches',
+                    '11x14': '11×14 inches',
+                    '12x18': '12×18 inches',
+                    '16x20': '16×20 inches',
+                    '16x24': '16×24 inches',
+                    '20x24': '20×24 inches',
+                    '20x30': '20×30 inches',
+                    '24x30': '24×30 inches',
+                    '24x36': '24×36 inches',
+                    '30x40': '30×40 inches',
+                    '30x45': '30×45 inches'
+                };
+                
+                // Add available sizes to dropdown
+                availableSizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = sizeNames[size] || size;
+                    sizeSelect.appendChild(option);
                 });
                 
-                // If current size not available for product, select first available
-                if (!availableSizes.includes(currentSettings.size)) {
-                    currentSettings.size = availableSizes.includes('16x20') ? '16x20' : availableSizes[0];
-                    document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
-                    document.querySelector(`.size-option[data-size="${currentSettings.size}"]`)?.classList.add('selected');
-                }
+                // Reset selection
+                sizeSelect.value = '';
+                currentSettings.size = null;
             }
             
             // Dynamic WHCC attribute rendering functions
@@ -1596,34 +1597,55 @@
                 return productWithMostAttributes;
             }
 
-            // Product selector - UPDATED to use WHCC attributes
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('click', async function() {
-                    document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-                    this.classList.add('selected');
-                    currentSettings.product = this.dataset.product;
-                    
-                    // Clear previous attribute selections
+            // Product dropdown - Progressive disclosure
+            document.getElementById('productSelect').addEventListener('change', async function() {
+                if (!this.value) {
+                    // Hide subsequent sections if no product selected
+                    document.getElementById('sizeSection').style.display = 'none';
+                    document.getElementById('frameSection').style.display = 'none';
+                    currentSettings.product = null;
+                    currentSettings.size = null;
                     currentSettings.attributes = {};
                     
-                    // Get WHCC product data for this category and render attributes
-                    const productData = getProductDataByCategory(currentSettings.product);
-                    renderAttributeSections(productData);
-                    
-                    // Handle frame section visibility (keep existing logic for framed products)
-                    const frameSection = document.getElementById('frameSection');
-                    if (this.dataset.product === 'framed') {
-                        frameSection.style.display = 'block';
-                    } else {
-                        frameSection.style.display = 'none';
-                        currentSettings.frame = 'none';
-                    }
-                    
-                    // Update available sizes for this product
-                    updateAvailableSizes();
+                    // Clear attribute sections
+                    const attributeSections = document.getElementById('attributeSections');
+                    attributeSections.innerHTML = `
+                        <div class="section">
+                            <div class="section-title" style="color: #64748b; font-style: italic;">
+                                Select a product to see available options
+                            </div>
+                        </div>
+                    `;
                     
                     await updatePreview();
-                });
+                    return;
+                }
+                
+                currentSettings.product = this.value;
+                
+                // Show size section when product is selected
+                document.getElementById('sizeSection').style.display = 'block';
+                
+                // Clear previous attribute selections
+                currentSettings.attributes = {};
+                
+                // Get WHCC product data for this category and render attributes
+                const productData = getProductDataByCategory(currentSettings.product);
+                renderAttributeSections(productData);
+                
+                // Handle frame section visibility (keep existing logic for framed products)
+                const frameSection = document.getElementById('frameSection');
+                if (this.value === 'framed') {
+                    frameSection.style.display = 'block';
+                } else {
+                    frameSection.style.display = 'none';
+                    currentSettings.frame = 'none';
+                }
+                
+                // Update available sizes for this product
+                updateAvailableSizes();
+                
+                await updatePreview();
             });
             
             // Paper selector
@@ -1636,23 +1658,25 @@
                 });
             });
             
-            // Size selector
-            document.querySelectorAll('.size-option').forEach(option => {
-                option.addEventListener('click', async function() {
-                    document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
-                    this.classList.add('selected');
-                    currentSettings.size = this.dataset.size;
-                    
-                    // Reset crop position when changing sizes to prevent out-of-bounds issues
-                    currentSettings.crop.x = 0;
-                    currentSettings.crop.y = 0;
-                    document.getElementById('xSlider').value = 0;
-                    document.getElementById('ySlider').value = 0;
-                    document.getElementById('xValue').textContent = '0';
-                    document.getElementById('yValue').textContent = '0';
-                    
+            // Size dropdown
+            document.getElementById('sizeSelect').addEventListener('change', async function() {
+                if (!this.value) {
+                    currentSettings.size = null;
                     await updatePreview();
-                });
+                    return;
+                }
+                
+                currentSettings.size = this.value;
+                
+                // Reset crop position when changing sizes to prevent out-of-bounds issues
+                currentSettings.crop.x = 0;
+                currentSettings.crop.y = 0;
+                document.getElementById('xSlider').value = 0;
+                document.getElementById('ySlider').value = 0;
+                document.getElementById('xValue').textContent = '0';
+                document.getElementById('yValue').textContent = '0';
+                
+                await updatePreview();
             });
             
             // Frame selector
