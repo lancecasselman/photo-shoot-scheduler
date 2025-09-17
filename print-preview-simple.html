@@ -310,6 +310,7 @@
                 <div class="section">
                     <div class="section-title">Product Type</div>
                     <select class="dropdown-select" id="productSelect">
+                        <option value="">Select a product type...</option>
                         <option value="prints">Photo Prints</option>
                         <option value="canvas">Canvas Prints</option>
                         <option value="metal">Metal Prints</option>
@@ -317,26 +318,19 @@
                     </select>
                 </div>
 
-                <!-- Size Selection -->
-                <div class="section">
+                <!-- Size Selection (hidden initially) -->
+                <div class="section" id="sizeSection" style="display: none;">
                     <div class="section-title">Size</div>
                     <select class="dropdown-select" id="sizeSelect">
-                        <option value="4x6">4×6 inches</option>
-                        <option value="5x7">5×7 inches</option>
-                        <option value="8x10" selected>8×10 inches</option>
-                        <option value="11x14">11×14 inches</option>
-                        <option value="16x20">16×20 inches</option>
-                        <option value="20x30">20×30 inches</option>
-                        <option value="24x36">24×36 inches</option>
-                        <option value="30x40">30×40 inches</option>
-                        <option value="custom">Custom Size</option>
+                        <option value="">Select a size...</option>
                     </select>
                 </div>
 
-                <!-- Paper Type (for prints) -->
-                <div class="section" id="paperSection">
+                <!-- Paper Type (hidden initially, for prints only) -->
+                <div class="section" id="paperSection" style="display: none;">
                     <div class="section-title">Paper Type</div>
                     <select class="dropdown-select" id="paperSelect">
+                        <option value="">Select paper type...</option>
                         <option value="lustre">Lustre - Professional finish with minimal glare</option>
                         <option value="glossy">Glossy - Vibrant colors with high shine</option>
                         <option value="matte">Matte - No glare, perfect for framing</option>
@@ -386,11 +380,11 @@
     <script>
         // State Management
         let currentSettings = {
-            product: 'prints',
-            size: '8x10',
-            paper: 'lustre',
+            product: null,
+            size: null,
+            paper: null,
             quantity: 1,
-            price: 9.99
+            price: 0
         };
 
         let photoUrl = '';
@@ -505,21 +499,52 @@
         function setupEventListeners() {
             // Product dropdown
             document.getElementById('productSelect').addEventListener('change', function() {
+                if (!this.value) {
+                    // Hide subsequent sections if no product selected
+                    document.getElementById('sizeSection').style.display = 'none';
+                    document.getElementById('paperSection').style.display = 'none';
+                    currentSettings.product = null;
+                    currentSettings.size = null;
+                    currentSettings.paper = null;
+                    updateDisplay();
+                    return;
+                }
                 currentSettings.product = this.value;
+                // Show size section when product is selected
+                document.getElementById('sizeSection').style.display = 'block';
                 updateAvailableSizes();
                 updateDisplay();
             });
 
             // Size dropdown
             document.getElementById('sizeSelect').addEventListener('change', function() {
+                if (!this.value) {
+                    // Hide paper section if no size selected
+                    document.getElementById('paperSection').style.display = 'none';
+                    currentSettings.size = null;
+                    currentSettings.paper = null;
+                    updateDisplay();
+                    return;
+                }
                 currentSettings.size = this.value;
+                // Show paper section for prints after size is selected
+                if (currentSettings.product === 'prints') {
+                    document.getElementById('paperSection').style.display = 'block';
+                    // Set default paper if not selected
+                    if (!currentSettings.paper) {
+                        currentSettings.paper = 'lustre';
+                        document.getElementById('paperSelect').value = 'lustre';
+                    }
+                }
                 updateDisplay();
             });
 
             // Paper dropdown
             document.getElementById('paperSelect').addEventListener('change', function() {
-                currentSettings.paper = this.value;
-                updateDisplay();
+                if (this.value) {
+                    currentSettings.paper = this.value;
+                    updateDisplay();
+                }
             });
         }
 
@@ -577,6 +602,14 @@
         }
 
         function updateDisplay() {
+            // Don't update if required selections are missing
+            if (!currentSettings.product || !currentSettings.size) {
+                document.getElementById('itemPrice').textContent = '$0.00';
+                document.getElementById('quantityDisplay').textContent = '0';
+                document.getElementById('totalPrice').textContent = '$0.00';
+                return;
+            }
+            
             // Update price
             const prices = basePrices[currentSettings.product] || basePrices.prints;
             currentSettings.price = prices[currentSettings.size] || 9.99;
