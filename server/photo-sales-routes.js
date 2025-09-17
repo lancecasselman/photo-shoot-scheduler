@@ -449,6 +449,70 @@ router.get('/whcc-complete-test', async (req, res) => {
     }
 });
 
+// Public endpoint for product catalog (no auth required for gallery clients)
+router.get('/products', async (req, res) => {
+    try {
+        console.log('📦 Fetching WHCC product catalog (public)...');
+        
+        const result = await printService.getProducts();
+        const products = Array.isArray(result) ? result : (result.products || []);
+        
+        console.log(`✅ Retrieved ${products.length} WHCC products for public display`);
+        
+        res.json({
+            products: products,
+            success: true,
+            count: products.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch WHCC products:', error);
+        
+        // Return fallback catalog with albums included
+        const fallbackProducts = [
+            // Albums - we confirmed these are available
+            { category: 'Albums', name: '10x10 Album', productUID: 'album-10x10', price: 299.99, sizes: [{width: 10, height: 10, price: 299.99}] },
+            { category: 'Albums', name: '12x12 Album', productUID: 'album-12x12', price: 349.99, sizes: [{width: 12, height: 12, price: 349.99}] },
+            { category: 'Albums', name: '8x8 Album', productUID: 'album-8x8', price: 249.99, sizes: [{width: 8, height: 8, price: 249.99}] },
+            { category: 'Albums', name: '11x14H Album', productUID: 'album-11x14h', price: 329.99, sizes: [{width: 11, height: 14, price: 329.99}] },
+            { category: 'Albums', name: '11x14V Album', productUID: 'album-11x14v', price: 329.99, sizes: [{width: 14, height: 11, price: 329.99}] },
+            
+            // Books
+            { category: 'Books', name: 'Photo Print 2up Yearbook', productUID: 'book-yearbook', price: 199.99, sizes: [{width: 8, height: 10, price: 199.99}] },
+            
+            // Metal Prints - confirmed available
+            { category: 'Metal Prints', name: 'Metal Print 8x10', productUID: 'metal-8x10', price: 59.99, sizes: [{width: 8, height: 10, price: 59.99}] },
+            { category: 'Metal Prints', name: 'Metal Print 11x14', productUID: 'metal-11x14', price: 89.99, sizes: [{width: 11, height: 14, price: 89.99}] },
+            { category: 'Metal Prints', name: 'Metal Print 16x20', productUID: 'metal-16x20', price: 129.99, sizes: [{width: 16, height: 20, price: 129.99}] },
+            { category: 'Metal Prints', name: 'Metal Print 20x24', productUID: 'metal-20x24', price: 179.99, sizes: [{width: 20, height: 24, price: 179.99}] },
+            { category: 'Metal Prints', name: 'Metal Print 24x30', productUID: 'metal-24x30', price: 249.99, sizes: [{width: 24, height: 30, price: 249.99}] },
+            { category: 'Metal Prints', name: 'Metal Print 30x40', productUID: 'metal-30x40', price: 379.99, sizes: [{width: 30, height: 40, price: 379.99}] },
+            
+            // Standard Prints
+            { category: 'Photographic Prints', name: 'Photo Print 4x6', productUID: 'print-4x6', price: 2.99, sizes: [{width: 4, height: 6, price: 2.99}] },
+            { category: 'Photographic Prints', name: 'Photo Print 5x7', productUID: 'print-5x7', price: 4.99, sizes: [{width: 5, height: 7, price: 4.99}] },
+            { category: 'Photographic Prints', name: 'Photo Print 8x10', productUID: 'print-8x10', price: 9.99, sizes: [{width: 8, height: 10, price: 9.99}] },
+            { category: 'Photographic Prints', name: 'Photo Print 11x14', productUID: 'print-11x14', price: 19.99, sizes: [{width: 11, height: 14, price: 19.99}] },
+            { category: 'Photographic Prints', name: 'Photo Print 16x20', productUID: 'print-16x20', price: 39.99, sizes: [{width: 16, height: 20, price: 39.99}] },
+            
+            // Canvas
+            { category: 'Canvas Prints', name: 'Canvas Print 8x10', productUID: 'canvas-8x10', price: 49.99, sizes: [{width: 8, height: 10, price: 49.99}] },
+            { category: 'Canvas Prints', name: 'Canvas Print 11x14', productUID: 'canvas-11x14', price: 69.99, sizes: [{width: 11, height: 14, price: 69.99}] },
+            { category: 'Canvas Prints', name: 'Canvas Print 16x20', productUID: 'canvas-16x20', price: 99.99, sizes: [{width: 16, height: 20, price: 99.99}] },
+            { category: 'Canvas Prints', name: 'Canvas Print 20x24', productUID: 'canvas-20x24', price: 149.99, sizes: [{width: 20, height: 24, price: 149.99}] },
+            { category: 'Canvas Prints', name: 'Canvas Print 24x30', productUID: 'canvas-24x30', price: 199.99, sizes: [{width: 24, height: 30, price: 199.99}] }
+        ];
+        
+        res.json({
+            products: fallbackProducts,
+            success: false,
+            fallback: true,
+            count: fallbackProducts.length,
+            message: 'Using fallback catalog - WHCC API temporarily unavailable'
+        });
+    }
+});
+
 // Apply authentication middleware to all protected routes
 router.use(requireAuth);
 
