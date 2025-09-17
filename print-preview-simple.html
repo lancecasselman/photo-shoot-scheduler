@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Print - Gallery</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Photo Preview Area */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+
+        .photo-wrapper {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            max-width: 80%;
+            max-height: 80vh;
+        }
+
+        #previewCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 400px;
+            background: white;
+            box-shadow: -2px 0 20px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #333;
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        /* Product Tabs */
+        .product-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+
+        .product-tab {
+            padding: 10px 20px;
+            background: #f8f8f8;
+            border: 1px solid #e5e5e5;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .product-tab:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .product-tab.active {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* Section Headers */
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        /* Size Grid */
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .size-option {
+            padding: 12px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .size-option:hover {
+            border-color: #999;
+        }
+
+        .size-option.active {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        .size-option.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Paper Type */
+        .paper-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .paper-option {
+            padding: 15px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .paper-option:hover {
+            border-color: #999;
+        }
+
+        .paper-option.active {
+            background: #f8f8f8;
+            border-color: #333;
+        }
+
+        .paper-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .paper-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Quantity */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 4px;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            border-color: #999;
+        }
+
+        .quantity-btn:active {
+            background: #f5f5f5;
+        }
+
+        .quantity-value {
+            font-size: 16px;
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Price Display */
+        .price-section {
+            padding: 20px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .price-row.total {
+            padding-top: 10px;
+            border-top: 1px solid #e5e5e5;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .action-buttons {
+            padding: 20px 30px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #333;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #000;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f8f8;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .preview-area {
+                height: 40vh;
+                padding: 20px;
+            }
+
+            .sidebar {
+                width: 100%;
+                flex: 1;
+            }
+
+            .size-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .product-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                gap: 10px;
+                padding-bottom: 15px;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .product-tab {
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Photo Preview -->
+        <div class="preview-area">
+            <div class="photo-wrapper">
+                <canvas id="previewCanvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+
+        <!-- Order Sidebar -->
+        <div class="sidebar">
+            <!-- Header -->
+            <div class="sidebar-header">
+                <a href="#" class="back-link" onclick="backToGallery(); return false;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Gallery
+                </a>
+                <h1 style="font-size: 24px; font-weight: 600;">Create Your Print</h1>
+            </div>
+
+            <!-- Product Options -->
+            <div class="sidebar-content">
+                <!-- Product Type -->
+                <div class="section">
+                    <div class="section-title">Product Type</div>
+                    <div class="product-tabs">
+                        <div class="product-tab active" data-product="prints">Prints</div>
+                        <div class="product-tab" data-product="canvas">Canvas</div>
+                        <div class="product-tab" data-product="metal">Metal</div>
+                        <div class="product-tab" data-product="albums">Albums</div>
+                    </div>
+                </div>
+
+                <!-- Size Selection -->
+                <div class="section">
+                    <div class="section-title">Size</div>
+                    <div class="size-grid">
+                        <div class="size-option" data-size="4x6">4×6"</div>
+                        <div class="size-option" data-size="5x7">5×7"</div>
+                        <div class="size-option active" data-size="8x10">8×10"</div>
+                        <div class="size-option" data-size="11x14">11×14"</div>
+                        <div class="size-option" data-size="16x20">16×20"</div>
+                        <div class="size-option" data-size="20x30">20×30"</div>
+                        <div class="size-option" data-size="24x36">24×36"</div>
+                        <div class="size-option" data-size="30x40">30×40"</div>
+                        <div class="size-option" data-size="custom">Custom</div>
+                    </div>
+                </div>
+
+                <!-- Paper Type (for prints) -->
+                <div class="section" id="paperSection">
+                    <div class="section-title">Paper Type</div>
+                    <div class="paper-options">
+                        <div class="paper-option active" data-paper="lustre">
+                            <div class="paper-name">Lustre</div>
+                            <div class="paper-desc">Professional finish with minimal glare</div>
+                        </div>
+                        <div class="paper-option" data-paper="glossy">
+                            <div class="paper-name">Glossy</div>
+                            <div class="paper-desc">Vibrant colors with high shine</div>
+                        </div>
+                        <div class="paper-option" data-paper="matte">
+                            <div class="paper-name">Matte</div>
+                            <div class="paper-desc">No glare, perfect for framing</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quantity -->
+                <div class="section">
+                    <div class="section-title">Quantity</div>
+                    <div class="quantity-selector">
+                        <button class="quantity-btn" onclick="changeQuantity(-1)">−</button>
+                        <span class="quantity-value" id="quantity">1</span>
+                        <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                    </div>
+                </div>
+
+                <!-- Price Summary -->
+                <div class="price-section">
+                    <div class="price-row">
+                        <span>8×10" Print</span>
+                        <span id="itemPrice">$9.99</span>
+                    </div>
+                    <div class="price-row">
+                        <span>Quantity</span>
+                        <span id="quantityDisplay">1</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Total</span>
+                        <span id="totalPrice">$9.99</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="addToCart()">Add to Cart</button>
+                <button class="btn btn-secondary" onclick="viewCart()">View Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // State Management
+        let currentSettings = {
+            product: 'prints',
+            size: '8x10',
+            paper: 'lustre',
+            quantity: 1,
+            price: 9.99
+        };
+
+        let photoUrl = '';
+        let whccProducts = [];
+
+        // Pricing Map
+        const basePrices = {
+            prints: {
+                '4x6': 4.99,
+                '5x7': 6.99,
+                '8x10': 9.99,
+                '11x14': 14.99,
+                '16x20': 29.99,
+                '20x30': 59.99,
+                '24x36': 89.99,
+                '30x40': 129.99,
+                'custom': 149.99
+            },
+            canvas: {
+                '8x10': 39.99,
+                '11x14': 59.99,
+                '16x20': 89.99,
+                '20x30': 129.99,
+                '24x36': 179.99,
+                '30x40': 249.99
+            },
+            metal: {
+                '8x10': 59.99,
+                '11x14': 89.99,
+                '16x20': 129.99,
+                '20x30': 179.99,
+                '24x36': 249.99,
+                '30x40': 379.99
+            },
+            albums: {
+                '8x8': 149.99,
+                '10x10': 199.99,
+                '12x12': 299.99
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            photoUrl = urlParams.get('photo') || '';
+
+            // Load photo preview
+            if (photoUrl) {
+                await loadPhotoPreview();
+            }
+
+            // Load WHCC products
+            await loadWHCCProducts();
+
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Update display
+            updateDisplay();
+        });
+
+        async function loadPhotoPreview() {
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            return new Promise((resolve) => {
+                img.onload = function() {
+                    // Calculate aspect ratio
+                    const maxWidth = 800;
+                    const maxHeight = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve();
+                };
+                
+                img.onerror = function() {
+                    console.error('Failed to load image');
+                    resolve();
+                };
+                
+                img.src = photoUrl;
+            });
+        }
+
+        async function loadWHCCProducts() {
+            try {
+                const response = await fetch('/api/print/products');
+                if (response.ok) {
+                    const data = await response.json();
+                    whccProducts = data.products || [];
+                    console.log('Loaded WHCC products:', whccProducts.length);
+                }
+            } catch (error) {
+                console.error('Failed to load WHCC products:', error);
+            }
+        }
+
+        function setupEventListeners() {
+            // Product tabs
+            document.querySelectorAll('.product-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.product-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentSettings.product = this.dataset.product;
+                    updateAvailableSizes();
+                    updateDisplay();
+                });
+            });
+
+            // Size options
+            document.querySelectorAll('.size-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    if (!this.classList.contains('disabled')) {
+                        document.querySelectorAll('.size-option').forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        currentSettings.size = this.dataset.size;
+                        updateDisplay();
+                    }
+                });
+            });
+
+            // Paper options
+            document.querySelectorAll('.paper-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.paper-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    currentSettings.paper = this.dataset.paper;
+                    updateDisplay();
+                });
+            });
+        }
+
+        function updateAvailableSizes() {
+            const product = currentSettings.product;
+            const availableSizes = Object.keys(basePrices[product] || basePrices.prints);
+            
+            document.querySelectorAll('.size-option').forEach(option => {
+                const size = option.dataset.size;
+                if (availableSizes.includes(size)) {
+                    option.classList.remove('disabled');
+                } else {
+                    option.classList.add('disabled');
+                    if (option.classList.contains('active')) {
+                        option.classList.remove('active');
+                        // Select first available size
+                        const firstAvailable = document.querySelector('.size-option:not(.disabled)');
+                        if (firstAvailable) {
+                            firstAvailable.classList.add('active');
+                            currentSettings.size = firstAvailable.dataset.size;
+                        }
+                    }
+                }
+            });
+
+            // Show/hide paper section for non-print products
+            const paperSection = document.getElementById('paperSection');
+            if (product === 'prints') {
+                paperSection.style.display = 'block';
+            } else {
+                paperSection.style.display = 'none';
+            }
+        }
+
+        function updateDisplay() {
+            // Update price
+            const prices = basePrices[currentSettings.product] || basePrices.prints;
+            currentSettings.price = prices[currentSettings.size] || 9.99;
+            
+            const itemPrice = currentSettings.price;
+            const total = itemPrice * currentSettings.quantity;
+            
+            document.getElementById('itemPrice').textContent = `$${itemPrice.toFixed(2)}`;
+            document.getElementById('quantityDisplay').textContent = currentSettings.quantity;
+            document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function changeQuantity(delta) {
+            const newQuantity = currentSettings.quantity + delta;
+            if (newQuantity >= 1 && newQuantity <= 99) {
+                currentSettings.quantity = newQuantity;
+                document.getElementById('quantity').textContent = newQuantity;
+                updateDisplay();
+            }
+        }
+
+        async function addToCart() {
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            // Get filename from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const filename = urlParams.get('filename') || 'photo.jpg';
+            
+            const cartItem = {
+                photo: photoUrl,
+                filename: filename,
+                product: currentSettings.product,
+                size: currentSettings.size,
+                paper: currentSettings.paper,
+                quantity: currentSettings.quantity,
+                price: currentSettings.price * currentSettings.quantity
+            };
+
+            try {
+                // Get existing cart
+                let cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+                cart.push(cartItem);
+                localStorage.setItem('printCart', JSON.stringify(cart));
+                
+                // Show success
+                alert(`Added ${currentSettings.quantity} ${currentSettings.size} ${currentSettings.product} to cart!`);
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart');
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        }
+
+        function viewCart() {
+            // Navigate to cart page
+            window.location.href = '/cart.html';
+        }
+
+        function backToGallery() {
+            // Get gallery URL from referrer or use default
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            
+            if (token) {
+                window.location.href = `/client-gallery.html?token=${token}`;
+            } else if (document.referrer) {
+                window.location.href = document.referrer;
+            } else {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

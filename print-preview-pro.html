@@ -17,7 +17,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
+            background: #f8f9fa;
             overflow-x: hidden;
             margin: 0;
             padding: 0;
@@ -25,16 +25,19 @@
 
         .preview-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             min-height: 100vh;
+            background: #f8f9fa;
         }
 
         .control-panel {
-            width: 100%;
+            width: 380px;
             background: white;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
             padding: 30px;
-            border-bottom: 1px solid #e2e8f0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .canvas-container {
@@ -43,18 +46,19 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px 0;
-            min-height: 60vh;
-            width: 100%;
-            overflow: hidden;
+            padding: 40px;
+            background: #f8f9fa;
+            overflow: auto;
         }
         
-        /* Desktop: Smaller canvas */
-        @media (min-width: 769px) {
-            #mockupCanvas {
-                max-width: 600px !important;
-                height: auto !important;
-            }
+        /* Photo preview styling */
+        .photo-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            max-height: 80vh;
         }
         
         /* Mobile Styles */
@@ -131,44 +135,44 @@
             letter-spacing: 1px;
         }
 
-        .product-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        /* Simplified product tabs */
+        .product-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0;
         }
 
-        .product-card {
-            padding: 15px;
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            text-align: center;
+        .product-tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            outline: none;
+        }
+
+        .product-tab:hover {
+            color: #1e293b;
+        }
+
+        .product-tab.selected {
+            color: #1e293b;
             font-weight: 600;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            border-bottom-color: #3b82f6;
         }
 
-        .product-card:hover {
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .product-card.selected {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border-color: transparent;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .size-grid {
+        /* Simplified size selector */
+        .size-selector {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 25px;
         }
 
         .size-option {
