@@ -97,16 +97,32 @@ class PrintServiceAPI {
       });
       
       console.log(`- Response status: ${response.status}`);
-      console.log(`- Response headers:`, response.headers.get('content-type'));
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log(`❌ Auth failed: ${response.status}`);
-        console.log(`- Error response: ${errorText.substring(0, 500)}`);
-        throw new Error(`WHCC authentication failed: ${response.status} - ${errorText.substring(0, 100)}`);
+      const responseText = await response.text();
+      console.log(`- Response: ${responseText.substring(0, 200)}`);
+      
+      // Parse response
+      let authData;
+      try {
+        authData = JSON.parse(responseText);
+      } catch (e) {
+        console.log(`❌ Failed to parse response as JSON`);
+        throw new Error(`WHCC authentication failed: Invalid response format`);
       }
       
-      const authData = await response.json();
+      // Check for error in response body (WHCC returns 200 with error message)
+      if (authData.ErrorNumber || authData.error) {
+        console.log(`❌ Auth failed: ${authData.ErrorNumber || authData.error}`);
+        console.log(`- Error message: ${authData.Message || authData.error_description}`);
+        throw new Error(`WHCC authentication failed: ${authData.Message || authData.error_description}`);
+      }
+      
+      // Check for valid token
+      if (!authData.Token) {
+        console.log(`❌ No token in response`);
+        throw new Error(`WHCC authentication failed: No token received`);
+      }
+      
       console.log('✅ Got access token:', {
         clientId: authData.ClientId,
         consumerKey: authData.ConsumerKey,
@@ -209,8 +225,8 @@ class PrintServiceAPI {
       console.error('❌ WHCC catalog error:', error.message);
       
       // Return professional fallback options
-      console.log('📦 Using professional fallback products');
-      return this.getProfessionalFallbackProducts();
+      console.log('❌ No fallback data - returning empty catalog');
+      return [];
     }
   }
   
@@ -227,13 +243,13 @@ class PrintServiceAPI {
           
           if (Array.isArray(productList) && productList.length > 0) {
             productList.forEach(product => {
-              // Extract key product attributes
+              // Extract key product attributes - use Id field from real WHCC API
               const baseProduct = {
-                id: `whcc_${product.ProductUID || product.Id || Math.random()}`,
+                id: `whcc_${product.Id || product.ProductUID || Math.random()}`,
                 name: product.Name || product.Description || 'WHCC Product',
                 description: product.Description || category.Name,
                 category: this.normalizeProductCategory(product.Name, category.Name),
-                productUID: product.ProductUID || product.Id,
+                productUID: product.Id || product.ProductUID, // Use Id as primary identifier
                 attributes: [],
                 sizes: [] // Will contain all available sizes
               };
@@ -442,11 +458,11 @@ class PrintServiceAPI {
         return products; // Return ALL products from WHCC catalog
       } else {
         console.log('⚠️ No products found in WHCC catalog structure');
-        return this.getProfessionalFallbackProducts();
+        return [];
       }
     } catch (error) {
       console.error('❌ Error transforming WHCC catalog:', error);
-      return this.getProfessionalFallbackProducts();
+      return [];
     }
   }
   
@@ -627,19 +643,8 @@ class PrintServiceAPI {
     return priorityOrder[categoryKey] || 999; // Unknown categories go to the end
   }
 
-  // Professional fallback products
-  getProfessionalFallbackProducts() {
-    return [
-      { id: 'lustre_4x6', name: '4"×6" Lustre Print', description: 'Professional lustre finish', price: 2.99, category: 'prints' },
-      { id: 'lustre_5x7', name: '5"×7" Lustre Print', description: 'Professional lustre finish', price: 4.99, category: 'prints' },
-      { id: 'lustre_8x10', name: '8"×10" Lustre Print', description: 'Professional lustre finish', price: 9.99, category: 'prints' },
-      { id: 'matte_5x7', name: '5"×7" Matte Print', description: 'Elegant matte finish', price: 5.99, category: 'prints' },
-      { id: 'matte_8x10', name: '8"×10" Matte Print', description: 'Elegant matte finish', price: 11.99, category: 'prints' },
-      { id: 'canvas_11x14', name: '11"×14" Canvas Print', description: 'Gallery-wrapped canvas', price: 49.99, category: 'canvas' },
-      { id: 'metal_8x10', name: '8"×10" Metal Print', description: 'Vibrant metal finish', price: 34.99, category: 'specialty' },
-      { id: 'digital_high_res', name: 'High-Resolution Digital', description: 'Full resolution download', price: 19.99, category: 'digital' }
-    ];
-  }
+  // NO FALLBACK PRODUCTS - Only use real WHCC data
+  // getProfessionalFallbackProducts function removed - we only use authentic API data
 
   // Get product categories
   async getCategories() {
