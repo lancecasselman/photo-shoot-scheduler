@@ -3,7 +3,7 @@
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const PrintServiceAPI = require('./print-service');
+const WHCCPrintService = require('./whcc-rebuilt');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db.ts');
 const { photoForSaleSettings, downloadTokens, digitalTransactions } = require('../shared/schema');
@@ -11,7 +11,7 @@ const { eq, and } = require('drizzle-orm');
 const router = express.Router();
 
 // Initialize WHCC print service
-const printService = new PrintServiceAPI();
+const printService = new WHCCPrintService();
 
 // Cache for WHCC product catalog (refresh every 30 minutes)
 let whccCatalogCache = null;

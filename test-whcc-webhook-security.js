@@ -12,8 +12,8 @@ function testWhccSignatureVerification() {
     console.log('🔐 Testing WHCC Webhook Security Implementation\n');
 
     // Import our print service for testing
-    const PrintServiceAPI = require('./server/print-service.js');
-    const printService = new PrintServiceAPI();
+    const WHCCPrintService = require('./server/whcc-rebuilt.js');
+    const printService = new WHCCPrintService();
 
     // Test data
     const testPayload = JSON.stringify({

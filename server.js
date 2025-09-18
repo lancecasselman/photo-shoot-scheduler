@@ -6015,8 +6015,8 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
 // ==================== PRINT SERVICE API ====================
 
 // Initialize print service
-const PrintServiceAPI = require('./server/print-service.js');
-const printService = new PrintServiceAPI();
+const WHCCPrintService = require('./server/whcc-rebuilt.js');
+const printService = new WHCCPrintService();
 
 // Get WHCC product catalog
 app.get('/api/whcc/catalog', async (req, res) => {
