@@ -335,6 +335,36 @@ async function validatePhotoOwnership(userId, photoUrl) {
     }
 }
 
+// SECURITY: Validate photo belongs to gallery session (for client orders)
+async function validateGalleryPhotoAccess(gallerySession, photoUrl) {
+    try {
+        // Check if photo belongs to the gallery session
+        if (!gallerySession || !gallerySession.photos || !Array.isArray(gallerySession.photos)) {
+            console.warn('⚠️ Gallery session has no photos:', gallerySession?.id);
+            return false;
+        }
+        
+        // Check if photoUrl is in the gallery's photo list
+        const photoExists = gallerySession.photos.some(photo => 
+            photo.url === photoUrl || 
+            photo.filename === photoUrl.split('/').pop() ||
+            photoUrl.includes(photo.filename)
+        );
+        
+        if (photoExists) {
+            console.log('✅ Gallery photo access validated:', { sessionId: gallerySession.id, photoUrl });
+            return true;
+        }
+        
+        console.warn('⚠️ Photo not found in gallery:', { sessionId: gallerySession.id, photoUrl });
+        return false;
+        
+    } catch (error) {
+        console.error('❌ Error validating gallery photo access:', error);
+        return false; // Fail-safe: deny access on error
+    }
+}
+
 // Get WHCC product catalog with caching
 async function getWHCCCatalog() {
     const now = Date.now();
@@ -529,6 +559,28 @@ router.get('/whcc-status', async (req, res) => {
     }
 });
 
+// Public endpoint for WHCC products (no auth required)
+router.get('/products', async (req, res) => {
+    try {
+        console.log('📦 Fetching WHCC products for public display...');
+        
+        const products = await getWHCCCatalog();
+        
+        return res.json({
+            products: products,
+            success: true,
+            count: products.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch WHCC products:', error);
+        return res.status(500).json({
+            error: 'Failed to load print products',
+            message: 'Unable to load available print products. Please try again later.'
+        });
+    }
+});
+
 // Simple authentication middleware for photo sales
 const requireAuth = (req, res, next) => {
     const userId = req.user?.uid || req.session?.user?.uid;
@@ -536,6 +588,62 @@ const requireAuth = (req, res, next) => {
         return res.status(401).json({ error: 'Authentication required' });
     }
     next();
+};
+
+// Gallery access middleware for client print ordering (no user account needed)
+const requireGalleryAccess = async (req, res, next) => {
+    try {
+        // Check for gallery access token in header, query, or body
+        const accessToken = req.headers['x-gallery-token'] || 
+                          req.query.gallery_token || 
+                          req.body.gallery_token;
+        
+        if (!accessToken) {
+            return res.status(401).json({ 
+                error: 'Gallery access required',
+                message: 'Please provide a valid gallery access token to place orders'
+            });
+        }
+        
+        // Validate gallery access token and get session info
+        const { photographySessions } = require('../shared/schema');
+        const gallerySession = await db.select()
+            .from(photographySessions)
+            .where(eq(photographySessions.galleryAccessToken, accessToken))
+            .limit(1);
+        
+        if (gallerySession.length === 0) {
+            return res.status(401).json({ 
+                error: 'Invalid gallery access',
+                message: 'Gallery access token is invalid or expired'
+            });
+        }
+        
+        const session = gallerySession[0];
+        
+        // Check if gallery access has expired
+        if (session.galleryExpiresAt && new Date() > new Date(session.galleryExpiresAt)) {
+            return res.status(401).json({ 
+                error: 'Gallery access expired',
+                message: 'This gallery link has expired. Please contact the photographer for a new link.'
+            });
+        }
+        
+        // Add session and user info to request for downstream use
+        req.gallerySession = session;
+        req.galleryUserId = session.userId;
+        req.accessToken = accessToken;
+        
+        console.log('✅ Gallery access validated for session:', session.id);
+        next();
+        
+    } catch (error) {
+        console.error('❌ Gallery access validation error:', error);
+        return res.status(500).json({ 
+            error: 'Gallery access validation failed',
+            message: 'Unable to validate gallery access. Please try again.'
+        });
+    }
 };
 
 // DEEP DIVE TEST ENDPOINT - Protected for admin use
@@ -817,6 +925,277 @@ router.get('/products', async (req, res) => {
         });
     }
 });
+
+// =============================================================================
+// CLIENT PRINT ORDERING ENDPOINTS (Gallery Access Token Authentication)
+// =============================================================================
+
+// Client endpoint for print orders using gallery access
+router.post('/client-print-order', requireGalleryAccess, async (req, res) => {
+    try {
+        console.log('🖼️ Processing client print order with gallery access:', req.body);
+        
+        const { photos, customerInfo } = req.body;
+        
+        if (!photos || !Array.isArray(photos) || photos.length === 0) {
+            return res.status(400).json({
+                error: 'No photos selected',
+                message: 'Please select at least one photo to print'
+            });
+        }
+
+        // Validate customer information (shipping required for prints)
+        const customerValidation = validateCustomerInfo(customerInfo, true);
+        if (!customerValidation.valid) {
+            console.error('❌ Client customer info validation failed:', customerValidation.errors || customerValidation.error);
+            return res.status(400).json({
+                error: 'Invalid customer information',
+                details: customerValidation.errors?.join('; ') || customerValidation.error,
+                validationErrors: customerValidation.errors || [customerValidation.error]
+            });
+        }
+
+        // Validate each photo exists in the gallery
+        for (const photoOrder of photos) {
+            if (!photoOrder.url || !photoOrder.products || !Array.isArray(photoOrder.products)) {
+                return res.status(400).json({
+                    error: 'Invalid photo order',
+                    message: 'Each photo must have a URL and products array'
+                });
+            }
+
+            // Validate photo belongs to this gallery
+            const hasAccess = await validateGalleryPhotoAccess(req.gallerySession, photoOrder.url);
+            if (!hasAccess) {
+                return res.status(403).json({
+                    error: 'Photo access denied',
+                    message: 'One or more selected photos are not available in this gallery'
+                });
+            }
+        }
+
+        // Build Stripe line items with server-validated pricing
+        const lineItems = [];
+        let totalProducts = 0;
+
+        for (const photoOrder of photos) {
+            for (const product of photoOrder.products) {
+                try {
+                    // Validate product price server-side using gallery owner's pricing
+                    const validatedPrice = await calculateProductPrice(product, req.galleryUserId);
+                    
+                    const quantity = product.quantity || 1;
+                    totalProducts += quantity;
+
+                    lineItems.push({
+                        price_data: {
+                            currency: 'usd',
+                            product_data: {
+                                name: `${product.name || 'Print'} - ${product.size || 'Custom Size'}`,
+                                description: `Print of ${photoOrder.filename || 'photo'}`,
+                                images: [photoOrder.url]
+                            },
+                            unit_amount: Math.round(validatedPrice * 100)
+                        },
+                        quantity: quantity
+                    });
+
+                } catch (pricingError) {
+                    console.error('❌ Error calculating product price:', pricingError);
+                    return res.status(400).json({
+                        error: 'Product pricing error',
+                        message: 'Unable to calculate price for selected products'
+                    });
+                }
+            }
+        }
+
+        if (lineItems.length === 0) {
+            return res.status(400).json({
+                error: 'No valid products',
+                message: 'No valid products found in order'
+            });
+        }
+
+        // Create Stripe checkout session for print order
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'payment',
+            line_items: lineItems,
+            shipping_address_collection: {
+                allowed_countries: ['US', 'CA']
+            },
+            customer_email: customerValidation.sanitized.email,
+            success_url: `${req.protocol}://${req.get('host')}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/cancel`,
+            metadata: {
+                order_type: 'client_print',
+                gallery_token: req.accessToken,
+                gallery_session_id: req.gallerySession.id,
+                photographer_id: req.galleryUserId,
+                customer_name: customerValidation.sanitized.name,
+                customer_phone: customerValidation.sanitized.phone || '',
+                total_products: totalProducts.toString()
+            }
+        });
+
+        console.log('✅ Client print checkout session created:', session.id);
+        
+        res.json({
+            success: true,
+            checkoutUrl: session.url,
+            sessionId: session.id,
+            totalProducts: totalProducts
+        });
+
+    } catch (error) {
+        console.error('❌ Client print order failed:', error);
+        
+        // Handle Stripe-specific errors
+        if (error.type && error.type.startsWith('Stripe')) {
+            const errorMapping = mapStripeErrorToResponse(error, 'client print order');
+            return res.status(errorMapping.status).json(errorMapping.response);
+        }
+
+        res.status(500).json({
+            error: 'Print order failed',
+            message: 'Unable to process print order. Please try again.'
+        });
+    }
+});
+
+// Client endpoint for digital photo orders using gallery access
+router.post('/client-digital-order', requireGalleryAccess, async (req, res) => {
+    try {
+        console.log('📱 Processing client digital photo order with gallery access:', req.body);
+        
+        const { photoUrl, filename, customerInfo } = req.body;
+        
+        if (!photoUrl || !filename) {
+            return res.status(400).json({
+                error: 'Missing required fields',
+                message: 'Photo URL and filename are required'
+            });
+        }
+
+        // Validate customer information (shipping not required for digital)
+        const customerValidation = validateCustomerInfo(customerInfo, false);
+        if (!customerValidation.valid) {
+            console.error('❌ Client digital customer info validation failed:', customerValidation.errors || customerValidation.error);
+            return res.status(400).json({
+                error: 'Invalid customer information',
+                details: customerValidation.errors?.join('; ') || customerValidation.error,
+                validationErrors: customerValidation.errors || [customerValidation.error]
+            });
+        }
+
+        // Validate photo belongs to this gallery
+        const hasAccess = await validateGalleryPhotoAccess(req.gallerySession, photoUrl);
+        if (!hasAccess) {
+            return res.status(403).json({
+                error: 'Photo access denied',
+                message: 'Selected photo is not available in this gallery'
+            });
+        }
+
+        // Get digital photo price from gallery owner's settings
+        const validatedPrice = await getDigitalPhotoPrice(req.galleryUserId, photoUrl);
+        console.log(`💰 Server-validated digital price: $${validatedPrice}`);
+
+        // Create Stripe checkout session for digital download
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'payment',
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `Digital Download - ${filename}`,
+                        description: 'High-resolution digital photo download',
+                        images: [photoUrl]
+                    },
+                    unit_amount: Math.round(validatedPrice * 100)
+                },
+                quantity: 1
+            }],
+            customer_email: customerValidation.sanitized.email,
+            success_url: `${req.protocol}://${req.get('host')}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/cancel`,
+            metadata: {
+                order_type: 'client_digital',
+                gallery_token: req.accessToken,
+                gallery_session_id: req.gallerySession.id,
+                photographer_id: req.galleryUserId,
+                photo_url: photoUrl,
+                filename: filename,
+                customer_name: customerValidation.sanitized.name,
+                customer_email: customerValidation.sanitized.email
+            }
+        });
+
+        console.log('✅ Client digital checkout session created:', session.id);
+        
+        res.json({
+            success: true,
+            checkoutUrl: session.url,
+            sessionId: session.id,
+            price: validatedPrice
+        });
+
+    } catch (error) {
+        console.error('❌ Client digital order failed:', error);
+        
+        // Handle Stripe-specific errors
+        if (error.type && error.type.startsWith('Stripe')) {
+            const errorMapping = mapStripeErrorToResponse(error, 'client digital order');
+            return res.status(errorMapping.status).json(errorMapping.response);
+        }
+
+        res.status(500).json({
+            error: 'Digital order failed',
+            message: 'Unable to process digital order. Please try again.'
+        });
+    }
+});
+
+// Test endpoint for client print ordering (no auth, just gallery token)
+router.post('/gallery/test-order', (req, res, next) => {
+    console.log('🧪 GALLERY TEST ENDPOINT HIT - Request reached photo-sales routes:', {
+        method: req.method,
+        path: req.path,
+        headers: {
+            'x-gallery-token': req.headers['x-gallery-token'],
+            'user-agent': req.headers['user-agent']
+        },
+        timestamp: new Date().toISOString()
+    });
+    next();
+}, requireGalleryAccess, async (req, res) => {
+    try {
+        console.log('🧪 Testing client print order with gallery access...');
+        
+        // Simple test response
+        res.json({
+            success: true,
+            message: 'Client print ordering is working!',
+            gallerySessionId: req.gallerySession.id,
+            photographerId: req.galleryUserId,
+            galleryPhotosCount: req.gallerySession.photos?.length || 0,
+            accessToken: req.accessToken
+        });
+
+    } catch (error) {
+        console.error('❌ Client order test failed:', error);
+        res.status(500).json({
+            error: 'Test failed',
+            message: error.message
+        });
+    }
+});
+
+// =============================================================================
+// PHOTOGRAPHER ENDPOINTS (User Authentication Required)
+// =============================================================================
 
 // Apply authentication middleware to all protected routes
 router.use(requireAuth);

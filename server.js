@@ -2593,6 +2593,10 @@ app.use('/api/booking', createBookingAgreementRoutes(pool));
 // Photo Sales API routes for WHCC print integration
 const photoSalesRoutes = require('./server/photo-sales-routes');
 app.use('/api/print', photoSalesRoutes);
+
+// Gallery Print API routes - Separate endpoint to avoid auth conflicts
+const galleryPrintRoutes = require('./server/gallery-print-routes');
+app.use('/api/gallery-print', galleryPrintRoutes);
 // Initialize templates on startup (non-blocking)
 (async () => {
     try {
