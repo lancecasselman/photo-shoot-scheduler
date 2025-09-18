@@ -335,26 +335,16 @@ class PrintServiceAPI {
                   };
                   baseProduct.price = defaultSize.price;
                 } else {
-                  // Fallback if no sizes found
-                  baseProduct.price = 19.99;
-                  baseProduct.dimensions = { width: 8, height: 10, area: 80 };
+                  // No sizes found - don't make up fake data
+                  baseProduct.price = 0;
+                  baseProduct.dimensions = null;
                 }
               } else {
-                // No ProductNodes - create standard fallback size
-                console.log(`⚠️ No ProductNodes found for ${baseProduct.name}, using fallback size`);
-                baseProduct.price = 19.99;
-                baseProduct.dimensions = { width: 8, height: 10, area: 80 };
-                baseProduct.sizes = [{
-                  id: `${baseProduct.id}_8x10`,
-                  label: '8"×10"',
-                  width: 8,
-                  height: 10,
-                  area: 80,
-                  price: 19.99,
-                  productUID: baseProduct.productUID,
-                  productNodeUID: 'fallback',
-                  nodeIndex: 0
-                }];
+                // No ProductNodes - this product has no sizes available
+                console.log(`⚠️ No ProductNodes found for ${baseProduct.name}, no sizes available`);
+                baseProduct.sizes = []; // Empty array - no fake sizes
+                baseProduct.price = 0;
+                baseProduct.dimensions = null;
               }
               
               // Enhanced AttributeCategories processing for proper WHCC integration
