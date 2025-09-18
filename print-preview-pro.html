@@ -653,8 +653,12 @@
             paper: 'lustre',
             size: null,
             frame: 'none',
-            crop: { x: 0, y: 0 }
+            crop: { x: 0, y: 0 },
+            attributes: {}
         };
+        
+        // Render version to prevent race conditions
+        let renderVersion = 0;
         
         // WHCC products will be loaded dynamically from API
         let whccProducts = [];
@@ -1453,13 +1457,27 @@
                 
                 console.log('🎨 Rendering attribute sections for product:', productData);
                 
-                // Clear existing content
+                // ALWAYS clear existing content first - no matter what
                 attributeSections.innerHTML = '';
                 
-                // Add canvas-specific options if canvas is selected
+                // STRICT CHECK: Only render canvas options for canvas products
                 if (currentSettings.product === 'canvas') {
                     renderCanvasOptions();
-                    return;
+                    return; // Exit early - don't process any WHCC attributes for canvas
+                }
+                
+                // For NON-CANVAS products only
+                if (currentSettings.product !== 'canvas') {
+                    // Filter out any canvas-specific attributes that might have leaked through
+                    if (productData && productData.attributesForDisplay) {
+                        const canvasAttributeKeys = ['wrap-type', 'protection', 'hardware', 'border', 'float-frame'];
+                        productData.attributesForDisplay = productData.attributesForDisplay.filter(category => {
+                            const isCanvasAttribute = canvasAttributeKeys.some(key => 
+                                category.categoryKey && category.categoryKey.toLowerCase().includes(key)
+                            );
+                            return !isCanvasAttribute;
+                        });
+                    }
                 }
                 
                 if (!productData || !productData.attributesForDisplay || productData.attributesForDisplay.length === 0) {
