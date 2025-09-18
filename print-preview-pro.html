@@ -81,6 +81,19 @@
                 width: 100%;
             }
             
+            .product-category-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .filter-tags {
+                justify-content: center;
+            }
+            
+            .filter-tag {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
             .product-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
             }
@@ -167,6 +180,121 @@
             border-bottom-color: #3b82f6;
         }
 
+        /* Product Category Grid */
+        .product-category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .category-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .category-card:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-card.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .category-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .category-count {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .category-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-style: italic;
+        }
+        
+        /* Search and Filter Styles */
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .filter-tag {
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .filter-tag:hover {
+            background: #e2e8f0;
+        }
+        
+        .filter-tag.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .product-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .product-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .product-item:hover {
+            background: #f8fafc;
+        }
+        
+        .product-item.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .product-details {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
         /* Dropdown Styles */
         .dropdown-select {
             width: 100%;
@@ -539,20 +667,10 @@
                     Product Type
                     <span id="productSourceIndicator" style="font-size: 12px; font-weight: normal; color: #48bb78; margin-left: 10px;"></span>
                 </h3>
-                <select class="dropdown-select" id="productSelect">
-                    <option value="">Select a product type...</option>
-                    <option value="photographic">Photo Prints</option>
-                    <option value="fineart">Fine Art Prints</option>
-                    <option value="canvas">Canvas Prints</option>
-                    <option value="metal">Metal Prints</option>
-                    <option value="acrylic">Acrylic Prints</option>
-                    <option value="framed">Framed Prints</option>
-                    <option value="albums">Albums</option>
-                    <option value="books">Books</option>
-                    <option value="cards">Cards</option>
-                    <option value="specialty">Specialty Items</option>
-                    <option value="bamboo">Bamboo Panel</option>
-                </select>
+                <div id="productCategoryGrid" class="product-category-grid">
+                    <!-- Categories will be populated dynamically from WHCC API -->
+                    <div class="category-loading">Loading product categories...</div>
+                </div>
             </div>
 
             <!-- Dynamic WHCC Attribute Sections -->
@@ -666,6 +784,10 @@
         let productSizes = {};
         let loadingProducts = true;
         
+        // Current selected category and products
+        let selectedCategory = null;
+        let categoryProducts = {};
+        
         // Living room background - Vertical/portrait orientation for better mobile view
         const roomImage = '/images/vertical-room.jpg';
         
@@ -709,6 +831,26 @@
                 return false;
             } finally {
                 loadingProducts = false;
+            }
+        }
+        
+        // Load fallback products if API fails
+        function loadFallbackProducts() {
+            console.log('Loading fallback products...');
+            
+            const categoryGrid = document.getElementById('productCategoryGrid');
+            if (categoryGrid) {
+                categoryGrid.innerHTML = `
+                    <div class="category-loading" style="color: #ef4444;">
+                        ⚠️ Unable to load products. Please refresh the page to try again.
+                    </div>
+                `;
+            }
+            
+            const indicator = document.getElementById('productSourceIndicator');
+            if (indicator) {
+                indicator.innerHTML = '❌ API Error';
+                indicator.style.color = '#ef4444';
             }
         }
         
@@ -762,11 +904,31 @@
                 'bamboo': 'bamboo'
             };
             
+            // Build category summary and product organization
+            const categorySummary = {};
+            
             // Group products by category and extract all sizes from the new sizes array
             whccProducts.forEach(product => {
                 // Map API category to our UI category
-                const apiCategory = product.category ? product.category.toLowerCase().replace(/ /g, '_') : 'prints';
-                const category = categoryMapping[apiCategory] || 'photographic';
+                const apiCategory = product.category ? product.category.toLowerCase() : 'photo prints';
+                const category = categoryMapping[apiCategory] || 'photo_prints';
+                
+                // Count products per category
+                if (!categorySummary[category]) {
+                    categorySummary[category] = {
+                        name: getCategoryDisplayName(category),
+                        count: 0,
+                        products: []
+                    };
+                }
+                categorySummary[category].count++;
+                categorySummary[category].products.push(product);
+                
+                // Store products by category for selection
+                if (!categoryProducts[category]) {
+                    categoryProducts[category] = [];
+                }
+                categoryProducts[category].push(product);
                 
                 // Extract paper type from product name or description
                 let paperType = 'standard';
@@ -874,8 +1036,92 @@
             console.log('📏 Available sizes by category:', productSizes);
             console.log('💰 Pricing structure:', pricing);
             
+            // Update the category grid display
+            updateCategoryGrid(categorySummary);
+            
             // Update size grid after processing new data
             updateSizeGrid();
+        }
+        
+        // Get friendly display name for categories
+        function getCategoryDisplayName(category) {
+            const displayNames = {
+                'albums': 'Albums',
+                'canvas': 'Canvas Prints',
+                'gallery_wraps': 'Gallery Wraps',
+                'photo_prints': 'Photo Prints',
+                'cards': 'Cards',
+                'acrylic': 'Acrylic Prints',
+                'metal': 'Metal Prints',
+                'framed': 'Framed Prints',
+                'fineart': 'Fine Art Prints',
+                'books': 'Books',
+                'specialty': 'Specialty Items',
+                'bamboo': 'Bamboo Panels'
+            };
+            return displayNames[category] || category.charAt(0).toUpperCase() + category.slice(1);
+        }
+        
+        // Update the category grid with WHCC data
+        function updateCategoryGrid(categorySummary) {
+            const categoryGrid = document.getElementById('productCategoryGrid');
+            if (!categoryGrid) {
+                console.warn('Category grid element not found');
+                return;
+            }
+            
+            console.log('📋 Updating category grid with:', categorySummary);
+            
+            // Sort categories by product count (descending)
+            const sortedCategories = Object.entries(categorySummary)
+                .sort(([,a], [,b]) => b.count - a.count);
+            
+            if (sortedCategories.length === 0) {
+                categoryGrid.innerHTML = '<div class="category-loading">No categories available</div>';
+                return;
+            }
+            
+            // Render category cards
+            categoryGrid.innerHTML = sortedCategories.map(([categoryKey, categoryData]) => `
+                <div class="category-card" data-category="${categoryKey}" onclick="selectCategory('${categoryKey}')">
+                    <div class="category-name">${categoryData.name}</div>
+                    <div class="category-count">${categoryData.count} products</div>
+                </div>
+            `).join('');
+            
+            console.log(`✅ Rendered ${sortedCategories.length} category cards`);
+            
+            // Add search and filter controls
+            addSearchAndFilters(categorySummary);
+        }
+        
+        // Add search and filtering functionality
+        function addSearchAndFilters(categorySummary) {
+            const attributeSections = document.getElementById('attributeSections');
+            if (!attributeSections) return;
+            
+            // Add search bar and filters above the categories
+            const searchHTML = `
+                <div class="section">
+                    <div class="section-title">Search & Filter</div>
+                    <input type="text" id="productSearch" class="dropdown-select" placeholder="Search products..." 
+                           oninput="filterProducts()" style="margin-bottom: 10px;">
+                    <div class="filter-tags" id="filterTags">
+                        <button class="filter-tag active" onclick="filterByTag('all')">All (${Object.values(categorySummary).reduce((sum, cat) => sum + cat.count, 0)})</button>
+                        ${Object.entries(categorySummary).map(([key, cat]) => 
+                            `<button class="filter-tag" onclick="filterByTag('${key}')">${cat.name} (${cat.count})</button>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+            
+            attributeSections.innerHTML = searchHTML + `
+                <div class="section">
+                    <div class="section-title" style="color: #64748b; font-style: italic;">
+                        Select a category above to see products
+                    </div>
+                </div>
+            `;
         }
         
         // NEW: Dynamic size grid update function
@@ -2409,6 +2655,296 @@
             }
         }
 
+        // Select a product category
+        function selectCategory(categoryKey) {
+            selectedCategory = categoryKey;
+            
+            // Update visual selection
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            const selectedCard = document.querySelector(`[data-category="${categoryKey}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Show products for this category
+            showCategoryProducts(categoryKey);
+        }
+        
+        // Show products for selected category
+        function showCategoryProducts(categoryKey) {
+            const products = categoryProducts[categoryKey] || [];
+            console.log(`Showing ${products.length} products for category: ${categoryKey}`);
+            
+            // Clear search when switching categories
+            const searchInput = document.getElementById('productSearch');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            // Update attribute sections to show products from this category
+            updateAttributeSections(products);
+        }
+        
+        // Note: updateAttributeSections is defined later with pagination support
+        
+        // Select a specific product (works with pagination)
+        function selectProduct(productIndex) {
+            // With pagination, get product from currentProducts array
+            if (!currentProducts || !currentProducts.length) return;
+            
+            const product = currentProducts[productIndex];
+            if (!product) return;
+            
+            // Update visual selection
+            document.querySelectorAll('#attributeSections .product-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            const selectedItem = document.querySelector(`[data-product-index="${productIndex}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+            
+            // Store current product
+            currentSettings.product = product;
+            
+            // Update size options
+            updateSizeOptions(product);
+            
+            // Update price
+            updatePricing();
+            
+            console.log('Selected product:', product.name);
+        }
+        
+        // Update size options for selected product
+        function updateSizeOptions(product) {
+            const sizeSection = document.getElementById('sizeSection');
+            const sizeSelect = document.getElementById('sizeSelect');
+            
+            if (!product.sizes || !product.sizes.length) {
+                sizeSection.style.display = 'none';
+                return;
+            }
+            
+            sizeSection.style.display = 'block';
+            sizeSelect.innerHTML = '<option value="">Select a size...</option>' + 
+                product.sizes.map((size, index) => `
+                    <option value="${index}">${size.width}" x ${size.height}" - $${size.price?.toFixed(2) || '0.00'}</option>
+                `).join('');
+            
+            // Add change handler for size selection
+            sizeSelect.addEventListener('change', function() {
+                const sizeIndex = parseInt(this.value);
+                if (!isNaN(sizeIndex) && product.sizes[sizeIndex]) {
+                    currentSettings.size = product.sizes[sizeIndex];
+                    updatePricing();
+                }
+            });
+        }
+        
+        // Update pricing display
+        function updatePricing() {
+            const priceAmount = document.getElementById('priceAmount');
+            if (!priceAmount) return;
+            
+            if (currentSettings.product && currentSettings.size) {
+                const price = currentSettings.size.price || 0;
+                priceAmount.textContent = `$${price.toFixed(2)}`;
+            } else {
+                priceAmount.textContent = '$0.00';
+            }
+        }
+        
+        // Filter products by search term
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch')?.value.toLowerCase() || '';
+            
+            if (!selectedCategory || !categoryProducts[selectedCategory]) {
+                return;
+            }
+            
+            const products = categoryProducts[selectedCategory];
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm))
+            );
+            
+            updateAttributeSections(filteredProducts);
+            console.log(`🔍 Filtered to ${filteredProducts.length} products with term: "${searchTerm}"`);
+        }
+        
+        // Filter by category tag
+        function filterByTag(categoryKey) {
+            // Update active tag
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            if (categoryKey === 'all') {
+                // Show all categories
+                document.querySelectorAll('.category-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                
+                // Clear selected category
+                selectedCategory = null;
+                document.querySelectorAll('.category-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Reset product view
+                document.getElementById('attributeSections').innerHTML = `
+                    <div class="section">
+                        <div class="section-title" style="color: #64748b; font-style: italic;">
+                            Select a category above to see products
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Filter categories
+                document.querySelectorAll('.category-card').forEach(card => {
+                    const cardCategory = card.dataset.category;
+                    card.style.display = cardCategory === categoryKey ? 'block' : 'none';
+                });
+                
+                // Auto-select the filtered category
+                selectCategory(categoryKey);
+            }
+        }
+        
+        // Pagination state
+        let currentPage = 1;
+        let currentProducts = [];
+        
+        // Enhanced product selection with pagination
+        function updateAttributeSections(products) {
+            const attributeSections = document.getElementById('attributeSections');
+            if (!attributeSections) return;
+            
+            // Store current products for pagination
+            currentProducts = products;
+            currentPage = 1; // Reset to first page
+            
+            renderProductPage();
+        }
+        
+        // Render current page of products
+        function renderProductPage() {
+            const attributeSections = document.getElementById('attributeSections');
+            if (!attributeSections) return;
+            
+            if (!currentProducts.length) {
+                attributeSections.innerHTML = `
+                    <div class="section">
+                        <div class="section-title" style="color: #64748b; font-style: italic;">
+                            No products found in this category
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Pagination variables
+            const itemsPerPage = 10;
+            const totalPages = Math.ceil(currentProducts.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedProducts = currentProducts.slice(startIndex, endIndex);
+            
+            // Generate product list HTML
+            const productListHTML = paginatedProducts.map((product, index) => {
+                const actualIndex = startIndex + index;
+                return `
+                    <div class="product-item" data-product-index="${actualIndex}" onclick="selectProduct(${actualIndex})">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-details">
+                            ${product.sizes?.length || 0} sizes available
+                            ${product.category ? ` • ${product.category}` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Generate pagination controls
+            const paginationHTML = totalPages > 1 ? `
+                <div class="pagination-controls" style="display: flex; justify-content: center; gap: 8px; margin-top: 15px; align-items: center;">
+                    <button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>
+                        Previous
+                    </button>
+                    <span style="font-size: 14px; color: #64748b; margin: 0 10px;">
+                        Page ${currentPage} of ${totalPages}
+                    </span>
+                    <button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>
+                        Next
+                    </button>
+                </div>
+            ` : '';
+            
+            attributeSections.innerHTML = `
+                <div class="attribute-category">
+                    <div class="section-title">
+                        Select Product (${currentProducts.length} found)
+                    </div>
+                    <div class="product-list">
+                        ${productListHTML}
+                    </div>
+                    ${paginationHTML}
+                </div>
+            `;
+        }
+        
+        // Change page function
+        function changePage(newPage) {
+            const totalPages = Math.ceil(currentProducts.length / 10);
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderProductPage();
+            }
+        }
+        
+        // Initialize the preview app
+        async function initializePreview() {
+            if (!photoUrl) {
+                alert('No photo URL provided');
+                return;
+            }
+            
+            // Show loading overlay
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            try {
+                // Load WHCC products first
+                const whccLoaded = await fetchWHCCProducts();
+                
+                // Load room and photo images in parallel
+                await Promise.all([
+                    loadRoomImage(),
+                    loadPhotoImage()
+                ]);
+                
+                // Initial render
+                render();
+                
+                console.log('✅ Preview initialized successfully');
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize preview:', error);
+                alert('Failed to load preview. Please try again.');
+            } finally {
+                // Hide loading overlay
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded, initializing preview...');
+            initializePreview();
+        });
+        
         // Add to cart
         function addToCart() {
             // Get ProductNode data for WHCC ordering
