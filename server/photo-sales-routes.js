@@ -18,6 +18,11 @@ let whccCatalogCache = null;
 let catalogCacheExpiry = 0;
 const CATALOG_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
+// Configurable default pricing settings
+const DEFAULT_PRINT_MARKUP_PERCENTAGE = Number.isFinite(parseFloat(process.env.DEFAULT_PRINT_MARKUP_PERCENTAGE)) ? parseFloat(process.env.DEFAULT_PRINT_MARKUP_PERCENTAGE) : 25; // 25%
+const DEFAULT_MIN_PRINT_PRICE = Number.isFinite(parseFloat(process.env.DEFAULT_MIN_PRINT_PRICE)) ? parseFloat(process.env.DEFAULT_MIN_PRINT_PRICE) : 5.00; // $5.00
+const DEFAULT_DIGITAL_PRICE = Number.isFinite(parseFloat(process.env.DEFAULT_DIGITAL_PRICE)) ? parseFloat(process.env.DEFAULT_DIGITAL_PRICE) : 25.00; // $25.00
+
 // Centralized Stripe error mapping for consistent error responses
 function mapStripeErrorToResponse(stripeError, context = '') {
     console.error(`❌ Stripe session creation failed${context ? ' for ' + context : ''}:`, stripeError);
@@ -203,7 +208,7 @@ async function calculateProductPrice(product, userId = null) {
             }
         }
         
-        // Get admin-configured markup if user ID provided
+        // Apply pricing logic (admin settings if userId provided, otherwise defaults)
         let finalPrice = basePrice;
         if (userId) {
             try {
@@ -220,22 +225,33 @@ async function calculateProductPrice(product, userId = null) {
                 
                 if (settingsResult.length > 0) {
                     const settings = settingsResult[0];
-                    const markupPercentage = parseFloat(settings.printMarkupPercentage) || 25; // Default 25%
-                    const minPrice = parseFloat(settings.minPrintPrice) || 5; // Default $5
+                    const mpRaw = settings.printMarkupPercentage;
+                    const minRaw = settings.minPrintPrice;
+                    const mpParsed = (mpRaw === null || mpRaw === '') ? NaN : parseFloat(mpRaw);
+                    const minParsed = (minRaw === null || minRaw === '') ? NaN : parseFloat(minRaw);
+                    const markupPercentage = Number.isFinite(mpParsed) ? mpParsed : DEFAULT_PRINT_MARKUP_PERCENTAGE;
+                    const minPrice = Number.isFinite(minParsed) ? minParsed : DEFAULT_MIN_PRINT_PRICE;
                     
                     finalPrice = basePrice * (1 + markupPercentage / 100);
                     finalPrice = Math.max(finalPrice, minPrice); // Enforce minimum
                     
                     console.log(`📈 Applied ${markupPercentage}% markup: $${basePrice} → $${finalPrice.toFixed(2)} (min: $${minPrice})`);
                 } else {
-                    // Default 25% markup if no settings found
-                    finalPrice = basePrice * 1.25;
-                    console.log(`📈 Applied default 25% markup: $${basePrice} → $${finalPrice.toFixed(2)}`);
+                    // Apply configurable default markup if no settings found
+                    finalPrice = basePrice * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100);
+                    finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE); // Enforce minimum price
+                    console.log(`📈 Applied default ${DEFAULT_PRINT_MARKUP_PERCENTAGE}% markup: $${basePrice} → $${finalPrice.toFixed(2)} (min: $${DEFAULT_MIN_PRINT_PRICE})`);  
                 }
             } catch (dbError) {
                 console.warn('⚠️ Could not fetch admin pricing settings, using default markup:', dbError.message);
-                finalPrice = basePrice * 1.25; // Default 25% markup
+                finalPrice = basePrice * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100); // Apply configurable default markup
+                finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE); // Enforce minimum price
             }
+        } else {
+            // Apply defaults when no userId provided (e.g., public pricing preview)
+            finalPrice = basePrice * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100);
+            finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE);
+            console.log(`📈 Applied default pricing (no user): ${DEFAULT_PRINT_MARKUP_PERCENTAGE}% markup, min $${DEFAULT_MIN_PRINT_PRICE}`);
         }
         
         // Round to 2 decimal places
@@ -263,7 +279,11 @@ async function getDigitalPhotoPrice(userId, photoUrl) {
             ));
         
         if (result.length > 0) {
-            return parseFloat(result[0].digitalPrice);
+            const priceRaw = result[0].digitalPrice;
+            const priceParsed = (priceRaw === null || priceRaw === '') ? NaN : parseFloat(priceRaw);
+            if (Number.isFinite(priceParsed)) {
+                return Math.round(priceParsed * 100) / 100;
+            }
         }
         
         // Fallback: check for any digital price setting for this user
@@ -276,15 +296,19 @@ async function getDigitalPhotoPrice(userId, photoUrl) {
             .limit(1);
         
         if (fallbackResult.length > 0) {
-            return parseFloat(fallbackResult[0].digitalPrice);
+            const fallbackRaw = fallbackResult[0].digitalPrice;
+            const fallbackParsed = (fallbackRaw === null || fallbackRaw === '') ? NaN : parseFloat(fallbackRaw);
+            if (Number.isFinite(fallbackParsed)) {
+                return Math.round(fallbackParsed * 100) / 100;
+            }
         }
         
         // Default digital price if no settings found
-        return 25.00;
+        return Math.round(DEFAULT_DIGITAL_PRICE * 100) / 100;
         
     } catch (error) {
         console.warn('⚠️ Could not fetch digital price, using default:', error.message);
-        return 25.00;
+        return Math.round(DEFAULT_DIGITAL_PRICE * 100) / 100;
     }
 }
 
@@ -1415,20 +1439,6 @@ async function submitToWHCC(session, products) {
     }
 }
 
-// Helper function to calculate product price
-function calculateProductPrice(product) {
-    // Base pricing logic - could be enhanced with dynamic pricing
-    const basePrices = {
-        '4x6': 15.00,
-        '5x7': 18.00,
-        '8x10': 25.00,
-        '11x14': 35.00,
-        '16x20': 55.00,
-        '20x30': 95.00
-    };
-    
-    return basePrices[product.size] || 25.00;
-}
 
 // Add API endpoint for getting photo for-sale settings
 router.get('/photo-settings/:photoUrl', async (req, res) => {
