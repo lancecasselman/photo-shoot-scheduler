@@ -2879,6 +2879,15 @@
                         <div class="price-amount" id="priceAmount">$0.00</div>
                     </div>
                     <div class="price-breakdown" id="priceBreakdown" style="display: none;"></div>
+                    
+                    <div class="action-buttons" style="display: flex; gap: 12px; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="addToCart()" style="flex: 1; padding: 14px; font-size: 16px; font-weight: 600;">
+                            🛒 Add to Cart
+                        </button>
+                        <button class="btn btn-secondary" onclick="viewCart()" style="flex: 0.8; padding: 14px; font-size: 16px; font-weight: 600;">
+                            View Cart
+                        </button>
+                    </div>
                 </div>
             `;
             
@@ -3421,6 +3430,539 @@
                 message.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => message.remove(), 300);
             }, 5000);
+        }
+        
+        // Navigate back to gallery
+        function backToGallery() {
+            // Extract gallery token from URL parameters (consistent with page initialization)
+            const urlParams = new URLSearchParams(window.location.search);
+            const galleryToken = urlParams.get('token');
+            
+            if (galleryToken) {
+                window.location.href = `/gallery?token=${galleryToken}`;
+            } else {
+                // Fallback: go back in history
+                window.history.back();
+            }
+        }
+        
+        // Show cart interface
+        function viewCart() {
+            const cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+            
+            if (cart.length === 0) {
+                alert('Your cart is empty. Add some products first!');
+                return;
+            }
+            
+            showCartModal(cart);
+        }
+        
+        // Display cart in a modal
+        function showCartModal(cart) {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            // Calculate cart total
+            let cartTotal = 0;
+            cart.forEach(item => {
+                cartTotal += parseFloat(item.price || 0);
+            });
+            
+            // Build cart items HTML
+            const cartItemsHTML = cart.map((item, index) => `
+                <div class="cart-item" style="
+                    display: flex;
+                    gap: 16px;
+                    padding: 16px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    margin-bottom: 12px;
+                    background: white;
+                ">
+                    <img src="${item.photoUrl}" alt="Photo" style="
+                        width: 80px;
+                        height: 80px;
+                        object-fit: cover;
+                        border-radius: 8px;
+                    ">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #1a202c; margin-bottom: 4px;">
+                            ${item.productName}
+                        </div>
+                        <div style="color: #64748b; font-size: 14px; margin-bottom: 8px;">
+                            ${Object.entries(item.configuration || {}).map(([key, value]) => 
+                                `${key}: ${typeof value === 'object' ? value.label || value.id : value}`
+                            ).join(' • ')}
+                        </div>
+                        <div style="color: #059669; font-weight: 600;">
+                            $${parseFloat(item.price || 0).toFixed(2)}
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${index})" style="
+                        background: #ef4444;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        height: fit-content;
+                    ">Remove</button>
+                </div>
+            `).join('');
+            
+            // Create modal content
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                ">
+                    <div style="
+                        padding: 24px;
+                        border-bottom: 1px solid #e2e8f0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <h2 style="margin: 0; color: #1a202c; font-size: 24px;">Shopping Cart</h2>
+                        <button onclick="closeCartModal()" style="
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #64748b;
+                            padding: 4px;
+                        ">&times;</button>
+                    </div>
+                    
+                    <div style="padding: 24px;">
+                        <div id="cartItems" style="margin-bottom: 24px;">
+                            ${cartItemsHTML}
+                        </div>
+                        
+                        <div style="
+                            border-top: 2px solid #e2e8f0;
+                            padding-top: 20px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 24px;
+                        ">
+                            <div>
+                                <div style="font-size: 18px; font-weight: 600; color: #1a202c;">
+                                    Estimated Total: $${cartTotal.toFixed(2)}
+                                </div>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                                    Final price calculated at checkout
+                                </div>
+                            </div>
+                            <div style="font-size: 14px; color: #64748b;">
+                                ${cart.length} item${cart.length !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="continueShopping()" style="
+                                background: #f1f5f9;
+                                color: #475569;
+                                border: 1px solid #cbd5e1;
+                                padding: 14px 24px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                flex: 1;
+                            ">Continue Shopping</button>
+                            <button onclick="proceedToCheckout()" style="
+                                background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                                color: white;
+                                border: none;
+                                padding: 14px 24px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                flex: 2;
+                            ">Proceed to Checkout</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store modal reference for other functions
+            window.currentCartModal = modal;
+        }
+        
+        // Remove item from cart
+        function removeFromCart(index) {
+            let cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+            cart.splice(index, 1);
+            localStorage.setItem('printCart', JSON.stringify(cart));
+            
+            // Refresh cart display
+            if (window.currentCartModal) {
+                document.body.removeChild(window.currentCartModal);
+                window.currentCartModal = null;
+            }
+            
+            if (cart.length > 0) {
+                viewCart();
+            } else {
+                alert('Cart is now empty!');
+            }
+        }
+        
+        // Close cart modal
+        function closeCartModal() {
+            if (window.currentCartModal) {
+                document.body.removeChild(window.currentCartModal);
+                window.currentCartModal = null;
+            }
+        }
+        
+        // Continue shopping
+        function continueShopping() {
+            closeCartModal();
+        }
+        
+        // Proceed to checkout with cart items
+        function proceedToCheckout() {
+            const cart = JSON.parse(localStorage.getItem('printCart') || '[]');
+            
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            
+            // Show customer information form
+            showCustomerInfoForm(cart);
+        }
+        
+        // Show customer information form for checkout
+        function showCustomerInfoForm(cart) {
+            closeCartModal();
+            
+            // Create customer info modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            const cartTotal = cart.reduce((total, item) => total + parseFloat(item.price || 0), 0);
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                ">
+                    <div style="
+                        padding: 24px;
+                        border-bottom: 1px solid #e2e8f0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <h2 style="margin: 0; color: #1a202c; font-size: 24px;">Customer Information</h2>
+                        <button onclick="closeCustomerForm()" style="
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #64748b;
+                            padding: 4px;
+                        ">&times;</button>
+                    </div>
+                    
+                    <form id="customerForm" style="padding: 24px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                                Email Address *
+                            </label>
+                            <input type="email" id="customerEmail" required style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                box-sizing: border-box;
+                            ">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                                Full Name *
+                            </label>
+                            <input type="text" id="customerName" required style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                box-sizing: border-box;
+                            ">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                                Phone Number *
+                            </label>
+                            <input type="tel" id="customerPhone" required style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                box-sizing: border-box;
+                            ">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">
+                                Shipping Address *
+                            </label>
+                            <input type="text" id="customerAddress" required placeholder="Street address" style="
+                                width: 100%;
+                                padding: 12px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                box-sizing: border-box;
+                                margin-bottom: 12px;
+                            ">
+                            <div style="display: flex; gap: 12px;">
+                                <input type="text" id="customerCity" required placeholder="City" style="
+                                    flex: 1;
+                                    padding: 12px;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    font-size: 16px;
+                                ">
+                                <input type="text" id="customerState" required placeholder="State" style="
+                                    width: 100px;
+                                    padding: 12px;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    font-size: 16px;
+                                ">
+                                <input type="text" id="customerZip" required placeholder="ZIP" style="
+                                    width: 100px;
+                                    padding: 12px;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    font-size: 16px;
+                                ">
+                            </div>
+                        </div>
+                        
+                        <div style="
+                            background: #f8fafc;
+                            padding: 16px;
+                            border-radius: 8px;
+                            margin-bottom: 24px;
+                            border: 1px solid #e2e8f0;
+                        ">
+                            <div style="font-weight: 600; color: #1a202c; margin-bottom: 8px;">Order Summary</div>
+                            <div style="color: #64748b; font-size: 14px; margin-bottom: 8px;">
+                                ${cart.length} item${cart.length !== 1 ? 's' : ''}
+                            </div>
+                            <div style="font-size: 18px; font-weight: 600; color: #059669;">
+                                Total: $${cartTotal.toFixed(2)}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px;">
+                            <button type="button" onclick="closeCustomerForm()" style="
+                                background: #f1f5f9;
+                                color: #475569;
+                                border: 1px solid #cbd5e1;
+                                padding: 14px 24px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                flex: 1;
+                            ">Cancel</button>
+                            <button type="submit" style="
+                                background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                                color: white;
+                                border: none;
+                                padding: 14px 24px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                flex: 2;
+                            ">Complete Order</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentCustomerModal = modal;
+            
+            // Handle form submission
+            document.getElementById('customerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitCartOrder(cart);
+            });
+        }
+        
+        // Close customer info form
+        function closeCustomerForm() {
+            if (window.currentCustomerModal) {
+                document.body.removeChild(window.currentCustomerModal);
+                window.currentCustomerModal = null;
+            }
+        }
+        
+        // Submit cart order to server
+        async function submitCartOrder(cart) {
+            try {
+                // Get customer information from form
+                const customerInfo = {
+                    email: document.getElementById('customerEmail').value,
+                    name: document.getElementById('customerName').value,
+                    phone: document.getElementById('customerPhone').value,
+                    address: document.getElementById('customerAddress').value,
+                    city: document.getElementById('customerCity').value,
+                    state: document.getElementById('customerState').value,
+                    zip: document.getElementById('customerZip').value
+                };
+                
+                // Transform cart items into the format expected by /client-print-order
+                const photos = [];
+                
+                // Group cart items by photo URL
+                const photoGroups = {};
+                cart.forEach(item => {
+                    if (!photoGroups[item.photoUrl]) {
+                        photoGroups[item.photoUrl] = {
+                            url: item.photoUrl,
+                            products: []
+                        };
+                    }
+                    
+                    // Transform configuration back to server format
+                    const product = {
+                        productUID: item.productUID,
+                        name: item.productName,
+                        quantity: 1
+                    };
+                    
+                    // Add attributes from configuration
+                    if (item.configuration) {
+                        Object.entries(item.configuration).forEach(([key, value]) => {
+                            if (typeof value === 'object' && value.id) {
+                                product[key] = value.id;
+                            } else {
+                                product[key] = value;
+                            }
+                        });
+                    }
+                    
+                    photoGroups[item.photoUrl].products.push(product);
+                });
+                
+                // Convert groups to array
+                Object.values(photoGroups).forEach(group => {
+                    photos.push(group);
+                });
+                
+                console.log('🛒 Submitting cart order:', { photos, customerInfo });
+                
+                // Show loading state
+                const submitButton = document.querySelector('#customerForm button[type="submit"]');
+                const originalText = submitButton.textContent;
+                submitButton.textContent = 'Processing...';
+                submitButton.disabled = true;
+                
+                // Submit to existing client-print-order endpoint with gallery token
+                const urlParams = new URLSearchParams(window.location.search);
+                const galleryToken = urlParams.get('token');
+                
+                const response = await fetch('/api/photo-sales/client-print-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${galleryToken}`,
+                        'Gallery-Token': galleryToken || ''
+                    },
+                    body: JSON.stringify({
+                        photos: photos,
+                        customerInfo: customerInfo,
+                        galleryToken: galleryToken || ''
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.checkoutUrl) {
+                    // Only clear cart after confirming we have a valid checkout URL
+                    try {
+                        // Test that the checkout URL is valid before clearing cart
+                        if (result.checkoutUrl.startsWith('https://checkout.stripe.com/') || 
+                            result.checkoutUrl.includes('stripe.com')) {
+                            localStorage.removeItem('printCart');
+                            window.location.href = result.checkoutUrl;
+                        } else {
+                            throw new Error('Invalid checkout URL received');
+                        }
+                    } catch (redirectError) {
+                        console.error('❌ Redirect error:', redirectError);
+                        throw new Error('Checkout redirect failed - cart preserved');
+                    }
+                } else {
+                    throw new Error(result.error || result.message || 'Order submission failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Cart order submission failed:', error);
+                alert('Order submission failed: ' + (error.message || 'Please try again'));
+                
+                // Reset submit button
+                const submitButton = document.querySelector('#customerForm button[type="submit"]');
+                if (submitButton) {
+                    submitButton.textContent = 'Complete Order';
+                    submitButton.disabled = false;
+                }
+            }
         }
     </script>
     
