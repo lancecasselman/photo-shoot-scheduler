@@ -419,8 +419,8 @@ class PrintServiceAPI {
               // Extract key product attributes - use Id field from real WHCC API
               const baseProduct = {
                 id: `whcc_${product.Id || product.ProductUID || Math.random()}`,
-                name: product.Name || product.Description || 'WHCC Product',
-                description: product.Description || category.Name,
+                name: this.generateProperProductName(product, category),
+                description: product.Description || this.generateProductDescription(product, category),
                 category: this.normalizeProductCategory(product.Name, category.Name),
                 productUID: product.Id || product.ProductUID, // Use Id as primary identifier
                 attributes: [],
@@ -643,8 +643,8 @@ class PrintServiceAPI {
   formatWHCCProduct(product, categoryName) {
     return {
       id: product.id || `whcc_${product.sku || Math.random()}`,
-      name: product.name || product.title || 'WHCC Product',
-      description: product.description || `Professional ${categoryName}`,
+      name: this.cleanProductName(product.name || product.title || this.generateNameFromCategory(categoryName)),
+      description: product.description || `Professional ${this.cleanProductName(categoryName)}`,
       price: product.price || product.basePrice || 0,
       category: categoryName?.toLowerCase() || 'prints',
       sizes: product.sizes || [],
@@ -760,6 +760,73 @@ class PrintServiceAPI {
     return displayNames[categoryKey] || categoryKey.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
+  }
+
+  // Generate proper, user-friendly product names
+  generateProperProductName(product, category) {
+    // Use the API name if available and clean it up
+    if (product.Name && product.Name.trim()) {
+      return this.cleanProductName(product.Name);
+    }
+    
+    // Use description if no name
+    if (product.Description && product.Description.trim()) {
+      return this.cleanProductName(product.Description);
+    }
+    
+    // Generate from category if neither name nor description available
+    if (category && category.Name) {
+      return this.generateNameFromCategory(category.Name);
+    }
+    
+    // Last resort fallback
+    return 'Professional Print Product';
+  }
+
+  // Clean up product names from WHCC API to be more user-friendly
+  cleanProductName(name) {
+    return name
+      .replace(/^\s+|\s+$/g, '') // Trim whitespace
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between camelCase
+      .split(' ')
+      .map(word => {
+        // Capitalize first letter of each word, but preserve acronyms
+        if (word.length <= 3 && word.toUpperCase() === word) {
+          return word; // Keep acronyms like "UV", "LED", "3D"
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
+  }
+
+  // Generate product description when not provided by API
+  generateProductDescription(product, category) {
+    if (product.Description && product.Description.trim()) {
+      return product.Description;
+    }
+    
+    const categoryName = category?.Name || 'Print';
+    const cleanCategoryName = this.cleanProductName(categoryName);
+    
+    return `Professional ${cleanCategoryName}`;
+  }
+
+  // Generate user-friendly name from category when product name is missing
+  generateNameFromCategory(categoryName) {
+    const categoryMap = {
+      'photographic': 'Photo Print',
+      'press_printed_products': 'Press Printed Product',
+      'canvas_gallery_wraps': 'Canvas Gallery Wrap',
+      'metal_products': 'Metal Print',
+      'acrylic_products': 'Acrylic Print',
+      'specialty_products': 'Specialty Print',
+      'albums': 'Photo Album',
+      'books': 'Photo Book'
+    };
+    
+    const normalizedCategory = categoryName.toLowerCase().replace(/\s+/g, '_');
+    return categoryMap[normalizedCategory] || this.cleanProductName(categoryName);
   }
 
   // Define logical priority order for attribute categories
