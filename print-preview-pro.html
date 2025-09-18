@@ -893,7 +893,7 @@
         async function fetchWHCCProducts() {
             try {
                 console.log('Fetching WHCC products from API...');
-                const response = await fetch('/api/print/products');
+                const response = await fetch('/api/whcc/catalog');
                 
                 if (!response.ok) {
                     throw new Error(`Failed to fetch products: ${response.status}`);
@@ -2288,7 +2288,7 @@
         
         // Back to gallery
         function backToGallery() {
-            window.location.href = `/client-gallery.html?token=${galleryToken}`;
+            window.location.href = `/gallery/${galleryToken}`;
         }
         
         // View cart
@@ -3439,7 +3439,7 @@
             const galleryToken = urlParams.get('token');
             
             if (galleryToken) {
-                window.location.href = `/gallery?token=${galleryToken}`;
+                window.location.href = `/gallery/${galleryToken}`;
             } else {
                 // Fallback: go back in history
                 window.history.back();
@@ -3917,7 +3917,7 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const galleryToken = urlParams.get('token');
                 
-                const response = await fetch('/api/photo-sales/client-print-order', {
+                const response = await fetch('/api/print/client-print-order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

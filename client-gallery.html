@@ -740,32 +740,78 @@
             photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
             galleryActions.style.display = 'flex';
 
-            // Generate photo cards with staggered animations
-            galleryGrid.innerHTML = photos.map((photo, index) => {
+            // Generate photo cards with staggered animations using secure DOM construction
+            galleryGrid.innerHTML = '';
+            
+            photos.forEach((photo, index) => {
                 const photoUrl = photo.url || photo.filename;
                 const filename = photo.filename || `photo-${index + 1}.jpg`;
                 
-                return `
-                    <div class="photo-card" onclick="openLightbox(${index})" style="animation: fadeInUp 0.6s ease forwards; animation-delay: ${index * 0.1}s; opacity: 0;">
-                        <div class="photo-wrapper">
-                            <img src="${photoUrl}" alt="${filename}" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjdmYWZjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Loading Image...</text></svg>'">
-                        </div>
-                        <div class="photo-info">
-                            <div class="photo-filename">${filename}</div>
-                            <div class="photo-actions">
-                                <button class="photo-btn download-btn" onclick="event.stopPropagation(); downloadPhoto('${photoUrl}', '${filename}')">
-                                    📥 Download
-                                </button>
-                                <button class="photo-btn print-btn" onclick="event.stopPropagation(); purchasePhoto('${filename}', ${index})">
-                                    🛒 Order Prints
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                // Create photo card element securely
+                const photoCard = document.createElement('div');
+                photoCard.className = 'photo-card';
+                photoCard.style.animation = `fadeInUp 0.6s ease forwards`;
+                photoCard.style.animationDelay = `${index * 0.1}s`;
+                photoCard.style.opacity = '0';
+                
+                // Create photo wrapper
+                const photoWrapper = document.createElement('div');
+                photoWrapper.className = 'photo-wrapper';
+                
+                // Create image element with secure attribute assignment
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.alt = filename;
+                img.loading = 'lazy';
+                img.onerror = function() {
+                    this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjdmYWZjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Loading Image...</text></svg>';
+                };
+                
+                photoWrapper.appendChild(img);
+                
+                // Create photo info section
+                const photoInfo = document.createElement('div');
+                photoInfo.className = 'photo-info';
+                
+                const filenameDiv = document.createElement('div');
+                filenameDiv.className = 'photo-filename';
+                filenameDiv.textContent = filename;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'photo-actions';
+                
+                // Create download button with secure data attributes
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'photo-btn download-btn';
+                downloadBtn.dataset.action = 'download';
+                downloadBtn.dataset.photoUrl = photoUrl;
+                downloadBtn.dataset.filename = filename;
+                downloadBtn.innerHTML = '📥 Download';
+                
+                // Create print button with secure data attributes  
+                const printBtn = document.createElement('button');
+                printBtn.className = 'photo-btn print-btn';
+                printBtn.dataset.action = 'purchase';
+                printBtn.dataset.filename = filename;
+                printBtn.dataset.photoIndex = index.toString();
+                printBtn.innerHTML = '🛒 Order Prints';
+                
+                actionsDiv.appendChild(downloadBtn);
+                actionsDiv.appendChild(printBtn);
+                
+                photoInfo.appendChild(filenameDiv);
+                photoInfo.appendChild(actionsDiv);
+                
+                photoCard.appendChild(photoWrapper);
+                photoCard.appendChild(photoInfo);
+                
+                galleryGrid.appendChild(photoCard);
+            });
 
             console.log(`✅ Rendered ${photos.length} photos for ${sessionData.clientName}`);
+            
+            // Add secure event delegation for photo actions
+            setupPhotoActionHandlers();
         }
 
         function showEmptyGallery() {
@@ -926,6 +972,41 @@
             }
         }
 
+        function setupPhotoActionHandlers() {
+            // Prevent duplicate event listeners
+            const galleryGrid = document.getElementById('galleryGrid');
+            
+            if (galleryGrid.dataset.handlersAttached === 'true') {
+                return; // Handlers already attached
+            }
+            
+            // Use event delegation for secure event handling
+            galleryGrid.addEventListener('click', (e) => {
+                // Handle photo action buttons
+                if (e.target.matches('[data-action="download"]')) {
+                    e.stopPropagation();
+                    const photoUrl = e.target.getAttribute('data-photo-url');
+                    const filename = e.target.getAttribute('data-filename');
+                    downloadPhoto(photoUrl, filename);
+                }
+                else if (e.target.matches('[data-action="purchase"]')) {
+                    e.stopPropagation();
+                    const filename = e.target.getAttribute('data-filename');
+                    const photoIndex = parseInt(e.target.getAttribute('data-photo-index'));
+                    purchasePhoto(filename, photoIndex);
+                }
+                // Handle photo card clicks for lightbox
+                else if (e.target.closest('.photo-card') && !e.target.closest('.photo-actions')) {
+                    const photoCard = e.target.closest('.photo-card');
+                    const photoIndex = Array.from(galleryGrid.children).indexOf(photoCard);
+                    openLightbox(photoIndex);
+                }
+            });
+            
+            // Mark handlers as attached to prevent duplicates
+            galleryGrid.dataset.handlersAttached = 'true';
+        }
+        
         function openLightbox(index) {
             // Simple lightbox implementation
             const photo = photos[index];
