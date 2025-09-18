@@ -23,6 +23,200 @@ const DEFAULT_PRINT_MARKUP_PERCENTAGE = Number.isFinite(parseFloat(process.env.D
 const DEFAULT_MIN_PRINT_PRICE = Number.isFinite(parseFloat(process.env.DEFAULT_MIN_PRINT_PRICE)) ? parseFloat(process.env.DEFAULT_MIN_PRINT_PRICE) : 5.00; // $5.00
 const DEFAULT_DIGITAL_PRICE = Number.isFinite(parseFloat(process.env.DEFAULT_DIGITAL_PRICE)) ? parseFloat(process.env.DEFAULT_DIGITAL_PRICE) : 25.00; // $25.00
 
+// Customer info validation utilities
+function validateEmail(email) {
+    if (!email || typeof email !== 'string') {
+        return { valid: false, error: 'Email is required' };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+        return { valid: false, error: 'Please enter a valid email address' };
+    }
+    
+    if (email.length > 254) {
+        return { valid: false, error: 'Email address is too long' };
+    }
+    
+    return { valid: true, sanitized: email.trim().toLowerCase() };
+}
+
+function validatePhone(phone) {
+    if (!phone || typeof phone !== 'string') {
+        return { valid: false, error: 'Phone number is required for shipping' };
+    }
+    
+    // Remove all non-digit characters for validation
+    const digitsOnly = phone.replace(/\D/g, '');
+    
+    if (digitsOnly.length < 10) {
+        return { valid: false, error: 'Phone number must be at least 10 digits' };
+    }
+    
+    if (digitsOnly.length > 15) {
+        return { valid: false, error: 'Phone number is too long' };
+    }
+    
+    return { valid: true, sanitized: phone.trim() };
+}
+
+function validateName(name, fieldName = 'Name') {
+    if (!name || typeof name !== 'string') {
+        return { valid: false, error: `${fieldName} is required` };
+    }
+    
+    const trimmed = name.trim();
+    if (trimmed.length < 1) {
+        return { valid: false, error: `${fieldName} is required` };
+    }
+    
+    if (trimmed.length > 100) {
+        return { valid: false, error: `${fieldName} is too long (max 100 characters)` };
+    }
+    
+    // Check for suspicious patterns (basic XSS prevention)
+    if (/<script|javascript:|on\w+=/i.test(trimmed)) {
+        return { valid: false, error: `${fieldName} contains invalid characters` };
+    }
+    
+    return { valid: true, sanitized: trimmed };
+}
+
+function validateAddress(address) {
+    if (!address || typeof address !== 'object') {
+        return { valid: false, error: 'Shipping address is required' };
+    }
+    
+    const errors = [];
+    const sanitized = {};
+    
+    // Validate address line 1
+    const addr1 = validateName(address.line1 || address.address1, 'Street address');
+    if (!addr1.valid) {
+        errors.push(addr1.error);
+    } else {
+        sanitized.line1 = addr1.sanitized;
+    }
+    
+    // Validate city
+    const city = validateName(address.city, 'City');
+    if (!city.valid) {
+        errors.push(city.error);
+    } else {
+        sanitized.city = city.sanitized;
+    }
+    
+    // Validate state/province
+    if (!address.state || typeof address.state !== 'string' || address.state.trim().length < 2) {
+        errors.push('State/Province is required (at least 2 characters)');
+    } else {
+        sanitized.state = address.state.trim().toUpperCase();
+    }
+    
+    // Validate postal code
+    if (!address.postal_code && !address.zip) {
+        errors.push('Postal/ZIP code is required');
+    } else {
+        const postalCode = address.postal_code || address.zip;
+        if (!/^[A-Za-z0-9\s\-]{3,10}$/.test(postalCode)) {
+            errors.push('Please enter a valid postal/ZIP code');
+        } else {
+            sanitized.postal_code = postalCode.trim().toUpperCase();
+        }
+    }
+    
+    // Validate country
+    const allowedCountries = ['US', 'CA', 'USA', 'CAN'];
+    const country = (address.country || 'US').toUpperCase();
+    if (!allowedCountries.includes(country)) {
+        errors.push('Currently, we only ship to US and Canada');
+    } else {
+        sanitized.country = country === 'USA' ? 'US' : (country === 'CAN' ? 'CA' : country);
+    }
+    
+    // Optional address line 2
+    if (address.line2 || address.address2) {
+        const addr2 = validateName(address.line2 || address.address2, 'Address line 2');
+        if (!addr2.valid) {
+            errors.push(addr2.error);
+        } else {
+            sanitized.line2 = addr2.sanitized;
+        }
+    }
+    
+    if (errors.length > 0) {
+        return { valid: false, errors };
+    }
+    
+    return { valid: true, sanitized };
+}
+
+function validateCustomerInfo(customerInfo, requireShipping = false) {
+    if (!customerInfo || typeof customerInfo !== 'object') {
+        return { 
+            valid: false, 
+            error: 'Customer information is required',
+            code: 'CUSTOMER_INFO_REQUIRED'
+        };
+    }
+    
+    const errors = [];
+    const sanitized = {};
+    
+    // Validate name
+    const name = validateName(customerInfo.name || `${customerInfo.firstName || ''} ${customerInfo.lastName || ''}`.trim(), 'Customer name');
+    if (!name.valid) {
+        errors.push(name.error);
+    } else {
+        sanitized.name = name.sanitized;
+    }
+    
+    // Validate email
+    const email = validateEmail(customerInfo.email);
+    if (!email.valid) {
+        errors.push(email.error);
+    } else {
+        sanitized.email = email.sanitized;
+    }
+    
+    // Validate phone (optional for digital, required for print)
+    if (customerInfo.phone) {
+        const phone = validatePhone(customerInfo.phone);
+        if (!phone.valid) {
+            errors.push(phone.error);
+        } else {
+            sanitized.phone = phone.sanitized;
+        }
+    } else if (requireShipping) {
+        errors.push('Phone number is required for shipping orders');
+    }
+    
+    // Validate shipping address (required for print orders)
+    if (requireShipping) {
+        if (!customerInfo.address && !customerInfo.shipping) {
+            errors.push('Shipping address is required for print orders');
+        } else {
+            const address = validateAddress(customerInfo.address || customerInfo.shipping);
+            if (!address.valid) {
+                errors.push(...(address.errors || [address.error]));
+            } else {
+                sanitized.address = address.sanitized;
+            }
+        }
+    }
+    
+    if (errors.length > 0) {
+        return { 
+            valid: false, 
+            errors,
+            error: errors[0], // First error for backward compatibility
+            code: 'CUSTOMER_INFO_INVALID'
+        };
+    }
+    
+    return { valid: true, sanitized };
+}
+
 // Centralized Stripe error mapping for consistent error responses
 function mapStripeErrorToResponse(stripeError, context = '') {
     console.error(`❌ Stripe session creation failed${context ? ' for ' + context : ''}:`, stripeError);
@@ -635,7 +829,27 @@ router.post('/digital-order', async (req, res) => {
         const { photoUrl, filename, customerInfo } = req.body;
         
         if (!photoUrl || !filename) {
-            return res.status(400).json({ error: 'Missing required fields: photoUrl and filename are required' });
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                details: 'Photo URL and filename are required',
+                code: 'MISSING_REQUIRED_FIELDS'
+            });
+        }
+        
+        // Validate customer information for digital orders (shipping not required)
+        if (customerInfo) {
+            const customerValidation = validateCustomerInfo(customerInfo, false);
+            if (!customerValidation.valid) {
+                console.error('❌ Customer info validation failed:', customerValidation.errors || customerValidation.error);
+                return res.status(400).json({
+                    error: 'Invalid customer information',
+                    details: customerValidation.errors?.join('; ') || customerValidation.error,
+                    code: customerValidation.code || 'CUSTOMER_INFO_INVALID',
+                    validationErrors: customerValidation.errors
+                });
+            }
+            // Use sanitized customer info for security
+            req.body.customerInfo = customerValidation.sanitized;
         }
         
         // SECURITY: Get userId from authenticated session, never trust client
@@ -744,7 +958,27 @@ router.post('/print-order', async (req, res) => {
         const { photoUrl, filename, products, customerInfo, galleryToken } = req.body;
         
         if (!photoUrl || !filename || !products || !Array.isArray(products)) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                details: 'Photo URL, filename, and products are required',
+                code: 'MISSING_REQUIRED_FIELDS'
+            });
+        }
+        
+        // Validate customer information for print orders (shipping required)
+        if (customerInfo) {
+            const customerValidation = validateCustomerInfo(customerInfo, true);
+            if (!customerValidation.valid) {
+                console.error('❌ Customer info validation failed:', customerValidation.errors || customerValidation.error);
+                return res.status(400).json({
+                    error: 'Invalid customer information',
+                    details: customerValidation.errors?.join('; ') || customerValidation.error,
+                    code: customerValidation.code || 'CUSTOMER_INFO_INVALID',
+                    validationErrors: customerValidation.errors
+                });
+            }
+            // Use sanitized customer info for security
+            req.body.customerInfo = customerValidation.sanitized;
         }
         
         // SECURITY: Calculate all prices server-side, never trust client
