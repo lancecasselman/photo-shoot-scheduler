@@ -361,6 +361,101 @@
             border-color: transparent;
         }
 
+        /* Enhanced Attribute Configuration Styles */
+        .attribute-section {
+            margin-bottom: 20px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .attribute-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .attribute-label .required {
+            color: #e53e3e;
+            margin-left: 4px;
+        }
+        
+        .attribute-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+        
+        .attribute-control:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+        
+        .attribute-help {
+            margin-top: 6px;
+            padding: 8px 12px;
+            background: #f7fafc;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #4a5568;
+            border-left: 3px solid #3182ce;
+        }
+        
+        .pricing-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .price-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .price-label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 16px;
+        }
+        
+        .price-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #38a169;
+        }
+        
+        .price-breakdown {
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        .unsupported-attribute {
+            padding: 12px;
+            background: #fed7d7;
+            color: #c53030;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
         /* Dynamic Attribute Sections */
         .attribute-sections {
             margin: 0;
@@ -2690,7 +2785,7 @@
         // Note: updateAttributeSections is defined later with pagination support
         
         // Select a specific product (works with pagination)
-        function selectProduct(productIndex) {
+        async function selectProduct(productIndex) {
             // With pagination, get product from currentProducts array
             if (!currentProducts || !currentProducts.length) return;
             
@@ -2709,39 +2804,327 @@
             // Store current product
             currentSettings.product = product;
             
-            // Update size options
-            updateSizeOptions(product);
-            
-            // Update price
-            updatePricing();
+            // Load advanced product configuration
+            await loadProductConfiguration(product);
             
             console.log('Selected product:', product.name);
         }
         
-        // Update size options for selected product
+        // Product configuration state
+        let productConfiguration = null;
+        let currentConfiguration = {};
+        
+        // Load product configuration and build attribute UI
+        async function loadProductConfiguration(product) {
+            try {
+                console.log('🔧 Loading configuration for product:', product.name);
+                
+                const response = await fetch(`/api/gallery-print/product/${product.productUID}/config`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load product configuration: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    productConfiguration = data.configuration;
+                    currentConfiguration = {};
+                    
+                    // Build dynamic attribute UI
+                    buildAttributeUI(productConfiguration);
+                    
+                    console.log('✅ Product configuration loaded:', productConfiguration);
+                } else {
+                    throw new Error(data.error || 'Failed to load configuration');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading product configuration:', error);
+                // Fallback to simple size selection
+                updateSizeOptions(product);
+            }
+        }
+        
+        // Build dynamic attribute UI based on configuration
+        function buildAttributeUI(config) {
+            const attributeSections = document.getElementById('attributeSections');
+            if (!attributeSections) return;
+            
+            let attributeHTML = '';
+            
+            // Build UI for each attribute
+            const allAttributes = [...config.required, ...config.optional];
+            
+            allAttributes.forEach(attributeKey => {
+                const attribute = config.attributes[attributeKey];
+                if (!attribute) return;
+                
+                attributeHTML += `
+                    <div class="attribute-section" data-attribute="${attributeKey}">
+                        <div class="attribute-label">
+                            ${attribute.label}
+                            ${attribute.required ? '<span class="required">*</span>' : ''}
+                        </div>
+                        ${buildAttributeControl(attributeKey, attribute)}
+                    </div>
+                `;
+            });
+            
+            // Add pricing section
+            attributeHTML += `
+                <div class="pricing-section">
+                    <div class="price-display">
+                        <div class="price-label">Total Price:</div>
+                        <div class="price-amount" id="priceAmount">$0.00</div>
+                    </div>
+                    <div class="price-breakdown" id="priceBreakdown" style="display: none;"></div>
+                </div>
+            `;
+            
+            attributeSections.innerHTML = attributeHTML;
+            
+            // Add event handlers for all attributes
+            allAttributes.forEach(attributeKey => {
+                const control = document.querySelector(`[data-attribute="${attributeKey}"] select, [data-attribute="${attributeKey}"] input`);
+                if (control) {
+                    control.addEventListener('change', (e) => handleAttributeChange(attributeKey, e.target.value));
+                }
+            });
+        }
+        
+        // Build control UI for specific attribute type
+        function buildAttributeControl(attributeKey, attribute) {
+            switch (attribute.type) {
+                case 'select':
+                    const options = attribute.options.map(option => 
+                        `<option value="${option.id}" data-price="${option.basePrice || option.upcharge || 0}">
+                            ${option.label}${option.upcharge > 0 ? ` (+$${option.upcharge.toFixed(2)})` : ''}
+                        </option>`
+                    ).join('');
+                    
+                    return `
+                        <select class="attribute-control" ${attribute.required ? 'required' : ''}>
+                            <option value="">Select ${attribute.label.toLowerCase()}...</option>
+                            ${options}
+                        </select>
+                        ${attribute.options.some(opt => opt.description) ? 
+                            `<div class="attribute-help" id="help-${attributeKey}" style="display: none;"></div>` : ''
+                        }
+                    `;
+                    
+                case 'input':
+                    return `
+                        <input type="${attribute.inputType || 'text'}" 
+                               class="attribute-control" 
+                               ${attribute.required ? 'required' : ''}
+                               placeholder="${attribute.placeholder || ''}"
+                        />
+                    `;
+                    
+                default:
+                    return `<div class="unsupported-attribute">Unsupported attribute type: ${attribute.type}</div>`;
+            }
+        }
+        
+        // Handle attribute value changes
+        async function handleAttributeChange(attributeKey, value) {
+            console.log(`🔄 Attribute changed: ${attributeKey} = ${value}`);
+            
+            // Update current configuration
+            if (value) {
+                // Find the full option data
+                const attribute = productConfiguration.attributes[attributeKey];
+                const selectedOption = attribute.options?.find(opt => opt.id === value);
+                
+                currentConfiguration[attributeKey] = selectedOption || value;
+            } else {
+                delete currentConfiguration[attributeKey];
+            }
+            
+            // Apply dependency rules
+            applyDependencyRules();
+            
+            // Update pricing in real-time
+            await updateLivePricing();
+            
+            // Show attribute help text
+            showAttributeHelp(attributeKey, value);
+        }
+        
+        // Apply dependency rules to show/hide attributes
+        function applyDependencyRules() {
+            if (!productConfiguration.dependencies) return;
+            
+            Object.keys(productConfiguration.dependencies).forEach(targetAttribute => {
+                const dependency = productConfiguration.dependencies[targetAttribute];
+                const dependentValue = currentConfiguration[dependency.dependsOn];
+                
+                if (dependentValue && dependency.rules) {
+                    dependency.rules.forEach(rule => {
+                        if (checkCondition(rule.condition, currentConfiguration)) {
+                            applyAction(targetAttribute, rule.action);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Check if dependency condition is met
+        function checkCondition(condition, configuration) {
+            // Simple condition checking - can be expanded
+            if (condition.size && configuration.size) {
+                const sizeCondition = condition.size;
+                const currentSize = configuration.size;
+                
+                if (sizeCondition.width && sizeCondition.width.min) {
+                    return currentSize.width >= sizeCondition.width.min;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Apply dependency action (show/hide options)
+        function applyAction(targetAttribute, action) {
+            const select = document.querySelector(`[data-attribute="${targetAttribute}"] select`);
+            if (!select || !action.show) return;
+            
+            // Show/hide specific options
+            Array.from(select.options).forEach(option => {
+                if (option.value) {
+                    option.style.display = action.show.includes(option.value) ? 'block' : 'none';
+                }
+            });
+        }
+        
+        // Show attribute help text
+        function showAttributeHelp(attributeKey, value) {
+            const helpDiv = document.getElementById(`help-${attributeKey}`);
+            if (!helpDiv) return;
+            
+            const attribute = productConfiguration.attributes[attributeKey];
+            const selectedOption = attribute.options?.find(opt => opt.id === value);
+            
+            if (selectedOption && selectedOption.description) {
+                helpDiv.textContent = selectedOption.description;
+                helpDiv.style.display = 'block';
+            } else {
+                helpDiv.style.display = 'none';
+            }
+        }
+        
+        // Update pricing with server-side validation
+        async function updateLivePricing() {
+            const priceAmount = document.getElementById('priceAmount');
+            const priceBreakdown = document.getElementById('priceBreakdown');
+            
+            if (!priceAmount) return;
+            
+            try {
+                // Check if we have required attributes
+                const hasAllRequired = productConfiguration.required.every(attr => 
+                    currentConfiguration[attr]
+                );
+                
+                if (!hasAllRequired) {
+                    priceAmount.textContent = '$0.00';
+                    priceBreakdown.style.display = 'none';
+                    return;
+                }
+                
+                // Call server-side pricing validation
+                const response = await fetch('/api/gallery-print/validate-price', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productUID: currentSettings.product.productUID,
+                        configuration: currentConfiguration
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Pricing validation failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    priceAmount.textContent = `$${data.price.toFixed(2)}`;
+                    
+                    // Show price breakdown if available
+                    if (data.priceBreakdown && data.priceBreakdown.length > 0) {
+                        const breakdownHTML = data.priceBreakdown.map(item => 
+                            `<div class="price-item">${item.item}: $${item.price.toFixed(2)}</div>`
+                        ).join('');
+                        priceBreakdown.innerHTML = breakdownHTML;
+                        priceBreakdown.style.display = 'block';
+                    } else {
+                        priceBreakdown.style.display = 'none';
+                    }
+                    
+                    // Store validated price for cart
+                    currentSettings.validatedPrice = data.price;
+                    currentSettings.priceBreakdown = data.priceBreakdown;
+                    
+                } else {
+                    throw new Error(data.error || 'Pricing validation failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Pricing validation error:', error);
+                priceAmount.textContent = 'Price unavailable';
+                priceBreakdown.style.display = 'none';
+            }
+        }
+        
+        // Legacy fallback for simple size selection (if configuration loading fails)
         function updateSizeOptions(product) {
-            const sizeSection = document.getElementById('sizeSection');
-            const sizeSelect = document.getElementById('sizeSelect');
+            const attributeSections = document.getElementById('attributeSections');
+            if (!attributeSections) return;
             
             if (!product.sizes || !product.sizes.length) {
-                sizeSection.style.display = 'none';
+                attributeSections.innerHTML = `
+                    <div class="section">
+                        <div class="section-title">No size options available</div>
+                    </div>
+                `;
                 return;
             }
             
-            sizeSection.style.display = 'block';
-            sizeSelect.innerHTML = '<option value="">Select a size...</option>' + 
-                product.sizes.map((size, index) => `
-                    <option value="${index}">${size.width}" x ${size.height}" - $${size.price?.toFixed(2) || '0.00'}</option>
-                `).join('');
+            const sizeOptions = product.sizes.map((size, index) => `
+                <option value="${index}">${size.width}" x ${size.height}" - $${size.price?.toFixed(2) || '0.00'}</option>
+            `).join('');
             
-            // Add change handler for size selection
-            sizeSelect.addEventListener('change', function() {
-                const sizeIndex = parseInt(this.value);
-                if (!isNaN(sizeIndex) && product.sizes[sizeIndex]) {
-                    currentSettings.size = product.sizes[sizeIndex];
-                    updatePricing();
-                }
-            });
+            attributeSections.innerHTML = `
+                <div class="attribute-section">
+                    <div class="attribute-label">Size *</div>
+                    <select class="attribute-control" id="sizeSelect">
+                        <option value="">Select a size...</option>
+                        ${sizeOptions}
+                    </select>
+                </div>
+                <div class="pricing-section">
+                    <div class="price-display">
+                        <div class="price-label">Total Price:</div>
+                        <div class="price-amount" id="priceAmount">$0.00</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add change handler for fallback size selection
+            const sizeSelect = document.getElementById('sizeSelect');
+            if (sizeSelect) {
+                sizeSelect.addEventListener('change', function() {
+                    const sizeIndex = parseInt(this.value);
+                    if (!isNaN(sizeIndex) && product.sizes[sizeIndex]) {
+                        currentSettings.size = product.sizes[sizeIndex];
+                        updatePricing();
+                    }
+                });
+            }
         }
         
         // Update pricing display
