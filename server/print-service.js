@@ -844,52 +844,68 @@ class PrintServiceAPI {
     }
   }
 
-  // Create a print order in WHCC system
+  // Create a print order in WHCC system - Step 1: Import Order
   async createOrder(orderData) {
     try {
       const token = await this.getAccessToken();
       
-      // Format order for WHCC OrderImport API
+      // Format order for WHCC OrderImport API - exact structure from WHCC documentation
       const whccOrder = {
-        Reference: orderData.orderId, // Our internal order ID
-        ClientInfo: {
-          FirstName: orderData.customer.firstName,
-          LastName: orderData.customer.lastName,
-          Email: orderData.customer.email,
-          Phone: orderData.customer.phone || '',
-          Address1: orderData.shipping.address1,
-          Address2: orderData.shipping.address2 || '',
-          City: orderData.shipping.city,
-          State: orderData.shipping.state,
-          Zip: orderData.shipping.zip,
-          Country: orderData.shipping.country || 'US'
-        },
-        Items: orderData.items.map(item => {
-          const orderItem = {
-            ProductUID: item.productUID,
-            Quantity: item.quantity,
-            LayoutUID: 0, // Default layout
-            Attributes: item.attributes || [],
-            Assets: [{
-              AssetPath: item.imageUrl,
-              PrintedFileName: item.fileName || 'print.jpg',
-              ImageHash: item.imageHash || '',
-              DP2NodeID: item.nodeId || 10000
-            }]
-          };
-          
-          // Add Editor Project UID if this item was customized
-          if (item.editorProjectUID) {
-            console.log('📝 Adding Editor Project UID to order item:', item.editorProjectUID);
-            orderItem.EditorProjectUID = item.editorProjectUID;
-            orderItem.IsCustomized = true;
-          }
-          
-          return orderItem;
-        }),
-        ShippingMethod: orderData.shippingMethod || 'Standard',
-        PaymentMethod: 'Prepaid', // We handle payment via Stripe
-        Comments: orderData.comments || ''
+        EntryId: orderData.orderId || Date.now().toString(), // Our internal reference
+        Orders: [{
+          SequenceNumber: 1,
+          Instructions: orderData.instructions || null,
+          Reference: `Order ${orderData.orderId}`, // Customer-facing order reference
+          SendNotificationEmailAddress: orderData.customer.email || null,
+          SendNotificationEmailToAccount: true,
+          ShipToAddress: {
+            Name: `${orderData.customer.firstName} ${orderData.customer.lastName}`,
+            Attn: orderData.shipping.attention || null,
+            Addr1: orderData.shipping.address1,
+            Addr2: orderData.shipping.address2 || null,
+            City: orderData.shipping.city,
+            State: orderData.shipping.state,
+            Zip: orderData.shipping.zip,
+            Country: orderData.shipping.country || 'US',
+            Phone: orderData.customer.phone || ''
+          },
+          ShipFromAddress: {
+            Name: orderData.photographerName || 'Photography Studio',
+            Addr1: orderData.returnAddress?.address1 || '3432 Denmark Ave',
+            Addr2: orderData.returnAddress?.address2 || 'Suite 390',
+            City: orderData.returnAddress?.city || 'Eagan',
+            State: orderData.returnAddress?.state || 'MN',
+            Zip: orderData.returnAddress?.zip || '55123',
+            Country: orderData.returnAddress?.country || 'US',
+            Phone: orderData.returnAddress?.phone || '8002525234'
+          },
+          OrderAttributes: orderData.orderAttributes || [],
+          OrderItems: orderData.items.map(item => {
+            const orderItem = {
+              ProductUID: item.productUID,
+              Quantity: item.quantity,
+              ItemAssets: [{
+                ProductNodeID: item.productNodeId || 10000, // Size-specific node ID
+                AssetPath: item.imageUrl, // Must be publicly accessible URL
+                ImageHash: item.imageHash || '', // MD5 hash of image
+                PrintedFileName: item.fileName || 'print.jpg',
+                AutoRotate: true,
+                AssetEnhancement: null
+              }],
+              ItemAttributes: item.attributes?.map(attr => ({
+                AttributeUID: attr.id || attr.AttributeUID || attr
+              })) || []
+            };
+            
+            // Add Editor Project UID if this item was customized
+            if (item.editorProjectUID) {
+              console.log('📝 Adding Editor Project UID to order item:', item.editorProjectUID);
+              orderItem.EditorProjectUID = item.editorProjectUID;
+            }
+            
+            return orderItem;
+          })
+        }]
       };
       
       console.log('📦 Creating WHCC order:', {
@@ -913,16 +929,18 @@ class PrintServiceAPI {
       }
       
       const result = await response.json();
-      console.log('✅ WHCC order created:', result);
+      console.log('✅ WHCC order imported:', result);
       
+      // Return the ConfirmationID which is needed for the submit step
       return {
         success: true,
-        orderId: result.OrderID,
-        reference: result.Reference,
-        status: result.Status,
-        confirmationUrl: result.ConfirmationUrl,
-        estimatedShipping: result.EstimatedShipDate,
-        total: result.Total
+        confirmationId: result.ConfirmationID, // This is what we need for submit
+        account: result.Account,
+        entryId: result.EntryID,
+        numberOfOrders: result.NumberOfOrders,
+        received: result.Received,
+        orders: result.Orders, // Contains pricing breakdown
+        total: result.Orders?.[0]?.Total || 0
       };
       
     } catch (error) {
@@ -931,12 +949,12 @@ class PrintServiceAPI {
     }
   }
   
-  // Submit order for production
-  async submitOrder(whccOrderId) {
+  // Submit order for production - Step 2: Confirm Order
+  async submitOrder(confirmationId) {
     try {
       const token = await this.getAccessToken();
       
-      console.log('🚀 Submitting WHCC order for production:', whccOrderId);
+      console.log('🚀 Submitting WHCC order for production, ConfirmationID:', confirmationId);
       
       const response = await fetch(`${this.isSandbox ? this.sandboxUrl : this.oasBaseUrl}/api/OrderImport/Submit`, {
         method: 'POST',
@@ -945,7 +963,7 @@ class PrintServiceAPI {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          OrderID: whccOrderId,
+          ConfirmationID: confirmationId, // Use ConfirmationID from import response
           ConfirmProduction: true
         })
       });
@@ -1265,37 +1283,63 @@ class PrintServiceAPI {
         return false;
       }
 
-      // Extract signature from header (WHCC uses x-whcc-signature or x-signature-sha256)
-      let signature = receivedSignature;
-      if (signature.startsWith('sha256=')) {
-        signature = signature.substring(7); // Remove 'sha256=' prefix
-      }
-
-      // Generate expected signature using HMAC-SHA256 
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(rawPayload, 'utf8')
-        .digest('hex');
-
-      console.log('🔐 Signature verification:', {
-        secretConfigured: !!webhookSecret,
-        signatureProvided: !!receivedSignature,
-        signatureLength: signature.length,
-        expectedLength: expectedSignature.length,
-        match: signature === expectedSignature
-      });
-
-      // Use timing-safe comparison to prevent timing attacks
-      const signatureBuffer = Buffer.from(signature, 'hex');
-      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      // Step 1: Extract timestamp and signature from WHCC-Signature header
+      // Header format: "t=1591735205,v1=307D88AF1425DC58552C1A6EDFB4C95E3E989F5B878CAFFEFFA6D581578DC82A"
+      const parts = receivedSignature.split(',');
+      let timestamp = null;
+      let signature = null;
       
-      // Ensure buffers are same length to prevent timing attacks
-      if (signatureBuffer.length !== expectedBuffer.length) {
-        console.error('❌ SECURITY: Signature length mismatch');
+      for (const part of parts) {
+        const [key, value] = part.split('=');
+        if (key === 't') {
+          timestamp = value;
+        } else if (key === 'v1') {
+          signature = value;
+        }
+      }
+      
+      if (!timestamp || !signature) {
+        console.error('❌ Invalid WHCC-Signature header format');
         return false;
       }
+      
+      // Step 2: Prepare the payload (timestamp + '.' + JSON_payload)
+      const signaturePayload = `${timestamp}.${rawPayload}`;
+      
+      // Step 3: Generate expected signature using HMAC-SHA256
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(signaturePayload, 'utf8')
+        .digest('hex')
+        .toUpperCase(); // WHCC uses uppercase hex
 
-      const isValid = crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+      // Step 4: Compare signatures using timing-safe comparison
+      let isValid = false;
+      try {
+        isValid = crypto.timingSafeEqual(
+          Buffer.from(signature),
+          Buffer.from(expectedSignature)
+        );
+      } catch (e) {
+        // Signatures are different lengths
+        isValid = false;
+      }
+      
+      // Step 5: Check timestamp tolerance (5 minutes) to prevent replay attacks
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      const timestampDiff = Math.abs(currentTimestamp - parseInt(timestamp));
+      const withinTolerance = timestampDiff <= 300; // 5 minutes
+      
+      if (!withinTolerance) {
+        console.error('❌ Webhook timestamp outside 5-minute tolerance window');
+        isValid = false;
+      }
+      
+      console.log('🔐 WHCC Signature verification:', {
+        signatureValid: isValid,
+        timestampValid: withinTolerance,
+        timestampAge: `${timestampDiff} seconds`
+      });
       
       if (isValid) {
         console.log('✅ WHCC webhook signature verified successfully');

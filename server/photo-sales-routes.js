@@ -1202,4 +1202,62 @@ router.get('/whcc-deep-dive', async (req, res) => {
     }
 });
 
+// WHCC Webhook handler for order status updates
+router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const signature = req.headers['whcc-signature'];
+    
+    // Get raw payload for signature verification
+    const rawPayload = req.body.toString('utf8');
+    
+    try {
+        // Verify WHCC webhook signature
+        const isValid = printService.verifyWhccSignature(rawPayload, signature, process.env.OAS_CONSUMER_SECRET);
+        
+        if (!isValid) {
+            console.error('❌ WHCC webhook signature verification failed');
+            return res.status(401).send('Unauthorized');
+        }
+        
+        // Parse the webhook payload
+        const webhookData = JSON.parse(rawPayload);
+        console.log('🔔 WHCC webhook received:', webhookData);
+        
+        // Handle different webhook events
+        const eventType = webhookData.EventType || webhookData.event_type;
+        const orderId = webhookData.OrderID || webhookData.order_id;
+        const status = webhookData.Status || webhookData.status;
+        
+        console.log(`📦 WHCC Order ${orderId}: ${eventType} - ${status}`);
+        
+        // Update order status in database
+        if (orderId) {
+            await pool.query(`
+                UPDATE print_orders 
+                SET 
+                    whcc_status = $1,
+                    updated_at = NOW()
+                WHERE whcc_order_id = $2
+            `, [status, orderId]);
+            
+            // If order is shipped, update tracking info
+            if (eventType === 'order.shipped' && webhookData.TrackingNumber) {
+                await pool.query(`
+                    UPDATE print_orders 
+                    SET 
+                        tracking_number = $1,
+                        shipped_at = NOW()
+                    WHERE whcc_order_id = $2
+                `, [webhookData.TrackingNumber, orderId]);
+            }
+        }
+        
+        // Send success response
+        res.json({ received: true });
+        
+    } catch (error) {
+        console.error('❌ Error processing WHCC webhook:', error);
+        res.status(400).send('Bad Request');
+    }
+});
+
 module.exports = router;
