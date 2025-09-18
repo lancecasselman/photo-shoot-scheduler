@@ -1367,6 +1367,15 @@
                 }
             }
             
+            // Add attribute pricing (frames, finishes, etc.)
+            if (currentSettings.attributes) {
+                Object.values(currentSettings.attributes).forEach(attr => {
+                    if (attr.price) {
+                        price += parseFloat(attr.price);
+                    }
+                });
+            }
+            
             document.getElementById('priceAmount').textContent = `$${price.toFixed(2)}`;
         }
         
