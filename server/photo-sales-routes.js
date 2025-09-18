@@ -6,7 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const PrintServiceAPI = require('./print-service');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db.ts');
-const { photoForSaleSettings } = require('../shared/schema');
+const { photoForSaleSettings, downloadTokens, digitalTransactions } = require('../shared/schema');
 const { eq, and } = require('drizzle-orm');
 const router = express.Router();
 
@@ -17,6 +17,93 @@ const printService = new PrintServiceAPI();
 let whccCatalogCache = null;
 let catalogCacheExpiry = 0;
 const CATALOG_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+// Centralized Stripe error mapping for consistent error responses
+function mapStripeErrorToResponse(stripeError, context = '') {
+    console.error(`❌ Stripe session creation failed${context ? ' for ' + context : ''}:`, stripeError);
+    
+    if (stripeError.type === 'StripeRateLimitError') {
+        return {
+            status: 429,
+            response: { 
+                error: 'Too many requests',
+                details: 'Please wait a moment and try again.',
+                code: 'RATE_LIMIT'
+            }
+        };
+    } else if (stripeError.type === 'StripeInvalidRequestError') {
+        console.error('Stripe invalid request error details:', stripeError.param, stripeError.message);
+        
+        // Check for specific parameter issues
+        if (stripeError.param && stripeError.param.includes('line_items')) {
+            return {
+                status: 400,
+                response: { 
+                    error: 'Product configuration error',
+                    details: 'There was an issue with one or more products in your order. Please review your selections and try again.',
+                    code: 'PRODUCT_CONFIG_ERROR'
+                }
+            };
+        } else if (stripeError.param && stripeError.param.includes('shipping')) {
+            return {
+                status: 400,
+                response: { 
+                    error: 'Shipping configuration error',
+                    details: 'There was an issue with shipping options. Please try again or contact support.',
+                    code: 'SHIPPING_CONFIG_ERROR'
+                }
+            };
+        } else {
+            return {
+                status: 400,
+                response: { 
+                    error: 'Invalid request',
+                    details: 'There was an issue with your order. Please try again or contact support.',
+                    code: 'INVALID_REQUEST'
+                }
+            };
+        }
+    } else if (stripeError.type === 'StripeAPIError') {
+        return {
+            status: 503,
+            response: { 
+                error: 'Payment system temporarily unavailable',
+                details: 'Our payment system is experiencing issues. Please try again in a few minutes.',
+                code: 'PAYMENT_SYSTEM_ERROR'
+            }
+        };
+    } else if (stripeError.type === 'StripeConnectionError') {
+        return {
+            status: 503,
+            response: { 
+                error: 'Connection error',
+                details: 'Unable to connect to payment system. Please check your internet connection and try again.',
+                code: 'CONNECTION_ERROR'
+            }
+        };
+    } else if (stripeError.type === 'StripeAuthenticationError') {
+        console.error('❌ Stripe authentication error - check API keys');
+        return {
+            status: 500,
+            response: { 
+                error: 'Payment system configuration error',
+                details: 'There is a configuration issue with our payment system. Please contact support.',
+                code: 'PAYMENT_CONFIG_ERROR'
+            }
+        };
+    } else {
+        // Unknown Stripe error
+        console.error('❌ Unknown Stripe error:', stripeError);
+        return {
+            status: 500,
+            response: { 
+                error: 'Payment processing error',
+                details: 'An unexpected error occurred while processing your payment. Please try again.',
+                code: 'UNKNOWN_PAYMENT_ERROR'
+            }
+        };
+    }
+}
 
 // SECURITY: Validate photo ownership before allowing operations
 async function validatePhotoOwnership(userId, photoUrl) {
@@ -544,31 +631,48 @@ router.post('/digital-order', async (req, res) => {
         console.log(`💰 Server-validated digital price: $${validatedPrice}`);
         
         // Create Stripe checkout session for digital download
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'payment',
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `Digital Download - ${filename}`,
-                        description: 'High-resolution digital photo download',
-                        images: [photoUrl]
+        let session;
+        try {
+            session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                mode: 'payment',
+                line_items: [{
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `Digital Download - ${filename}`,
+                            description: 'High-resolution digital photo download',
+                            images: [photoUrl]
+                        },
+                        unit_amount: Math.round(validatedPrice * 100) // Server-validated price
                     },
-                    unit_amount: Math.round(validatedPrice * 100) // Server-validated price
+                    quantity: 1
+                }],
+                metadata: {
+                    type: 'digital_download',
+                    photoUrl: photoUrl,
+                    filename: filename
                 },
-                quantity: 1
-            }],
-            metadata: {
-                type: 'digital_download',
-                photoUrl: photoUrl,
-                filename: filename
-            },
-            success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`,
-            cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
-        });
+                success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`,
+                cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
+            });
+            
+            console.log('✅ Created Stripe session for digital download:', session.id);
+            
+        } catch (stripeError) {
+            const errorMapping = mapStripeErrorToResponse(stripeError, 'digital download');
+            return res.status(errorMapping.status).json(errorMapping.response);
+        }
         
-        console.log('✅ Created Stripe session for digital download:', session.id);
+        // Validate that session was created successfully
+        if (!session || !session.url) {
+            console.error('❌ Stripe session created but missing checkout URL');
+            return res.status(500).json({ 
+                error: 'Payment setup incomplete',
+                details: 'Unable to set up payment page. Please try again.',
+                code: 'CHECKOUT_SETUP_ERROR'
+            });
+        }
         
         res.json({
             checkoutUrl: session.url,
@@ -577,7 +681,34 @@ router.post('/digital-order', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Digital order failed:', error);
-        res.status(500).json({ error: 'Failed to process digital order' });
+        
+        // Check for common non-Stripe errors
+        if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+            return res.status(503).json({ 
+                error: 'Network connectivity issue',
+                details: 'Unable to connect to our servers. Please check your internet connection and try again.',
+                code: 'NETWORK_ERROR'
+            });
+        } else if (error.message.includes('timeout')) {
+            return res.status(504).json({ 
+                error: 'Request timeout',
+                details: 'The request took too long to process. Please try again.',
+                code: 'TIMEOUT_ERROR'
+            });
+        } else if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                error: 'Invalid data',
+                details: 'Some of the provided information is invalid. Please check your details and try again.',
+                code: 'VALIDATION_ERROR'
+            });
+        } else {
+            // Generic fallback error
+            return res.status(500).json({ 
+                error: 'Processing error',
+                details: 'An unexpected error occurred. Please try again, and contact support if the problem persists.',
+                code: 'INTERNAL_ERROR'
+            });
+        }
     }
 });
 
@@ -635,27 +766,44 @@ router.post('/print-order', async (req, res) => {
         }
         
         // Create Stripe checkout session for print order
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'payment',
-            line_items: lineItems,
-            shipping_address_collection: {
-                allowed_countries: ['US', 'CA']
-            },
-            metadata: {
-                type: 'print_order',
-                photoUrl: photoUrl,
-                filename: filename,
-                products: JSON.stringify(validatedProducts), // Use validated products with server prices
-                galleryToken: galleryToken || '',
-                userId: userId || 'anonymous',
-                serverValidatedTotal: totalPrice.toFixed(2)
-            },
-            success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=print`,
-            cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
-        });
+        let session;
+        try {
+            session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                mode: 'payment',
+                line_items: lineItems,
+                shipping_address_collection: {
+                    allowed_countries: ['US', 'CA']
+                },
+                metadata: {
+                    type: 'print_order',
+                    photoUrl: photoUrl,
+                    filename: filename,
+                    products: JSON.stringify(validatedProducts), // Use validated products with server prices
+                    galleryToken: galleryToken || '',
+                    userId: userId || 'anonymous',
+                    serverValidatedTotal: totalPrice.toFixed(2)
+                },
+                success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=print`,
+                cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
+            });
+            
+            console.log('✅ Created Stripe session for print order:', session.id);
+            
+        } catch (stripeError) {
+            const errorMapping = mapStripeErrorToResponse(stripeError, 'print order');
+            return res.status(errorMapping.status).json(errorMapping.response);
+        }
         
-        console.log('✅ Created Stripe session for print order:', session.id);
+        // Validate that session was created successfully
+        if (!session || !session.url) {
+            console.error('❌ Stripe session created but missing checkout URL for print order');
+            return res.status(500).json({ 
+                error: 'Payment setup incomplete',
+                details: 'Unable to set up payment page. Please try again.',
+                code: 'CHECKOUT_SETUP_ERROR'
+            });
+        }
         
         res.json({
             checkoutUrl: session.url,
@@ -665,7 +813,46 @@ router.post('/print-order', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Print order failed:', error);
-        res.status(500).json({ error: 'Failed to process print order' });
+        
+        // Check for WHCC catalog or pricing errors
+        if (error.message.includes('Product') && error.message.includes('not found')) {
+            return res.status(400).json({ 
+                error: 'Product unavailable',
+                details: 'One or more selected products are currently unavailable. Please try different options.',
+                code: 'PRODUCT_UNAVAILABLE'
+            });
+        } else if (error.message.includes('calculateProductPrice')) {
+            return res.status(400).json({ 
+                error: 'Pricing error',
+                details: 'Unable to calculate pricing for your order. Please try again or contact support.',
+                code: 'PRICING_ERROR'
+            });
+        } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+            return res.status(503).json({ 
+                error: 'Network connectivity issue',
+                details: 'Unable to connect to our servers. Please check your internet connection and try again.',
+                code: 'NETWORK_ERROR'
+            });
+        } else if (error.message.includes('timeout')) {
+            return res.status(504).json({ 
+                error: 'Request timeout',
+                details: 'The request took too long to process. Please try again.',
+                code: 'TIMEOUT_ERROR'
+            });
+        } else if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                error: 'Invalid order data',
+                details: 'Some of the order information is invalid. Please check your selections and try again.',
+                code: 'VALIDATION_ERROR'
+            });
+        } else {
+            // Generic fallback error
+            return res.status(500).json({ 
+                error: 'Order processing error',
+                details: 'An unexpected error occurred while processing your order. Please try again, and contact support if the problem persists.',
+                code: 'INTERNAL_ERROR'
+            });
+        }
     }
 });
 
@@ -808,19 +995,177 @@ async function handleDigitalDownload(session) {
         console.log('📱 Processing digital download fulfillment...');
         
         const { photoUrl, filename } = session.metadata;
+        const customerEmail = session.customer_details?.email;
+        const customerName = session.customer_details?.name || 'Customer';
         
-        // In a real implementation, you would:
-        // 1. Generate a secure download link
+        if (!customerEmail) {
+            console.error('❌ No customer email found for digital delivery');
+            return;
+        }
+        
+        // 1. Generate a secure download link with expiration
+        const downloadToken = await generateSecureDownloadToken(photoUrl, filename, session.id);
+        
+        // Get the correct base URL for download links
+        const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
+                       process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` :
+                       'https://photography-app.example.com';
+        
+        const downloadUrl = `${baseUrl}/api/print/secure/${downloadToken}`;
+        
         // 2. Send download email to customer
-        // 3. Log the transaction
+        const emailSent = await sendDigitalDownloadEmail({
+            customerEmail,
+            customerName,
+            filename,
+            downloadUrl,
+            sessionId: session.id
+        });
+        
+        if (emailSent) {
+            console.log(`✅ Digital download email sent to ${customerEmail} for ${filename}`);
+        } else {
+            console.error(`❌ Failed to send download email to ${customerEmail}`);
+        }
+        
+        // 3. Log the transaction in database
+        await logDigitalTransaction(session, downloadToken);
         
         console.log(`✅ Digital download processed for ${filename}`);
         
-        // For now, we'll just log the successful transaction
-        // TODO: Implement actual digital delivery system
-        
     } catch (error) {
         console.error('❌ Digital download fulfillment failed:', error);
+    }
+}
+
+// Generate secure download token with expiration
+async function generateSecureDownloadToken(photoUrl, filename, sessionId) {
+    const crypto = require('crypto');
+    
+    // Create unique token
+    const tokenData = {
+        photoUrl,
+        filename,
+        sessionId,
+        timestamp: Date.now(),
+        expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days from now
+    };
+    
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Store token in database for validation
+    try {
+        await db.insert(downloadTokens).values({
+            id: uuidv4(),
+            token,
+            photoUrl,
+            filename,
+            sessionId,
+            expiresAt: new Date(tokenData.expires),
+            createdAt: new Date(),
+            isUsed: false
+        });
+        
+        console.log(`🔑 Generated download token for ${filename}`);
+        return token;
+    } catch (error) {
+        console.error('❌ Failed to store download token:', error);
+        throw error;
+    }
+}
+
+// Send digital download email using SendGrid
+async function sendDigitalDownloadEmail({ customerEmail, customerName, filename, downloadUrl, sessionId }) {
+    try {
+        if (!process.env.SENDGRID_API_KEY) {
+            console.error('❌ SENDGRID_API_KEY not configured');
+            return false;
+        }
+        
+        const sgMail = require('@sendgrid/mail');
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        
+        const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                    .download-btn { display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+                    .footer { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 14px; color: #666; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>📸 Your Digital Download is Ready!</h1>
+                        <p>Thank you for your purchase</p>
+                    </div>
+                    <div class="content">
+                        <p>Hi ${customerName},</p>
+                        <p>Your high-resolution digital photo download is now available:</p>
+                        <p><strong>File:</strong> ${filename}</p>
+                        <p><strong>Order ID:</strong> ${sessionId.substring(0, 12)}...</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${downloadUrl}" class="download-btn">📥 Download Your Photo</a>
+                        </div>
+                        
+                        <div class="footer">
+                            <p><strong>Important Notes:</strong></p>
+                            <ul>
+                                <li>This download link will expire in 7 days</li>
+                                <li>The link can only be used once</li>
+                                <li>Save the file to your device immediately after downloading</li>
+                                <li>For questions, please contact us with your order ID</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        const msg = {
+            to: customerEmail,
+            from: process.env.SENDGRID_FROM_EMAIL || 'noreply@yourphotography.com',
+            subject: `📸 Your Digital Photo Download - ${filename}`,
+            text: `Hi ${customerName},\n\nYour digital photo download is ready!\n\nFile: ${filename}\nDownload Link: ${downloadUrl}\n\nThis link expires in 7 days and can only be used once.\n\nThank you for your purchase!`,
+            html: emailHtml
+        };
+        
+        await sgMail.send(msg);
+        console.log(`📧 Download email sent to ${customerEmail}`);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Failed to send download email:', error);
+        return false;
+    }
+}
+
+// Log digital transaction in database
+async function logDigitalTransaction(session, downloadToken) {
+    try {
+        await db.insert(digitalTransactions).values({
+            id: uuidv4(),
+            sessionId: session.id,
+            photoUrl: session.metadata.photoUrl,
+            filename: session.metadata.filename,
+            customerEmail: session.customer_details?.email,
+            customerName: session.customer_details?.name,
+            amount: session.amount_total,
+            downloadToken,
+            createdAt: new Date(),
+            status: 'completed'
+        });
+        
+        console.log(`📊 Digital transaction logged for session ${session.id}`);
+    } catch (error) {
+        console.error('❌ Failed to log digital transaction:', error);
     }
 }
 
@@ -1263,6 +1608,138 @@ router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req
     } catch (error) {
         console.error('❌ Error processing WHCC webhook:', error);
         res.status(400).send('Bad Request');
+    }
+});
+
+// Secure download endpoint for digital purchases
+router.get('/secure/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        console.log(`🔐 Processing secure download request for token: ${token.substring(0, 8)}...`);
+        
+        // Find and validate the download token
+        const tokenRecord = await db.select().from(downloadTokens)
+            .where(eq(downloadTokens.token, token))
+            .limit(1);
+        
+        if (tokenRecord.length === 0) {
+            console.warn('⚠️ Invalid download token requested:', token.substring(0, 8));
+            return res.status(404).json({ error: 'Invalid or expired download link' });
+        }
+        
+        const download = tokenRecord[0];
+        
+        // Check if token has expired
+        if (new Date() > download.expiresAt) {
+            console.warn('⚠️ Expired download token:', token.substring(0, 8));
+            return res.status(410).json({ error: 'Download link has expired' });
+        }
+        
+        // Check if token has already been used
+        if (download.isUsed) {
+            console.warn('⚠️ Already used download token:', token.substring(0, 8));
+            return res.status(410).json({ error: 'Download link has already been used' });
+        }
+        
+        // Mark token as used
+        await db.update(downloadTokens)
+            .set({ 
+                isUsed: true, 
+                usedAt: new Date() 
+            })
+            .where(eq(downloadTokens.token, token));
+        
+        // Verify the Stripe session is still valid and paid
+        try {
+            const stripeSession = await stripe.checkout.sessions.retrieve(download.sessionId);
+            
+            if (stripeSession.payment_status !== 'paid') {
+                console.warn('⚠️ Attempted download for unpaid session:', download.sessionId);
+                return res.status(403).json({ error: 'Payment required to access download' });
+            }
+            
+            // Verify the photo matches what was paid for
+            if (stripeSession.metadata.photoUrl !== download.photoUrl) {
+                console.warn('⚠️ Photo URL mismatch in download token vs paid session');
+                return res.status(403).json({ error: 'Invalid download request' });
+            }
+            
+        } catch (stripeError) {
+            console.error('❌ Failed to verify Stripe session:', stripeError);
+            return res.status(500).json({ error: 'Unable to verify payment status' });
+        }
+        
+        // Stream the file securely from R2 storage
+        try {
+            const { GetObjectCommand } = require('@aws-sdk/client-s3');
+            const { S3Client } = require('@aws-sdk/client-s3');
+            
+            // Initialize S3 client for R2
+            const s3Client = new S3Client({
+                endpoint: process.env.R2_ENDPOINT,
+                region: 'auto',
+                credentials: {
+                    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+                },
+            });
+            
+            // Extract R2 key from photo URL
+            const r2Key = download.photoUrl.split('/').pop(); // Extract filename from URL
+            
+            // Get object from R2
+            const command = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key,
+            });
+            
+            const response = await s3Client.send(command);
+            
+            if (!response.Body) {
+                console.error('❌ No file body returned from R2:', r2Key);
+                return res.status(404).json({ error: 'Photo file not found' });
+            }
+            
+            // Set headers for secure file download
+            const contentType = response.ContentType || 'image/jpeg';
+            const sanitizedFilename = download.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+            
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Disposition', `attachment; filename="${sanitizedFilename}"`);
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+            res.setHeader('Content-Length', response.ContentLength || 0);
+            
+            // Stream the file securely
+            if (response.Body.pipe) {
+                response.Body.pipe(res);
+            } else {
+                // Handle ReadableStream for newer AWS SDK versions
+                const chunks = [];
+                const reader = response.Body.getReader();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                
+                const buffer = Buffer.concat(chunks);
+                res.send(buffer);
+            }
+            
+            console.log(`✅ Secure digital download completed for ${download.filename}`);
+            
+        } catch (r2Error) {
+            console.error('❌ Error streaming from R2:', r2Error);
+            res.status(500).json({ error: 'Failed to download photo' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Secure download error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

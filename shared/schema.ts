@@ -355,6 +355,38 @@ export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;
 export type InsertBusinessExpense = typeof businessExpenses.$inferInsert;
 export type BusinessExpense = typeof businessExpenses.$inferSelect;
 
+// Digital download tokens for secure downloads
+export const downloadTokens = pgTable("download_tokens", {
+  id: varchar("id").primaryKey().notNull(),
+  token: varchar("token").notNull().unique(),
+  photoUrl: varchar("photo_url").notNull(),
+  filename: varchar("filename").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Digital transaction records
+export const digitalTransactions = pgTable("digital_transactions", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull(),
+  photoUrl: varchar("photo_url").notNull(),
+  filename: varchar("filename").notNull(),
+  customerEmail: varchar("customer_email").notNull(),
+  customerName: varchar("customer_name"),
+  amount: integer("amount").notNull(), // Amount in cents
+  downloadToken: varchar("download_token").notNull(),
+  status: varchar("status").notNull().default("completed"), // completed, failed, refunded
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InsertDownloadToken = typeof downloadTokens.$inferInsert;
+export type DownloadToken = typeof downloadTokens.$inferSelect;
+export type InsertDigitalTransaction = typeof digitalTransactions.$inferInsert;
+export type DigitalTransaction = typeof digitalTransactions.$inferSelect;
+
 // Community Platform Tables
 export const communityProfiles = pgTable("community_profiles", {
   id: varchar("id").primaryKey().notNull(),
