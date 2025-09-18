@@ -99,7 +99,7 @@ class PrintServiceAPI {
       console.log(`- Response status: ${response.status}`);
       
       const responseText = await response.text();
-      console.log(`- Response: ${responseText.substring(0, 200)}`);
+      console.log(`- Response received, length: ${responseText.length}`);
       
       // Parse response
       let authData;
@@ -885,7 +885,7 @@ class PrintServiceAPI {
               ProductUID: item.productUID,
               Quantity: item.quantity,
               ItemAssets: [{
-                ProductNodeID: item.productNodeId || 10000, // Size-specific node ID
+                ProductNodeID: item.productNodeUID || item.productNodeId, // Size-specific node UID
                 AssetPath: item.imageUrl, // Must be publicly accessible URL
                 ImageHash: item.imageHash || '', // MD5 hash of image
                 PrintedFileName: item.fileName || 'print.jpg',

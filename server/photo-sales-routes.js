@@ -233,9 +233,9 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-// DEEP DIVE TEST ENDPOINT - Add BEFORE authentication middleware
-// This bypasses authentication for testing purposes
-router.get('/whcc-complete-test', async (req, res) => {
+// DEEP DIVE TEST ENDPOINT - Protected for admin use
+// NOTE: In production, this should be admin-only or disabled
+router.get('/whcc-complete-test', requireAuth, async (req, res) => {
     console.log('\n🚀 COMPLETE WHCC CAPABILITIES TEST');
     console.log('='.repeat(60));
     
@@ -1210,7 +1210,7 @@ router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req
     const rawPayload = req.body.toString('utf8');
     
     try {
-        // Verify WHCC webhook signature
+        // Verify WHCC webhook signature using consumer secret
         const isValid = printService.verifyWhccSignature(rawPayload, signature, process.env.OAS_CONSUMER_SECRET);
         
         if (!isValid) {
@@ -1220,7 +1220,11 @@ router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req
         
         // Parse the webhook payload
         const webhookData = JSON.parse(rawPayload);
-        console.log('🔔 WHCC webhook received:', webhookData);
+        console.log('🔔 WHCC webhook received:', { 
+            eventType: webhookData.EventType, 
+            orderId: webhookData.OrderID,
+            status: webhookData.Status 
+        });
         
         // Handle different webhook events
         const eventType = webhookData.EventType || webhookData.event_type;
@@ -1229,25 +1233,27 @@ router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req
         
         console.log(`📦 WHCC Order ${orderId}: ${eventType} - ${status}`);
         
-        // Update order status in database
+        // Update order status in database using Drizzle ORM
         if (orderId) {
-            await pool.query(`
-                UPDATE print_orders 
-                SET 
-                    whcc_status = $1,
-                    updated_at = NOW()
-                WHERE whcc_order_id = $2
-            `, [status, orderId]);
+            const { printOrders } = require('../shared/schema');
+            const { eq } = require('drizzle-orm');
+            
+            await db.update(printOrders)
+                .set({ 
+                    status: status,
+                    whccStatus: status,
+                    updatedAt: new Date()
+                })
+                .where(eq(printOrders.whccOrderId, orderId));
             
             // If order is shipped, update tracking info
             if (eventType === 'order.shipped' && webhookData.TrackingNumber) {
-                await pool.query(`
-                    UPDATE print_orders 
-                    SET 
-                        tracking_number = $1,
-                        shipped_at = NOW()
-                    WHERE whcc_order_id = $2
-                `, [webhookData.TrackingNumber, orderId]);
+                await db.update(printOrders)
+                    .set({ 
+                        trackingNumber: webhookData.TrackingNumber,
+                        shippedAt: new Date()
+                    })
+                    .where(eq(printOrders.whccOrderId, orderId));
             }
         }
         
