@@ -34,18 +34,24 @@ class WHCCPrintService {
       catalog: '/api/catalog'
     };
     
+    // Editor API Endpoints (may differ from OAS API)
+    this.editorEndpoints = {
+      token: '/api/AccessToken',
+      catalog: '/api/catalog'
+    };
+    
     console.log(`🏭 WHCC Service: ${this.isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
     console.log(`🔧 Base URL: ${this.baseUrl}`);
     console.log(`🔑 Credentials: ${this.oasKey ? 'OAS ✓' : 'OAS ✗'} | ${this.editorKeyId ? 'Editor ✓' : 'Editor ✗'}`);
   }
 
   /**
-   * Step 1: Get Access Token
+   * Step 1a: Get OAS Access Token
    * Following WHCC Order Submit API specification
    */
   async getAccessToken() {
     try {
-      console.log('🔐 WHCC: Getting access token...');
+      console.log('🔐 WHCC OAS: Getting access token...');
       
       const url = `${this.baseUrl}${this.endpoints.token}`;
       
@@ -81,12 +87,88 @@ class WHCCPrintService {
         throw new Error('No token received from WHCC');
       }
       
-      console.log('✅ WHCC: Access token obtained');
+      console.log('✅ WHCC OAS: Access token obtained');
       return data.Token;
       
     } catch (error) {
-      console.error('❌ WHCC: Token error:', error.message);
+      console.error('❌ WHCC OAS: Token error:', error.message);
       throw new Error(`Failed to authenticate with WHCC: ${error.message}`);
+    }
+  }
+
+  /**
+   * Step 1b: Get Editor API Access Token
+   * Following WHCC Editor API specification
+   */
+  async getEditorAccessToken() {
+    try {
+      console.log('🔐 WHCC Editor: Getting access token...');
+      
+      if (!this.editorKeyId || !this.editorKeySecret) {
+        throw new Error('Editor API credentials not configured. Please set EDITOR_API_KEY_ID and EDITOR_API_KEY_SECRET environment variables.');
+      }
+      
+      const url = `${this.baseUrl}${this.editorEndpoints.token}`;
+      
+      // Use form data for token request (per WHCC spec)
+      const params = new URLSearchParams({
+        grant_type: 'consumer_credentials',
+        consumer_key: this.editorKeyId,
+        consumer_secret: this.editorKeySecret
+      });
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: params.toString()
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Editor API token request failed: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Check for WHCC error response (they return 200 with error)
+      if (data.ErrorNumber || data.error) {
+        throw new Error(`WHCC Editor Auth Error: ${data.Message || data.error_description || 'Unknown error'}`);
+      }
+      
+      if (!data.Token) {
+        throw new Error('No token received from WHCC Editor API');
+      }
+      
+      console.log('✅ WHCC Editor: Access token obtained');
+      return data.Token;
+      
+    } catch (error) {
+      console.error('❌ WHCC Editor: Token error:', error.message);
+      throw new Error(`Failed to authenticate with WHCC Editor API: ${error.message}`);
+    }
+  }
+
+  /**
+   * Determine which API to use based on product category
+   */
+  shouldUseEditorAPI(category) {
+    const editorCategories = ['albums', 'cards', 'books'];
+    return editorCategories.includes(category);
+  }
+
+  /**
+   * Get appropriate token based on category
+   */
+  async getTokenForCategory(category) {
+    if (this.shouldUseEditorAPI(category)) {
+      console.log(`🎯 Using Editor API for category: ${category}`);
+      return await this.getEditorAccessToken();
+    } else {
+      console.log(`🎯 Using OAS API for category: ${category}`);
+      return await this.getAccessToken();
     }
   }
 
@@ -333,13 +415,17 @@ class WHCCPrintService {
   }
 
   /**
-   * Get WHCC Product Catalog
+   * Get WHCC Product Catalog from specific API
    */
-  async getCatalog() {
+  async getCatalogFromAPI(useEditorAPI = false) {
     try {
-      const token = await this.getAccessToken();
+      const token = useEditorAPI ? await this.getEditorAccessToken() : await this.getAccessToken();
+      const endpoints = useEditorAPI ? this.editorEndpoints : this.endpoints;
+      const apiName = useEditorAPI ? 'Editor' : 'OAS';
       
-      const url = `${this.baseUrl}${this.endpoints.catalog}`;
+      const url = `${this.baseUrl}${endpoints.catalog}`;
+      
+      console.log(`📚 WHCC ${apiName}: Fetching catalog from ${url}`);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -350,15 +436,112 @@ class WHCCPrintService {
       });
       
       if (!response.ok) {
-        throw new Error(`Catalog request failed: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`${apiName} catalog request failed: ${response.status} - ${errorText}`);
       }
       
-      return await response.json();
+      const catalog = await response.json();
+      console.log(`✅ WHCC ${apiName}: Catalog received with ${catalog.Categories?.length || 0} categories`);
+      
+      return catalog;
       
     } catch (error) {
-      console.error('❌ WHCC: Catalog error:', error.message);
+      console.error(`❌ WHCC ${useEditorAPI ? 'Editor' : 'OAS'}: Catalog error:`, error.message);
       throw error;
     }
+  }
+
+  /**
+   * Get Combined WHCC Product Catalog from both APIs
+   * Routes products based on category: Albums/Cards/Books -> Editor API, others -> OAS API
+   */
+  async getCatalog(categoryFilter = null) {
+    try {
+      console.log('🏭 WHCC: Getting dual API catalog...');
+      
+      const results = { Categories: [] };
+      const processedCategories = new Set();
+      
+      // If a specific category filter is provided, route to appropriate API
+      if (categoryFilter) {
+        const useEditorAPI = this.shouldUseEditorAPIForCatalogCategory(categoryFilter);
+        console.log(`🎯 Category filter '${categoryFilter}' routed to ${useEditorAPI ? 'Editor' : 'OAS'} API`);
+        return await this.getCatalogFromAPI(useEditorAPI);
+      }
+      
+      // Otherwise, get products from both APIs and merge them
+      const [oasCatalog, editorCatalog] = await Promise.allSettled([
+        this.getCatalogFromAPI(false), // OAS API
+        this.getCatalogFromAPI(true)   // Editor API
+      ]);
+      
+      // Process OAS API results (Canvas Prints, Photo Prints, etc.)
+      if (oasCatalog.status === 'fulfilled' && oasCatalog.value?.Categories) {
+        console.log('📋 Processing OAS API categories...');
+        oasCatalog.value.Categories.forEach(category => {
+          const categoryName = category.Name?.toLowerCase() || '';
+          
+          // Skip if this category should be handled by Editor API
+          if (this.shouldUseEditorAPIForCatalogCategory(categoryName)) {
+            console.log(`⏭️ Skipping OAS category '${category.Name}' - will be handled by Editor API`);
+            return;
+          }
+          
+          console.log(`✅ Adding OAS category: ${category.Name}`);
+          results.Categories.push({
+            ...category,
+            _source: 'OAS'
+          });
+          processedCategories.add(categoryName);
+        });
+      } else if (oasCatalog.status === 'rejected') {
+        console.warn('⚠️ OAS API catalog failed:', oasCatalog.reason.message);
+      }
+      
+      // Process Editor API results (Albums, Cards, Books)
+      if (editorCatalog.status === 'fulfilled' && editorCatalog.value?.Categories) {
+        console.log('📋 Processing Editor API categories...');
+        editorCatalog.value.Categories.forEach(category => {
+          const categoryName = category.Name?.toLowerCase() || '';
+          
+          // Only include if this category should be handled by Editor API
+          if (this.shouldUseEditorAPIForCatalogCategory(categoryName)) {
+            console.log(`✅ Adding Editor category: ${category.Name}`);
+            results.Categories.push({
+              ...category,
+              _source: 'Editor'
+            });
+            processedCategories.add(categoryName);
+          } else {
+            console.log(`⏭️ Skipping Editor category '${category.Name}' - handled by OAS API`);
+          }
+        });
+      } else if (editorCatalog.status === 'rejected') {
+        console.warn('⚠️ Editor API catalog failed:', editorCatalog.reason.message);
+      }
+      
+      console.log(`🏭 WHCC: Combined catalog with ${results.Categories.length} categories from dual APIs`);
+      
+      return results;
+      
+    } catch (error) {
+      console.error('❌ WHCC: Dual catalog error:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Determine if a catalog category should use Editor API
+   */
+  shouldUseEditorAPIForCatalogCategory(categoryName) {
+    if (!categoryName || typeof categoryName !== 'string') {
+      return false;
+    }
+    
+    const name = categoryName.toLowerCase();
+    const editorKeywords = ['album', 'card', 'book', 'layflat', 'hardcover', 'softcover'];
+    
+    return editorKeywords.some(keyword => name.includes(keyword));
   }
 
   /**
@@ -397,30 +580,50 @@ class WHCCPrintService {
   }
 
   /**
-   * Compatibility method for getProducts() - delegates to getCatalog()
-   * Maintains compatibility with existing code
+   * Get products with dual API routing support
+   * Maintains compatibility with existing code while adding dual API functionality
    */
-  async getProducts() {
+  async getProducts(categoryFilter = null) {
     try {
-      const catalog = await this.getCatalog();
+      console.log('🛍️ WHCC: Getting products with dual API support...');
+      
+      const catalog = await this.getCatalog(categoryFilter);
       
       // Transform catalog to match expected product format
       if (!catalog || !catalog.Categories) {
+        console.log('⚠️ WHCC: No catalog categories found');
         return [];
       }
       
       const products = [];
+      let editorApiCount = 0;
+      let oasApiCount = 0;
+      
       catalog.Categories.forEach(category => {
         const productList = category.ProductList || [];
+        const isEditorSource = category._source === 'Editor';
+        const isOASSource = category._source === 'OAS';
+        
+        console.log(`📂 Processing category '${category.Name}' from ${category._source || 'Unknown'} API (${productList.length} products)`);
+        
         productList.forEach(product => {
+          const normalizedCategory = this.normalizeProductCategory(product.Name, category.Name);
+          
           const baseProduct = {
             id: `whcc_${product.Id}`,
             name: product.Name || category.Name,
             description: product.Description || `Professional ${category.Name}`,
-            category: this.normalizeProductCategory(product.Name, category.Name),
+            category: normalizedCategory,
             productUID: product.Id,
-            sizes: []
+            sizes: [],
+            // Add source API information for transparency
+            _apiSource: category._source || 'Unknown',
+            _usesEditorAPI: this.shouldUseEditorAPI(normalizedCategory)
           };
+          
+          // Track API usage
+          if (isEditorSource) editorApiCount++;
+          if (isOASSource) oasApiCount++;
           
           // Enhanced size extraction: Handle both ProductNodes and AttributeGroups
           let sizesExtracted = false;
@@ -541,6 +744,18 @@ class WHCCPrintService {
           products.push(baseProduct);
         });
       });
+      
+      // Log dual API summary
+      const totalProducts = products.length;
+      console.log(`🏭 WHCC Dual API Summary:`);
+      console.log(`  📊 Total products: ${totalProducts}`);
+      console.log(`  🎨 Editor API products: ${editorApiCount} (Albums, Cards, Books)`);
+      console.log(`  🖼️ OAS API products: ${oasApiCount} (Canvas Prints, Photo Prints, etc.)`);
+      
+      // Verify routing accuracy
+      const editorProducts = products.filter(p => p._usesEditorAPI).length;
+      const oasProducts = products.filter(p => !p._usesEditorAPI).length;
+      console.log(`  ✅ Routing verification: ${editorProducts} Editor-routed, ${oasProducts} OAS-routed`);
       
       return products;
       
