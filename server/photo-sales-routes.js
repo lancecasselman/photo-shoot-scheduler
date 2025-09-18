@@ -814,6 +814,15 @@ router.post('/print-order', async (req, res) => {
     } catch (error) {
         console.error('❌ Print order failed:', error);
         
+        // Check for structured WHCC errors first
+        if (error.isWHCCError || error.code?.startsWith('WHCC_')) {
+            return res.status(error.status || 500).json({ 
+                error: error.message,
+                details: error.details,
+                code: error.code
+            });
+        }
+        
         // Check for WHCC catalog or pricing errors
         if (error.message.includes('Product') && error.message.includes('not found')) {
             return res.status(400).json({ 
@@ -855,6 +864,164 @@ router.post('/print-order', async (req, res) => {
         }
     }
 });
+
+// Print order status endpoint (requires auth)
+router.get('/order-status/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        // SECURITY: Get userId from authenticated session
+        const userId = req.user?.uid || req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        console.log(`📋 Fetching order status for session: ${sessionId}`);
+        
+        // Query database for order by session ID and user ID
+        const { printOrders } = require('../shared/schema');
+        const { eq, and } = require('drizzle-orm');
+        
+        const orders = await db.select()
+            .from(printOrders)
+            .where(and(
+                eq(printOrders.stripeSessionId, sessionId),
+                eq(printOrders.userId, userId)
+            ));
+        
+        if (orders.length === 0) {
+            return res.status(404).json({ 
+                error: 'Order not found',
+                details: 'No order found with the provided session ID.',
+                code: 'ORDER_NOT_FOUND'
+            });
+        }
+        
+        const order = orders[0];
+        
+        // Get detailed status from WHCC if we have an order ID
+        let whccStatus = null;
+        if (order.whccOrderId) {
+            try {
+                whccStatus = await printService.getOrderStatus(order.whccOrderId);
+            } catch (whccError) {
+                console.warn('⚠️ Could not fetch WHCC status:', whccError.message);
+                // Continue with database status if WHCC is unavailable
+            }
+        }
+        
+        // Provide comprehensive status information
+        const statusResponse = {
+            sessionId: sessionId,
+            orderId: order.id,
+            status: order.status,
+            whccStatus: order.whccStatus || whccStatus?.status,
+            whccOrderId: order.whccOrderId,
+            trackingNumber: order.trackingNumber,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+            shippedAt: order.shippedAt,
+            totalPrice: order.totalPrice,
+            items: (() => {
+                try {
+                    return order.items ? JSON.parse(order.items) : [];
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse order items JSON:', e.message);
+                    return [];
+                }
+            })(),
+            
+            // Human-readable status messages
+            statusMessage: getStatusMessage(order.status, order.whccStatus),
+            canCancel: canCancelOrder(order.status),
+            estimatedDelivery: getEstimatedDelivery(order.status, order.createdAt)
+        };
+        
+        console.log(`✅ Retrieved order status: ${order.status}`);
+        
+        res.json({
+            success: true,
+            order: statusResponse
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch order status:', error);
+        
+        if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+            return res.status(503).json({ 
+                error: 'Service temporarily unavailable',
+                details: 'Unable to check order status right now. Please try again later.',
+                code: 'SERVICE_UNAVAILABLE'
+            });
+        } else {
+            return res.status(500).json({ 
+                error: 'Failed to retrieve order status',
+                details: 'An error occurred while checking your order status. Please try again.',
+                code: 'STATUS_CHECK_ERROR'
+            });
+        }
+    }
+});
+
+// Helper functions for order status
+function getStatusMessage(status, whccStatus) {
+    const currentStatus = whccStatus || status;
+    
+    switch (currentStatus?.toLowerCase()) {
+        case 'pending':
+            return 'Your order is being prepared for processing.';
+        case 'processing':
+        case 'confirmed':
+            return 'Your order is being processed and will be printed soon.';
+        case 'printing':
+        case 'production':
+            return 'Your order is currently being printed.';
+        case 'quality_check':
+            return 'Your order is undergoing quality inspection.';
+        case 'shipped':
+            return 'Your order has been shipped and is on its way to you.';
+        case 'delivered':
+            return 'Your order has been delivered.';
+        case 'cancelled':
+            return 'Your order has been cancelled.';
+        case 'failed':
+        case 'error':
+            return 'There was an issue with your order. Please contact support.';
+        default:
+            return 'Your order status is being updated.';
+    }
+}
+
+function canCancelOrder(status) {
+    const cancelableStatuses = ['pending', 'confirmed', 'processing'];
+    return cancelableStatuses.includes(status?.toLowerCase());
+}
+
+function getEstimatedDelivery(status, createdAt) {
+    if (!createdAt) return null;
+    
+    const orderDate = new Date(createdAt);
+    const now = new Date();
+    
+    switch (status?.toLowerCase()) {
+        case 'pending':
+        case 'processing':
+        case 'confirmed':
+            // Typically 3-5 business days for processing + 3-7 days shipping
+            const processAndShip = new Date(orderDate);
+            processAndShip.setDate(processAndShip.getDate() + 10);
+            return processAndShip.toISOString().split('T')[0]; // Return as YYYY-MM-DD
+        case 'shipped':
+            // Usually 3-7 days for delivery after shipping
+            const deliveryDate = new Date(now);
+            deliveryDate.setDate(deliveryDate.getDate() + 5);
+            return deliveryDate.toISOString().split('T')[0];
+        case 'delivered':
+            return 'Delivered';
+        default:
+            return null;
+    }
+}
 
 // WHCC product catalog endpoint (requires auth)
 router.get('/whcc-products', async (req, res) => {
@@ -933,7 +1100,32 @@ async function submitToWHCC(orderData) {
         
     } catch (error) {
         console.error('❌ WHCC order submission failed:', error);
-        throw error;
+        
+        // If this is a structured WHCC error, preserve the structure for proper handling
+        if (error.isWHCCError) {
+            throw error;
+        }
+        
+        // For other errors, wrap them appropriately
+        if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+            const wrappedError = new Error('Network connectivity issue');
+            wrappedError.details = 'Unable to connect to print service. Please check your internet connection and try again.';
+            wrappedError.code = 'WHCC_NETWORK_ERROR';
+            wrappedError.status = 503;
+            throw wrappedError;
+        } else if (error.message.includes('timeout')) {
+            const wrappedError = new Error('Print service timeout');
+            wrappedError.details = 'The print service took too long to respond. Please try again.';
+            wrappedError.code = 'WHCC_TIMEOUT_ERROR';
+            wrappedError.status = 504;
+            throw wrappedError;
+        } else {
+            const wrappedError = new Error('Print service error');
+            wrappedError.details = 'An unexpected error occurred with the print service. Please try again or contact support.';
+            wrappedError.code = 'WHCC_UNKNOWN_ERROR';
+            wrappedError.status = 500;
+            throw wrappedError;
+        }
     }
 }
 

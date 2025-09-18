@@ -1,5 +1,6 @@
 const crypto = require('crypto');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// Use global fetch when available (Node 18+), fallback to node-fetch if needed
+const fetch = global.fetch || ((...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)));
 
 class PrintServiceAPI {
   constructor() {
@@ -23,6 +24,147 @@ class PrintServiceAPI {
     this.editorBaseUrl = this.isSandbox 
       ? 'https://sandbox.apps.whcc.com/editor/api' 
       : 'https://studio.whcc.com/editor/api';
+  }
+
+  // Centralized WHCC error mapping for consistent error responses
+  mapWHCCErrorToResponse(error, response, context = '') {
+    console.error(`❌ WHCC API error${context ? ' for ' + context : ''}:`, error.message);
+    
+    const status = response?.status;
+    let errorText = '';
+    
+    // Try to get error details from response if available
+    if (response) {
+      try {
+        errorText = typeof response === 'string' ? response : JSON.stringify(response);
+      } catch (e) {
+        errorText = response.toString();
+      }
+    }
+    
+    console.error('WHCC API error details:', { status, errorText });
+    
+    if (status === 400) {
+      // Bad Request - usually validation or data format issues
+      if (errorText.toLowerCase().includes('product')) {
+        return {
+          status: 400,
+          response: {
+            error: 'Product configuration invalid',
+            details: 'One or more products in your order are not configured correctly. Please review your selections.',
+            code: 'WHCC_PRODUCT_CONFIG_ERROR'
+          }
+        };
+      } else if (errorText.toLowerCase().includes('address')) {
+        return {
+          status: 400,
+          response: {
+            error: 'Invalid shipping address',
+            details: 'The shipping address provided is invalid. Please check and correct your address.',
+            code: 'WHCC_ADDRESS_ERROR'
+          }
+        };
+      } else if (errorText.toLowerCase().includes('image') || errorText.toLowerCase().includes('asset')) {
+        return {
+          status: 400,
+          response: {
+            error: 'Image processing error',
+            details: 'There was an issue processing your image. Please ensure the image is accessible and try again.',
+            code: 'WHCC_IMAGE_ERROR'
+          }
+        };
+      } else {
+        return {
+          status: 400,
+          response: {
+            error: 'Invalid order data',
+            details: 'Some of the order information is invalid. Please check your order details and try again.',
+            code: 'WHCC_VALIDATION_ERROR'
+          }
+        };
+      }
+    } else if (status === 401) {
+      // Authentication error
+      console.error('❌ WHCC authentication error - check API credentials');
+      return {
+        status: 500,
+        response: {
+          error: 'Print service configuration error',
+          details: 'There is a configuration issue with our print service. Please contact support.',
+          code: 'WHCC_AUTH_ERROR'
+        }
+      };
+    } else if (status === 403) {
+      // Permission/account issues
+      return {
+        status: 503,
+        response: {
+          error: 'Print service access denied',
+          details: 'Our print service is experiencing access issues. Please try again later or contact support.',
+          code: 'WHCC_ACCESS_DENIED'
+        }
+      };
+    } else if (status === 404) {
+      // Resource not found
+      return {
+        status: 400,
+        response: {
+          error: 'Product or resource not found',
+          details: 'One or more items in your order could not be found. Please review your selections.',
+          code: 'WHCC_NOT_FOUND'
+        }
+      };
+    } else if (status === 429) {
+      // Rate limiting
+      return {
+        status: 429,
+        response: {
+          error: 'Too many requests',
+          details: 'Please wait a moment before trying again.',
+          code: 'WHCC_RATE_LIMIT'
+        }
+      };
+    } else if (status >= 500) {
+      // Server errors
+      return {
+        status: 503,
+        response: {
+          error: 'Print service temporarily unavailable',
+          details: 'Our print service is experiencing issues. Please try again in a few minutes.',
+          code: 'WHCC_SERVER_ERROR'
+        }
+      };
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      // Network connectivity issues
+      return {
+        status: 503,
+        response: {
+          error: 'Network connectivity issue',
+          details: 'Unable to connect to print service. Please check your internet connection and try again.',
+          code: 'WHCC_NETWORK_ERROR'
+        }
+      };
+    } else if (error.message.includes('timeout')) {
+      // Timeout issues
+      return {
+        status: 504,
+        response: {
+          error: 'Print service timeout',
+          details: 'The print service took too long to respond. Please try again.',
+          code: 'WHCC_TIMEOUT_ERROR'
+        }
+      };
+    } else {
+      // Unknown error
+      return {
+        status: 500,
+        response: {
+          error: 'Print service error',
+          details: 'An unexpected error occurred with the print service. Please try again or contact support.',
+          code: 'WHCC_UNKNOWN_ERROR'
+        }
+      };
+    }
   }
 
   // Generate OAS API signature
@@ -135,7 +277,38 @@ class PrintServiceAPI {
     } catch (error) {
       console.error('❌ WHCC authentication error:', error.message);
       console.error('- Full error:', error);
-      throw error;
+      
+      // Create structured error for authentication issues
+      if (error.message.includes('WHCC authentication failed')) {
+        const structuredError = new Error('Print service authentication error');
+        structuredError.details = 'Unable to authenticate with print service. Please contact support.';
+        structuredError.code = 'WHCC_AUTH_ERROR';
+        structuredError.status = 500;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        const structuredError = new Error('Network connectivity issue');
+        structuredError.details = 'Unable to connect to print service. Please check your internet connection and try again.';
+        structuredError.code = 'WHCC_NETWORK_ERROR';
+        structuredError.status = 503;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else if (error.message.includes('timeout')) {
+        const structuredError = new Error('Print service timeout');
+        structuredError.details = 'The print service took too long to respond. Please try again.';
+        structuredError.code = 'WHCC_TIMEOUT_ERROR';
+        structuredError.status = 504;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else {
+        // Generic error
+        const structuredError = new Error('Print service error');
+        structuredError.details = 'An unexpected error occurred with the print service. Please try again or contact support.';
+        structuredError.code = 'WHCC_UNKNOWN_ERROR';
+        structuredError.status = 500;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      }
     }
   }
 
@@ -784,13 +957,56 @@ class PrintServiceAPI {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch order status: ${response.status}`);
+        const errorText = await response.text();
+        const errorMapping = this.mapWHCCErrorToResponse(
+          new Error(`HTTP ${response.status}: ${errorText}`), 
+          { status: response.status, text: errorText }, 
+          'order status check'
+        );
+        
+        // Create a structured error that can be handled by the calling code
+        const structuredError = new Error(errorMapping.response.error);
+        structuredError.details = errorMapping.response.details;
+        structuredError.code = errorMapping.response.code;
+        structuredError.status = errorMapping.status;
+        structuredError.isWHCCError = true;
+        
+        throw structuredError;
       }
 
       return await response.json();
     } catch (error) {
       console.error('Error fetching order status:', error);
-      throw error;
+      
+      // If this is already a structured error, just re-throw it
+      if (error.isWHCCError) {
+        throw error;
+      }
+      
+      // For network/timeout errors, create structured error
+      if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        const structuredError = new Error('Network connectivity issue');
+        structuredError.details = 'Unable to connect to print service. Please check your internet connection and try again.';
+        structuredError.code = 'WHCC_NETWORK_ERROR';
+        structuredError.status = 503;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else if (error.message.includes('timeout')) {
+        const structuredError = new Error('Print service timeout');
+        structuredError.details = 'The print service took too long to respond. Please try again.';
+        structuredError.code = 'WHCC_TIMEOUT_ERROR';
+        structuredError.status = 504;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else {
+        // Generic error
+        const structuredError = new Error('Print service error');
+        structuredError.details = 'An unexpected error occurred with the print service. Please try again or contact support.';
+        structuredError.code = 'WHCC_UNKNOWN_ERROR';
+        structuredError.status = 500;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      }
     }
   }
 
@@ -924,8 +1140,20 @@ class PrintServiceAPI {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ WHCC order creation failed:', errorText);
-        throw new Error(`Failed to create order: ${response.status}`);
+        const errorMapping = this.mapWHCCErrorToResponse(
+          new Error(`HTTP ${response.status}: ${errorText}`), 
+          { status: response.status, text: errorText }, 
+          'order creation'
+        );
+        
+        // Create a structured error that can be handled by the calling code
+        const structuredError = new Error(errorMapping.response.error);
+        structuredError.details = errorMapping.response.details;
+        structuredError.code = errorMapping.response.code;
+        structuredError.status = errorMapping.status;
+        structuredError.isWHCCError = true;
+        
+        throw structuredError;
       }
       
       const result = await response.json();
@@ -945,7 +1173,36 @@ class PrintServiceAPI {
       
     } catch (error) {
       console.error('❌ Error creating WHCC order:', error);
-      throw error;
+      
+      // If this is already a structured error, just re-throw it
+      if (error.isWHCCError) {
+        throw error;
+      }
+      
+      // For network/timeout errors, create structured error
+      if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        const structuredError = new Error('Network connectivity issue');
+        structuredError.details = 'Unable to connect to print service. Please check your internet connection and try again.';
+        structuredError.code = 'WHCC_NETWORK_ERROR';
+        structuredError.status = 503;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else if (error.message.includes('timeout')) {
+        const structuredError = new Error('Print service timeout');
+        structuredError.details = 'The print service took too long to respond. Please try again.';
+        structuredError.code = 'WHCC_TIMEOUT_ERROR';
+        structuredError.status = 504;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else {
+        // Generic error
+        const structuredError = new Error('Print service error');
+        structuredError.details = 'An unexpected error occurred with the print service. Please try again or contact support.';
+        structuredError.code = 'WHCC_UNKNOWN_ERROR';
+        structuredError.status = 500;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      }
     }
   }
   
@@ -970,8 +1227,20 @@ class PrintServiceAPI {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ WHCC order submission failed:', errorText);
-        throw new Error(`Failed to submit order: ${response.status}`);
+        const errorMapping = this.mapWHCCErrorToResponse(
+          new Error(`HTTP ${response.status}: ${errorText}`), 
+          { status: response.status, text: errorText }, 
+          'order submission'
+        );
+        
+        // Create a structured error that can be handled by the calling code
+        const structuredError = new Error(errorMapping.response.error);
+        structuredError.details = errorMapping.response.details;
+        structuredError.code = errorMapping.response.code;
+        structuredError.status = errorMapping.status;
+        structuredError.isWHCCError = true;
+        
+        throw structuredError;
       }
       
       const result = await response.json();
@@ -987,7 +1256,36 @@ class PrintServiceAPI {
       
     } catch (error) {
       console.error('❌ Error submitting WHCC order:', error);
-      throw error;
+      
+      // If this is already a structured error, just re-throw it
+      if (error.isWHCCError) {
+        throw error;
+      }
+      
+      // For network/timeout errors, create structured error
+      if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        const structuredError = new Error('Network connectivity issue');
+        structuredError.details = 'Unable to connect to print service. Please check your internet connection and try again.';
+        structuredError.code = 'WHCC_NETWORK_ERROR';
+        structuredError.status = 503;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else if (error.message.includes('timeout')) {
+        const structuredError = new Error('Print service timeout');
+        structuredError.details = 'The print service took too long to respond. Please try again.';
+        structuredError.code = 'WHCC_TIMEOUT_ERROR';
+        structuredError.status = 504;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      } else {
+        // Generic error
+        const structuredError = new Error('Print service error');
+        structuredError.details = 'An unexpected error occurred with the print service. Please try again or contact support.';
+        structuredError.code = 'WHCC_UNKNOWN_ERROR';
+        structuredError.status = 500;
+        structuredError.isWHCCError = true;
+        throw structuredError;
+      }
     }
   }
   
