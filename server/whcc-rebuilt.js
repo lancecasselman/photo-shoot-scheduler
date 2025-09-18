@@ -422,41 +422,123 @@ class WHCCPrintService {
             sizes: []
           };
           
-          // Process ProductNodes into proper size objects
+          // Enhanced size extraction: Handle both ProductNodes and AttributeGroups
+          let sizesExtracted = false;
+          
+          // Method 1: Extract sizes from ProductNodes (existing logic)
           if (product.ProductNodes && product.ProductNodes.length > 0) {
-            console.log(`📏 Processing ${product.ProductNodes.length} size options for ${baseProduct.name}`);
+            console.log(`📏 Processing ${product.ProductNodes.length} ProductNode options for ${baseProduct.name}`);
             
             product.ProductNodes.forEach(node => {
-              const width = node.W || 0;
-              const height = node.H || 0;
-              const area = width * height;
+              let width = node.W || 0;
+              let height = node.H || 0;
               
-              // Calculate price based on product type and size
-              let price = this.calculateProductPrice(baseProduct.category, width, height, node.Price);
+              // If W/H missing, try parsing from node name/display name
+              if (!width || !height) {
+                const dimensions = this.parseDimensionsFromText(node.Name || node.DisplayName || '');
+                if (dimensions) {
+                  width = dimensions.width;
+                  height = dimensions.height;
+                  console.log(`📐 Parsed dimensions from node name: ${width}x${height}`);
+                }
+              }
               
-              const sizeOption = {
-                uid: node.UID || `${width}x${height}`,
-                label: `${width}" x ${height}"`,
-                width: width,
-                height: height,
-                area: area,
-                price: price,
-                productNodeUID: node.UID
-              };
+              if (width > 0 && height > 0) {
+                const area = width * height;
+                let price = this.calculateProductPrice(baseProduct.category, width, height, node.Price);
+                
+                const sizeOption = {
+                  uid: node.UID || `${width}x${height}`,
+                  label: `${width}" x ${height}"`,
+                  width: width,
+                  height: height,
+                  area: area,
+                  price: price,
+                  productNodeUID: node.UID
+                };
+                
+                baseProduct.sizes.push(sizeOption);
+                sizesExtracted = true;
+              }
+            });
+          }
+          
+          // Method 2: Extract sizes from AttributeGroups (for Albums, Books, etc.)
+          if (!sizesExtracted && product.AttributeGroups && product.AttributeGroups.length > 0) {
+            console.log(`🔍 No ProductNode sizes found, checking ${product.AttributeGroups.length} AttributeGroups for ${baseProduct.name}`);
+            
+            // Add detailed debugging for Albums
+            if (baseProduct.category === 'albums') {
+              console.log(`🐛 ALBUM DEBUG - AttributeGroups:`, product.AttributeGroups.map(g => ({
+                name: g.Name,
+                hasAttributes: !!(g.Attributes && g.Attributes.length > 0),
+                attributeCount: g.Attributes ? g.Attributes.length : 0
+              })));
+            }
+            
+            product.AttributeGroups.forEach((group, groupIndex) => {
+              const isSize = this.isSizeRelatedGroup(group.Name);
+              console.log(`  Group ${groupIndex + 1}: "${group.Name}" - Size-related: ${isSize}`);
               
-              baseProduct.sizes.push(sizeOption);
+              if (isSize) {
+                console.log(`📏 Found size-related group: ${group.Name}`);
+                
+                if (group.Attributes && group.Attributes.length > 0) {
+                  group.Attributes.forEach((attribute, attrIndex) => {
+                    console.log(`    Attribute ${attrIndex + 1}: "${attribute.Name || 'Unnamed'}" - Options: ${attribute.Options ? attribute.Options.length : 0}`);
+                    
+                    if (attribute.Options && attribute.Options.length > 0) {
+                      attribute.Options.forEach((option, optIndex) => {
+                        const optionText = option.Label || option.Name || '';
+                        const dimensions = this.parseDimensionsFromText(optionText);
+                        console.log(`      Option ${optIndex + 1}: "${optionText}" - Parsed: ${dimensions ? dimensions.width + 'x' + dimensions.height : 'No dimensions'}`);
+                        
+                        if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
+                          const area = dimensions.width * dimensions.height;
+                          let price = this.calculateProductPrice(baseProduct.category, dimensions.width, dimensions.height, option.Price || null);
+                          
+                          const sizeOption = {
+                            uid: option.AttributeUID || `${dimensions.width}x${dimensions.height}`,
+                            label: option.Label || `${dimensions.width}" x ${dimensions.height}"`,
+                            width: dimensions.width,
+                            height: dimensions.height,
+                            area: area,
+                            price: price,
+                            productNodeUID: null,
+                            attributeUID: option.AttributeUID
+                          };
+                          
+                          baseProduct.sizes.push(sizeOption);
+                          sizesExtracted = true;
+                        }
+                      });
+                    }
+                  });
+                } else {
+                  console.log(`    No attributes found in group: ${group.Name}`);
+                }
+              }
             });
             
-            // Sort sizes by area (smallest to largest)
-            baseProduct.sizes.sort((a, b) => a.area - b.area);
-            
-            console.log(`✅ Extracted ${baseProduct.sizes.length} sizes: ${baseProduct.sizes.map(s => s.label).join(', ')}`);
-            products.push(baseProduct);
-          } else {
-            console.log(`⚠️ No ProductNodes found for ${baseProduct.name}, no sizes available`);
-            // Still add the product but with empty sizes array
-            products.push(baseProduct);
+            if (!sizesExtracted && baseProduct.category === 'albums') {
+              console.log(`🐛 ALBUM DEBUG COMPLETE - No sizes extracted from any AttributeGroups`);
+            }
           }
+          
+          // Sort sizes by area and remove duplicates
+          if (baseProduct.sizes.length > 0) {
+            // Remove duplicate sizes based on dimensions
+            const uniqueSizes = baseProduct.sizes.filter((size, index, self) => {
+              return index === self.findIndex(s => s.width === size.width && s.height === size.height);
+            });
+            
+            baseProduct.sizes = uniqueSizes.sort((a, b) => a.area - b.area);
+            console.log(`✅ Extracted ${baseProduct.sizes.length} sizes: ${baseProduct.sizes.map(s => s.label).join(', ')}`);
+          } else {
+            console.log(`⚠️ No sizes found for ${baseProduct.name} (checked ProductNodes and AttributeGroups)`);
+          }
+          
+          products.push(baseProduct);
         });
       });
       
@@ -482,6 +564,63 @@ class WHCCPrintService {
     if (name.includes('print')) return 'photographic_prints';
     
     return categoryName ? categoryName.toLowerCase().replace(/\s+/g, '_') : 'other';
+  }
+
+  /**
+   * Parse dimensions from text strings using regex patterns
+   * Handles formats like: "8x10", "8"x10"", "8 x 10", "10×10", etc.
+   */
+  parseDimensionsFromText(text) {
+    if (!text || typeof text !== 'string') {
+      return null;
+    }
+    
+    // Common dimension patterns
+    const patterns = [
+      // Pattern 1: 8x10, 8×10, 8 x 10
+      /(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/i,
+      // Pattern 2: 8"x10", 8" x 10"
+      /(\d+(?:\.\d+)?)["'']?\s*[x×]\s*(\d+(?:\.\d+)?)["'']/i,
+      // Pattern 3: 8 by 10, 8" by 10"
+      /(\d+(?:\.\d+)?)["'']?\s*by\s*(\d+(?:\.\d+)?)["'']/i,
+      // Pattern 4: Just dimensions with quotes: 8" × 10"
+      /(\d+(?:\.\d+)?)["'']\s*[×x]\s*(\d+(?:\.\d+)?)["'']/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const width = parseFloat(match[1]);
+        const height = parseFloat(match[2]);
+        
+        if (width > 0 && height > 0) {
+          return {
+            width: width,
+            height: height
+          };
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Check if an attribute group name is size-related
+   */
+  isSizeRelatedGroup(groupName) {
+    if (!groupName || typeof groupName !== 'string') {
+      return false;
+    }
+    
+    const name = groupName.toLowerCase();
+    const sizeKeywords = [
+      'size', 'dimension', 'album size', 'book size', 'card size', 
+      'print size', 'page size', 'format', 'dimensions', 'album dimensions',
+      'book dimensions', 'page format', 'album format', 'book format'
+    ];
+    
+    return sizeKeywords.some(keyword => name.includes(keyword));
   }
 
   /**
