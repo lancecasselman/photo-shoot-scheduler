@@ -1456,6 +1456,12 @@
                 // Clear existing content
                 attributeSections.innerHTML = '';
                 
+                // Add canvas-specific options if canvas is selected
+                if (currentSettings.product === 'canvas') {
+                    renderCanvasOptions();
+                    return;
+                }
+                
                 if (!productData || !productData.attributesForDisplay || productData.attributesForDisplay.length === 0) {
                     console.log('⚠️ No attribute data available, showing fallback message');
                     attributeSections.innerHTML = `
@@ -1515,6 +1521,188 @@
                 setupAttributeEventListeners();
                 
                 console.log(`✅ Rendered ${productData.attributesForDisplay.length} attribute categories`);
+            }
+            
+            // Canvas-specific options function
+            function renderCanvasOptions() {
+                const attributeSections = document.getElementById('attributeSections');
+                if (!attributeSections) return;
+                
+                attributeSections.innerHTML = `
+                    <!-- Gallery Wrap Type -->
+                    <div class="section attribute-category">
+                        <h3 class="section-title">Gallery Wrap Type</h3>
+                        <div class="attribute-grid three-column">
+                            <div class="attribute-option selected" data-category="wrap-type" data-value="premium" data-price="0">
+                                <div class="option-name">1-1/2" Premium Gallery Wrap</div>
+                                <div class="option-description">Professional quality</div>
+                            </div>
+                            <div class="attribute-option" data-category="wrap-type" data-value="economy" data-price="-5">
+                                <div class="option-name">1-1/2" Economy Gallery Wrap</div>
+                                <div class="option-price">-$5.00</div>
+                                <div class="option-description">Budget-friendly option</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Protection -->
+                    <div class="section attribute-category">
+                        <h3 class="section-title">Canvas Protection</h3>
+                        <div class="attribute-grid three-column">
+                            <div class="attribute-option selected" data-category="protection" data-value="semi-gloss" data-price="0">
+                                <div class="option-name">Semi-Gloss Laminate</div>
+                                <div class="option-description">Standard protection</div>
+                            </div>
+                            <div class="attribute-option" data-category="protection" data-value="matte" data-price="0">
+                                <div class="option-name">Matte Laminate</div>
+                                <div class="option-description">Non-reflective finish</div>
+                            </div>
+                            <div class="attribute-option" data-category="protection" data-value="none" data-price="-8">
+                                <div class="option-name">No Lamination</div>
+                                <div class="option-price">-$8.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hanging Hardware -->
+                    <div class="section attribute-category">
+                        <h3 class="section-title">Hanging Hardware</h3>
+                        <div class="attribute-grid three-column">
+                            <div class="attribute-option selected" data-category="hardware" data-value="sawtooth-with-paper" data-price="0">
+                                <div class="option-name">Sawtooth with Paper Backing</div>
+                                <div class="option-description">Ready to hang</div>
+                            </div>
+                            <div class="attribute-option" data-category="hardware" data-value="sawtooth-no-paper" data-price="-2">
+                                <div class="option-name">Sawtooth without Paper</div>
+                                <div class="option-price">-$2.00</div>
+                                <div class="option-description">Economy option</div>
+                            </div>
+                            <div class="attribute-option" data-category="hardware" data-value="none" data-price="-5">
+                                <div class="option-name">No Hardware</div>
+                                <div class="option-price">-$5.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Border Options -->
+                    <div class="section attribute-category">
+                        <h3 class="section-title">Canvas Border</h3>
+                        <div class="attribute-grid three-column">
+                            <div class="attribute-option selected" data-category="border" data-value="mirror" data-price="0">
+                                <div class="option-name">Mirror Wrap</div>
+                                <div class="option-description">Image continues on sides</div>
+                            </div>
+                            <div class="attribute-option" data-category="border" data-value="white" data-price="0">
+                                <div class="option-name">White Border</div>
+                                <div class="option-description">Clean white edges</div>
+                            </div>
+                            <div class="attribute-option" data-category="border" data-value="black" data-price="0">
+                                <div class="option-name">Black Border</div>
+                                <div class="option-description">Classic black edges</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Float Frame Options -->
+                    <div class="section attribute-category">
+                        <h3 class="section-title">Float Frame (Optional)</h3>
+                        <div class="attribute-grid">
+                            <div class="attribute-option selected" data-category="float-frame" data-value="none" data-price="0">
+                                <div class="option-name">No Float Frame</div>
+                            </div>
+                            <!-- Classic Finishes -->
+                            <div class="attribute-option" data-category="float-frame" data-value="classic-gold" data-price="45">
+                                <div class="option-name">Classic Gold</div>
+                                <div class="option-price">+$45.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="classic-silver" data-price="45">
+                                <div class="option-name">Classic Silver</div>
+                                <div class="option-price">+$45.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="classic-black" data-price="45">
+                                <div class="option-name">Classic Black</div>
+                                <div class="option-price">+$45.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="classic-white" data-price="45">
+                                <div class="option-name">Classic White</div>
+                                <div class="option-price">+$45.00</div>
+                            </div>
+                            <!-- Wire Brushed -->
+                            <div class="attribute-option" data-category="float-frame" data-value="wire-charcoal" data-price="55">
+                                <div class="option-name">Wire Brushed Charcoal</div>
+                                <div class="option-price">+$55.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wire-chestnut" data-price="55">
+                                <div class="option-name">Wire Brushed Chestnut</div>
+                                <div class="option-price">+$55.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wire-smoke" data-price="55">
+                                <div class="option-name">Wire Brushed Smoke Gray</div>
+                                <div class="option-price">+$55.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wire-white" data-price="55">
+                                <div class="option-name">Wire Brushed White</div>
+                                <div class="option-price">+$55.00</div>
+                            </div>
+                            <!-- Aged Metallic -->
+                            <div class="attribute-option" data-category="float-frame" data-value="aged-champagne" data-price="65">
+                                <div class="option-name">Aged Metallic Champagne</div>
+                                <div class="option-price">+$65.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="aged-gold" data-price="65">
+                                <div class="option-name">Aged Metallic Gold</div>
+                                <div class="option-price">+$65.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="aged-gray" data-price="65">
+                                <div class="option-name">Aged Metallic Gray</div>
+                                <div class="option-price">+$65.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="aged-silver" data-price="65">
+                                <div class="option-name">Aged Metallic Silver</div>
+                                <div class="option-price">+$65.00</div>
+                            </div>
+                            <!-- Satin Metal -->
+                            <div class="attribute-option" data-category="float-frame" data-value="satin-black" data-price="60">
+                                <div class="option-name">Satin Metal Black</div>
+                                <div class="option-price">+$60.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="satin-brass" data-price="60">
+                                <div class="option-name">Satin Metal Brass</div>
+                                <div class="option-price">+$60.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="satin-rose" data-price="60">
+                                <div class="option-name">Satin Metal Rose Gold</div>
+                                <div class="option-price">+$60.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="satin-silver" data-price="60">
+                                <div class="option-name">Satin Metal Silver</div>
+                                <div class="option-price">+$60.00</div>
+                            </div>
+                            <!-- Wood Finishes -->
+                            <div class="attribute-option" data-category="float-frame" data-value="wood-cherry" data-price="50">
+                                <div class="option-name">Wood Cherry</div>
+                                <div class="option-price">+$50.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wood-natural" data-price="50">
+                                <div class="option-name">Wood Natural</div>
+                                <div class="option-price">+$50.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wood-walnut" data-price="50">
+                                <div class="option-name">Wood Walnut</div>
+                                <div class="option-price">+$50.00</div>
+                            </div>
+                            <div class="attribute-option" data-category="float-frame" data-value="wood-weathered" data-price="50">
+                                <div class="option-name">Wood Weathered Gray</div>
+                                <div class="option-price">+$50.00</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners for canvas options
+                setupAttributeEventListeners();
+                
+                console.log('✅ Rendered canvas-specific options');
             }
             
             function setupAttributeEventListeners() {
