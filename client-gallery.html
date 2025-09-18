@@ -13,10 +13,23 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
             color: #333;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            opacity: 0.9;
+            z-index: -1;
         }
 
         .container {
@@ -25,146 +38,277 @@
         }
 
         .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.2);
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .header h1 {
-            color: #2d3748;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
         .header p {
-            color: #718096;
-            font-size: 1.1rem;
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.8;
         }
 
         .gallery-actions {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 35px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+            z-index: 10;
         }
 
         .photo-count {
-            font-weight: 600;
-            color: #2d3748;
-            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .photo-count::before {
+            content: '📸';
+            font-size: 1.5rem;
         }
 
         .download-all-btn {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .download-all-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .download-all-btn:hover::before {
+            left: 100%;
         }
 
         .download-all-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(72, 187, 120, 0.4);
+        }
+        
+        .download-all-btn:active {
+            transform: translateY(-1px) scale(0.98);
         }
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+            padding: 0 5px;
         }
 
         .photo-card {
-            background: white;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
+            position: relative;
+        }
+        
+        .photo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(102, 126, 234, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+            pointer-events: none;
         }
 
         .photo-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(102, 126, 234, 0.1);
+        }
+        
+        .photo-card:hover::before {
+            opacity: 1;
         }
 
         .photo-wrapper {
             position: relative;
             width: 100%;
             overflow: hidden;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
         }
 
         .photo-wrapper img {
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            transition: transform 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .photo-card:hover .photo-wrapper img {
-            transform: scale(1.05);
+            transform: scale(1.08) rotate(0.5deg);
+        }
+        
+        .photo-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .photo-card:hover .photo-wrapper::after {
+            opacity: 1;
         }
 
         .photo-info {
-            padding: 15px;
+            padding: 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
         }
         
         .photo-actions {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         
         .photo-btn {
-            padding: 8px 15px;
+            flex: 1;
+            padding: 12px 18px;
             border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .photo-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .photo-btn:hover::before {
+            left: 100%;
         }
         
         .print-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
         .print-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
         
         .download-btn {
-            background: #48bb78;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
         }
         
         .download-btn:hover {
-            background: #38a169;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+        }
+        
+        .photo-btn:active {
+            transform: translateY(0) scale(0.95);
         }
 
         .photo-filename {
-            font-weight: 600;
+            font-weight: 700;
             color: #2d3748;
-            margin-bottom: 10px;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+            margin: 0;
         }
 
         .photo-actions {
@@ -172,56 +316,53 @@
             gap: 10px;
         }
 
-        .download-btn {
-            flex: 1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
 
-        .download-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .purchase-btn {
-            flex: 1;
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .purchase-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
-        }
 
         .loading {
             text-align: center;
-            padding: 50px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
+            margin: 40px 0;
+        }
+        
+        .loading h3 {
+            color: #667eea;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .loading p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
         }
 
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(102, 126, 234, 0.1);
+            border-top: 5px solid #667eea;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+        
+        .loading-spinner::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px solid transparent;
+            border-top: 2px solid #764ba2;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
         }
 
         @keyframes spin {
@@ -230,45 +371,276 @@
         }
 
         .error {
-            background: #fed7d7;
+            background: linear-gradient(135deg, rgba(254, 215, 215, 0.9) 0%, rgba(252, 129, 129, 0.1) 100%);
+            backdrop-filter: blur(10px);
             color: #c53030;
-            padding: 20px;
-            border-radius: 15px;
+            padding: 30px;
+            border-radius: 18px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(197, 48, 48, 0.2);
+            box-shadow: 0 10px 40px rgba(197, 48, 48, 0.1);
+        }
+        
+        .error h2 {
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .error p {
+            font-size: 1.1rem;
+            opacity: 0.8;
         }
 
         .empty-gallery {
             text-align: center;
-            padding: 50px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
+            margin: 40px 0;
+        }
+        
+        .empty-gallery::before {
+            content: '📷';
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.3;
         }
 
         .empty-gallery h2 {
-            color: #2d3748;
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            font-weight: 700;
         }
 
         .empty-gallery p {
-            color: #718096;
+            color: #64748b;
+            font-size: 1.2rem;
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
             .gallery-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 20px;
+                padding: 0;
+            }
+            
+            .header {
+                padding: 30px 25px;
+                margin-bottom: 25px;
             }
             
             .header h1 {
-                font-size: 2rem;
+                font-size: 2.2rem;
+            }
+            
+            .header p {
+                font-size: 1.1rem;
             }
             
             .gallery-actions {
                 flex-direction: column;
                 text-align: center;
+                padding: 20px;
+                gap: 15px;
+                position: relative;
+                top: auto;
             }
+            
+            .photo-count {
+                font-size: 1.2rem;
+            }
+            
+            .download-all-btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            
+            .photo-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .photo-btn {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .gallery-actions {
+                padding: 15px;
+            }
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        /* Smooth transitions for all interactive elements */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
+        }
+        /* Lightbox Modal */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .lightbox-modal.show {
+            opacity: 1;
+        }
+        
+        .lightbox-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .lightbox-image {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .lightbox-info {
+            color: white;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lightbox-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .lightbox-nav.prev {
+            left: 20px;
+        }
+        
+        .lightbox-nav.next {
+            right: 20px;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -281,7 +653,8 @@
 
         <div id="loadingContainer" class="loading">
             <div class="loading-spinner"></div>
-            <p>Loading your photo gallery...</p>
+            <h3>Preparing Your Gallery</h3>
+            <p>Loading beautiful memories...</p>
         </div>
 
         <div id="errorContainer" class="error" style="display: none;">
@@ -367,24 +740,24 @@
             photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
             galleryActions.style.display = 'flex';
 
-            // Generate photo cards
+            // Generate photo cards with staggered animations
             galleryGrid.innerHTML = photos.map((photo, index) => {
                 const photoUrl = photo.url || photo.filename;
                 const filename = photo.filename || `photo-${index + 1}.jpg`;
                 
                 return `
-                    <div class="photo-card" onclick="openLightbox(${index})">
+                    <div class="photo-card" onclick="openLightbox(${index})" style="animation: fadeInUp 0.6s ease forwards; animation-delay: ${index * 0.1}s; opacity: 0;">
                         <div class="photo-wrapper">
-                            <img src="${photoUrl}" alt="${filename}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4='">
+                            <img src="${photoUrl}" alt="${filename}" loading="lazy" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjdmYWZjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Loading Image...</text></svg>'">
                         </div>
                         <div class="photo-info">
                             <div class="photo-filename">${filename}</div>
                             <div class="photo-actions">
-                                <button class="download-btn" onclick="event.stopPropagation(); downloadPhoto('${photoUrl}', '${filename}')">
+                                <button class="photo-btn download-btn" onclick="event.stopPropagation(); downloadPhoto('${photoUrl}', '${filename}')">
                                     📥 Download
                                 </button>
-                                <button class="purchase-btn" onclick="event.stopPropagation(); purchasePhoto('${filename}', ${index})">
-                                    🛒 Purchase
+                                <button class="photo-btn print-btn" onclick="event.stopPropagation(); purchasePhoto('${filename}', ${index})">
+                                    🛒 Order Prints
                                 </button>
                             </div>
                         </div>
