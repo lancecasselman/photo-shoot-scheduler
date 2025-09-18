@@ -413,14 +413,50 @@ class WHCCPrintService {
       catalog.Categories.forEach(category => {
         const productList = category.ProductList || [];
         productList.forEach(product => {
-          products.push({
+          const baseProduct = {
             id: `whcc_${product.Id}`,
             name: product.Name || category.Name,
             description: product.Description || `Professional ${category.Name}`,
-            category: category.Name.toLowerCase(),
+            category: this.normalizeProductCategory(product.Name, category.Name),
             productUID: product.Id,
-            sizes: product.ProductNodes || []
-          });
+            sizes: []
+          };
+          
+          // Process ProductNodes into proper size objects
+          if (product.ProductNodes && product.ProductNodes.length > 0) {
+            console.log(`📏 Processing ${product.ProductNodes.length} size options for ${baseProduct.name}`);
+            
+            product.ProductNodes.forEach(node => {
+              const width = node.W || 0;
+              const height = node.H || 0;
+              const area = width * height;
+              
+              // Calculate price based on product type and size
+              let price = this.calculateProductPrice(baseProduct.category, width, height, node.Price);
+              
+              const sizeOption = {
+                uid: node.UID || `${width}x${height}`,
+                label: `${width}" x ${height}"`,
+                width: width,
+                height: height,
+                area: area,
+                price: price,
+                productNodeUID: node.UID
+              };
+              
+              baseProduct.sizes.push(sizeOption);
+            });
+            
+            // Sort sizes by area (smallest to largest)
+            baseProduct.sizes.sort((a, b) => a.area - b.area);
+            
+            console.log(`✅ Extracted ${baseProduct.sizes.length} sizes: ${baseProduct.sizes.map(s => s.label).join(', ')}`);
+            products.push(baseProduct);
+          } else {
+            console.log(`⚠️ No ProductNodes found for ${baseProduct.name}, no sizes available`);
+            // Still add the product but with empty sizes array
+            products.push(baseProduct);
+          }
         });
       });
       
@@ -430,6 +466,81 @@ class WHCCPrintService {
       console.error('❌ WHCC: Products error:', error.message);
       return [];
     }
+  }
+
+  /**
+   * Normalize product category names for consistent handling
+   */
+  normalizeProductCategory(productName, categoryName) {
+    const name = (productName || categoryName || '').toLowerCase();
+    
+    if (name.includes('album')) return 'albums';
+    if (name.includes('book')) return 'books';
+    if (name.includes('metal')) return 'metal_prints';
+    if (name.includes('canvas')) return 'canvas_prints';
+    if (name.includes('card')) return 'cards';
+    if (name.includes('print')) return 'photographic_prints';
+    
+    return categoryName ? categoryName.toLowerCase().replace(/\s+/g, '_') : 'other';
+  }
+
+  /**
+   * Calculate product pricing based on category and size
+   */
+  calculateProductPrice(category, width, height, nodePrice) {
+    // Use node price if available
+    if (nodePrice && nodePrice > 0) {
+      return nodePrice;
+    }
+    
+    const area = width * height;
+    let price = 19.99; // Base price
+    
+    switch (category) {
+      case 'albums':
+        if (width <= 8 && height <= 8) price = 149.99;      // Small albums (8x8)
+        else if (width <= 10 && height <= 10) price = 199.99; // Medium albums (10x10)
+        else if (width <= 11 && height <= 14) price = 249.99; // Large albums (11x14)
+        else if (width <= 12 && height <= 12) price = 299.99; // X-Large albums (12x12)
+        else price = 349.99; // Premium albums
+        break;
+        
+      case 'books':
+        price = 99.99; // Base price for books
+        if (width <= 8 && height <= 10) price = 89.99;
+        else if (width >= 11) price = 129.99;
+        break;
+        
+      case 'metal_prints':
+        if (area <= 80) price = 59.99;       // Small metal (8x10)
+        else if (area <= 154) price = 89.99; // Medium metal (11x14)
+        else if (area <= 320) price = 129.99; // Large metal (16x20)
+        else if (area <= 480) price = 179.99; // X-Large metal (20x24)
+        else if (area <= 720) price = 249.99; // XX-Large metal (24x30)
+        else price = 379.99; // Ultra metal
+        break;
+        
+      case 'canvas_prints':
+        if (area <= 80) price = 49.99;       // Small canvas (8x10)
+        else if (area <= 154) price = 69.99; // Medium canvas (11x14)
+        else if (area <= 320) price = 99.99; // Large canvas (16x20)
+        else if (area <= 480) price = 149.99; // X-Large canvas (20x24)
+        else price = 199.99; // Premium canvas
+        break;
+        
+      default:
+        // Standard print pricing based on area
+        if (area > 0) {
+          if (area <= 35) price = 4.99;        // Small prints (5x7)
+          else if (area <= 80) price = 9.99;   // Medium prints (8x10)
+          else if (area <= 154) price = 14.99; // Large prints (11x14)
+          else if (area <= 192) price = 19.99; // X-Large prints (12x16)
+          else if (area <= 320) price = 29.99; // XX-Large prints (16x20)
+          else price = 39.99; // Ultra prints
+        }
+    }
+    
+    return price;
   }
 }
 

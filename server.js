@@ -7157,9 +7157,7 @@ app.post('/api/webhooks/whcc', express.raw({ type: 'application/json' }), async 
             }
 
             // Verify signature using our secure verification function
-            const printService = require('./server/print-service.js');
-            const printServiceInstance = new printService();
-            const isValidSignature = printServiceInstance.verifyWhccSignature(
+            const isValidSignature = printService.verifyWhccSignature(
                 req.body, // Raw payload
                 receivedSignature,
                 webhookSecret
