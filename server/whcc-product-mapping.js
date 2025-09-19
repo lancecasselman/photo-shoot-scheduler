@@ -88,6 +88,8 @@ function findWhccProductByCuratedUID(curatedUID, whccCatalog) {
     return null;
   }
 
+  // Metal prints don't exist in WHCC sandbox - they'll use fallback products
+
   // Search through all categories for exact name match
   for (const category of whccCatalog.Categories || []) {
     for (const product of category.ProductList || []) {
