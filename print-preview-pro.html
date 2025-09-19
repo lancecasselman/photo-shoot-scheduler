@@ -4270,17 +4270,34 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const galleryToken = urlParams.get('token');
                 
-                // Transform data for new WHCC API format
+                // Transform data for new WHCC API format using real WHCC UIDs
                 const orderItems = [];
                 photos.forEach(photo => {
                     photo.products.forEach(product => {
+                        // Use real WHCC UIDs from whccData if available, otherwise fallback
+                        const productUID = product.whccData?.productUID || product.productUID;
+                        const productNodeUID = product.whccData?.productNodeUID || product.productNodeUID;
+                        
+                        // If we don't have real UIDs, this order will fail
+                        if (!productUID || !productNodeUID) {
+                            console.error('❌ Missing WHCC UIDs for product:', product);
+                            throw new Error(`Product ${product.productName || 'unknown'} is missing required WHCC UIDs for ordering`);
+                        }
+                        
+                        // Get real AttributeUIDs array for WHCC requirements
+                        const attributeUIDs = product.whccData?.attributeUIDs || product.defaultAttributeUIDs || [];
+                        
+                        // Validate AttributeUIDs - WHCC requires non-empty attribute array
+                        if (!Array.isArray(attributeUIDs) || attributeUIDs.length === 0) {
+                            console.error('❌ Missing AttributeUIDs for product:', product);
+                            throw new Error(`Product ${product.productName || 'unknown'} is missing required AttributeUIDs for WHCC ordering`);
+                        }
+                        
                         orderItems.push({
-                            productUID: product.productUID,
-                            productNodeUID: product.productNodeUID || 'default_node',
-                            attributeSelections: {
-                                surface: product.surface || 'lustre',
-                                size: product.size || '4x6'
-                            },
+                            productUID: productUID,
+                            productNodeUID: productNodeUID,
+                            // Use correct field name and ensure it's an array of UIDs
+                            attributeUIDs: attributeUIDs,
                             imageUrl: photo.url,
                             quantity: product.quantity || 1,
                             cropData: product.cropData || null
