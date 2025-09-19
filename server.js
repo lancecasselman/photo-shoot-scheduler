@@ -918,14 +918,24 @@ app.post('/api/whcc/webhook', express.raw({ type: 'application/json' }), async (
       return res.status(401).json({ error: 'Missing signature header' });
     }
     
-    // Verify webhook signature using raw body
+    // CRITICAL SECURITY: Verify webhook signature using OAS secret
     const rawBody = req.body.toString('utf8');
-    const isValid = whccCoreForWebhook.verifyWebhookSignature(rawBody, signature);
+    const webhookSecret = process.env.OAS_CONSUMER_SECRET;
+    
+    if (!webhookSecret) {
+      console.error('🚨 SECURITY ALERT: OAS_CONSUMER_SECRET not configured for webhook verification!');
+      return res.status(500).json({ error: 'Webhook verification not configured' });
+    }
+    
+    const isValid = whccCoreForWebhook.verifyWebhookSignature(rawBody, signature, webhookSecret);
     
     if (!isValid) {
-      console.log('❌ WHCC Webhook: Invalid signature');
+      console.error('🚨 SECURITY ALERT: WHCC webhook signature verification FAILED');
+      console.error('- Possible webhook forgery attempt');
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
+    
+    console.log('✅ WHCC Webhook: Signature verified successfully');
     
     // Parse webhook payload
     let webhookData;
@@ -943,17 +953,24 @@ app.post('/api/whcc/webhook', express.raw({ type: 'application/json' }), async (
       status: webhookData.Status || webhookData.status
     });
     
-    // TODO: Update order status in database
-    // await updateOrderStatus(webhookData);
+    // Process webhook using shared WHCC Core Service instance
+    const whccCore = whccCoreForWebhook; // Reuse existing instance
+    
+    const updateResult = await whccCore.updateOrderStatus({
+      confirmationId: webhookData.ConfirmationID || webhookData.confirmation_id,
+      status: webhookData.Status || webhookData.status,
+      type: webhookData.EventType || webhookData.event_type || 'unknown'
+    });
+    
+    if (updateResult.success) {
+      console.log(`✅ WHCC Webhook: Order ${updateResult.orderId} status updated to ${updateResult.newStatus}`);
+    } else {
+      console.error(`❌ WHCC Webhook: Failed to update order status - ${updateResult.error}`);
+    }
     
     // Process webhook based on event type
     if (webhookData.EventType === 'OrderStatusChanged' || webhookData.event_type === 'order.status.changed') {
       console.log(`📋 WHCC Webhook: Order status update - ${webhookData.ConfirmationID}: ${webhookData.Status}`);
-      
-      // TODO: Implement order status update
-      // - Update database record
-      // - Send notification to customer if needed
-      // - Trigger any business logic
     }
     
     res.status(200).json({ 

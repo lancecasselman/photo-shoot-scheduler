@@ -1,5 +1,9 @@
 const crypto = require('crypto');
 const fetch = global.fetch || ((...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)));
+const { drizzle } = require('drizzle-orm/neon-http');
+const { neon } = require('@neondatabase/serverless');
+const { eq } = require('drizzle-orm');
+const { whccOrders } = require('../shared/schema');
 
 /**
  * WHCC Core Service - Editor-Driven Ordering
@@ -26,9 +30,31 @@ class WHCCCoreService {
       catalog: '/api/catalog'
     };
 
+    // Database connection
+    this.db = null;
+    this.initializeDatabase();
+
     console.log(`🏭 WHCC Core Service: ${this.isSandbox ? 'SANDBOX' : 'PRODUCTION'} mode`);
     console.log(`🔧 Base URL: ${this.baseUrl}`);
     console.log(`🔑 Credentials: ${this.oasKey ? 'OAS ✓' : 'OAS ✗'}`);
+  }
+
+  /**
+   * Initialize database connection
+   */
+  initializeDatabase() {
+    try {
+      if (!process.env.DATABASE_URL) {
+        console.warn('⚠️ WHCC Core: DATABASE_URL not found');
+        return;
+      }
+      
+      const sql = neon(process.env.DATABASE_URL);
+      this.db = drizzle(sql);
+      console.log('✅ WHCC Core: Database connection initialized');
+    } catch (error) {
+      console.error('❌ WHCC Core: Database initialization failed:', error.message);
+    }
   }
 
   /**
@@ -521,6 +547,129 @@ class WHCCCoreService {
     } catch (error) {
       console.error('❌ WHCC Core: Image processing failed:', error.message);
       throw new Error(`Failed to process order images: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update Order Status from WHCC Webhook
+   * Updates order status and timestamps in database based on webhook events
+   */
+  async updateOrderStatus(webhookData) {
+    try {
+      console.log('📋 WHCC Core: Updating order status from webhook...');
+      
+      if (!this.db) {
+        console.warn('⚠️ WHCC Core: Database not initialized, cannot update order status');
+        return { success: false, error: 'Database not available' };
+      }
+
+      const { confirmationId, status, type } = webhookData;
+      
+      if (!confirmationId) {
+        console.error('❌ WHCC Core: Missing confirmationId in webhook data');
+        return { success: false, error: 'Missing confirmation ID' };
+      }
+
+      console.log(`🔍 WHCC Core: Looking for order with confirmationId: ${confirmationId}`);
+      
+      // Find order by WHCC confirmation ID
+      const existingOrders = await this.db
+        .select()
+        .from(whccOrders)
+        .where(eq(whccOrders.confirmationId, confirmationId));
+
+      if (existingOrders.length === 0) {
+        console.warn(`⚠️ WHCC Core: No order found with confirmationId: ${confirmationId}`);
+        return { success: false, error: 'Order not found' };
+      }
+
+      const order = existingOrders[0];
+      console.log(`📦 WHCC Core: Found order ${order.id} for confirmationId: ${confirmationId}`);
+
+      // Prepare webhook event for logging
+      const webhookEvent = {
+        type: type || 'unknown',
+        status: status || 'unknown',
+        confirmationId,
+        receivedAt: new Date().toISOString()
+      };
+
+      // Prepare update data using existing schema fields
+      const updateData = {
+        whccStatus: status || 'unknown', // Update WHCC status field
+        webhookEvents: [...(order.webhookEvents || []), webhookEvent], // Append to webhook events log
+        updatedAt: new Date()
+      };
+
+      // Update order status in database with confirmation
+      const updateResult = await this.db
+        .update(whccOrders)
+        .set(updateData)
+        .where(eq(whccOrders.id, order.id))
+        .returning({ id: whccOrders.id, whccStatus: whccOrders.whccStatus });
+
+      // Verify row was actually updated
+      if (!updateResult || updateResult.length === 0) {
+        console.warn(`⚠️ WHCC Core: No rows updated for order ${order.id}`);
+        return { success: false, error: 'Failed to update order status' };
+      }
+
+      console.log(`✅ WHCC Core: Order ${order.id} status updated to: ${status}`);
+      
+      return {
+        success: true,
+        orderId: order.id,
+        confirmationId,
+        oldStatus: order.status,
+        newStatus: status,
+        webhookType: type
+      };
+      
+    } catch (error) {
+      console.error('❌ WHCC Core: Order status update failed:', error.message);
+      return { 
+        success: false, 
+        error: error.message,
+        confirmationId: webhookData?.confirmationId
+      };
+    }
+  }
+
+  /**
+   * Verify WHCC Webhook Signature
+   * Validates webhook authenticity using WHCC webhook secret
+   */
+  verifyWebhookSignature(payload, signature, secret) {
+    try {
+      if (!secret) {
+        console.error('❌ WHCC Core: Webhook secret not configured');
+        return false;
+      }
+
+      if (!signature) {
+        console.error('❌ WHCC Core: Missing webhook signature');
+        return false;
+      }
+
+      // WHCC typically uses HMAC-SHA256 for webhook signatures
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(payload, 'utf8')
+        .digest('hex');
+
+      // Compare signatures securely
+      const providedSignature = signature.replace('sha256=', '');
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(expectedSignature, 'hex'),
+        Buffer.from(providedSignature, 'hex')
+      );
+
+      console.log(`🔐 WHCC Core: Webhook signature ${isValid ? 'verified' : 'failed'}`);
+      return isValid;
+      
+    } catch (error) {
+      console.error('❌ WHCC Core: Webhook signature verification error:', error.message);
+      return false;
     }
   }
 }
