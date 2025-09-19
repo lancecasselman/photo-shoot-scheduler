@@ -902,6 +902,75 @@ process.on('uncaughtException', (error) => {
 // This includes compression, body parsers, and any middleware that reads the body
 // ============================================================================
 
+// WHCC webhook for order status updates (BEFORE body parsing)
+const WHCCCoreService = require('./server/whcc-core-service');
+const whccCoreForWebhook = new WHCCCoreService();
+
+app.post('/api/whcc/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    console.log('🔔 WHCC Webhook: Received webhook...');
+    
+    // Get signature from headers
+    const signature = req.get('WHCC-Signature') || req.get('X-WHCC-Signature');
+    
+    if (!signature) {
+      console.log('❌ WHCC Webhook: Missing signature header');
+      return res.status(401).json({ error: 'Missing signature header' });
+    }
+    
+    // Verify webhook signature using raw body
+    const rawBody = req.body.toString('utf8');
+    const isValid = whccCoreForWebhook.verifyWebhookSignature(rawBody, signature);
+    
+    if (!isValid) {
+      console.log('❌ WHCC Webhook: Invalid signature');
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
+    
+    // Parse webhook payload
+    let webhookData;
+    try {
+      webhookData = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('❌ WHCC Webhook: Invalid JSON payload');
+      return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+    
+    console.log('✅ WHCC Webhook: Signature verified, processing event...');
+    console.log('📦 WHCC Webhook Event:', {
+      type: webhookData.EventType || webhookData.event_type || 'unknown',
+      confirmationId: webhookData.ConfirmationID || webhookData.confirmation_id,
+      status: webhookData.Status || webhookData.status
+    });
+    
+    // TODO: Update order status in database
+    // await updateOrderStatus(webhookData);
+    
+    // Process webhook based on event type
+    if (webhookData.EventType === 'OrderStatusChanged' || webhookData.event_type === 'order.status.changed') {
+      console.log(`📋 WHCC Webhook: Order status update - ${webhookData.ConfirmationID}: ${webhookData.Status}`);
+      
+      // TODO: Implement order status update
+      // - Update database record
+      // - Send notification to customer if needed
+      // - Trigger any business logic
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Webhook processed successfully' 
+    });
+    
+  } catch (error) {
+    console.error('❌ WHCC Webhook: Processing error:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'Webhook processing failed',
+      details: error.message 
+    });
+  }
+});
+
 // Main Stripe webhook for payments and subscriptions
 app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -2597,6 +2666,11 @@ app.use('/api/print', photoSalesRoutes);
 // Gallery Print API routes - Separate endpoint to avoid auth conflicts
 const galleryPrintRoutes = require('./server/gallery-print-routes');
 app.use('/api/gallery-print', galleryPrintRoutes);
+
+// WHCC API routes - Editor-driven print ordering
+const whccApiRoutes = require('./server/whcc-api-routes');
+whccApiRoutes.setAuth(isAuthenticated); // Pass authentication middleware
+app.use('/api/whcc', whccApiRoutes);
 // Initialize templates on startup (non-blocking)
 (async () => {
     try {
