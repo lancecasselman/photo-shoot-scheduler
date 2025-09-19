@@ -476,7 +476,11 @@ class WHCCPrintService {
             category: normalizedCategory,
             productUID: product.Id,
             sizes: [],
-            _apiSource: 'OAS'
+            _apiSource: 'OAS',
+            // Include WHCC product examples if available
+            thumbnail: product.ThumbnailUrl || product.ImageUrl || product.ExampleImage || product.PreviewImage || null,
+            exampleImage: product.ExampleImage || product.PreviewImage || product.ThumbnailUrl || null,
+            productImage: product.ProductImage || product.Image || null
           };
           
           totalProducts++;
