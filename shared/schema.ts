@@ -672,7 +672,101 @@ export const photoForSaleSettings = pgTable("photo_for_sale_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// WHCC Editor Orders table for editor-driven print ordering
+export const whccOrders = pgTable("whcc_orders", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  sessionId: varchar("session_id").references(() => photographySessions.id), // Optional - for gallery orders
+  galleryToken: varchar("gallery_token"), // For client gallery orders
+  
+  // WHCC Integration Fields
+  confirmationId: varchar("confirmation_id").unique(), // WHCC ConfirmationID from order import
+  whccOrderId: varchar("whcc_order_id"), // WHCC OrderID from order submission
+  whccStatus: varchar("whcc_status").default("draft"), // WHCC order status
+  
+  // Order Details
+  orderId: varchar("order_id").notNull(), // Our internal order reference
+  orderReference: varchar("order_reference"), // Human-readable reference
+  instructions: text("instructions").default(""),
+  
+  // Customer Information
+  customerInfo: jsonb("customer_info").notNull(), // { firstName, lastName, email, phone }
+  shippingAddress: jsonb("shipping_address").notNull(), // WHCC shipping address format
+  studioAddress: jsonb("studio_address"), // Ship-from address (photographer)
+  
+  // Pricing
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0.00"),
+  tax: decimal("tax", { precision: 10, scale: 2 }).default("0.00"),
+  total: decimal("total", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Status Tracking
+  orderStatus: varchar("order_status").default("pending"), // pending, imported, submitted, production, shipped, delivered, cancelled
+  paymentStatus: varchar("payment_status").default("pending"), // pending, paid, failed, refunded
+  
+  // WHCC Tracking
+  trackingNumber: varchar("tracking_number"),
+  shippingMethodUID: varchar("shipping_method_uid"), // WHCC ShipMethodUID
+  
+  // Processing Dates
+  importedAt: timestamp("imported_at"), // When order was imported to WHCC
+  submittedAt: timestamp("submitted_at"), // When order was submitted for production
+  productionDate: timestamp("production_date"), // WHCC production date
+  shipDate: timestamp("ship_date"), // WHCC ship date
+  estimatedDelivery: timestamp("estimated_delivery"), // WHCC estimated delivery
+  deliveredAt: timestamp("delivered_at"), // Actual delivery date
+  
+  // Metadata
+  source: varchar("source").default("editor"), // editor, gallery, manual
+  metadata: jsonb("metadata").default({}), // Additional order data
+  webhookEvents: jsonb("webhook_events").default([]), // WHCC webhook event log
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// WHCC Order Items table for individual products in orders
+export const whccOrderItems = pgTable("whcc_order_items", {
+  id: varchar("id").primaryKey().notNull(),
+  orderId: varchar("order_id").notNull().references(() => whccOrders.id),
+  
+  // WHCC Product Information
+  productUID: varchar("product_uid").notNull(), // WHCC ProductUID
+  productNodeUID: varchar("product_node_uid").notNull(), // WHCC ProductNodeUID for size/variant
+  productName: varchar("product_name").notNull(),
+  productCategory: varchar("product_category"),
+  
+  // Product Attributes (size, paper, finish, etc.)
+  attributeSelections: jsonb("attribute_selections").notNull(), // [{ attributeUID, optionUID, name, value }]
+  
+  // Image and Crop Data
+  imageUrl: varchar("image_url").notNull(), // R2 signed URL for WHCC access
+  imageFilename: varchar("image_filename").notNull(),
+  imageHash: varchar("image_hash"), // For duplicate detection
+  cropData: jsonb("crop_data"), // { left, top, width, height } from editor
+  
+  // Quantity and Pricing
+  quantity: integer("quantity").default(1),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default("0.00"),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Editor Data
+  editorProjectUID: varchar("editor_project_uid"), // WHCC EditorProjectUID if customized
+  autoRotate: boolean("auto_rotate").default(true),
+  printedFileName: varchar("printed_filename").default("print.jpg"),
+  
+  // Metadata
+  metadata: jsonb("metadata").default({}), // Additional item data
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type InsertAdminContentEdit = typeof adminContentEdits.$inferInsert;
 export type AdminContentEdit = typeof adminContentEdits.$inferSelect;
 export type InsertPhotoForSaleSetting = typeof photoForSaleSettings.$inferInsert;
 export type PhotoForSaleSetting = typeof photoForSaleSettings.$inferSelect;
+export type InsertWhccOrder = typeof whccOrders.$inferInsert;
+export type WhccOrder = typeof whccOrders.$inferSelect;
+export type InsertWhccOrderItem = typeof whccOrderItems.$inferInsert;
+export type WhccOrderItem = typeof whccOrderItems.$inferSelect;
