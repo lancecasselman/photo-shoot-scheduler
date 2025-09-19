@@ -3275,15 +3275,60 @@
             const endIndex = startIndex + itemsPerPage;
             const paginatedProducts = currentProducts.slice(startIndex, endIndex);
             
-            // Generate product list HTML
+            // Generate product list HTML with WHCC product examples
             const productListHTML = paginatedProducts.map((product, index) => {
                 const actualIndex = startIndex + index;
+                
+                // Display WHCC product example image if available
+                const productImage = product.thumbnail || product.exampleImage || product.productImage;
+                const imageHTML = productImage ? `
+                    <div class="product-image" style="
+                        width: 60px;
+                        height: 60px;
+                        background-image: url('${productImage}');
+                        background-size: cover;
+                        background-position: center;
+                        background-color: #f8fafc;
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                        flex-shrink: 0;
+                        margin-right: 12px;
+                    "></div>
+                ` : `
+                    <div class="product-image" style="
+                        width: 60px;
+                        height: 60px;
+                        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                        flex-shrink: 0;
+                        margin-right: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #64748b;
+                        font-size: 12px;
+                        text-align: center;
+                        line-height: 1.2;
+                    ">No Image</div>
+                `;
+                
                 return `
-                    <div class="product-item" data-product-index="${actualIndex}" onclick="selectProduct(${actualIndex})">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-details">
-                            ${product.sizes?.length || 0} sizes available
-                            ${product.category ? ` • ${product.category}` : ''}
+                    <div class="product-item" data-product-index="${actualIndex}" onclick="selectProduct(${actualIndex})" style="
+                        display: flex;
+                        align-items: center;
+                        padding: 12px;
+                        border-bottom: 1px solid #e2e8f0;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    ">
+                        ${imageHTML}
+                        <div class="product-info" style="flex: 1;">
+                            <div class="product-name" style="font-weight: 600; color: #1a202c; margin-bottom: 4px;">${product.name}</div>
+                            <div class="product-details" style="font-size: 12px; color: #64748b;">
+                                ${product.sizes?.length || 0} sizes available
+                                ${product.category ? ` • ${product.category}` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
