@@ -385,8 +385,13 @@
         
         console.log('🖼️ Starting print order for:', { photoUrl, filename, saleData });
         
+        // Get gallery token from current page (available in client-gallery.html)
+        const currentToken = window.galleryToken || 
+                           (window.location.pathname.split('/').pop()) || 
+                           new URLSearchParams(window.location.search).get('token');
+        
         // Open print preview page with WHCC product selection
-        const previewUrl = `/print-preview-pro.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&basePrice=${saleData.basePrice}`;
+        const previewUrl = `/print-preview-pro.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&basePrice=${saleData.basePrice}&token=${encodeURIComponent(currentToken)}`;
         
         // Open in same window for better experience
         window.location.href = previewUrl;
