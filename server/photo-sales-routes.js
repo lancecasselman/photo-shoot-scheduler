@@ -3,20 +3,22 @@
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const WHCCPrintService = require('./whcc-rebuilt');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db.ts');
 const { photoForSaleSettings, downloadTokens, digitalTransactions } = require('../shared/schema');
 const { eq, and } = require('drizzle-orm');
 const router = express.Router();
 
-// Initialize WHCC print service
-const printService = new WHCCPrintService();
+// WHCC print service removed - functionality disabled
 
-// Cache for WHCC product catalog (refresh every 30 minutes)
-let whccCatalogCache = null;
-let catalogCacheExpiry = 0;
-const CATALOG_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+// Router-level safeguard for any remaining WHCC/print endpoints
+router.all(['/whcc*', '/print*', '/products', '/client-print-order'], (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'All print functionality is no longer available'
+    });
+});
 
 // Configurable default pricing settings
 const DEFAULT_PRINT_MARKUP_PERCENTAGE = Number.isFinite(parseFloat(process.env.DEFAULT_PRINT_MARKUP_PERCENTAGE)) ? parseFloat(process.env.DEFAULT_PRINT_MARKUP_PERCENTAGE) : 25; // 25%
@@ -537,7 +539,15 @@ async function getDigitalPhotoPrice(userId, photoUrl) {
 }
 
 // Public endpoint for WHCC status check (no auth required)
-router.get('/whcc-status', async (req, res) => {
+router.get('/whcc-status', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'WHCC status endpoint is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('🔍 Checking WHCC status (public endpoint)...');
         
@@ -559,8 +569,16 @@ router.get('/whcc-status', async (req, res) => {
     }
 });
 
-// Public endpoint for WHCC products (no auth required)
-router.get('/products', async (req, res) => {
+// Public endpoint for WHCC products (no auth required) - DISABLED
+router.get('/products', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Product catalog is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('📦 Fetching WHCC products for public display...');
         
@@ -646,7 +664,15 @@ const requireGalleryAccess = async (req, res, next) => {
 
 // DEEP DIVE TEST ENDPOINT - Protected for admin use
 // NOTE: In production, this should be admin-only or disabled
-router.get('/whcc-complete-test', requireAuth, async (req, res) => {
+router.get('/whcc-complete-test', requireAuth, (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'WHCC test endpoint is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     console.log('\n🚀 COMPLETE WHCC CAPABILITIES TEST');
     console.log('='.repeat(60));
     
@@ -860,8 +886,16 @@ router.get('/whcc-complete-test', requireAuth, async (req, res) => {
     }
 });
 
-// Public endpoint for product catalog (no auth required for gallery clients)
-router.get('/products', async (req, res) => {
+// Public endpoint for product catalog (no auth required for gallery clients) - DISABLED
+router.get('/products', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Product catalog is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('📦 Fetching WHCC product catalog (public)...');
         
@@ -929,7 +963,15 @@ router.get('/products', async (req, res) => {
 // =============================================================================
 
 // Client endpoint for print orders using gallery access
-router.post('/client-print-order', requireGalleryAccess, async (req, res) => {
+router.post('/client-print-order', requireGalleryAccess, (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Client print order functionality is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('🖼️ Processing client print order with gallery access:', req.body);
         
@@ -1328,7 +1370,15 @@ router.post('/digital-order', async (req, res) => {
 });
 
 // Print order endpoint with WHCC integration
-router.post('/print-order', async (req, res) => {
+router.post('/print-order', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Print order functionality is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('🖼️ Processing print order:', req.body);
         
@@ -1659,7 +1709,15 @@ function getEstimatedDelivery(status, createdAt) {
 }
 
 // WHCC product catalog endpoint (requires auth)
-router.get('/whcc-products', async (req, res) => {
+router.get('/whcc-products', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'WHCC products endpoint is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     try {
         console.log('📦 Fetching WHCC product catalog...');
         
@@ -2172,7 +2230,15 @@ router.post('/photo-settings', async (req, res) => {
 });
 
 // DEEP DIVE TEST ENDPOINT - Comprehensive WHCC capabilities check
-router.get('/whcc-deep-dive', async (req, res) => {
+router.get('/whcc-deep-dive', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'WHCC deep dive endpoint is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     console.log('\n🚀 DEEP DIVE INTO WHCC CAPABILITIES');
     console.log('='.repeat(60));
     
@@ -2361,7 +2427,15 @@ router.get('/whcc-deep-dive', async (req, res) => {
 });
 
 // WHCC Webhook handler for order status updates
-router.post('/whcc-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+router.post('/whcc-webhook', express.raw({type: 'application/json'}), (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'WHCC webhook endpoint is no longer available'
+    });
+    return;
+    // Original endpoint disabled below
+    /*
     const signature = req.headers['whcc-signature'];
     
     // Get raw payload for signature verification

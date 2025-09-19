@@ -1355,6 +1355,7 @@ if (process.env.NODE_ENV === 'production') {
     // CORS for production
     app.use(cors(PRODUCTION_CONFIG.cors));
     
+    
     // Rate limiting - EXCLUDE webhooks and uploads
     const limiter = rateLimit(PRODUCTION_CONFIG.rateLimit);
     const uploadLimiter = rateLimit({
@@ -1555,6 +1556,15 @@ app.use((req, res, next) => {
     } else {
         next();
     }
+});
+
+// Kill-switch for removed WHCC routes - return 410 Gone (applies to all environments)
+app.all(['/api/print', '/api/print/*', '/api/whcc', '/api/whcc/*', '/api/gallery-print', '/api/gallery-print/*'], (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service routes have been removed',
+        message: 'This functionality is no longer available'
+    });
 });
 
 // SECURITY: Controlled static file serving - only after routes are defined
@@ -6018,168 +6028,8 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
 
 
 
-// Test print service connection
-app.get('/api/print/test', async (req, res) => {
-    try {
-        console.log('Testing WHCC print service configuration...');
-        
-        // Check if credentials are configured
-        const hasOAS = !!(process.env.OAS_CONSUMER_KEY && process.env.OAS_CONSUMER_SECRET);
-        const hasEditor = !!(process.env.EDITOR_API_KEY_ID && process.env.EDITOR_API_KEY_SECRET);
-        
-        res.json({ 
-            success: true, 
-            message: 'WHCC Print Service configured',
-            credentials: {
-                oasApi: hasOAS ? 'Configured' : 'Missing',
-                editorApi: hasEditor ? 'Configured' : 'Missing'
-            },
-            status: hasOAS && hasEditor ? 'Ready' : 'Incomplete setup'
-        });
-    } catch (error) {
-        console.error('Print service test failed:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Print service test failed', 
-            details: error.message 
-        });
-    }
-});
 
-// Test WHCC 4x6 Loose Print Order (like PHP example)
-app.post('/api/print/test-4x6-order', async (req, res) => {
-    try {
-        console.log('🧪 Testing WHCC 4x6 Loose Print Order (like PHP example)...');
-        
-        // Step 1: Get access token
-        console.log('Step 1: Getting access token...');
-        const token = await printService.getAccessToken();
-        if (!token) {
-            throw new Error('Failed to get access token');
-        }
-        console.log('✅ Access token obtained');
-        
-        // Step 2: Build test order payload for 4x6 Loose Print
-        const testOrder = {
-            Reference: `TEST-4x6-${Date.now()}`,
-            ClientInfo: {
-                FirstName: 'Test',
-                LastName: 'Customer',
-                Email: 'test@example.com',
-                Phone: '555-0123',
-                Address1: '123 Test Street',
-                Address2: '',
-                City: 'Test City',
-                State: 'CA',
-                Zip: '90210',
-                Country: 'US'
-            },
-            Items: [{
-                ProductUID: '4x6_loose_print', // This should be a real WHCC ProductUID
-                Quantity: 1,
-                LayoutUID: 0,
-                Attributes: [],
-                Assets: [{
-                    AssetPath: 'https://via.placeholder.com/400x600.jpg', // Test image
-                    PrintedFileName: 'test-4x6.jpg',
-                    ImageHash: '',
-                    DP2NodeID: 10000
-                }]
-            }],
-            ShippingMethod: 'Standard',
-            PaymentMethod: 'Prepaid',
-            Comments: 'Test 4x6 loose print order from API integration'
-        };
-        
-        console.log('Step 2: Order payload built:', {
-            reference: testOrder.Reference,
-            itemCount: testOrder.Items.length
-        });
-        
-        // Step 3: Import order
-        console.log('Step 3: Importing order...');
-        const importUrl = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}/api/OrderImport`;
-        
-        const fetch = (await import('node-fetch')).default;
-        const importResponse = await fetch(importUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(testOrder)
-        });
-        
-        const importData = await importResponse.json();
-        console.log('✅ Order imported:', importData);
-        
-        // Step 4: Submit order for production (optional in sandbox)
-        if (importData.OrderID) {
-            console.log('Step 4: Submitting order for production...');
-            const submitUrl = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}/api/OrderImport/Submit`;
-            
-            const submitResponse = await fetch(submitUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    OrderID: importData.OrderID,
-                    ConfirmProduction: false // Keep false for sandbox testing
-                })
-            });
-            
-            const submitData = await submitResponse.json();
-            console.log('✅ Order submission response:', submitData);
-        }
-        
-        // Step 5: Get order status
-        if (importData.OrderID) {
-            console.log('Step 5: Getting order status...');
-            const statusUrl = `${printService.isSandbox ? printService.sandboxUrl : printService.oasBaseUrl}/api/Orders/${importData.OrderID}`;
-            
-            const statusResponse = await fetch(statusUrl, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            const statusData = await statusResponse.json();
-            console.log('✅ Order status:', statusData);
-            
-            res.json({
-                success: true,
-                message: 'Successfully tested WHCC 4x6 order flow',
-                results: {
-                    tokenObtained: true,
-                    orderImported: importData,
-                    orderStatus: statusData
-                },
-                environment: printService.isSandbox ? 'sandbox' : 'production'
-            });
-        } else {
-            res.json({
-                success: true,
-                message: 'Partial test completed',
-                results: {
-                    tokenObtained: true,
-                    orderImportResponse: importData
-                },
-                environment: printService.isSandbox ? 'sandbox' : 'production'
-            });
-        }
-        
-    } catch (error) {
-        console.error('❌ 4x6 order test failed:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            details: 'Check server logs for more information'
-        });
-    }
-});
+// WHCC routes removed - functionality disabled
 
 // Debug WHCC API connection
 app.get('/api/print/debug', async (req, res) => {

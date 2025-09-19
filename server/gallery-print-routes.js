@@ -108,40 +108,13 @@ router.post('/test-order', requireGalleryAccess, async (req, res) => {
     }
 });
 
-// Get WHCC products for gallery clients
-router.get('/products', async (req, res) => {
-    try {
-        console.log('🛍️ GALLERY PRINT: Fetching WHCC products for clients...');
-        
-        // Import WHCC service
-        const WHCCService = require('./whcc-rebuilt');
-        const printService = new WHCCService();
-        
-        // Get products from WHCC
-        const products = await printService.getProducts();
-        
-        if (!products || products.length === 0) {
-            return res.status(404).json({
-                error: 'No products available',
-                message: 'No print products are currently available. Please try again later.'
-            });
-        }
-        
-        console.log(`✅ GALLERY PRINT: Successfully loaded ${products.length} products`);
-        
-        return res.json({
-            products: products,
-            success: true,
-            count: products.length
-        });
-        
-    } catch (error) {
-        console.error('❌ GALLERY PRINT: Failed to fetch WHCC products:', error);
-        return res.status(500).json({
-            error: 'Failed to load print products',
-            message: 'Unable to load available print products. Please try again later.'
-        });
-    }
+// WHCC print service removed - products endpoint disabled
+router.get('/products', (req, res) => {
+    res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Print product functionality is no longer available'
+    });
 });
 
 // Live pricing validation endpoint - no auth required for public pricing
@@ -158,12 +131,12 @@ router.post('/validate-price', async (req, res) => {
       });
     }
     
-    // Import WHCC service
-    const WHCCService = require('./whcc-rebuilt');
-    const printService = new WHCCService();
-    
-    // Get products from WHCC to validate configuration
-    const products = await printService.getProducts();
+    // WHCC service removed - return 410 for print pricing
+    return res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Print pricing validation is no longer available'
+    });
     const product = products.find(p => p.productUID === productUID || p.id === productUID);
     
     if (!product) {
@@ -252,12 +225,12 @@ router.get('/product/:productUID/config', async (req, res) => {
   try {
     console.log('🔧 Product configuration request for:', productUID);
     
-    // Import WHCC service
-    const WHCCService = require('./whcc-rebuilt');
-    const printService = new WHCCService();
-    
-    // Get product details from WHCC catalog
-    const products = await printService.getProducts();
+    // WHCC service removed - return 410 for product configuration  
+    return res.status(410).json({
+        success: false,
+        error: 'WHCC print service has been removed',
+        message: 'Product configuration is no longer available'
+    });
     const product = products.find(p => p.productUID === productUID || p.id === productUID);
     
     if (!product) {
