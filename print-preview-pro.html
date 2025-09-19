@@ -1336,47 +1336,72 @@
             }
         }
         
-        // Update price display - FIXED to use multi-dimensional pricing with paper types
-        function updatePrice() {
-            // Use the product type directly as category (no mapping needed)
-            const category = currentSettings.product;
-            const paperType = currentSettings.paper || 'standard';
-            const size = currentSettings.size;
-            
-            // Try to get price from multi-dimensional structure
-            let price = 19.99; // Default price
-            
-            if (pricing[category]) {
-                // First try with specific paper type
-                if (pricing[category][paperType] && pricing[category][paperType][size]) {
-                    price = pricing[category][paperType][size];
-                }
-                // Fallback to standard paper type
-                else if (pricing[category]['standard'] && pricing[category]['standard'][size]) {
-                    price = pricing[category]['standard'][size];
-                }
-                // Last fallback: try to find any paper type with this size
-                else {
-                    const paperTypes = Object.keys(pricing[category]);
-                    for (const pt of paperTypes) {
-                        if (pricing[category][pt] && pricing[category][pt][size]) {
-                            price = pricing[category][pt][size];
-                            break;
+        // SIMPLIFIED PRICING - Get one total price from server
+        async function updatePrice() {
+            await quotePrice();
+        }
+        
+        // SECURE: Get simple total price from server quote endpoint (no client price tampering)
+        async function quotePrice() {
+            try {
+                // Show loading state
+                document.getElementById('priceAmount').textContent = 'Loading...';
+                
+                // Get current configuration
+                const productUID = currentSettings.productUID || currentSettings.product;
+                const quantity = currentSettings.quantity || 1;
+                
+                // SECURE: Build attributeUIDs array (no prices sent to server)
+                const attributeUIDs = [];
+                if (currentSettings.attributes) {
+                    Object.values(currentSettings.attributes).forEach(attr => {
+                        if (attr.uid || attr.id || attr.attributeUID) {
+                            const uid = attr.uid || attr.id || attr.attributeUID;
+                            attributeUIDs.push(uid);
                         }
-                    }
+                    });
                 }
-            }
-            
-            // Add attribute pricing (frames, finishes, etc.)
-            if (currentSettings.attributes) {
-                Object.values(currentSettings.attributes).forEach(attr => {
-                    if (attr.price) {
-                        price += parseFloat(attr.price);
-                    }
+                
+                // SECURITY: Gallery token for server-side authentication (no client userId needed)
+                const token = window.galleryToken || 
+                            new URLSearchParams(window.location.search).get('token') ||
+                            window.location.pathname.split('/').pop();
+                
+                console.log('🔒 Requesting SECURE authenticated quote for:', { productUID, attributeUIDs, quantity });
+                
+                // Call secure authenticated quote endpoint
+                const response = await fetch('/api/print/quote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Gallery-Token': token  // Server derives userId from this token
+                    },
+                    body: JSON.stringify({
+                        productUID,
+                        attributeUIDs,
+                        quantity
+                        // userId removed - now derived server-side from gallery token
+                    })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`Quote request failed: ${response.status}`);
+                }
+                
+                const quote = await response.json();
+                console.log('✅ Simple quote received:', quote);
+                
+                // Display simple total price
+                document.getElementById('priceAmount').textContent = `$${quote.totalPrice}`;
+                
+                // Store quote for cart/checkout
+                currentSettings.quote = quote;
+                
+            } catch (error) {
+                console.error('❌ Error getting price quote:', error);
+                // Fallback to a reasonable default
+                document.getElementById('priceAmount').textContent = '$19.99';
             }
-            
-            document.getElementById('priceAmount').textContent = `$${price.toFixed(2)}`;
         }
         
         // Show loading state for products
@@ -1859,16 +1884,12 @@
                         <h3 class="${titleClass}">${category.displayName}</h3>
                         <div class="${gridClass}" data-category-key="${category.categoryKey}">
                             ${category.options.map(option => {
-                                const priceText = option.price > 0 ? `+$${option.price.toFixed(2)}` : 
-                                                option.priceModifier !== 0 ? (option.priceModifier > 0 ? `+$${option.priceModifier.toFixed(2)}` : `$${option.priceModifier.toFixed(2)}`) : '';
-                                
                                 return `
                                     <div class="attribute-option ${option.isDefault ? 'selected' : ''} ${!option.available ? 'unavailable' : ''}" 
                                          data-attribute-uid="${option.attributeUID}" 
                                          data-category="${category.categoryKey}"
                                          data-price="${option.price || option.priceModifier || 0}">
                                         <div class="option-name">${option.name}</div>
-                                        ${priceText ? `<div class="option-price">${priceText}</div>` : ''}
                                         ${option.description ? `<div class="option-description">${option.description}</div>` : ''}
                                     </div>
                                 `;
@@ -1901,7 +1922,6 @@
                             </div>
                             <div class="attribute-option" data-category="wrap-type" data-value="economy" data-price="-5">
                                 <div class="option-name">1-1/2" Economy Gallery Wrap</div>
-                                <div class="option-price">-$5.00</div>
                                 <div class="option-description">Budget-friendly option</div>
                             </div>
                         </div>

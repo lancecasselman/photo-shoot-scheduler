@@ -590,13 +590,11 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-// Gallery access middleware for client print ordering (no user account needed)
+// SECURE gallery access middleware - headers only (prevents token leakage)
 const requireGalleryAccess = async (req, res, next) => {
     try {
-        // Check for gallery access token in header, query, or body
-        const accessToken = req.headers['x-gallery-token'] || 
-                          req.query.gallery_token || 
-                          req.body.gallery_token;
+        // SECURITY: Only accept gallery tokens from secure headers (no query/body leakage)
+        const accessToken = req.headers['x-gallery-token'];
         
         if (!accessToken) {
             return res.status(401).json({ 
@@ -2555,6 +2553,184 @@ router.get('/secure/:token', async (req, res) => {
     } catch (error) {
         console.error('❌ Secure download error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// SIMPLIFIED PRICING SYSTEM
+// SECURE: Calculate vendor cost using only server-side catalog data (no client price tampering)
+async function calculateVendorCost(productUID, attributeUIDs = [], quantity = 1) {
+    try {
+        console.log('🔒 SECURE vendor cost calculation for:', { productUID, attributeUIDs, quantity });
+        
+        const catalog = await getWHCCCatalog();
+        
+        // Find the product in WHCC catalog using UID
+        const whccProduct = catalog.find(p => 
+            p.productUID === productUID || 
+            p.id === productUID ||
+            p.ProductUID === productUID
+        );
+        
+        if (!whccProduct) {
+            console.warn('⚠️ Product not found in WHCC catalog:', productUID);
+            throw new Error(`Product ${productUID} not found in WHCC catalog`);
+        }
+        
+        // Start with base product price (WHCC wholesale cost)
+        let totalVendorCost = parseFloat(whccProduct.price || whccProduct.Price || 0);
+        console.log(`📦 Base product cost (WHCC wholesale): $${totalVendorCost}`);
+        
+        // SECURE & STRICT: Look up attribute costs from server catalog - FAIL on unknown UIDs
+        if (attributeUIDs && attributeUIDs.length > 0) {
+            for (const attributeUID of attributeUIDs) {
+                let attributeFound = false;
+                let attributeCost = 0;
+                
+                // Try to find attribute in product's attribute catalog
+                if (whccProduct.attributes && Array.isArray(whccProduct.attributes)) {
+                    const attribute = whccProduct.attributes.find(a => 
+                        a.attributeUID === attributeUID || 
+                        a.uid === attributeUID ||
+                        a.id === attributeUID
+                    );
+                    
+                    if (attribute) {
+                        attributeCost = parseFloat(attribute.price || attribute.cost || 0);
+                        attributeFound = true;
+                        console.log(`🔧 Added secure attribute "${attribute.name || attributeUID}": +$${attributeCost}`);
+                    }
+                }
+                
+                // Alternative: Look in options array if not found in attributes
+                if (!attributeFound && whccProduct.options) {
+                    const option = whccProduct.options.find(o => 
+                        o.attributeUID === attributeUID || 
+                        o.uid === attributeUID ||
+                        o.id === attributeUID
+                    );
+                    
+                    if (option) {
+                        attributeCost = parseFloat(option.price || option.cost || 0);
+                        attributeFound = true;
+                        console.log(`🔧 Added secure option "${option.name || attributeUID}": +$${attributeCost}`);
+                    }
+                }
+                
+                // STRICT SECURITY: Fail if attribute UID is unknown (prevents underpricing)
+                if (!attributeFound) {
+                    console.error(`❌ SECURITY: Unknown attribute UID ${attributeUID} for product ${productUID}`);
+                    throw new Error(`Invalid attribute UID: ${attributeUID}. This attribute is not available for product ${productUID}.`);
+                }
+                
+                totalVendorCost += attributeCost;
+            }
+        }
+        
+        // Apply quantity
+        totalVendorCost *= quantity;
+        
+        console.log(`✅ SECURE total vendor cost: $${totalVendorCost.toFixed(2)} (qty: ${quantity})`);
+        return totalVendorCost;
+        
+    } catch (error) {
+        console.error('❌ Error in secure vendor cost calculation:', error);
+        throw error;
+    }
+}
+
+
+// SECURE quote endpoint with authentication - no client userId tampering possible
+router.post('/quote', requireGalleryAccess, async (req, res) => {
+    try {
+        console.log('🔒 SECURE pricing quote request (authenticated):', req.body);
+        
+        const { productUID, attributeUIDs = [], quantity = 1 } = req.body;
+        // SECURITY: userId is now derived server-side from authenticated gallery token
+        const userId = req.galleryUserId;
+        
+        // Input validation
+        if (!productUID) {
+            return res.status(400).json({ error: 'Product UID is required' });
+        }
+        
+        // SECURITY: Validate quantity to prevent misuse
+        const quantityNum = parseInt(quantity);
+        if (!Number.isInteger(quantityNum) || quantityNum < 1 || quantityNum > 100) {
+            return res.status(400).json({ 
+                error: 'Invalid quantity', 
+                message: 'Quantity must be a whole number between 1 and 100' 
+            });
+        }
+        
+        console.log(`🔐 Using server-derived userId: ${userId} (cannot be tampered by client)`);
+        
+        // SECURE: Calculate vendor cost using only server catalog (no client price tampering)
+        const vendorCost = await calculateVendorCost(productUID, attributeUIDs, quantity);
+        
+        // Apply photographer markup and minimum price (same logic as existing system)
+        let finalPrice = vendorCost;
+        let markupApplied = DEFAULT_PRINT_MARKUP_PERCENTAGE;
+        let minPriceApplied = false;
+        
+        if (userId) {
+            try {
+                const settingsResult = await db.select({
+                    printMarkupPercentage: photoForSaleSettings.printMarkupPercentage,
+                    minPrintPrice: photoForSaleSettings.minPrintPrice
+                })
+                .from(photoForSaleSettings)
+                .where(and(
+                    eq(photoForSaleSettings.userId, userId),
+                    eq(photoForSaleSettings.isActive, true)
+                ))
+                .limit(1);
+                
+                if (settingsResult.length > 0) {
+                    const settings = settingsResult[0];
+                    const mpRaw = settings.printMarkupPercentage;
+                    const minRaw = settings.minPrintPrice;
+                    const mpParsed = (mpRaw === null || mpRaw === '') ? NaN : parseFloat(mpRaw);
+                    const minParsed = (minRaw === null || minRaw === '') ? NaN : parseFloat(minRaw);
+                    markupApplied = Number.isFinite(mpParsed) ? mpParsed : DEFAULT_PRINT_MARKUP_PERCENTAGE;
+                    const minPrice = Number.isFinite(minParsed) ? minParsed : DEFAULT_MIN_PRINT_PRICE;
+                    
+                    finalPrice = vendorCost * (1 + markupApplied / 100);
+                    if (finalPrice < minPrice) {
+                        finalPrice = minPrice;
+                        minPriceApplied = true;
+                    }
+                } else {
+                    finalPrice = vendorCost * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100);
+                    finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE);
+                    if (finalPrice === DEFAULT_MIN_PRINT_PRICE) minPriceApplied = true;
+                }
+            } catch (dbError) {
+                console.warn('⚠️ Could not fetch user pricing settings, using defaults:', dbError.message);
+                finalPrice = vendorCost * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100);
+                finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE);
+                if (finalPrice === DEFAULT_MIN_PRINT_PRICE) minPriceApplied = true;
+            }
+        } else {
+            finalPrice = vendorCost * (1 + DEFAULT_PRINT_MARKUP_PERCENTAGE / 100);
+            finalPrice = Math.max(finalPrice, DEFAULT_MIN_PRINT_PRICE);
+            if (finalPrice === DEFAULT_MIN_PRINT_PRICE) minPriceApplied = true;
+        }
+        
+        console.log(`💰 Simple quote complete: $${vendorCost.toFixed(2)} → $${finalPrice.toFixed(2)} (${markupApplied}% markup)`);
+        
+        // Return simple total price response
+        res.json({
+            totalPrice: parseFloat(finalPrice.toFixed(2)),
+            currency: 'USD',
+            vendorCost: parseFloat(vendorCost.toFixed(2)),
+            markupPercent: markupApplied,
+            minPriceApplied,
+            quantity
+        });
+        
+    } catch (error) {
+        console.error('❌ Quote calculation error:', error);
+        res.status(500).json({ error: 'Failed to calculate quote' });
     }
 });
 
