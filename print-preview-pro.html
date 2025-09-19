@@ -893,7 +893,7 @@
         async function fetchWHCCProducts() {
             try {
                 console.log('Fetching WHCC products from API...');
-                const response = await fetch('/api/whcc/catalog');
+                const response = await fetch('/api/print/products');
                 
                 if (!response.ok) {
                     throw new Error(`Failed to fetch products: ${response.status}`);
