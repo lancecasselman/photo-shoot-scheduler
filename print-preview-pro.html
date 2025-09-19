@@ -3279,56 +3279,24 @@
             const productListHTML = paginatedProducts.map((product, index) => {
                 const actualIndex = startIndex + index;
                 
-                // Display WHCC product example image if available
-                const productImage = product.thumbnail || product.exampleImage || product.productImage;
-                const imageHTML = productImage ? `
-                    <div class="product-image" style="
-                        width: 60px;
-                        height: 60px;
-                        background-image: url('${productImage}');
-                        background-size: cover;
-                        background-position: center;
-                        background-color: #f8fafc;
-                        border-radius: 6px;
-                        border: 1px solid #e2e8f0;
-                        flex-shrink: 0;
-                        margin-right: 12px;
-                    "></div>
-                ` : `
-                    <div class="product-image" style="
-                        width: 60px;
-                        height: 60px;
-                        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-                        border-radius: 6px;
-                        border: 1px solid #e2e8f0;
-                        flex-shrink: 0;
-                        margin-right: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #64748b;
-                        font-size: 12px;
-                        text-align: center;
-                        line-height: 1.2;
-                    ">No Image</div>
-                `;
+                // Clean text-only display - no images or placeholders
                 
                 return `
                     <div class="product-item" data-product-index="${actualIndex}" onclick="selectProduct(${actualIndex})" style="
-                        display: flex;
-                        align-items: center;
-                        padding: 12px;
+                        padding: 16px 20px;
                         border-bottom: 1px solid #e2e8f0;
                         cursor: pointer;
-                        transition: all 0.2s;
-                    ">
-                        ${imageHTML}
-                        <div class="product-info" style="flex: 1;">
-                            <div class="product-name" style="font-weight: 600; color: #1a202c; margin-bottom: 4px;">${product.name}</div>
-                            <div class="product-details" style="font-size: 12px; color: #64748b;">
+                        transition: all 0.2s ease;
+                        background: white;
+                    " onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='white'">
+                        <div class="product-name" style="font-weight: 600; color: #1a202c; margin-bottom: 6px; font-size: 15px;">${product.name}</div>
+                        <div class="product-details" style="font-size: 13px; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap;">
+                            <span style="display: flex; align-items: center;">
+                                <span style="color: #3b82f6; margin-right: 4px;">📐</span>
                                 ${product.sizes?.length || 0} sizes available
-                                ${product.category ? ` • ${product.category}` : ''}
-                            </div>
+                            </span>
+                            ${product.category ? `<span style="display: flex; align-items: center;"><span style="color: #8b5cf6; margin-right: 4px;">🏷️</span>${product.category}</span>` : ''}
+                            ${product.sizes && product.sizes.length > 0 ? `<span style="display: flex; align-items: center;"><span style="color: #10b981; margin-right: 4px;">📏</span>${product.sizes[0]} ${product.sizes.length > 1 ? `+${product.sizes.length - 1} more` : ''}</span>` : ''}
                         </div>
                     </div>
                 `;
