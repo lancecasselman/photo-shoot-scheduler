@@ -1528,8 +1528,7 @@
             // Update aspect ratio text
             document.getElementById('cropRatio').textContent = `${width}:${height} aspect ratio`;
             
-            // Store crop area data for interaction
-            const cropCanvas = document.getElementById('cropPreview');
+            // Store crop area data for interaction (reuse existing cropCanvas variable)
             if (cropCanvas) {
                 cropCanvas.cropData = {
                     x: cropX, y: cropY, 
