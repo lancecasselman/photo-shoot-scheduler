@@ -902,91 +902,6 @@ process.on('uncaughtException', (error) => {
 // This includes compression, body parsers, and any middleware that reads the body
 // ============================================================================
 
-// WHCC webhook for order status updates (BEFORE body parsing)
-const WHCCCoreService = require('./server/whcc-core-service');
-const whccCoreForWebhook = new WHCCCoreService();
-
-app.post('/api/whcc/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    console.log('🔔 WHCC Webhook: Received webhook...');
-    
-    // Get signature from headers
-    const signature = req.get('WHCC-Signature') || req.get('X-WHCC-Signature');
-    
-    if (!signature) {
-      console.log('❌ WHCC Webhook: Missing signature header');
-      return res.status(401).json({ error: 'Missing signature header' });
-    }
-    
-    // CRITICAL SECURITY: Verify webhook signature using OAS secret
-    const rawBody = req.body.toString('utf8');
-    const webhookSecret = process.env.OAS_CONSUMER_SECRET;
-    
-    if (!webhookSecret) {
-      console.error('🚨 SECURITY ALERT: OAS_CONSUMER_SECRET not configured for webhook verification!');
-      return res.status(500).json({ error: 'Webhook verification not configured' });
-    }
-    
-    const isValid = whccCoreForWebhook.verifyWebhookSignature(rawBody, signature, webhookSecret);
-    
-    if (!isValid) {
-      console.error('🚨 SECURITY ALERT: WHCC webhook signature verification FAILED');
-      console.error('- Possible webhook forgery attempt');
-      return res.status(401).json({ error: 'Invalid webhook signature' });
-    }
-    
-    console.log('✅ WHCC Webhook: Signature verified successfully');
-    
-    // Parse webhook payload
-    let webhookData;
-    try {
-      webhookData = JSON.parse(rawBody);
-    } catch (parseError) {
-      console.error('❌ WHCC Webhook: Invalid JSON payload');
-      return res.status(400).json({ error: 'Invalid JSON payload' });
-    }
-    
-    console.log('✅ WHCC Webhook: Signature verified, processing event...');
-    console.log('📦 WHCC Webhook Event:', {
-      type: webhookData.EventType || webhookData.event_type || 'unknown',
-      confirmationId: webhookData.ConfirmationID || webhookData.confirmation_id,
-      status: webhookData.Status || webhookData.status
-    });
-    
-    // Process webhook using shared WHCC Core Service instance
-    const whccCore = whccCoreForWebhook; // Reuse existing instance
-    
-    const updateResult = await whccCore.updateOrderStatus({
-      confirmationId: webhookData.ConfirmationID || webhookData.confirmation_id,
-      status: webhookData.Status || webhookData.status,
-      type: webhookData.EventType || webhookData.event_type || 'unknown'
-    });
-    
-    if (updateResult.success) {
-      console.log(`✅ WHCC Webhook: Order ${updateResult.orderId} status updated to ${updateResult.newStatus}`);
-    } else {
-      console.error(`❌ WHCC Webhook: Failed to update order status - ${updateResult.error}`);
-    }
-    
-    // Process webhook based on event type
-    if (webhookData.EventType === 'OrderStatusChanged' || webhookData.event_type === 'order.status.changed') {
-      console.log(`📋 WHCC Webhook: Order status update - ${webhookData.ConfirmationID}: ${webhookData.Status}`);
-    }
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Webhook processed successfully' 
-    });
-    
-  } catch (error) {
-    console.error('❌ WHCC Webhook: Processing error:', error.message);
-    res.status(500).json({ 
-      success: false,
-      error: 'Webhook processing failed',
-      details: error.message 
-    });
-  }
-});
 
 // Main Stripe webhook for payments and subscriptions
 app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
@@ -2676,18 +2591,11 @@ const createBookingAgreementRoutes = require('./server/booking-agreements-routes
 const { initializeTemplates } = require('./server/booking-agreement-templates');
 app.use('/api/booking', createBookingAgreementRoutes(pool));
 
-// Photo Sales API routes for WHCC print integration
-const photoSalesRoutes = require('./server/photo-sales-routes');
-app.use('/api/print', photoSalesRoutes);
 
 // Gallery Print API routes - Separate endpoint to avoid auth conflicts
 const galleryPrintRoutes = require('./server/gallery-print-routes');
 app.use('/api/gallery-print', galleryPrintRoutes);
 
-// WHCC API routes - Editor-driven print ordering
-const whccApiRoutes = require('./server/whcc-api-routes');
-whccApiRoutes.setAuth(isAuthenticated); // Pass authentication middleware
-app.use('/api/whcc', whccApiRoutes);
 // Initialize templates on startup (non-blocking)
 (async () => {
     try {
@@ -6107,32 +6015,8 @@ app.post('/api/clients/auto-populate', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== PRINT SERVICE API ====================
 
-// Initialize print service
-const WHCCPrintService = require('./server/whcc-rebuilt.js');
-const printService = new WHCCPrintService();
 
-// Get WHCC product catalog
-app.get('/api/whcc/catalog', async (req, res) => {
-    try {
-        console.log('📦 Fetching WHCC product catalog...');
-        const products = await printService.getProducts();
-        res.json({
-            success: true,
-            products: products,
-            count: products.length,
-            environment: process.env.WHCC_ENV || 'sandbox'
-        });
-    } catch (error) {
-        console.error('❌ Error fetching WHCC catalog:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            message: 'Using fallback catalog due to configuration'
-        });
-    }
-});
 
 // Test print service connection
 app.get('/api/print/test', async (req, res) => {
@@ -15491,47 +15375,6 @@ async function startServer() {
     // Start server first, then initialize database in background
     ensureStaticSitesDirectory();
 
-    // WHCC Environment Validation - Critical for Production
-    function validateWhccEnvironment() {
-        const requiredVars = {
-            'OAS_CONSUMER_KEY': process.env.OAS_CONSUMER_KEY,
-            'OAS_CONSUMER_SECRET': process.env.OAS_CONSUMER_SECRET,
-            'EDITOR_API_KEY_ID': process.env.EDITOR_API_KEY_ID,
-            'EDITOR_API_KEY_SECRET': process.env.EDITOR_API_KEY_SECRET
-        };
-        
-        const optionalVars = {
-            'WHCC_WEBHOOK_SECRET': process.env.WHCC_WEBHOOK_SECRET,
-            'WHCC_ENV': process.env.WHCC_ENV || 'production',
-            'OAS_API_URL': process.env.OAS_API_URL
-        };
-        
-        // Check required variables
-        const missingRequired = Object.entries(requiredVars)
-            .filter(([key, value]) => !value)
-            .map(([key]) => key);
-        
-        if (missingRequired.length > 0) {
-            console.warn('⚠️ WHCC: Missing required environment variables:');
-            missingRequired.forEach(key => console.warn(`  - ${key}`));
-            console.warn('⚠️ WHCC integration disabled - server will continue without print features');
-            console.warn('⚠️ Add these variables to enable WHCC print integration');
-            // Don't exit in production - allow server to start without WHCC
-            return false; // Return false to indicate WHCC is disabled
-        } else {
-            console.log('✅ WHCC environment variables: All required variables configured');
-            return true; // Return true to indicate WHCC is enabled
-        }
-        
-        // Log optional variable status
-        console.log('ℹ️ WHCC configuration:');
-        console.log(`  - Environment: ${optionalVars.WHCC_ENV}`);
-        console.log(`  - Webhook secret: ${optionalVars.WHCC_WEBHOOK_SECRET ? 'CONFIGURED' : 'NOT SET (signatures disabled)'}`);
-        console.log(`  - API URL override: ${optionalVars.OAS_API_URL || 'Using default'}`);
-        
-        return missingRequired.length === 0;
-    }
-    
     // Initialize notification services with error handling
     try {
         initializeNotificationServices();
@@ -15539,12 +15382,6 @@ async function startServer() {
     } catch (error) {
         console.warn('⚠️ Notification services failed to initialize:', error.message);
         console.warn('⚠️ Server will continue without notification features');
-    }
-    
-    // Validate WHCC environment configuration (non-blocking)
-    const whccEnabled = validateWhccEnvironment();
-    if (!whccEnabled) {
-        console.log('ℹ️ WHCC: Integration disabled - continuing without print features');
     }
 
     // Start automated payment scheduler with error handling
@@ -15660,9 +15497,6 @@ async function startServer() {
         }
     });
 
-    // WHCC Integration: ENABLED
-    // The WHCC print service integration is active and ready for order processing
-    console.log('✅ WHCC Integration: Enabled - ready for sandbox order processing');
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);

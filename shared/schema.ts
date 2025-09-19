@@ -520,11 +520,8 @@ export const printOrders = pgTable("print_orders", {
   clientEmail: varchar("client_email"),
   clientName: varchar("client_name"),
   orderStatus: varchar("order_status").default("pending"), // pending, processing, shipped, delivered, cancelled
-  status: varchar("status").default("pending"), // WHCC status
-  whccOrderId: varchar("whcc_order_id"), // WHCC Order ID
   oasOrderId: varchar("oas_order_id"), // Order ID from OAS API (legacy)
   editorProjectId: varchar("editor_project_id"), // Project ID from Editor API
-  reference: varchar("reference"), // Our reference number for WHCC
   items: jsonb("items").default([]), // Array of order items with product details
   customerInfo: jsonb("customer_info"), // Customer details object
   shippingInfo: jsonb("shipping_info"), // Shipping details object
@@ -581,27 +578,6 @@ export const printCarts = pgTable("print_carts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// WHCC Editor Sessions table for tracking print project customization
-export const editorSessions = pgTable("editor_sessions", {
-  id: varchar("id").primaryKey().notNull(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  sessionId: varchar("session_id"), // Photography session ID (optional)
-  projectId: varchar("project_id").notNull(), // WHCC Editor Project ID
-  projectUID: varchar("project_uid"), // WHCC Project UID (after completion)
-  productUID: varchar("product_uid").notNull(), // WHCC Product UID
-  productNodeUID: varchar("product_node_uid"), // WHCC Product Node UID
-  editorUrl: varchar("editor_url"), // WHCC Editor URL
-  imageUrl: varchar("image_url").notNull(), // Source image URL
-  status: varchar("status").notNull().default("pending"), // pending, in_progress, completed, failed
-  attributeUIDs: jsonb("attribute_uids").default({}), // Selected product attributes
-  finalImageUrl: varchar("final_image_url"), // Final customized image URL
-  completedAt: timestamp("completed_at"),
-  expiresAt: timestamp("expires_at"),
-  callbackData: jsonb("callback_data").default({}), // Webhook callback data
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Photographer Clients type exports
 export type InsertPhotographerClient = typeof photographerClients.$inferInsert;
@@ -614,8 +590,6 @@ export type InsertPrintProduct = typeof printProducts.$inferInsert;
 export type PrintProduct = typeof printProducts.$inferSelect;
 export type InsertPrintCart = typeof printCarts.$inferInsert;
 export type PrintCart = typeof printCarts.$inferSelect;
-export type InsertEditorSession = typeof editorSessions.$inferInsert;
-export type EditorSession = typeof editorSessions.$inferSelect;
 
 // Community type exports
 export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;
@@ -661,9 +635,9 @@ export const photoForSaleSettings = pgTable("photo_for_sale_settings", {
   allowPrints: boolean("allow_prints").default(true),
   allowDigital: boolean("allow_digital").default(true),
   digitalPrice: decimal("digital_price", { precision: 10, scale: 2 }).notNull(),
-  printMarkupPercentage: decimal("print_markup_percentage", { precision: 5, scale: 2 }).default("25.00"), // Markup over WHCC base price
+  printMarkupPercentage: decimal("print_markup_percentage", { precision: 5, scale: 2 }).default("25.00"),
   minPrintPrice: decimal("min_print_price", { precision: 10, scale: 2 }).default("5.00"), // Minimum print price floor
-  featuredProducts: jsonb("featured_products").default([]), // Array of featured WHCC product IDs
+  featuredProducts: jsonb("featured_products").default([]),
   customPricing: jsonb("custom_pricing").default({}), // Custom per-product pricing overrides
   saleDescription: text("sale_description"), // Optional description for this sale item
   tags: jsonb("tags").default([]), // Tags for organization
@@ -672,101 +646,8 @@ export const photoForSaleSettings = pgTable("photo_for_sale_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// WHCC Editor Orders table for editor-driven print ordering
-export const whccOrders = pgTable("whcc_orders", {
-  id: varchar("id").primaryKey().notNull(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  sessionId: varchar("session_id").references(() => photographySessions.id), // Optional - for gallery orders
-  galleryToken: varchar("gallery_token"), // For client gallery orders
-  
-  // WHCC Integration Fields
-  confirmationId: varchar("confirmation_id").unique(), // WHCC ConfirmationID from order import
-  whccOrderId: varchar("whcc_order_id"), // WHCC OrderID from order submission
-  whccStatus: varchar("whcc_status").default("draft"), // WHCC order status
-  
-  // Order Details
-  orderId: varchar("order_id").notNull(), // Our internal order reference
-  orderReference: varchar("order_reference"), // Human-readable reference
-  instructions: text("instructions").default(""),
-  
-  // Customer Information
-  customerInfo: jsonb("customer_info").notNull(), // { firstName, lastName, email, phone }
-  shippingAddress: jsonb("shipping_address").notNull(), // WHCC shipping address format
-  studioAddress: jsonb("studio_address"), // Ship-from address (photographer)
-  
-  // Pricing
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default("0.00"),
-  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0.00"),
-  tax: decimal("tax", { precision: 10, scale: 2 }).default("0.00"),
-  total: decimal("total", { precision: 10, scale: 2 }).default("0.00"),
-  
-  // Status Tracking
-  orderStatus: varchar("order_status").default("pending"), // pending, imported, submitted, production, shipped, delivered, cancelled
-  paymentStatus: varchar("payment_status").default("pending"), // pending, paid, failed, refunded
-  
-  // WHCC Tracking
-  trackingNumber: varchar("tracking_number"),
-  shippingMethodUID: varchar("shipping_method_uid"), // WHCC ShipMethodUID
-  
-  // Processing Dates
-  importedAt: timestamp("imported_at"), // When order was imported to WHCC
-  submittedAt: timestamp("submitted_at"), // When order was submitted for production
-  productionDate: timestamp("production_date"), // WHCC production date
-  shipDate: timestamp("ship_date"), // WHCC ship date
-  estimatedDelivery: timestamp("estimated_delivery"), // WHCC estimated delivery
-  deliveredAt: timestamp("delivered_at"), // Actual delivery date
-  
-  // Metadata
-  source: varchar("source").default("editor"), // editor, gallery, manual
-  metadata: jsonb("metadata").default({}), // Additional order data
-  webhookEvents: jsonb("webhook_events").default([]), // WHCC webhook event log
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// WHCC Order Items table for individual products in orders
-export const whccOrderItems = pgTable("whcc_order_items", {
-  id: varchar("id").primaryKey().notNull(),
-  orderId: varchar("order_id").notNull().references(() => whccOrders.id),
-  
-  // WHCC Product Information
-  productUID: varchar("product_uid").notNull(), // WHCC ProductUID
-  productNodeUID: varchar("product_node_uid").notNull(), // WHCC ProductNodeUID for size/variant
-  productName: varchar("product_name").notNull(),
-  productCategory: varchar("product_category"),
-  
-  // Product Attributes (size, paper, finish, etc.)
-  attributeSelections: jsonb("attribute_selections").notNull(), // [{ attributeUID, optionUID, name, value }]
-  
-  // Image and Crop Data
-  imageUrl: varchar("image_url").notNull(), // R2 signed URL for WHCC access
-  imageFilename: varchar("image_filename").notNull(),
-  imageHash: varchar("image_hash"), // For duplicate detection
-  cropData: jsonb("crop_data"), // { left, top, width, height } from editor
-  
-  // Quantity and Pricing
-  quantity: integer("quantity").default(1),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default("0.00"),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).default("0.00"),
-  
-  // Editor Data
-  editorProjectUID: varchar("editor_project_uid"), // WHCC EditorProjectUID if customized
-  autoRotate: boolean("auto_rotate").default(true),
-  printedFileName: varchar("printed_filename").default("print.jpg"),
-  
-  // Metadata
-  metadata: jsonb("metadata").default({}), // Additional item data
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 export type InsertAdminContentEdit = typeof adminContentEdits.$inferInsert;
 export type AdminContentEdit = typeof adminContentEdits.$inferSelect;
 export type InsertPhotoForSaleSetting = typeof photoForSaleSettings.$inferInsert;
 export type PhotoForSaleSetting = typeof photoForSaleSettings.$inferSelect;
-export type InsertWhccOrder = typeof whccOrders.$inferInsert;
-export type WhccOrder = typeof whccOrders.$inferSelect;
-export type InsertWhccOrderItem = typeof whccOrderItems.$inferInsert;
-export type WhccOrderItem = typeof whccOrderItems.$inferSelect;
