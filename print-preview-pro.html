@@ -1527,6 +1527,337 @@
             
             // Update aspect ratio text
             document.getElementById('cropRatio').textContent = `${width}:${height} aspect ratio`;
+            
+            // Store crop area data for interaction
+            const cropCanvas = document.getElementById('cropPreview');
+            if (cropCanvas) {
+                cropCanvas.cropData = {
+                    x: cropX, y: cropY, 
+                    width: cropWidth, height: cropHeight,
+                    handleSize: handleSize,
+                    imgX: imgX, imgY: imgY,
+                    imgDisplayWidth: imgDisplayWidth, imgDisplayHeight: imgDisplayHeight,
+                    printAspectRatio: printAspectRatio,
+                    scale: scale
+                };
+            }
+        }
+        
+        // Interactive crop handling variables
+        let isDragging = false;
+        let dragHandle = null;
+        let dragStartX = 0, dragStartY = 0;
+        let initialCropX = 0, initialCropY = 0;
+        
+        // Initialize interactive cropping
+        function initInteractiveCropping() {
+            const cropCanvas = document.getElementById('cropPreview');
+            if (!cropCanvas) return;
+            
+            // Mouse events
+            cropCanvas.addEventListener('mousedown', handleCropMouseDown);
+            cropCanvas.addEventListener('mousemove', handleCropMouseMove);
+            cropCanvas.addEventListener('mouseup', handleCropMouseUp);
+            cropCanvas.addEventListener('mouseleave', handleCropMouseUp);
+            
+            // Touch events for mobile
+            cropCanvas.addEventListener('touchstart', handleCropTouchStart);
+            cropCanvas.addEventListener('touchmove', handleCropTouchMove);
+            cropCanvas.addEventListener('touchend', handleCropTouchEnd);
+            
+            // Change cursor on hover
+            cropCanvas.style.cursor = 'crosshair';
+        }
+        
+        // Get mouse/touch position relative to canvas
+        function getCanvasPosition(e, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+        
+        // Check which handle (if any) is being clicked
+        function getClickedHandle(x, y, cropData) {
+            if (!cropData) return null;
+            
+            const { x: cropX, y: cropY, width: cropWidth, height: cropHeight, handleSize } = cropData;
+            const tolerance = handleSize;
+            
+            // Check each corner handle
+            const handles = [
+                { name: 'tl', x: cropX, y: cropY },                           // Top-left
+                { name: 'tr', x: cropX + cropWidth, y: cropY },               // Top-right  
+                { name: 'bl', x: cropX, y: cropY + cropHeight },              // Bottom-left
+                { name: 'br', x: cropX + cropWidth, y: cropY + cropHeight }   // Bottom-right
+            ];
+            
+            for (const handle of handles) {
+                if (Math.abs(x - handle.x) <= tolerance && Math.abs(y - handle.y) <= tolerance) {
+                    return handle.name;
+                }
+            }
+            
+            // Check if clicking inside crop area for panning
+            if (x >= cropX && x <= cropX + cropWidth && y >= cropY && y <= cropY + cropHeight) {
+                return 'pan';
+            }
+            
+            return null;
+        }
+        
+        // Mouse down handler
+        function handleCropMouseDown(e) {
+            e.preventDefault();
+            const cropCanvas = e.target;
+            const pos = getCanvasPosition(e, cropCanvas);
+            
+            if (!cropCanvas.cropData) return;
+            
+            const handle = getClickedHandle(pos.x, pos.y, cropCanvas.cropData);
+            if (handle) {
+                isDragging = true;
+                dragHandle = handle;
+                dragStartX = pos.x;
+                dragStartY = pos.y;
+                initialCropX = currentSettings.crop.x;
+                initialCropY = currentSettings.crop.y;
+                cropCanvas.style.cursor = handle === 'pan' ? 'move' : 'nw-resize';
+            }
+        }
+        
+        // Mouse move handler
+        function handleCropMouseMove(e) {
+            const cropCanvas = e.target;
+            const pos = getCanvasPosition(e, cropCanvas);
+            
+            if (!isDragging) {
+                // Update cursor based on hover
+                if (cropCanvas.cropData) {
+                    const handle = getClickedHandle(pos.x, pos.y, cropCanvas.cropData);
+                    cropCanvas.style.cursor = handle === 'pan' ? 'move' : handle ? 'nw-resize' : 'crosshair';
+                }
+                return;
+            }
+            
+            if (!cropCanvas.cropData) return;
+            
+            const deltaX = pos.x - dragStartX;
+            const deltaY = pos.y - dragStartY;
+            
+            updateCropFromDrag(deltaX, deltaY, dragHandle, cropCanvas.cropData);
+        }
+        
+        // Mouse up handler
+        function handleCropMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                dragHandle = null;
+                const cropCanvas = document.getElementById('cropPreview');
+                if (cropCanvas) {
+                    cropCanvas.style.cursor = 'crosshair';
+                }
+                
+                // Update main preview with new crop
+                updatePreview();
+            }
+        }
+        
+        // Touch event handlers
+        function handleCropTouchStart(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                handleCropMouseDown(e);
+            }
+        }
+        
+        function handleCropTouchMove(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                handleCropMouseMove(e);
+            }
+        }
+        
+        function handleCropTouchEnd(e) {
+            e.preventDefault();
+            handleCropMouseUp(e);
+        }
+        
+        // Update crop based on drag movement
+        function updateCropFromDrag(deltaX, deltaY, handle, cropData) {
+            if (!currentSettings.size || !loadedPrintImage) return;
+            
+            const { imgDisplayWidth, imgDisplayHeight, imgX, imgY, scale } = cropData;
+            const imgAspectRatio = loadedPrintImage.width / loadedPrintImage.height;
+            const [width, height] = currentSettings.size.split('x').map(Number);
+            const printAspectRatio = width / height;
+            
+            // Convert delta to image coordinates
+            const deltaImgX = deltaX / scale;
+            const deltaImgY = deltaY / scale;
+            
+            // Calculate maximum movement based on image/print aspect ratios
+            let maxMovementX = 0, maxMovementY = 0;
+            
+            if (imgAspectRatio > printAspectRatio) {
+                // Image wider than print - can move horizontally
+                const sourceWidth = loadedPrintImage.height * printAspectRatio;
+                maxMovementX = (loadedPrintImage.width - sourceWidth) / 2;
+            } else {
+                // Image taller than print - can move vertically  
+                const sourceHeight = loadedPrintImage.width / printAspectRatio;
+                maxMovementY = (loadedPrintImage.height - sourceHeight) / 2;
+            }
+            
+            // Handle different drag types
+            if (handle === 'pan') {
+                // Pan the entire crop area
+                if (maxMovementX > 0) {
+                    currentSettings.crop.x = Math.max(-100, Math.min(100, 
+                        initialCropX - (deltaImgX * 200 / maxMovementX)));
+                }
+                if (maxMovementY > 0) {
+                    currentSettings.crop.y = Math.max(-100, Math.min(100, 
+                        initialCropY - (deltaImgY * 200 / maxMovementY)));
+                }
+            } else {
+                // Handle corner dragging - for now, treat as panning
+                // Future enhancement: implement corner-specific resizing with aspect ratio lock
+                if (maxMovementX > 0) {
+                    currentSettings.crop.x = Math.max(-100, Math.min(100, 
+                        initialCropX - (deltaImgX * 200 / maxMovementX)));
+                }
+                if (maxMovementY > 0) {
+                    currentSettings.crop.y = Math.max(-100, Math.min(100, 
+                        initialCropY - (deltaImgY * 200 / maxMovementY)));
+                }
+            }
+            
+            // Update crop preview immediately with canvas wrap awareness
+            const wrapInfo = getCanvasWrapInfo(currentSettings.product);
+            if (wrapInfo && wrapInfo.isCanvas) {
+                updateCropPreviewWithCanvasWrap();
+            } else {
+                updateCropPreview();
+            }
+        }
+        
+        // Canvas wrap considerations for canvas products
+        function getCanvasWrapInfo(productName) {
+            const isCanvas = productName && (
+                productName.toLowerCase().includes('canvas') ||
+                productName.toLowerCase().includes('gallery wrap')
+            );
+            
+            if (!isCanvas) return null;
+            
+            // Canvas wrap loses approximately 1.5-2 inches on each side
+            const wrapAmount = 1.75; // inches lost to wrapping
+            return {
+                isCanvas: true,
+                wrapAmount: wrapAmount,
+                safeAreaRatio: 0.8 // 80% of image is safe from wrapping
+            };
+        }
+        
+        // Enhanced crop preview with canvas wrap indication
+        function updateCropPreviewWithCanvasWrap() {
+            updateCropPreview(); // Draw normal crop first
+            
+            const cropCanvas = document.getElementById('cropPreview');
+            if (!cropCanvas || !currentSettings.product) return;
+            
+            const wrapInfo = getCanvasWrapInfo(currentSettings.product);
+            if (!wrapInfo) return;
+            
+            const ctx = cropCanvas.getContext('2d');
+            const cropData = cropCanvas.cropData;
+            if (!cropData) return;
+            
+            const { x: cropX, y: cropY, width: cropWidth, height: cropHeight } = cropData;
+            
+            // Calculate safe area (area that won't be wrapped)
+            const safeMargin = cropWidth * (1 - wrapInfo.safeAreaRatio) / 2;
+            const safeX = cropX + safeMargin;
+            const safeY = cropY + safeMargin;
+            const safeWidth = cropWidth - (safeMargin * 2);
+            const safeHeight = cropHeight - (safeMargin * 2);
+            
+            // Draw wrap area indicator (red/yellow zones)
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.3)'; // Warning yellow
+            ctx.fillRect(cropX, cropY, cropWidth, cropHeight);
+            
+            // Draw safe area (green zone)
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.2)'; // Safe green
+            ctx.fillRect(safeX, safeY, safeWidth, safeHeight);
+            
+            // Draw safe area border
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(safeX, safeY, safeWidth, safeHeight);
+            ctx.setLineDash([]);
+            
+            // Add text labels
+            ctx.fillStyle = '#dc2626';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('WRAP AREA', cropX + cropWidth/2, cropY + 12);
+            
+            ctx.fillStyle = '#16a34a';
+            ctx.fillText('SAFE AREA', safeX + safeWidth/2, safeY + 12);
+        }
+        
+        // Format crop data for WHCC order submission
+        function getWHCCCropData() {
+            if (!currentSettings.size || !loadedPrintImage) {
+                return null;
+            }
+            
+            const [width, height] = currentSettings.size.split('x').map(Number);
+            const printAspectRatio = width / height;
+            const imgAspectRatio = loadedPrintImage.width / loadedPrintImage.height;
+            
+            // Calculate source crop area in actual image coordinates
+            let sourceX = 0, sourceY = 0, sourceWidth = loadedPrintImage.width, sourceHeight = loadedPrintImage.height;
+            
+            if (imgAspectRatio > printAspectRatio) {
+                // Image wider than print - crop width
+                sourceWidth = loadedPrintImage.height * printAspectRatio;
+                const maxOffset = loadedPrintImage.width - sourceWidth;
+                sourceX = (loadedPrintImage.width - sourceWidth) / 2 + (currentSettings.crop.x * maxOffset / 200);
+                sourceX = Math.max(0, Math.min(maxOffset, sourceX));
+            } else {
+                // Image taller than print - crop height
+                sourceHeight = loadedPrintImage.width / printAspectRatio;
+                const maxOffset = loadedPrintImage.height - sourceHeight;
+                sourceY = (loadedPrintImage.height - sourceHeight) / 2 + (currentSettings.crop.y * maxOffset / 200);
+                sourceY = Math.max(0, Math.min(maxOffset, sourceY));
+            }
+            
+            // Return crop data in WHCC expected format
+            return {
+                // Crop coordinates as percentages of original image
+                cropX: (sourceX / loadedPrintImage.width) * 100,
+                cropY: (sourceY / loadedPrintImage.height) * 100,
+                cropWidth: (sourceWidth / loadedPrintImage.width) * 100,
+                cropHeight: (sourceHeight / loadedPrintImage.height) * 100,
+                
+                // Original image dimensions for reference
+                originalWidth: loadedPrintImage.width,
+                originalHeight: loadedPrintImage.height,
+                
+                // Print dimensions and aspect ratio
+                printWidth: width,
+                printHeight: height,
+                printAspectRatio: printAspectRatio,
+                
+                // Canvas wrap information if applicable
+                canvasWrap: getCanvasWrapInfo(currentSettings.product)
+            };
         }
         
         // Load and draw mockup
@@ -1555,8 +1886,13 @@
                     await new Promise((resolve, reject) => {
                         loadedPrintImage.onload = () => {
                             resolve();
-                            // Update crop preview as soon as image loads
-                            updateCropPreview();
+                            // Update crop preview as soon as image loads with canvas wrap awareness
+                            const wrapInfo = getCanvasWrapInfo(currentSettings.product);
+                            if (wrapInfo && wrapInfo.isCanvas) {
+                                updateCropPreviewWithCanvasWrap();
+                            } else {
+                                updateCropPreview();
+                            }
                         };
                         loadedPrintImage.onerror = reject;
                         loadedPrintImage.src = photoUrl;
@@ -1726,7 +2062,14 @@
                 }
                 
                 updatePrice();
-                updateCropPreview();
+                
+                // Use canvas wrap aware crop preview for canvas products
+                const wrapInfo = getCanvasWrapInfo(currentSettings.product);
+                if (wrapInfo && wrapInfo.isCanvas) {
+                    updateCropPreviewWithCanvasWrap();
+                } else {
+                    updateCropPreview();
+                }
             } catch (error) {
                 console.error('Error updating preview:', error);
             } finally {
@@ -1748,6 +2091,9 @@
             
             // Fetch WHCC products from API
             await fetchWHCCProducts();
+            
+            // Initialize interactive cropping
+            initInteractiveCropping();
             
             // Hide loading state
             hideLoadingState();
