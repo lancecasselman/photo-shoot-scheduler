@@ -15261,6 +15261,11 @@ app.get('/print-preview.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'print-preview.html'));
 });
 
+// Serve WHCC print preview pro page (no authentication required for gallery clients)
+app.get('/print-preview-pro.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'print-preview-pro.html'));
+});
+
 // Serve print checkout page (no authentication required for gallery clients)
 app.get('/print-checkout.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'print-checkout.html'));
