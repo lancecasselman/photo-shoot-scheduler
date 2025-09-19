@@ -26,13 +26,13 @@ const WHCC_PRODUCT_MAPPING = {
   'canvas-20x24': 'Canvas Print 20x24',
   'canvas-24x30': 'Canvas Print 24x30',
 
-  // Metal Prints - these might be in Gallery Wraps or Partner Photo Fulfillment
-  'metal-8x10': 'Photo Print 8x10 ',  // Fallback to photo prints
-  'metal-11x14': 'Photo Print 11x14',
-  'metal-16x20': 'Photo Print 16x20',
-  'metal-20x24': 'Photo Print 20x24',
-  'metal-24x30': 'Photo Print 24x30',
-  'metal-30x40': 'Photo Print 30x40',
+  // Metal Prints - Map to actual WHCC Metal Print products
+  'metal-8x10': 'Metal Print 8x10',   // Actual metal print product
+  'metal-11x14': 'Metal Print 11x14', // Actual metal print product
+  'metal-16x20': 'Metal Print 16x20', // Actual metal print product
+  'metal-20x24': 'Metal Print 20x24', // Actual metal print product
+  'metal-24x30': 'Metal Print 24x30', // Actual metal print product
+  'metal-30x40': 'Metal Print 30x40', // Actual metal print product
 
   // Books
   'book-yearbook': 'Photo Print 2up Yearbook'

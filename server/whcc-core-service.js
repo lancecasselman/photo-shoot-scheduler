@@ -468,6 +468,9 @@ class WHCCCoreService {
       // Step 5: Get initial status
       const orderStatus = await this.getOrder(token, confirmationId);
       
+      // Step 6: Save order to database for tracking
+      const savedOrder = await this.saveOrderToDatabase(editorOrderData, confirmationId, submitResult.OrderID, orderStatus);
+      
       console.log('✅ WHCC Core: Editor order process completed successfully');
       
       return {
@@ -476,7 +479,8 @@ class WHCCCoreService {
         whccOrderId: submitResult.OrderID,
         status: orderStatus.Status || 'Submitted',
         trackingNumber: orderStatus.TrackingNumber || null,
-        orderReference: editorOrderData.reference || `Editor Order ${editorOrderData.orderId}`
+        orderReference: editorOrderData.reference || `Editor Order ${editorOrderData.orderId}`,
+        databaseOrderId: savedOrder?.id || null
       };
       
     } catch (error) {
@@ -632,6 +636,89 @@ class WHCCCoreService {
         error: error.message,
         confirmationId: webhookData?.confirmationId
       };
+    }
+  }
+
+  /**
+   * Save Order to Database for Tracking
+   * Saves order data to whcc_orders table for status tracking and management
+   */
+  async saveOrderToDatabase(editorOrderData, confirmationId, whccOrderId, orderStatus) {
+    try {
+      console.log('💾 WHCC Core: Saving order to database...');
+      
+      if (!this.db) {
+        console.warn('⚠️ WHCC Core: Database not initialized, cannot save order');
+        return null;
+      }
+
+      const { v4: uuidv4 } = require('uuid');
+      const orderId = uuidv4();
+
+      // Prepare order data for database
+      const orderData = {
+        id: orderId,
+        userId: editorOrderData.userId || null,
+        sessionId: editorOrderData.sessionId || null,
+        galleryToken: editorOrderData.galleryToken || null,
+        
+        // WHCC Integration Fields
+        confirmationId: confirmationId,
+        whccOrderId: whccOrderId,
+        whccStatus: orderStatus.Status || 'submitted',
+        
+        // Order Details
+        orderId: editorOrderData.orderId || orderId,
+        orderReference: editorOrderData.reference || `WHCC-${confirmationId}`,
+        instructions: editorOrderData.instructions || '',
+        
+        // Customer Information
+        customerInfo: editorOrderData.customerInfo,
+        shippingAddress: editorOrderData.shippingAddress,
+        studioAddress: editorOrderData.studioAddress || null,
+        
+        // Pricing
+        subtotal: editorOrderData.subtotal || '0.00',
+        shippingCost: editorOrderData.shippingCost || '0.00',
+        tax: editorOrderData.tax || '0.00',
+        total: editorOrderData.total || '0.00',
+        
+        // Status Tracking
+        orderStatus: 'submitted',
+        paymentStatus: 'pending',
+        
+        // WHCC Tracking
+        trackingNumber: orderStatus.TrackingNumber || null,
+        shippingMethodUID: editorOrderData.shippingMethodUID || null,
+        
+        // Processing Dates
+        importedAt: new Date(),
+        submittedAt: new Date(),
+        
+        // Metadata
+        source: 'editor',
+        metadata: { 
+          originalOrderData: editorOrderData,
+          whccResponse: orderStatus
+        },
+        webhookEvents: [], // Initialize empty webhook events array
+        
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Insert order into database
+      const [savedOrder] = await this.db
+        .insert(whccOrders)
+        .values(orderData)
+        .returning({ id: whccOrders.id, confirmationId: whccOrders.confirmationId });
+
+      console.log(`✅ WHCC Core: Order saved to database with ID ${savedOrder.id}`);
+      return savedOrder;
+      
+    } catch (error) {
+      console.error('❌ WHCC Core: Failed to save order to database:', error.message);
+      return null;
     }
   }
 
