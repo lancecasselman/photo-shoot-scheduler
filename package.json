@@ -18,8 +18,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.873.0",
-    "@aws-sdk/s3-request-presigner": "^3.872.0",
+    "@aws-sdk/client-s3": "^3.893.0",
+    "@aws-sdk/s3-request-presigner": "^3.893.0",
     "@google-cloud/firestore": "^7.11.3",
     "@google-cloud/storage": "^7.17.0",
     "@neondatabase/serverless": "^1.0.1",
