@@ -2527,56 +2527,7 @@
                 return productWithMostAttributes;
             }
 
-            // Product dropdown - Progressive disclosure
-            document.getElementById('productSelect').addEventListener('change', async function() {
-                if (!this.value) {
-                    // Hide subsequent sections if no product selected
-                    document.getElementById('sizeSection').style.display = 'none';
-                    document.getElementById('frameSection').style.display = 'none';
-                    currentSettings.product = null;
-                    currentSettings.size = null;
-                    currentSettings.attributes = {};
-                    
-                    // Clear attribute sections
-                    const attributeSections = document.getElementById('attributeSections');
-                    attributeSections.innerHTML = `
-                        <div class="section">
-                            <div class="section-title" style="color: #64748b; font-style: italic;">
-                                Select a product to see available options
-                            </div>
-                        </div>
-                    `;
-                    
-                    await updatePreview();
-                    return;
-                }
-                
-                currentSettings.product = this.value;
-                
-                // Show size section when product is selected
-                document.getElementById('sizeSection').style.display = 'block';
-                
-                // Clear previous attribute selections
-                currentSettings.attributes = {};
-                
-                // Get WHCC product data for this category and render attributes
-                const productData = getProductDataByCategory(currentSettings.product);
-                renderAttributeSections(productData);
-                
-                // Handle frame section visibility (keep existing logic for framed products)
-                const frameSection = document.getElementById('frameSection');
-                if (this.value === 'framed') {
-                    frameSection.style.display = 'block';
-                } else {
-                    frameSection.style.display = 'none';
-                    currentSettings.frame = 'none';
-                }
-                
-                // Update available sizes for this product
-                updateAvailableSizes();
-                
-                await updatePreview();
-            });
+            // Product selection is now handled through clickable product items in selectProduct()
             
             // Paper selector
             document.querySelectorAll('.paper-option').forEach(option => {
