@@ -5,12 +5,12 @@
 
 // Mapping between curated product names and real WHCC product names from OAS API
 const WHCC_PRODUCT_MAPPING = {
-  // Albums - exact names from OAS API logs
-  'album-8x8': 'Album 8x8',
-  'album-10x10': 'Album 10x10', 
-  'album-11x14h': 'Album 11x14H',
-  'album-11x14v': 'Album 11x14V',
-  'album-12x12': 'Album 12x12',
+  // Albums - exact names from WHCC catalog (size first, not "Album" first)
+  'album-8x8': '8x8 Album',
+  'album-10x10': '10x10 Album', 
+  'album-11x14h': '11x14H Album',
+  'album-11x14v': '11x14V Album',
+  'album-12x12': '12x12 Album',
 
   // Photo Prints - exact names from OAS API logs
   'print-4x6': 'Photo Print 4x6',

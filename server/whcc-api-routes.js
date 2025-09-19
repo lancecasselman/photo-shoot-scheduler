@@ -54,15 +54,9 @@ router.setAuth = (authMiddleware) => {
 /**
  * GET /api/whcc/products
  * Get curated WHCC product catalog for editor
- * Requires authentication
+ * Public endpoint - no authentication required for browsing
  */
-router.get('/products', (req, res, next) => {
-  if (isAuthenticated) {
-    return isAuthenticated(req, res, next);
-  } else {
-    return res.status(401).json({ success: false, error: 'Authentication required' });
-  }
-}, async (req, res) => {
+router.get('/products', async (req, res) => {
   try {
     console.log('📦 WHCC API: Getting products for editor...');
     
