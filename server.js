@@ -9610,6 +9610,11 @@ app.get('/storefront', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'storefront.html'));
 });
 
+// Serve print preview page (uses gallery token authentication)
+app.get('/print-preview-pro.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'print-preview-pro.html'));
+});
+
 // Serve community dashboard page
 app.get('/community', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'community', 'community-dashboard.html'));
