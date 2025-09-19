@@ -227,6 +227,110 @@ router.get('/orders/:id', (req, res, next) => {
 // NOTE: Webhook route is handled directly in server.js BEFORE body parsing middleware
 
 /**
+ * POST /api/whcc/signed-urls
+ * Generate R2 signed URLs for WHCC-accessible image assets
+ * Converts gallery URLs to R2 signed URLs that WHCC can access
+ * Requires authentication and rate limiting for security
+ */
+router.post('/signed-urls', orderRateLimit, (req, res, next) => {
+  if (isAuthenticated) {
+    return isAuthenticated(req, res, next);
+  } else {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+}, async (req, res) => {
+  try {
+    console.log('🔗 WHCC API: Generating signed URLs for image assets...');
+    
+    const { imageUrls } = req.body;
+    
+    if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request',
+        details: 'imageUrls array is required'
+      });
+    }
+    
+    const signedUrls = [];
+    
+    for (const imageUrl of imageUrls) {
+      try {
+        // Extract proper R2 key from gallery URL pattern
+        let r2Key = null;
+        
+        // Parse different gallery URL patterns to preserve folder structure
+        if (imageUrl.includes('/r2/file/')) {
+          // Pattern: /r2/file/photographer-gallery/subfolder/image.jpg
+          const r2FileIndex = imageUrl.indexOf('/r2/file/');
+          r2Key = imageUrl.substring(r2FileIndex + '/r2/file/'.length);
+        } else if (imageUrl.includes('/file/')) {
+          // Pattern: /file/photographer-gallery/subfolder/image.jpg  
+          const fileIndex = imageUrl.indexOf('/file/');
+          r2Key = imageUrl.substring(fileIndex + '/file/'.length);
+        } else if (imageUrl.includes('/')) {
+          // Fallback: assume it's already an R2 key with folders
+          r2Key = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+        } else {
+          // Direct filename - assume root level
+          r2Key = imageUrl;
+        }
+        
+        // Remove query parameters if present
+        if (r2Key && r2Key.includes('?')) {
+          r2Key = r2Key.split('?')[0];
+        }
+        
+        // Validate R2 key
+        if (!r2Key || r2Key.trim() === '') {
+          throw new Error('Could not extract valid R2 key from URL');
+        }
+        
+        // Reject unsupported URL schemes
+        if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+          throw new Error('Blob and data URLs are not supported');
+        }
+        
+        // Generate 24-hour signed URL for WHCC access
+        const signedUrl = await whccCore.createSignedImageURL(r2Key, 24 * 60 * 60);
+        
+        signedUrls.push({
+          originalUrl: imageUrl,
+          signedUrl: signedUrl,
+          r2Key: r2Key,
+          expiresIn: 24 * 60 * 60
+        });
+        
+      } catch (error) {
+        console.warn(`⚠️ Failed to generate signed URL for ${imageUrl}:`, error.message);
+        signedUrls.push({
+          originalUrl: imageUrl,
+          signedUrl: null,
+          error: error.message
+        });
+      }
+    }
+    
+    console.log(`✅ WHCC API: Generated ${signedUrls.filter(u => u.signedUrl).length}/${imageUrls.length} signed URLs`);
+    
+    res.json({
+      success: true,
+      signedUrls,
+      count: signedUrls.length,
+      validCount: signedUrls.filter(u => u.signedUrl).length
+    });
+    
+  } catch (error) {
+    console.error('❌ WHCC API: Signed URL generation error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate signed URLs',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/whcc/status
  * Health check for WHCC integration
  */

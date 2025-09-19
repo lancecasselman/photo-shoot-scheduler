@@ -4263,14 +4263,69 @@
                 // Show loading state
                 const submitButton = document.querySelector('#customerForm button[type="submit"]');
                 const originalText = submitButton.textContent;
-                submitButton.textContent = 'Processing...';
+                submitButton.textContent = 'Processing Images...';
                 submitButton.disabled = true;
                 
                 // Submit to new WHCC orders endpoint with gallery token
                 const urlParams = new URLSearchParams(window.location.search);
                 const galleryToken = urlParams.get('token');
                 
-                // Transform data for new WHCC API format using real WHCC UIDs
+                // Step 1: Generate R2 signed URLs for WHCC access
+                console.log('🔗 Generating R2 signed URLs for WHCC access...');
+                const imageUrls = [...new Set(photos.map(photo => photo.url))]; // Unique URLs only
+                
+                let signedUrlMap = {};
+                try {
+                    const signedUrlResponse = await fetch('/api/whcc/signed-urls', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${galleryToken}`,
+                            'Gallery-Token': galleryToken || ''
+                        },
+                        body: JSON.stringify({ imageUrls })
+                    });
+                    
+                    if (!signedUrlResponse.ok) {
+                        if (signedUrlResponse.status === 401) {
+                            throw new Error('Authentication required - please log in');
+                        }
+                        throw new Error(`Failed to generate signed URLs: ${signedUrlResponse.status}`);
+                    }
+                    
+                    const signedUrlData = await signedUrlResponse.json();
+                    
+                    if (!signedUrlData.success) {
+                        throw new Error(signedUrlData.error || 'Failed to generate signed URLs');
+                    }
+                    
+                    // Create mapping from original URL to signed URL
+                    const failedUrls = [];
+                    signedUrlData.signedUrls.forEach(item => {
+                        if (item.signedUrl) {
+                            signedUrlMap[item.originalUrl] = item.signedUrl;
+                        } else {
+                            failedUrls.push(item.originalUrl);
+                        }
+                    });
+                    
+                    // Enforce all-or-nothing: block submission if any images failed to sign
+                    if (failedUrls.length > 0) {
+                        console.error('❌ Failed to generate signed URLs for images:', failedUrls);
+                        throw new Error(`Could not process ${failedUrls.length} image(s) for WHCC. All images must be accessible for order fulfillment.`);
+                    }
+                    
+                    console.log(`✅ Generated ${Object.keys(signedUrlMap).length}/${imageUrls.length} signed URLs for WHCC`);
+                    
+                } catch (signedUrlError) {
+                    console.error('❌ Failed to generate signed URLs:', signedUrlError);
+                    throw new Error(`Image processing failed: ${signedUrlError.message}`);
+                }
+                
+                // Update submit button
+                submitButton.textContent = 'Submitting Order...';
+                
+                // Step 2: Transform data for new WHCC API format using real WHCC UIDs and signed URLs
                 const orderItems = [];
                 photos.forEach(photo => {
                     photo.products.forEach(product => {
@@ -4293,12 +4348,19 @@
                             throw new Error(`Product ${product.productName || 'unknown'} is missing required AttributeUIDs for WHCC ordering`);
                         }
                         
+                        // Use signed URL for WHCC access
+                        const whccImageUrl = signedUrlMap[photo.url] || photo.url;
+                        
+                        if (!signedUrlMap[photo.url]) {
+                            console.warn(`⚠️ No signed URL available for ${photo.url}, using original URL`);
+                        }
+                        
                         orderItems.push({
                             productUID: productUID,
                             productNodeUID: productNodeUID,
                             // Use correct field name and ensure it's an array of UIDs
                             attributeUIDs: attributeUIDs,
-                            imageUrl: photo.url,
+                            imageUrl: whccImageUrl, // Use R2 signed URL for WHCC access
                             quantity: product.quantity || 1,
                             cropData: product.cropData || null
                         });
