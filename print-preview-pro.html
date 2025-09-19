@@ -2098,6 +2098,21 @@
             // Hide loading state
             hideLoadingState();
             
+            // Also hide main loading overlay if it's visible
+            const mainLoadingOverlay = document.getElementById('loadingOverlay');
+            if (mainLoadingOverlay) {
+                mainLoadingOverlay.style.display = 'none';
+            }
+            
+            // Ensure all buttons are enabled and responsive
+            const allButtons = document.querySelectorAll('button, .btn');
+            allButtons.forEach(button => {
+                button.disabled = false;
+                button.style.pointerEvents = 'auto';
+            });
+            
+            console.log('✅ Page initialization complete - all systems ready');
+            
             // Function to update available sizes based on product - ONLY USE WHCC DATA
             function updateAvailableSizes() {
                 const category = currentSettings.product;
