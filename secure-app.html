@@ -17997,10 +17997,22 @@ END:VCALENDAR`;
 
         // Open download controls modal
         window.openDownloadControls = async function(sessionId) {
+            console.log('🔍 Opening download controls for session:', sessionId);
             currentDownloadSessionId = sessionId;
             
+            // Find the modal element
+            const modal = document.getElementById('downloadControlsModal');
+            console.log('🔍 Modal element found:', modal);
+            
+            if (!modal) {
+                console.error('❌ Download controls modal not found in DOM!');
+                alert('Download controls modal not found. Please refresh the page and try again.');
+                return;
+            }
+            
             // Show modal
-            document.getElementById('downloadControlsModal').style.display = 'flex';
+            modal.style.display = 'flex';
+            console.log('✅ Modal should now be visible');
             
             // Load current settings
             await loadDownloadControlSettings(sessionId);
