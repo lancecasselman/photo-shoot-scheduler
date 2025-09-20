@@ -21,7 +21,7 @@ const { drizzle } = require('drizzle-orm/node-postgres');
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
-function createDownloadRoutes() {
+function createDownloadRoutes(isAuthenticated) {
   const router = express.Router();
   
   // Database connection for API routes
@@ -48,25 +48,8 @@ function createDownloadRoutes() {
     }
   });
 
-  // Authentication middleware for photographer-only routes
-  const requireAuth = (req, res, next) => {
-    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
-    
-    if (isAuthenticated && req.user && req.user.uid) {
-      return next();
-    }
-    
-    if (hasValidSession) {
-      req.user = req.session.user;
-      if (req.user.uid) {
-        return next();
-      }
-    }
-    
-    console.log('Download API Auth failed - no valid session');
-    return res.status(401).json({ error: 'Authentication required' });
-  };
+  // Use the same authentication middleware as the main server
+  const requireAuth = isAuthenticated;
 
   // Token validation middleware for public endpoints
   const requireValidToken = async (req, res, next) => {
@@ -184,11 +167,6 @@ function createDownloadRoutes() {
    */
   router.put('/sessions/:sessionId/policy', requireAuth, upload.single('logo'), async (req, res) => {
     try {
-      console.log('📋 PUT /sessions/:sessionId/policy - Request received');
-      console.log('Request body:', req.body);
-      console.log('Request file:', req.file ? 'File uploaded' : 'No file');
-      console.log('Session ID:', req.params.sessionId);
-      
       const userId = getUserId(req);
       const { sessionId } = req.params;
       const {
