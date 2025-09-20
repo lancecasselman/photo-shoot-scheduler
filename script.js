@@ -2041,7 +2041,7 @@ function createPhotoGallery(session) {
 
     const galleryTitle = document.createElement('h4');
     galleryTitle.className = 'gallery-title';
-    galleryTitle.textContent = 'Photo Gallery';
+    galleryTitle.textContent = 'Photo Gallery & Download Controls';
 
     const photoCount = document.createElement('span');
     photoCount.className = 'photo-count';
@@ -2051,6 +2051,9 @@ function createPhotoGallery(session) {
     galleryHeader.appendChild(galleryTitle);
     galleryHeader.appendChild(photoCount);
 
+    // Add download controls section
+    const downloadControls = createDownloadControlsSection(session);
+    
     const galleryGrid = document.createElement('div');
     galleryGrid.className = 'gallery-grid';
     galleryGrid.setAttribute('data-session-id', session.id);
@@ -2059,6 +2062,7 @@ function createPhotoGallery(session) {
     loadSessionPhotos(session.id, galleryGrid, photoCount);
 
     gallerySection.appendChild(galleryHeader);
+    gallerySection.appendChild(downloadControls);
     gallerySection.appendChild(galleryGrid);
 
     return gallerySection;
@@ -2139,6 +2143,743 @@ function createPhotoItem(photo, index, sessionId) {
     photoItem.appendChild(deleteBtn);
 
     return photoItem;
+}
+
+// Create download controls section for session management
+function createDownloadControlsSection(session) {
+    const controlsSection = document.createElement('div');
+    controlsSection.className = 'download-controls-section';
+    controlsSection.style.cssText = `
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+    `;
+
+    // Download Policy Configuration
+    const policyHeader = document.createElement('div');
+    policyHeader.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    `;
+    
+    const policyTitle = document.createElement('h5');
+    policyTitle.textContent = '📥 Download Policy & Controls';
+    policyTitle.style.cssText = `
+        margin: 0;
+        color: #495057;
+        font-weight: 600;
+    `;
+
+    const configureBtn = document.createElement('button');
+    configureBtn.className = 'btn btn-primary';
+    configureBtn.textContent = '⚙️ Configure';
+    configureBtn.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+    `;
+    configureBtn.onclick = () => openDownloadPolicyModal(session.id);
+
+    policyHeader.appendChild(policyTitle);
+    policyHeader.appendChild(configureBtn);
+
+    // Current Policy Display
+    const policyDisplay = document.createElement('div');
+    policyDisplay.id = `policy-display-${session.id}`;
+    policyDisplay.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    `;
+
+    // Quick Actions Row
+    const actionsRow = document.createElement('div');
+    actionsRow.style.cssText = `
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    `;
+
+    const generateTokenBtn = document.createElement('button');
+    generateTokenBtn.className = 'btn btn-success';
+    generateTokenBtn.textContent = '🔑 Generate Download Token';
+    generateTokenBtn.style.cssText = `
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+    `;
+    generateTokenBtn.onclick = () => generateDownloadToken(session.id);
+
+    const analyticsBtn = document.createElement('button');
+    analyticsBtn.className = 'btn btn-info';
+    analyticsBtn.textContent = '📊 View Analytics';
+    analyticsBtn.style.cssText = `
+        background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+    `;
+    analyticsBtn.onclick = () => showDownloadAnalytics(session.id);
+
+    const watermarkBtn = document.createElement('button');
+    watermarkBtn.className = 'btn btn-secondary';
+    watermarkBtn.textContent = '🎨 Watermark Settings';
+    watermarkBtn.style.cssText = `
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+    `;
+    watermarkBtn.onclick = () => openWatermarkModal(session.id);
+
+    actionsRow.appendChild(generateTokenBtn);
+    actionsRow.appendChild(analyticsBtn);
+    actionsRow.appendChild(watermarkBtn);
+
+    // Analytics Summary
+    const analyticsSummary = document.createElement('div');
+    analyticsSummary.id = `analytics-summary-${session.id}`;
+    analyticsSummary.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    `;
+
+    controlsSection.appendChild(policyHeader);
+    controlsSection.appendChild(policyDisplay);
+    controlsSection.appendChild(actionsRow);
+    controlsSection.appendChild(analyticsSummary);
+
+    // Load current policy and analytics only after authentication is established
+    if (window.currentUser || document.cookie.includes('connect.sid')) {
+        // Authentication appears to be ready, load data
+        loadDownloadPolicy(session.id);
+        loadDownloadAnalytics(session.id);
+    } else {
+        // Wait for authentication to be established
+        const checkAuthAndLoad = () => {
+            if (window.currentUser || document.cookie.includes('connect.sid')) {
+                loadDownloadPolicy(session.id);
+                loadDownloadAnalytics(session.id);
+            } else {
+                // Show fallback UI if auth is not ready after timeout
+                setTimeout(() => {
+                    if (!window.currentUser && !document.cookie.includes('connect.sid')) {
+                        showDownloadPolicyFallback(session.id);
+                        showDownloadAnalyticsFallback(session.id);
+                    }
+                }, 2000);
+            }
+        };
+        
+        // Try loading after a short delay
+        setTimeout(checkAuthAndLoad, 1000);
+    }
+
+    return controlsSection;
+}
+
+// Load and display current download policy
+async function loadDownloadPolicy(sessionId) {
+    try {
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            credentials: 'include' // Use session-based auth
+        });
+        
+        if (!response.ok) {
+            // Handle auth errors gracefully
+            if (response.status === 401) {
+                console.log('Download policy: Authentication required');
+                showDownloadPolicyFallback(sessionId);
+                return;
+            }
+            throw new Error('Failed to load policy');
+        }
+
+        const data = await response.json();
+        const policy = data.policy;
+
+        const policyDisplay = document.getElementById(`policy-display-${sessionId}`);
+        if (!policyDisplay) return;
+
+        policyDisplay.innerHTML = `
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                <div style="font-weight: 600; color: #495057; margin-bottom: 5px;">Pricing Model</div>
+                <div style="color: #28a745; font-weight: 500;">${getPricingModelDisplay(policy.pricingModel)}</div>
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                <div style="font-weight: 600; color: #495057; margin-bottom: 5px;">Download Limit</div>
+                <div style="color: #6c757d;">${policy.downloadMax || 'Unlimited'}</div>
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                <div style="font-weight: 600; color: #495057; margin-bottom: 5px;">Price per Download</div>
+                <div style="color: #dc3545;">$${parseFloat(policy.pricePerDownload || 0).toFixed(2)}</div>
+            </div>
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                <div style="font-weight: 600; color: #495057; margin-bottom: 5px;">Watermark</div>
+                <div style="color: ${policy.watermarkEnabled ? '#28a745' : '#6c757d'};">
+                    ${policy.watermarkEnabled ? `✅ ${policy.watermarkType}` : '❌ Disabled'}
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading download policy:', error);
+        showDownloadPolicyFallback(sessionId);
+    }
+}
+
+// Show fallback UI for download policy
+function showDownloadPolicyFallback(sessionId) {
+    const policyDisplay = document.getElementById(`policy-display-${sessionId}`);
+    if (policyDisplay) {
+        policyDisplay.innerHTML = `
+            <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; text-align: center;">
+                <div style="color: #6c757d; margin-bottom: 8px;">⚠️ Download policy not configured</div>
+                <button onclick="openDownloadPolicyModal('${sessionId}')" style="
+                    background: #007bff; 
+                    color: white; 
+                    border: none; 
+                    padding: 6px 12px; 
+                    border-radius: 4px; 
+                    cursor: pointer;
+                    font-size: 0.8rem;
+                ">Configure Now</button>
+            </div>
+        `;
+    }
+}
+
+// Load and display download analytics
+async function loadDownloadAnalytics(sessionId) {
+    try {
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/analytics`, {
+            credentials: 'include' // Use session-based auth
+        });
+        
+        if (!response.ok) {
+            // Handle auth errors gracefully
+            if (response.status === 401) {
+                console.log('Download analytics: Authentication required');
+                showDownloadAnalyticsFallback(sessionId);
+                return;
+            }
+            throw new Error('Failed to load analytics');
+        }
+
+        const data = await response.json();
+        const analytics = data.analytics;
+
+        const analyticsSummary = document.getElementById(`analytics-summary-${sessionId}`);
+        if (!analyticsSummary) return;
+
+        analyticsSummary.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #17a2b8;">${analytics.totalDownloads}</div>
+                <div style="font-size: 0.8rem; color: #6c757d;">Total Downloads</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #28a745;">${analytics.freeDownloads}</div>
+                <div style="font-size: 0.8rem; color: #6c757d;">Free Downloads</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #dc3545;">${analytics.paidDownloads}</div>
+                <div style="font-size: 0.8rem; color: #6c757d;">Paid Downloads</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #6f42c1;">$${parseFloat(analytics.totalRevenue || 0).toFixed(2)}</div>
+                <div style="font-size: 0.8rem; color: #6c757d;">Revenue</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #fd7e14;">${analytics.uniqueClients}</div>
+                <div style="font-size: 0.8rem; color: #6c757d;">Unique Clients</div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading download analytics:', error);
+        showDownloadAnalyticsFallback(sessionId);
+    }
+}
+
+// Show fallback UI for download analytics
+function showDownloadAnalyticsFallback(sessionId) {
+    const analyticsSummary = document.getElementById(`analytics-summary-${sessionId}`);
+    if (analyticsSummary) {
+        analyticsSummary.innerHTML = `
+            <div style="text-align: center; color: #6c757d; grid-column: 1 / -1; padding: 20px;">
+                <div style="font-size: 0.9rem; margin-bottom: 8px;">📊 Analytics not available</div>
+                <div style="font-size: 0.8rem;">Configure download policy to start tracking</div>
+            </div>
+        `;
+    }
+}
+
+// Helper function to display pricing model
+function getPricingModelDisplay(model) {
+    switch (model) {
+        case 'free': return '🆓 Free Downloads';
+        case 'paid': return '💰 Paid Downloads';
+        case 'freemium': return '🎯 Freemium Model';
+        default: return '🆓 Free Downloads';
+    }
+}
+
+// Open download policy configuration modal
+function openDownloadPolicyModal(sessionId) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('download-policy-modal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'download-policy-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        ">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                border-bottom: 2px solid #e9ecef;
+                padding-bottom: 15px;
+            ">
+                <h3 style="margin: 0; color: #495057; font-weight: 600;">📥 Download Policy Configuration</h3>
+                <button onclick="closeDownloadPolicyModal()" style="
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #6c757d;
+                    padding: 5px;
+                ">×</button>
+            </div>
+            
+            <form id="download-policy-form">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">Pricing Model</label>
+                    <select id="pricingModel" style="
+                        width: 100%;
+                        padding: 10px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                    ">
+                        <option value="free">🆓 Free Downloads</option>
+                        <option value="paid">💰 Paid Downloads Only</option>
+                        <option value="freemium">🎯 Freemium (Free + Paid)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">Download Limit (leave empty for unlimited)</label>
+                    <input type="number" id="downloadMax" placeholder="e.g., 10" style="
+                        width: 100%;
+                        padding: 10px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                    ">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">Price per Download ($)</label>
+                    <input type="number" step="0.01" id="pricePerDownload" placeholder="e.g., 5.00" style="
+                        width: 100%;
+                        padding: 10px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                    ">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">Free Downloads (for freemium model)</label>
+                    <input type="number" id="freeDownloads" placeholder="e.g., 3" style="
+                        width: 100%;
+                        padding: 10px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                    ">
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: flex; align-items: center; font-weight: 600; color: #495057;">
+                        <input type="checkbox" id="watermarkEnabled" style="margin-right: 10px; transform: scale(1.2);">
+                        Enable Watermarks
+                    </label>
+                </div>
+
+                <div style="
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                    border-top: 1px solid #e9ecef;
+                    padding-top: 20px;
+                ">
+                    <button type="button" onclick="closeDownloadPolicyModal()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">Cancel</button>
+                    <button type="submit" style="
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">Save Policy</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Load current policy data
+    loadPolicyDataIntoForm(sessionId);
+
+    // Handle form submission
+    document.getElementById('download-policy-form').onsubmit = (e) => {
+        e.preventDefault();
+        saveDownloadPolicy(sessionId);
+    };
+}
+
+// Load current policy data into form
+async function loadPolicyDataIntoForm(sessionId) {
+    try {
+
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, { 
+            credentials: 'include' // Use session-based auth
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const policy = data.policy;
+
+        document.getElementById('pricingModel').value = policy.pricingModel || 'free';
+        document.getElementById('downloadMax').value = policy.downloadMax || '';
+        document.getElementById('pricePerDownload').value = policy.pricePerDownload || '';
+        document.getElementById('freeDownloads').value = policy.freeDownloads || '';
+        document.getElementById('watermarkEnabled').checked = policy.watermarkEnabled || false;
+
+    } catch (error) {
+        console.error('Error loading policy data:', error);
+    }
+}
+
+// Save download policy
+async function saveDownloadPolicy(sessionId) {
+    try {
+        const authToken = await getAuthToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        const policyData = {
+            pricingModel: document.getElementById('pricingModel').value,
+            downloadMax: parseInt(document.getElementById('downloadMax').value) || null,
+            pricePerDownload: parseFloat(document.getElementById('pricePerDownload').value) || 0,
+            freeDownloads: parseInt(document.getElementById('freeDownloads').value) || 0,
+            watermarkEnabled: document.getElementById('watermarkEnabled').checked
+        };
+
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            method: 'PUT',
+            headers,
+            credentials: 'include', // Use session-based auth
+            body: JSON.stringify(policyData)
+        });
+
+        if (!response.ok) throw new Error('Failed to save policy');
+
+        showMessage('Download policy updated successfully!', 'success');
+        closeDownloadPolicyModal();
+        
+        // Refresh policy display
+        loadDownloadPolicy(sessionId);
+
+    } catch (error) {
+        console.error('Error saving download policy:', error);
+        showMessage('Error saving download policy: ' + error.message, 'error');
+    }
+}
+
+// Close download policy modal
+function closeDownloadPolicyModal() {
+    const modal = document.getElementById('download-policy-modal');
+    if (modal) modal.remove();
+}
+
+// Generate download token
+async function generateDownloadToken(sessionId) {
+    const clientEmail = prompt('Enter client email for download token:');
+    if (!clientEmail) return;
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/generate-token`, {
+            method: 'POST',
+            headers,
+            credentials: 'include', // Use session-based auth
+            body: JSON.stringify({ clientEmail, expiresInHours: 72 })
+        });
+
+        if (!response.ok) throw new Error('Failed to generate token');
+
+        const data = await response.json();
+        
+        // Show token with copy option
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                max-width: 600px;
+                width: 90%;
+                text-align: center;
+            ">
+                <h3 style="color: #28a745; margin-bottom: 20px;">🔑 Download Token Generated</h3>
+                <p style="margin-bottom: 15px; color: #495057;">Client: <strong>${clientEmail}</strong></p>
+                <p style="margin-bottom: 15px; color: #495057;">Expires: <strong>${new Date(data.expiresAt).toLocaleString()}</strong></p>
+                
+                <div style="
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
+                    word-break: break-all;
+                    font-family: monospace;
+                    border: 1px solid #dee2e6;
+                ">${data.downloadUrl}</div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="navigator.clipboard.writeText('${data.downloadUrl}').then(() => showMessage('URL copied!', 'success'))" style="
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    ">📋 Copy URL</button>
+                    <button onclick="this.closest('div').closest('div').remove()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    ">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        showMessage('Download token generated successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error generating download token:', error);
+        showMessage('Error generating download token: ' + error.message, 'error');
+    }
+}
+
+// Show download analytics modal
+async function showDownloadAnalytics(sessionId) {
+    try {
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/analytics`, {
+            credentials: 'include' // Use session-based auth
+        });
+        if (!response.ok) throw new Error('Failed to load analytics');
+
+        const data = await response.json();
+        const analytics = data.analytics;
+
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                max-width: 700px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            ">
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 25px;
+                    border-bottom: 2px solid #e9ecef;
+                    padding-bottom: 15px;
+                ">
+                    <h3 style="margin: 0; color: #495057;">📊 Download Analytics</h3>
+                    <button onclick="this.closest('div').closest('div').remove()" style="
+                        background: none;
+                        border: none;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        color: #6c757d;
+                    ">×</button>
+                </div>
+                
+                <div style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 25px;
+                ">
+                    <div style="
+                        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 2rem; font-weight: bold;">${analytics.totalDownloads}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Total Downloads</div>
+                    </div>
+                    <div style="
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 2rem; font-weight: bold;">${analytics.freeDownloads}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Free Downloads</div>
+                    </div>
+                    <div style="
+                        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 2rem; font-weight: bold;">${analytics.paidDownloads}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Paid Downloads</div>
+                    </div>
+                    <div style="
+                        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 2rem; font-weight: bold;">$${parseFloat(analytics.totalRevenue || 0).toFixed(2)}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Total Revenue</div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <button onclick="this.closest('div').closest('div').remove()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 12px 25px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+        showMessage('Error loading analytics: ' + error.message, 'error');
+    }
+}
+
+// Open watermark configuration modal
+function openWatermarkModal(sessionId) {
+    // Placeholder for watermark configuration
+    showMessage('Watermark configuration will open the dedicated watermark settings modal', 'info');
+    // This could integrate with the existing watermark logo upload functionality
 }
 
 // Open photo upload dialog - use existing HTML modal
