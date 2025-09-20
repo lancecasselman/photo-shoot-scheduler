@@ -184,6 +184,11 @@ function createDownloadRoutes() {
    */
   router.put('/sessions/:sessionId/policy', requireAuth, upload.single('logo'), async (req, res) => {
     try {
+      console.log('📋 PUT /sessions/:sessionId/policy - Request received');
+      console.log('Request body:', req.body);
+      console.log('Request file:', req.file ? 'File uploaded' : 'No file');
+      console.log('Session ID:', req.params.sessionId);
+      
       const userId = getUserId(req);
       const { sessionId } = req.params;
       const {
