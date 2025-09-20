@@ -4889,7 +4889,6 @@ async function openDownloadControls(sessionId) {
             
             <div style="display: flex; gap: 15px; margin-top: 30px;">
                 <button id="savePolicy" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Settings</button>
-                <button id="generateToken" style="flex: 1; padding: 12px; background: #17a2b8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🔗 Generate Access Token</button>
                 <button id="closeModal" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
             </div>
         `;
