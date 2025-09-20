@@ -167,15 +167,6 @@ function createDownloadRoutes(isAuthenticated) {
    */
   router.put('/sessions/:sessionId/policy', requireAuth, upload.single('logo'), async (req, res) => {
     try {
-      console.log('🔍 Download policy PUT route hit:', {
-        sessionId: req.params.sessionId,
-        bodyKeys: Object.keys(req.body || {}),
-        bodyType: typeof req.body,
-        contentType: req.get('Content-Type'),
-        rawBody: req.rawBody ? 'exists' : 'missing',
-        userAgent: req.get('User-Agent')?.substring(0, 50)
-      });
-      
       const userId = getUserId(req);
       const { sessionId } = req.params;
       const {
@@ -260,6 +251,8 @@ function createDownloadRoutes(isAuthenticated) {
 
       // Always update the timestamp
       updateData.watermarkUpdatedAt = new Date();
+
+      console.log(`🔍 Updating session ${sessionId} with data:`, updateData);
 
       // Update session in database
       await db
