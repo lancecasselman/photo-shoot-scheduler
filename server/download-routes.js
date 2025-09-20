@@ -518,7 +518,7 @@ function createDownloadRoutes() {
   router.post('/purchase/:sessionId/:photoId', async (req, res) => {
     try {
       const { sessionId, photoId } = req.params;
-      const { token, paymentMethodId, clientEmail, clientName } = req.body;
+      const { token, clientEmail, clientName } = req.body;
 
       if (!token) {
         return res.status(403).json({ error: 'Access token required' });
@@ -592,82 +592,211 @@ function createDownloadRoutes() {
         return res.status(400).json({ error: 'This session uses free downloads' });
       }
 
-      const amount = parseInt(sessionData.pricePerDownload * 100) || 500; // Convert to cents, default $5.00
+      // Validate required information for checkout
+      if (!clientEmail || !clientName) {
+        return res.status(400).json({ error: 'Client email and name required for receipt' });
+      }
 
-      // Create idempotency key to prevent duplicate charges
-      const idempotencyKey = `purchase-${sessionId}-${photoId}-${token}-${Date.now()}`;
+      // Get the photo filename for display
+      let photoFilename = photoId;
+      try {
+        const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionId);
+        const photo = sessionFiles.filesByType.gallery?.find(p => 
+          p.filename === photoId || p.key.includes(photoId)
+        );
+        if (photo) {
+          photoFilename = photo.filename || photoId;
+        }
+      } catch (err) {
+        console.warn('Could not determine photo filename, using photoId:', photoId);
+      }
 
-      // Create Stripe Payment Intent with SCA support
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        payment_method: paymentMethodId,
-        confirmation_method: 'manual',
-        confirm: true,
+      const amount = Math.max(50, Math.round(Number(sessionData.pricePerDownload) * 100)) || 500; // Convert to cents with proper rounding, minimum 50 cents
+
+      // Create success and cancel URLs
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const successUrl = `${baseUrl}/api/downloads/purchase-success?session_id={CHECKOUT_SESSION_ID}&token=${token}&sessionId=${sessionId}&photoId=${photoId}`;
+      const cancelUrl = `${baseUrl}/gallery/${sessionId}?token=${token}`;
+
+      // Create Stripe Checkout Session
+      const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Photo Download - ${photoFilename}`,
+              description: `High-resolution download from ${sessionData.sessionName || 'Photo Session'}`,
+            },
+            unit_amount: amount
+          },
+          quantity: 1
+        }],
+        customer_email: clientEmail,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         metadata: {
           sessionId,
           photoId,
-          downloadToken: token,
-          clientEmail: clientEmail || 'unknown'
+          token,
+          clientEmail,
+          clientName,
+          photographerId: sessionData.userId,
+          sessionName: sessionData.sessionName || 'Photo Session',
+          type: 'photo_download'
         }
-      }, {
-        idempotencyKey
       });
 
-      // Create digital transaction record with photo binding
-      const transactionId = uuidv4();
-      await db.insert(digitalTransactions).values({
-        id: transactionId,
-        sessionId,
-        userId: sessionData.userId,
-        photoId, // Add photo binding for specific authorization
-        stripePaymentIntentId: paymentIntent.id,
-        amount,
-        downloadToken: token,
-        status: paymentIntent.status,
-        createdAt: new Date()
+      console.log(`💳 Created Stripe checkout session for photo ${photoId} in session ${sessionId}`);
+      
+      res.json({
+        success: true,
+        sessionId: checkoutSession.id,
+        url: checkoutSession.url,
+        message: 'Checkout session created successfully'
       });
-
-      // Handle different payment states
-      if (paymentIntent.status === 'succeeded') {
-        // Payment completed successfully
-        await db.update(digitalTransactions)
-          .set({ status: 'completed' })
-          .where(eq(digitalTransactions.id, transactionId));
-
-        console.log(`💳 Payment completed for photo ${photoId} in session ${sessionId}`);
-        res.json({ 
-          success: true,
-          message: 'Payment successful',
-          transactionId,
-          downloadReady: true
-        });
-      } else if (paymentIntent.status === 'requires_action') {
-        // SCA/3DS authentication required
-        res.json({
-          success: false,
-          requiresAction: true,
-          paymentIntentId: paymentIntent.id,
-          clientSecret: paymentIntent.client_secret,
-          transactionId
-        });
-      } else {
-        // Payment failed or other status
-        await db.update(digitalTransactions)
-          .set({ status: 'failed' })
-          .where(eq(digitalTransactions.id, transactionId));
-
-        res.status(400).json({ 
-          error: 'Payment failed', 
-          details: paymentIntent.last_payment_error?.message 
-        });
-      }
       
     } catch (error) {
       console.error('Error processing purchase:', error);
       res.status(500).json({ error: 'Failed to process payment' });
     }
   });
+
+  /**
+   * GET /api/downloads/purchase-success
+   * Handle successful Stripe checkout and record transaction
+   */
+  router.get('/purchase-success', async (req, res) => {
+    try {
+      const { session_id, token, sessionId, photoId } = req.query;
+
+      if (!session_id || !token || !sessionId || !photoId) {
+        return res.status(400).send(`
+          <html>
+            <head><title>Payment Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>❌ Payment Error</h1>
+              <p>Missing required parameters. Please contact support.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Retrieve the Stripe session
+      const stripeSession = await stripe.checkout.sessions.retrieve(session_id);
+      
+      if (stripeSession.payment_status !== 'paid') {
+        return res.status(400).send(`
+          <html>
+            <head><title>Payment Not Completed</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>⏳ Payment Pending</h1>
+              <p>Your payment has not been completed yet. Please wait or try again.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Validate metadata matches query parameters for security
+      if (stripeSession.metadata.sessionId !== sessionId || 
+          stripeSession.metadata.photoId !== photoId || 
+          stripeSession.metadata.token !== token) {
+        console.error('Metadata mismatch in payment success:', {
+          expected: { sessionId, photoId, token },
+          received: stripeSession.metadata
+        });
+        return res.status(400).send(`
+          <html>
+            <head><title>Payment Validation Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>❌ Payment Validation Error</h1>
+              <p>Payment metadata does not match. Please contact support.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Re-validate token for security
+      const downloadToken = await db
+        .select()
+        .from(downloadTokens)
+        .where(eq(downloadTokens.token, token))
+        .limit(1);
+
+      if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt || downloadToken[0].sessionId !== sessionId) {
+        return res.status(403).send(`
+          <html>
+            <head><title>Token Validation Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>❌ Token Validation Error</h1>
+              <p>Access token is invalid or expired. Please contact support.</p>
+            </body>
+          </html>
+        `);
+      }
+
+      // Check for existing transaction to prevent duplicates (webhook may have already recorded it)
+      const existingTransaction = await db
+        .select()
+        .from(digitalTransactions)
+        .where(eq(digitalTransactions.stripeSessionId, session_id))
+        .limit(1);
+        
+      if (existingTransaction.length === 0) {
+        // Record the transaction only if webhook hasn't already done it
+        const transactionId = uuidv4();
+        await db.insert(digitalTransactions).values({
+          id: transactionId,
+          sessionId,
+          userId: stripeSession.metadata.photographerId,
+          photoId,
+          stripeSessionId: session_id,
+          amount: stripeSession.amount_total / 100, // Convert from cents
+          downloadToken: token,
+          status: 'completed',
+          clientEmail: stripeSession.customer_email,
+          clientName: stripeSession.metadata.clientName,
+          createdAt: new Date()
+        });
+
+        console.log(`✅ Redirect: Payment recorded for photo ${photoId} in session ${sessionId}, transaction: ${transactionId}`);
+      } else {
+        console.log(`✅ Redirect: Transaction already recorded by webhook for session ${session_id}`);
+      }
+
+      // Redirect back to gallery with success message
+      const redirectUrl = `/gallery/${sessionId}?token=${token}&purchase=success&photo=${photoId}`;
+      
+      res.send(`
+        <html>
+          <head>
+            <title>Payment Successful</title>
+            <meta http-equiv="refresh" content="3;url=${redirectUrl}">
+          </head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>✅ Payment Successful!</h1>
+            <p>Your photo download has been purchased successfully.</p>
+            <p>You will be redirected to the gallery in 3 seconds...</p>
+            <a href="${redirectUrl}">Click here if you are not redirected automatically</a>
+          </body>
+        </html>
+      `);
+
+    } catch (error) {
+      console.error('Error handling purchase success:', error);
+      res.status(500).send(`
+        <html>
+          <head><title>Payment Processing Error</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>❌ Payment Processing Error</h1>
+            <p>There was an error processing your payment. Please contact support.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
 
   /**
    * GET /api/downloads/download/:token/:photoId

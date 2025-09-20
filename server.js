@@ -1495,7 +1495,53 @@ app.use(session({
     }
 }));
 
-// Body parsing middleware (MUST be after session but BEFORE all routes)
+// Webhook routes MUST come BEFORE body parsing to preserve raw body for signature verification
+app.post('/api/downloads/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+        const sig = req.headers['stripe-signature'];
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        
+        let event;
+        
+        if (webhookSecret) {
+            // Verify webhook signature in production
+            try {
+                event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+            } catch (err) {
+                console.error('❌ Webhook signature verification failed:', err.message);
+                return res.status(400).send(`Webhook Error: ${err.message}`);
+            }
+        } else {
+            // DANGER: In development only, accept events without signature verification
+            console.warn('⚠️ DEVELOPMENT: Webhook signature verification skipped - DO NOT USE IN PRODUCTION');
+            if (process.env.NODE_ENV === 'production') {
+                console.error('🚨 SECURITY ERROR: Production webhook without signature verification');
+                return res.status(500).send('Webhook configuration error');
+            }
+            event = JSON.parse(req.body);
+        }
+        
+        // Handle checkout.session.completed events for photo downloads
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            
+            // Check if this is a photo download payment
+            if (session.metadata?.type === 'photo_download') {
+                // Import here to avoid circular dependencies
+                const { handleDownloadWebhook } = require('./server/download-webhook-handler');
+                await handleDownloadWebhook(session);
+            }
+        }
+        
+        res.json({ received: true });
+        
+    } catch (error) {
+        console.error('❌ Error handling download webhook:', error);
+        res.status(400).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Body parsing middleware (MUST be after webhook routes but BEFORE all other routes)
 app.use(express.json({ 
     limit: '100gb',
     verify: (req, res, buf) => {
