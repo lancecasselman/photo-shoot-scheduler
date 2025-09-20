@@ -10632,7 +10632,7 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
     try {
         console.log('🔍 API: Verifying gallery access for token:', galleryToken);
         
-        // Verify gallery token exists and get photos
+        // Verify gallery token exists and get photos with download policies
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
@@ -10642,7 +10642,18 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
                 date_time,
                 photos,
                 gallery_access_token,
-                jsonb_array_length(photos) as photo_count
+                jsonb_array_length(photos) as photo_count,
+                download_enabled,
+                pricing_model,
+                download_max,
+                price_per_download,
+                free_downloads,
+                watermark_enabled,
+                watermark_type,
+                watermark_text,
+                watermark_position,
+                watermark_opacity,
+                watermark_scale
             FROM photography_sessions 
             WHERE gallery_access_token = $1
         `, [galleryToken]);
@@ -10673,8 +10684,20 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
                 clientName: session.client_name,
                 sessionType: session.session_type,
                 dateTime: session.date_time,
-                photoCount: photos.length
-            }
+                photoCount: photos.length,
+                downloadEnabled: session.download_enabled,
+                pricingModel: session.pricing_model,
+                downloadMax: session.download_max,
+                pricePerDownload: session.price_per_download,
+                freeDownloads: session.free_downloads,
+                watermarkEnabled: session.watermark_enabled,
+                watermarkType: session.watermark_type,
+                watermarkText: session.watermark_text,
+                watermarkPosition: session.watermark_position,
+                watermarkOpacity: session.watermark_opacity,
+                watermarkScale: session.watermark_scale
+            },
+            sessionId: session.id  // Add sessionId at top level for backward compatibility
         });
 
     } catch (error) {
@@ -10693,7 +10716,7 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
     try {
         console.log('📸 API: Getting photos for gallery token:', galleryToken);
         
-        // Get photos from database (not from R2 file manager)
+        // Get photos from database with download policies
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
@@ -10701,7 +10724,18 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
                 client_name, 
                 session_type,
                 photos,
-                gallery_access_token
+                gallery_access_token,
+                download_enabled,
+                pricing_model,
+                download_max,
+                price_per_download,
+                free_downloads,
+                watermark_enabled,
+                watermark_type,
+                watermark_text,
+                watermark_position,
+                watermark_opacity,
+                watermark_scale
             FROM photography_sessions 
             WHERE gallery_access_token = $1
         `, [galleryToken]);
@@ -10743,7 +10777,18 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
             session: {
                 id: session.id,
                 clientName: session.client_name,
-                sessionType: session.session_type
+                sessionType: session.session_type,
+                downloadEnabled: session.download_enabled,
+                pricingModel: session.pricing_model,
+                downloadMax: session.download_max,
+                pricePerDownload: session.price_per_download,
+                freeDownloads: session.free_downloads,
+                watermarkEnabled: session.watermark_enabled,
+                watermarkType: session.watermark_type,
+                watermarkText: session.watermark_text,
+                watermarkPosition: session.watermark_position,
+                watermarkOpacity: session.watermark_opacity,
+                watermarkScale: session.watermark_scale
             }
         });
 
