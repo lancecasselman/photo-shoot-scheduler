@@ -182,7 +182,7 @@ function createDownloadRoutes() {
    * PUT /api/downloads/sessions/:sessionId/policy
    * Update download policy for a session
    */
-  router.put('/sessions/:sessionId/policy', requireAuth, async (req, res) => {
+  router.put('/sessions/:sessionId/policy', requireAuth, upload.single('logo'), async (req, res) => {
     try {
       const userId = getUserId(req);
       const { sessionId } = req.params;
@@ -228,6 +228,43 @@ function createDownloadRoutes() {
       if (watermarkPosition !== undefined) updateData.watermarkPosition = watermarkPosition;
       if (watermarkOpacity !== undefined) updateData.watermarkOpacity = watermarkOpacity;
       if (watermarkScale !== undefined) updateData.watermarkScale = watermarkScale;
+
+      // Handle logo file upload if provided
+      if (req.file && watermarkType === 'logo') {
+        try {
+          // Process the logo image with Sharp
+          const logoBuffer = await sharp(req.file.buffer)
+            .resize(500, 500, { // Max 500x500px
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+            .png({ quality: 90 })
+            .toBuffer();
+
+          // Upload logo to R2 storage
+          const logoFilename = `watermark-logo-${sessionId}-${Date.now()}.png`;
+          const r2Key = `photographer-${userId}/session-${sessionId}/watermarks/${logoFilename}`;
+          
+          const uploadResult = await r2Manager.uploadFile(
+            logoBuffer,
+            r2Key,
+            'image/png',
+            logoFilename
+          );
+
+          if (uploadResult.success) {
+            // Get URL for the uploaded logo
+            const logoUrl = await r2Manager.getSignedUrl(r2Key, 31536000); // 1 year expiry for logos
+            updateData.watermarkLogoUrl = logoUrl;
+            console.log(`🖼️ Watermark logo uploaded to R2 for session ${sessionId}`);
+          } else {
+            console.error('Failed to upload watermark logo to R2:', uploadResult.error);
+          }
+        } catch (logoError) {
+          console.error('Error processing watermark logo:', logoError);
+          // Don't fail the entire update if logo upload fails
+        }
+      }
 
       // Always update the timestamp
       updateData.watermarkUpdatedAt = new Date();
