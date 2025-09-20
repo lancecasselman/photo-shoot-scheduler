@@ -18200,6 +18200,26 @@ END:VCALENDAR`;
             const enabled = document.getElementById('watermarkEnabled').checked;
             document.getElementById('watermarkSettings').style.display = enabled ? 'block' : 'none';
         }
+
+        // Debug modal existence on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 DOM loaded - checking for download controls modal...');
+            const modal = document.getElementById('downloadControlsModal');
+            console.log('🔍 Download controls modal found:', modal ? 'YES' : 'NO', modal);
+            if (modal) {
+                console.log('✅ Modal element structure:', modal.outerHTML.substring(0, 100) + '...');
+            }
+        });
+
+        // Also check immediately in case DOM is already loaded
+        if (document.readyState !== 'loading') {
+            console.log('🔍 DOM already loaded - checking for download controls modal...');
+            const modal = document.getElementById('downloadControlsModal');
+            console.log('🔍 Download controls modal found:', modal ? 'YES' : 'NO', modal);
+            if (modal) {
+                console.log('✅ Modal element structure:', modal.outerHTML.substring(0, 100) + '...');
+            }
+        }
     </script>
 
     <!-- Console Cleanup for Production -->
