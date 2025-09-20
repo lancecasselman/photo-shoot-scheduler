@@ -276,16 +276,7 @@
             left: 100%;
         }
         
-        .print-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .print-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
+        /* Print button CSS removed */
         
         .download-btn {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
@@ -788,16 +779,9 @@
                 downloadBtn.dataset.filename = filename;
                 downloadBtn.innerHTML = '📥 Download';
                 
-                // Create print button with secure data attributes  
-                const printBtn = document.createElement('button');
-                printBtn.className = 'photo-btn print-btn';
-                printBtn.dataset.action = 'purchase';
-                printBtn.dataset.filename = filename;
-                printBtn.dataset.photoIndex = index.toString();
-                printBtn.innerHTML = '🛒 Order Prints';
+                // Print functionality has been removed
                 
                 actionsDiv.appendChild(downloadBtn);
-                actionsDiv.appendChild(printBtn);
                 
                 photoInfo.appendChild(filenameDiv);
                 photoInfo.appendChild(actionsDiv);
@@ -872,21 +856,7 @@
             console.log('✅ Bulk download completed');
         }
 
-        async function purchasePhoto(filename, index) {
-            try {
-                console.log('🛒 Starting purchase for photo:', filename);
-                
-                // Get the photo URL
-                const photo = photos[index];
-                const photoUrl = photo.url || photo.filename;
-                
-                // Use the professional print preview
-                const previewUrl = `/print-preview-pro.html?photo=${encodeURIComponent(photoUrl)}&filename=${encodeURIComponent(filename)}&token=${galleryToken}`;
-                
-                // Open in same window for better mobile experience
-                window.location.href = previewUrl;
-                
-                return;
+        // Print functionality has been removed
                 
                 let selectedOption = null;
                 
@@ -989,12 +959,7 @@
                     const filename = e.target.getAttribute('data-filename');
                     downloadPhoto(photoUrl, filename);
                 }
-                else if (e.target.matches('[data-action="purchase"]')) {
-                    e.stopPropagation();
-                    const filename = e.target.getAttribute('data-filename');
-                    const photoIndex = parseInt(e.target.getAttribute('data-photo-index'));
-                    purchasePhoto(filename, photoIndex);
-                }
+                // Print purchase functionality has been removed
                 // Handle photo card clicks for lightbox
                 else if (e.target.closest('.photo-card') && !e.target.closest('.photo-actions')) {
                     const photoCard = e.target.closest('.photo-card');
