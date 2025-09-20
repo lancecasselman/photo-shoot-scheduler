@@ -385,9 +385,11 @@ export const downloadTokens = pgTable("download_tokens", {
   photoUrl: varchar("photo_url").notNull(),
   filename: varchar("filename").notNull(),
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  type: varchar("type").notNull().default("free").$type<'free' | 'paid'>(), // Track token type
   expiresAt: timestamp("expires_at").notNull(),
   isUsed: boolean("is_used").default(false),
   usedAt: timestamp("used_at"),
+  oneTime: boolean("one_time").default(true), // Whether token is single-use
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   sessionIdx: index("idx_download_tokens_session").on(table.sessionId),
@@ -438,7 +440,7 @@ export const galleryDownloads = pgTable("gallery_downloads", {
   watermarkConfig: jsonb("watermark_config").default({}), // snapshot of watermark settings at time of download
   ipAddress: varchar("ip_address"),
   userAgent: text("user_agent"),
-  status: varchar("status").notNull().default("completed").$type<'completed' | 'failed' | 'refunded'>(),
+  status: varchar("status").notNull().default("completed").$type<'reserved' | 'completed' | 'cancelled' | 'expired' | 'failed' | 'refunded'>(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   // Business rule enforcement CHECK constraint
