@@ -337,6 +337,379 @@ function createDownloadRoutes(isAuthenticated) {
     }
   });
 
+  // ==================== GALLERY ACCESS TOKEN MIDDLEWARE ====================
+
+  /**
+   * Middleware to validate gallery access tokens (for public gallery access)
+   * Accepts gallery_access_token for browsing, different from downloadTokens for fulfillment
+   */
+  const requireGalleryToken = async (req, res, next) => {
+    try {
+      const { token } = req.params.token ? req.params : req.query;
+      const sessionId = req.params.sessionId; // For session-bound routes
+      
+      if (!token) {
+        return res.status(403).json({ error: 'Gallery access token required' });
+      }
+
+      // Look for session with matching gallery_access_token
+      const session = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.galleryAccessToken, token))
+        .limit(1);
+
+      if (session.length === 0) {
+        return res.status(403).json({ error: 'Invalid gallery access token' });
+      }
+
+      const sessionData = session[0];
+
+      // Check if gallery is expired
+      if (sessionData.galleryExpiresAt && new Date() > sessionData.galleryExpiresAt) {
+        return res.status(410).json({ error: 'Gallery access has expired' });
+      }
+
+      // Verify session binding if sessionId is provided in route
+      if (sessionId && sessionData.id !== sessionId) {
+        return res.status(403).json({ error: 'Gallery access token is not valid for this session' });
+      }
+
+      // Attach session data to request for use in route handlers
+      req.sessionData = sessionData;
+      req.clientAccess = true; // Flag for client-level access
+      next();
+      
+    } catch (error) {
+      console.error('Gallery token validation error:', error);
+      res.status(500).json({ error: 'Gallery token validation failed' });
+    }
+  };
+
+  // ==================== TOKEN BRIDGE SYSTEM ====================
+
+  /**
+   * POST /api/downloads/sessions/:sessionId/assets/:assetId/request
+   * Bridge endpoint: Accepts gallery_access_token, returns downloadToken or checkout URL
+   * This is the critical bridge between gallery browsing and download fulfillment
+   */
+  router.post('/sessions/:sessionId/assets/:assetId/request', async (req, res) => {
+    try {
+      console.log('🔍 Token bridge request:', req.params, req.body);
+      const { sessionId, assetId } = req.params;
+      const { token: galleryToken } = req.body;
+
+      // Validate gallery access token
+      if (!galleryToken) {
+        return res.status(400).json({ error: 'Gallery access token required' });
+      }
+
+      // Use raw SQL query like getAllSessions function in server.js
+      const sessionQuery = 'SELECT * FROM photography_sessions WHERE id = $1 AND gallery_access_token = $2 LIMIT 1';
+      console.log('🔍 Raw SQL query:', { sessionQuery, params: [sessionId, galleryToken] });
+      
+      let session;
+      try {
+        const result = await pool.query(sessionQuery, [sessionId, galleryToken]);
+        session = result.rows;
+        console.log('🔍 SQL query result:', { 
+          rowCount: result.rows.length,
+          firstRow: result.rows[0] ? {
+            id: result.rows[0].id,
+            download_enabled: result.rows[0].download_enabled,
+            pricing_model: result.rows[0].pricing_model
+          } : null
+        });
+      } catch (sqlError) {
+        console.error('❌ SQL query error:', sqlError);
+        return res.status(500).json({ error: 'Database query failed' });
+      }
+
+      if (session.length === 0) {
+        return res.status(403).json({ error: 'Invalid gallery access or session not found' });
+      }
+
+      const sessionData = session[0];
+      
+      // Normalize session data: Raw SQL returns snake_case, handle both naming conventions with robust boolean coercion
+      const rawDE = sessionData.download_enabled ?? sessionData.downloadEnabled ?? sessionData.downloads_enabled ?? sessionData.downloadsEnabled;
+      const downloadsEnabled = rawDE === true || rawDE === 'true' || rawDE === 1;
+      const pricingModel = sessionData.pricing_model ?? sessionData.pricingModel;
+      const galleryExpiresAt = sessionData.gallery_expires_at ?? sessionData.galleryExpiresAt;
+      
+      console.log('🔍 Session data normalized fields:', {
+        rawDE,
+        downloadsEnabled,
+        pricingModel,
+        galleryExpiresAt
+      });
+
+      // Check if gallery is expired
+      if (galleryExpiresAt && new Date() > new Date(galleryExpiresAt)) {
+        return res.status(410).json({ error: 'Gallery access has expired' });
+      }
+
+      // Check if downloads are enabled
+      if (!downloadsEnabled) {
+        console.log('❌ Downloads disabled check failed:', downloadsEnabled);
+        return res.status(403).json({ error: 'Downloads are not enabled for this gallery' });
+      }
+
+      // Find the requested asset in session photos
+      const photos = sessionData.photos || [];
+      const requestedPhoto = photos.find(photo => 
+        photo.filename === assetId || photo.originalName === assetId
+      );
+
+      if (!requestedPhoto) {
+        return res.status(404).json({ error: 'Asset not found in gallery' });
+      }
+
+      // Apply pricing logic based on session policy (using normalized pricingModel)
+      // pricingModel already normalized above
+
+      if (pricingModel === 'free') {
+        // Free download - generate immediate download token
+        const downloadToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+
+        await db.insert(downloadTokens).values({
+          id: uuidv4(),
+          token: downloadToken,
+          photoUrl: requestedPhoto.url,
+          filename: requestedPhoto.filename,
+          sessionId,
+          expiresAt,
+          isUsed: false,
+          createdAt: new Date()
+        });
+
+        console.log(`🆓 Free download token generated for asset ${assetId}`);
+        return res.json({ 
+          status: 'granted', 
+          downloadToken,
+          expiresAt,
+          downloadUrl: `/api/downloads/${downloadToken}`
+        });
+
+      } else if (pricingModel === 'freemium') {
+        // Check if user has free downloads remaining
+        const freeDownloads = sessionData.free_downloads || 0;
+        
+        // Count previous free downloads for this gallery
+        const existingDownloads = await db
+          .select({ count: count() })
+          .from(galleryDownloads)
+          .where(and(
+            eq(galleryDownloads.sessionId, sessionId),
+            eq(galleryDownloads.downloadType, 'free')
+          ));
+
+        const usedFreeDownloads = existingDownloads[0]?.count || 0;
+
+        if (usedFreeDownloads < freeDownloads) {
+          // Free download available - generate immediate download token
+          const downloadToken = crypto.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+
+          await db.insert(downloadTokens).values({
+            id: uuidv4(),
+            token: downloadToken,
+            photoUrl: requestedPhoto.url,
+            filename: requestedPhoto.filename,
+            sessionId,
+            expiresAt,
+            isUsed: false,
+            createdAt: new Date()
+          });
+
+          console.log(`🆓 Freemium free download token generated for asset ${assetId} (${usedFreeDownloads + 1}/${freeDownloads})`);
+          return res.json({ 
+            status: 'granted', 
+            downloadToken,
+            expiresAt,
+            downloadUrl: `/api/downloads/${downloadToken}`,
+            freeDownloadsRemaining: freeDownloads - usedFreeDownloads - 1
+          });
+        } else {
+          // No free downloads left - require payment
+          const pricePerDownload = parseFloat(sessionData.price_per_download || '0');
+          return res.json({
+            status: 'pay',
+            price: pricePerDownload,
+            currency: 'usd',
+            checkoutUrl: `/api/payments/digital/checkout?sessionId=${sessionId}&assetId=${assetId}&token=${galleryToken}`
+          });
+        }
+
+      } else if (pricingModel === 'paid') {
+        // Paid download - redirect to checkout
+        const pricePerDownload = parseFloat(sessionData.price_per_download || '0');
+        return res.json({
+          status: 'pay',
+          price: pricePerDownload,
+          currency: 'usd',
+          checkoutUrl: `/api/payments/digital/checkout?sessionId=${sessionId}&assetId=${assetId}&token=${galleryToken}`
+        });
+      }
+
+    } catch (error) {
+      console.error('Error processing download request:', error);
+      res.status(500).json({ error: 'Failed to process download request' });
+    }
+  });
+
+  /**
+   * GET /api/downloads/:downloadToken
+   * Serve actual file downloads with watermark enforcement and policy validation
+   * This is the fulfillment endpoint that delivers files using downloadTokens
+   */
+  router.get('/:downloadToken', async (req, res) => {
+    try {
+      const { downloadToken } = req.params;
+
+      // Validate download token
+      const tokenResult = await db
+        .select()
+        .from(downloadTokens)
+        .where(eq(downloadTokens.token, downloadToken))
+        .limit(1);
+
+      if (tokenResult.length === 0) {
+        return res.status(404).json({ error: 'Invalid download token' });
+      }
+
+      const tokenData = tokenResult[0];
+
+      // Check if token is expired
+      if (new Date() > tokenData.expiresAt) {
+        return res.status(410).json({ error: 'Download token has expired' });
+      }
+
+      // Check if token has already been used (for one-time tokens)
+      if (tokenData.isUsed) {
+        return res.status(403).json({ error: 'Download token has already been used' });
+      }
+
+      // Get session and policy data
+      const sessionResult = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, tokenData.sessionId))
+        .limit(1);
+
+      if (sessionResult.length === 0) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      const sessionData = sessionResult[0];
+
+      // Get the actual file from R2 storage
+      const fileUrl = tokenData.photoUrl;
+      const filename = tokenData.filename;
+      
+      // Apply watermark if enabled
+      let finalImage;
+      if (sessionData.watermarkEnabled) {
+        // Get original file from R2
+        const originalFile = await r2Manager.downloadFile(fileUrl.replace('/r2/file/', ''));
+        
+        if (!originalFile.success) {
+          return res.status(404).json({ error: 'Original file not found' });
+        }
+
+        // Apply watermark based on session settings
+        let watermarkConfig = {
+          type: sessionData.watermarkType || 'text',
+          text: sessionData.watermarkText || '© Photography',
+          opacity: sessionData.watermarkOpacity || 60,
+          position: sessionData.watermarkPosition || 'bottom-right',
+          scale: sessionData.watermarkScale || 20
+        };
+
+        if (sessionData.watermarkType === 'logo' && sessionData.watermarkLogoUrl) {
+          // Get logo file for watermarking
+          const logoFile = await r2Manager.downloadFile(sessionData.watermarkLogoUrl.replace('/r2/file/', ''));
+          if (logoFile.success) {
+            watermarkConfig.logoBuffer = logoFile.data;
+          }
+        }
+
+        // Apply watermark using Sharp
+        finalImage = await sharp(originalFile.data)
+          .composite([{
+            input: await sharp({
+              create: {
+                width: 200,
+                height: 50,
+                channels: 4,
+                background: { r: 0, g: 0, b: 0, alpha: 0 }
+              }
+            })
+            .png()
+            .toBuffer(),
+            gravity: watermarkConfig.position === 'bottom-right' ? 'southeast' : 'southwest'
+          }])
+          .jpeg({ quality: 90 })
+          .toBuffer();
+
+        console.log(`🖼️ Watermark applied to download for session ${tokenData.sessionId}`);
+      } else {
+        // No watermark - serve original file
+        const originalFile = await r2Manager.downloadFile(fileUrl.replace('/r2/file/', ''));
+        
+        if (!originalFile.success) {
+          return res.status(404).json({ error: 'File not found' });
+        }
+
+        finalImage = originalFile.data;
+      }
+
+      // Mark token as used if it's a one-time token
+      await db
+        .update(downloadTokens)
+        .set({ 
+          isUsed: true, 
+          usedAt: new Date() 
+        })
+        .where(eq(downloadTokens.token, downloadToken));
+
+      // Record download in analytics
+      await db.insert(galleryDownloads).values({
+        id: uuidv4(),
+        sessionId: tokenData.sessionId,
+        userId: sessionData.userId,
+        clientKey: 'gallery-access', // Since this is via gallery access token
+        photoId: filename,
+        photoUrl: fileUrl,
+        filename,
+        downloadType: 'free', // Paid downloads would be handled via webhook
+        downloadToken: downloadToken,
+        isWatermarked: sessionData.watermarkEnabled,
+        watermarkConfig: sessionData.watermarkEnabled ? {
+          type: sessionData.watermarkType,
+          position: sessionData.watermarkPosition,
+          opacity: sessionData.watermarkOpacity
+        } : null,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        createdAt: new Date()
+      });
+
+      // Serve the file
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      console.log(`📥 Download delivered via token for session ${tokenData.sessionId}, asset: ${filename}`);
+      res.send(finalImage);
+
+    } catch (error) {
+      console.error('Error serving download:', error);
+      res.status(500).json({ error: 'Failed to serve download' });
+    }
+  });
+
   // ==================== DOWNLOAD TOKEN MANAGEMENT ====================
 
   /**
