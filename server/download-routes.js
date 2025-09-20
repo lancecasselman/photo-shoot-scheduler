@@ -200,26 +200,41 @@ function createDownloadRoutes(isAuthenticated) {
         return res.status(400).json({ error: 'Invalid watermark type. Must be "text" or "logo"' });
       }
 
-      // Build update object (only include defined values) - Use snake_case for database columns
+      // Build update object (only include defined values) - Use camelCase for Drizzle columns
       // Apply boolean coercion for form data that sends string values
       const updateData = {};
       if (downloadEnabled !== undefined) {
         // Coerce string boolean values from form data
-        updateData.download_enabled = downloadEnabled === true || downloadEnabled === 'true' || downloadEnabled === '1';
+        updateData.downloadEnabled = downloadEnabled === true || downloadEnabled === 'true' || downloadEnabled === '1';
       }
-      if (pricingModel !== undefined) updateData.pricing_model = pricingModel;
-      if (downloadMax !== undefined) updateData.download_max = downloadMax;
-      if (pricePerDownload !== undefined) updateData.price_per_download = pricePerDownload;
-      if (freeDownloads !== undefined) updateData.free_downloads = freeDownloads;
+      if (pricingModel !== undefined) updateData.pricingModel = pricingModel;
+      if (downloadMax !== undefined) {
+        // Convert to integer or null
+        updateData.downloadMax = downloadMax ? parseInt(downloadMax) : null;
+      }
+      if (pricePerDownload !== undefined) {
+        // Convert to decimal string
+        updateData.pricePerDownload = pricePerDownload ? String(pricePerDownload) : '0';
+      }
+      if (freeDownloads !== undefined) {
+        // Convert to integer
+        updateData.freeDownloads = parseInt(freeDownloads) || 0;
+      }
       if (watermarkEnabled !== undefined) {
         // Coerce string boolean values from form data
-        updateData.watermark_enabled = watermarkEnabled === true || watermarkEnabled === 'true' || watermarkEnabled === '1';
+        updateData.watermarkEnabled = watermarkEnabled === true || watermarkEnabled === 'true' || watermarkEnabled === '1';
       }
-      if (watermarkType !== undefined) updateData.watermark_type = watermarkType;
-      if (watermarkText !== undefined) updateData.watermark_text = watermarkText;
-      if (watermarkPosition !== undefined) updateData.watermark_position = watermarkPosition;
-      if (watermarkOpacity !== undefined) updateData.watermark_opacity = watermarkOpacity;
-      if (watermarkScale !== undefined) updateData.watermark_scale = watermarkScale;
+      if (watermarkType !== undefined) updateData.watermarkType = watermarkType;
+      if (watermarkText !== undefined) updateData.watermarkText = watermarkText;
+      if (watermarkPosition !== undefined) updateData.watermarkPosition = watermarkPosition;
+      if (watermarkOpacity !== undefined) {
+        // Convert to integer
+        updateData.watermarkOpacity = parseInt(watermarkOpacity) || 60;
+      }
+      if (watermarkScale !== undefined) {
+        // Convert to integer
+        updateData.watermarkScale = parseInt(watermarkScale) || 20;
+      }
 
       // Handle logo file upload if provided
       if (req.file && watermarkType === 'logo') {
@@ -247,7 +262,7 @@ function createDownloadRoutes(isAuthenticated) {
           if (uploadResult.success) {
             // Get URL for the uploaded logo
             const logoUrl = await r2Manager.getSignedUrl(r2Key, 31536000); // 1 year expiry for logos
-            updateData.watermark_logo_url = logoUrl;
+            updateData.watermarkLogoUrl = logoUrl;
             console.log(`🖼️ Watermark logo uploaded to R2 for session ${sessionId}`);
           } else {
             console.error('Failed to upload watermark logo to R2:', uploadResult.error);
@@ -259,7 +274,8 @@ function createDownloadRoutes(isAuthenticated) {
       }
 
       // Always update the timestamp
-      updateData.watermark_updated_at = new Date();
+      updateData.watermarkUpdatedAt = new Date();
+      updateData.updatedAt = new Date();
 
       console.log(`🔍 Updating session ${sessionId} with data:`, updateData);
 
