@@ -10866,7 +10866,7 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
     });
 
     try {
-        // First get the session info using the gallery token
+        // First get the session info using the gallery token including download policies
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT 
@@ -10874,7 +10874,19 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
                 user_id,
                 client_name, 
                 session_type,
-                gallery_access_token
+                gallery_access_token,
+                download_enabled,
+                download_max,
+                pricing_model,
+                free_downloads,
+                price_per_download,
+                watermark_enabled,
+                watermark_type,
+                watermark_logo_url,
+                watermark_text,
+                watermark_opacity,
+                watermark_position,
+                watermark_scale
             FROM photography_sessions 
             WHERE gallery_access_token = $1
         `, [galleryToken]);
@@ -10929,7 +10941,22 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
             clientName: session.client_name,
             sessionType: session.session_type,
             photos: photos,
-            valid: true
+            valid: true,
+            // Include download policy information for client enforcement
+            downloadEnabled: session.download_enabled !== false, // Default to true if null
+            downloadMax: session.download_max,
+            pricingModel: session.pricing_model || 'free',
+            freeDownloads: session.free_downloads || 0,
+            pricePerDownload: session.price_per_download || '0.00',
+            watermarkEnabled: session.watermark_enabled === true,
+            watermarkSettings: {
+                type: session.watermark_type || 'text',
+                text: session.watermark_text || '© Photography',
+                logoUrl: session.watermark_logo_url,
+                opacity: session.watermark_opacity || 60,
+                position: session.watermark_position || 'bottom-right',
+                scale: session.watermark_scale || 20
+            }
         });
     } catch (error) {
         console.error('❌ API VERIFY ERROR:', error);

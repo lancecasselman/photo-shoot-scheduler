@@ -733,7 +733,7 @@
                 // Fallback to basic gallery system
                 console.log('📸 Using basic gallery system');
                 
-                // Verify gallery access and get session info
+                // Verify gallery access and get session info with download policies
                 const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
                 if (!verifyResponse.ok) {
                     const error = await verifyResponse.json();
@@ -741,21 +741,31 @@
                 }
 
                 sessionData = await verifyResponse.json();
-                console.log('✅ Session data loaded:', sessionData);
+                console.log('✅ Session data loaded with download policies:', sessionData);
 
-                // Update page title and header
+                // Extract photos from verify response (already includes photos)
+                photos = sessionData.photos || [];
+                
+                // Update page title and header with download policy info
                 document.getElementById('galleryTitle').textContent = `${sessionData.clientName}'s Gallery`;
-                document.getElementById('gallerySubtitle').textContent = sessionData.sessionType;
-                document.title = `${sessionData.clientName}'s Photo Gallery`;
-
-                // Load photos
-                const photosResponse = await fetch(`/api/gallery/${galleryToken}/photos`);
-                if (!photosResponse.ok) {
-                    throw new Error('Failed to load photos');
+                
+                // Display download policy information
+                let subtitle = sessionData.sessionType;
+                if (!sessionData.downloadEnabled) {
+                    subtitle += ' • Downloads Disabled';
+                } else if (sessionData.pricingModel === 'paid') {
+                    subtitle += ` • $${sessionData.pricePerDownload} per photo`;
+                } else if (sessionData.pricingModel === 'freemium') {
+                    subtitle += ` • ${sessionData.freeDownloads} free downloads, then $${sessionData.pricePerDownload} each`;
+                } else if (sessionData.downloadMax) {
+                    subtitle += ` • ${sessionData.downloadMax} download limit`;
                 }
-
-                const photosData = await photosResponse.json();
-                photos = photosData.photos || [];
+                if (sessionData.watermarkEnabled) {
+                    subtitle += ' • Watermarked';
+                }
+                
+                document.getElementById('gallerySubtitle').textContent = subtitle;
+                document.title = `${sessionData.clientName}'s Photo Gallery`;
 
                 // Hide loading and show gallery
                 document.getElementById('loadingContainer').style.display = 'none';
