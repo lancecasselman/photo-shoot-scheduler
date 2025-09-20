@@ -5003,7 +5003,7 @@ async function openDownloadControls(sessionId) {
         `;
         
         // Insert the gallery link section before the close button
-        modal.querySelector('.modal-content').insertBefore(galleryLinkSection, modal.querySelector('#closeModal').parentElement);
+        modalContent.insertBefore(galleryLinkSection, modal.querySelector('#closeModal').parentElement);
         
         // Handle close
         document.getElementById('closeModal').onclick = function() {
