@@ -50,6 +50,9 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import R2 storage services
 const R2FileManager = require('./server/r2-file-manager');
 const createR2Routes = require('./server/r2-api-routes');
+
+// Import download control services
+const createDownloadRoutes = require('./server/download-routes');
 // const createMultipartRoutes = require('./server/multipart-endpoints'); // Removed - was only for Uppy/ObjectUploader
 
 // Import new storage system
@@ -2592,6 +2595,9 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
+
+// Download Control API Routes - Photo delivery with pricing and watermarks
+app.use('/api/downloads', createDownloadRoutes());
 
 // Enhanced Multipart Upload Routes - Optimized for large file uploads
 // app.use('/api/r2/multipart', createMultipartRoutes(pool)); // Removed - was only for Uppy/ObjectUploader
