@@ -824,7 +824,8 @@ function createDownloadRoutes() {
                         position === 'top-left' ? 'northwest' : 
                         position === 'top-right' ? 'northeast' : 
                         position === 'bottom-left' ? 'southwest' : 'southeast',
-                blend: 'over'
+                blend: 'over',
+                opacity: opacity // Apply the configured opacity to logo watermarks
               });
 
             } catch (logoError) {
