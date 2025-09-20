@@ -54,6 +54,19 @@ Transitioned from native mobile app development to a web-app only strategy for s
 - Camera access and file uploads work natively in modern mobile browsers
 - Users can install web app to home screen for native app feel
 
+### Photography Delivery System
+A comprehensive download-based delivery system with flexible pricing models (free, paid, freemium), customizable watermarking, and Stripe Connect integration for payment processing. Features include:
+- Download policies configurable per session (enable/disable, pricing model, limits)
+- Watermark system supporting text and logo overlays with positioning and opacity controls
+- Download tracking with enforcement of quotas and maximum limits
+- Direct gallery links via secure gallery_access_tokens (industry standard approach)
+- Proper HTTP status codes (403/429) for limit enforcement
+- Downloadable originals with optional watermarking based on pricing model
+
+**Known Limitations**: 
+- Concurrent download requests may occasionally bypass limits due to non-atomic token redemption (will be addressed in future update with transactional guarantees)
+- Download type tracking (free vs paid) requires further refinement for complex freemium scenarios
+
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
 
