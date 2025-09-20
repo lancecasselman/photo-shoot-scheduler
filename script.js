@@ -435,6 +435,7 @@ async function loadSessions() {
             reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
             galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
             reminderSent: session.reminder_sent || session.reminderSent || false,
+            galleryAccessToken: session.gallery_access_token || session.galleryAccessToken, // Add gallery access token
             createdBy: session.created_by || session.createdBy,
             createdAt: session.created_at || session.createdAt,
             updatedAt: session.updated_at || session.updatedAt
@@ -4953,8 +4954,18 @@ async function openDownloadControls(sessionId) {
             }
         };
         
-        // Direct gallery link - no token needed! Use the session's existing gallery access token
-        const directGalleryUrl = `/gallery/${policy.sessionId}`;  // Will use gallery_access_token from session
+        // Find the session data to get gallery access token
+        const currentSession = sessions.find(s => s.id === sessionId);
+        const galleryAccessToken = currentSession?.gallery_access_token || currentSession?.galleryAccessToken;
+        
+        // Validate that we have a proper gallery access token
+        if (!galleryAccessToken) {
+            showMessage('Gallery access token unavailable. Please refresh or contact support.', 'error');
+            return;
+        }
+        
+        // Direct gallery link using the session's existing gallery access token
+        const directGalleryUrl = `/gallery/${galleryAccessToken}`;
         
         // Add direct gallery link display  
         const galleryLinkSection = document.createElement('div');
