@@ -165,12 +165,14 @@ function createDownloadRoutes(isAuthenticated) {
    * PUT /api/downloads/sessions/:sessionId/policy
    * Update download policy for a session
    */
-  router.put('/sessions/:sessionId/policy', requireAuth, async (req, res) => {
+  router.put('/sessions/:sessionId/policy', requireAuth, upload.single('logo'), async (req, res) => {
     try {
       console.log('🔍 Download policy PUT route hit:', {
         sessionId: req.params.sessionId,
         bodyKeys: Object.keys(req.body || {}),
-        hasFile: !!req.file,
+        bodyType: typeof req.body,
+        contentType: req.get('Content-Type'),
+        rawBody: req.rawBody ? 'exists' : 'missing',
         userAgent: req.get('User-Agent')?.substring(0, 50)
       });
       
