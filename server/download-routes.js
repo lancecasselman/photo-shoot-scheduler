@@ -201,13 +201,20 @@ function createDownloadRoutes(isAuthenticated) {
       }
 
       // Build update object (only include defined values) - Use snake_case for database columns
+      // Apply boolean coercion for form data that sends string values
       const updateData = {};
-      if (downloadEnabled !== undefined) updateData.download_enabled = downloadEnabled;
+      if (downloadEnabled !== undefined) {
+        // Coerce string boolean values from form data
+        updateData.download_enabled = downloadEnabled === true || downloadEnabled === 'true' || downloadEnabled === '1';
+      }
       if (pricingModel !== undefined) updateData.pricing_model = pricingModel;
       if (downloadMax !== undefined) updateData.download_max = downloadMax;
       if (pricePerDownload !== undefined) updateData.price_per_download = pricePerDownload;
       if (freeDownloads !== undefined) updateData.free_downloads = freeDownloads;
-      if (watermarkEnabled !== undefined) updateData.watermark_enabled = watermarkEnabled;
+      if (watermarkEnabled !== undefined) {
+        // Coerce string boolean values from form data
+        updateData.watermark_enabled = watermarkEnabled === true || watermarkEnabled === 'true' || watermarkEnabled === '1';
+      }
       if (watermarkType !== undefined) updateData.watermark_type = watermarkType;
       if (watermarkText !== undefined) updateData.watermark_text = watermarkText;
       if (watermarkPosition !== undefined) updateData.watermark_position = watermarkPosition;
