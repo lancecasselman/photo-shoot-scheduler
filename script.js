@@ -685,6 +685,7 @@ function createSessionCard(session) {
     downloadControlsBtn.style.backgroundColor = '#3b82f6'; // Blue background
     downloadControlsBtn.style.color = 'white';
     downloadControlsBtn.style.marginBottom = '5px';
+    console.log('✅ DOWNLOAD CONTROLS BUTTON CREATED for session:', session.id);
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
