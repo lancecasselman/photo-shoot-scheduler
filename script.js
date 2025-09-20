@@ -4934,6 +4934,8 @@ async function openDownloadControls(sessionId) {
                     formData.append('logo', logoFile);
                 }
                 
+                console.log('📤 Saving policy for session:', sessionId);
+                
                 const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
@@ -4941,14 +4943,25 @@ async function openDownloadControls(sessionId) {
                 });
                 
                 if (!saveResponse.ok) {
-                    throw new Error('Failed to save policy');
+                    const responseText = await saveResponse.text();
+                    console.error('❌ Policy save failed:', {
+                        status: saveResponse.status,
+                        statusText: saveResponse.statusText,
+                        responseText: responseText
+                    });
+                    throw new Error(`Failed to save policy: ${saveResponse.status} ${saveResponse.statusText}`);
                 }
                 
                 showMessage('Download policy saved successfully!', 'success');
                 document.body.removeChild(modal);
                 
             } catch (error) {
-                console.error('Error saving policy:', error);
+                console.error('Error saving policy:', {
+                    message: error.message,
+                    stack: error.stack,
+                    status: error.status,
+                    statusText: error.statusText
+                });
                 showMessage('Failed to save policy: ' + error.message, 'error');
             }
         };
