@@ -17894,6 +17894,302 @@ END:VCALENDAR`;
     <link rel="stylesheet" href="booking-agreements-modal.css">
     <script src="booking-agreements-modal.js"></script>
     
+    <!-- Download Controls Modal -->
+    <div id="downloadControlsModal" class="modal-overlay" style="display: none;">
+        <div class="invoice-card-modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Download Controls & Gallery Settings</h3>
+                <button onclick="closeModal('downloadControlsModal')" class="modal-close" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div id="downloadControlsContent">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                            <input type="checkbox" id="downloadEnabled" style="transform: scale(1.2);">
+                            Enable Downloads for This Gallery
+                        </label>
+                        <p style="color: #666; font-size: 14px; margin-top: 5px;">Allow clients to download photos from this gallery</p>
+                    </div>
+
+                    <div id="downloadSettings" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 8px;">Pricing Model</label>
+                            <select id="pricingModel" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                <option value="free">Free Downloads</option>
+                                <option value="paid">Paid Downloads</option>
+                                <option value="freemium">Freemium (Some Free, Then Paid)</option>
+                            </select>
+                        </div>
+
+                        <div id="freeSettings" style="margin-bottom: 20px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 8px;">Download Limit (Optional)</label>
+                            <input type="number" id="downloadMax" placeholder="Leave blank for unlimited" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                            <p style="color: #666; font-size: 14px; margin-top: 5px;">Maximum number of downloads allowed per client</p>
+                        </div>
+
+                        <div id="paidSettings" style="display: none; margin-bottom: 20px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 8px;">Price Per Download ($)</label>
+                            <input type="number" id="pricePerDownload" step="0.01" placeholder="5.00" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                        </div>
+
+                        <div id="freemiumSettings" style="display: none; margin-bottom: 20px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 8px;">Free Downloads Allowed</label>
+                            <input type="number" id="freeDownloads" placeholder="3" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 8px;">Price After Free Limit ($)</label>
+                            <input type="number" id="freemiumPrice" step="0.01" placeholder="3.00" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                        </div>
+
+                        <div style="margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #e5e7eb;">
+                            <h4 style="margin-bottom: 15px; font-size: 16px; font-weight: 600;">Watermark Settings</h4>
+                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <input type="checkbox" id="watermarkEnabled" style="transform: scale(1.2);">
+                                Add Watermark to Downloaded Photos
+                            </label>
+                            <div id="watermarkSettings" style="display: none;">
+                                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Watermark Text</label>
+                                <input type="text" id="watermarkText" placeholder="© Your Studio Name" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 15px;">
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div>
+                                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Position</label>
+                                        <select id="watermarkPosition" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                            <option value="bottom-right">Bottom Right</option>
+                                            <option value="bottom-left">Bottom Left</option>
+                                            <option value="top-right">Top Right</option>
+                                            <option value="top-left">Top Left</option>
+                                            <option value="center">Center</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Opacity (%)</label>
+                                        <input type="range" id="watermarkOpacity" min="10" max="100" value="60" style="width: 100%; margin-bottom: 5px;">
+                                        <div style="text-align: center; font-size: 14px; color: #666;"><span id="opacityValue">60</span>%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="padding: 15px; background: #e3f2fd; border-radius: 8px; border: 1px solid #1976d2; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <span style="font-size: 20px;">🔗</span>
+                                <strong style="color: #1976d2;">Gallery Link</strong>
+                            </div>
+                            <div style="background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: monospace; font-size: 14px; color: #333;">
+                                <span id="galleryLink">Loading gallery link...</span>
+                            </div>
+                            <button onclick="copyGalleryLink()" style="margin-top: 10px; padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                📋 Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('downloadControlsModal')" class="btn btn-secondary">Cancel</button>
+                <button onclick="saveDownloadControls()" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variable to track current session for download controls
+        let currentDownloadSessionId = null;
+
+        // Open download controls modal
+        window.openDownloadControls = async function(sessionId) {
+            currentDownloadSessionId = sessionId;
+            
+            // Show modal
+            document.getElementById('downloadControlsModal').style.display = 'flex';
+            
+            // Load current settings
+            await loadDownloadControlSettings(sessionId);
+        };
+
+        // Load current download control settings for a session
+        async function loadDownloadControlSettings(sessionId) {
+            try {
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const policy = data.policy;
+                    
+                    // Populate form fields
+                    document.getElementById('downloadEnabled').checked = policy.downloadEnabled || false;
+                    document.getElementById('pricingModel').value = policy.pricingModel || 'free';
+                    document.getElementById('downloadMax').value = policy.downloadMax || '';
+                    document.getElementById('pricePerDownload').value = policy.pricePerDownload || '';
+                    document.getElementById('freeDownloads').value = policy.freeDownloads || '';
+                    document.getElementById('freemiumPrice').value = policy.pricePerDownload || '';
+                    
+                    // Watermark settings
+                    document.getElementById('watermarkEnabled').checked = policy.watermarkEnabled || false;
+                    document.getElementById('watermarkText').value = policy.watermarkText || '© Your Studio Name';
+                    document.getElementById('watermarkPosition').value = policy.watermarkPosition || 'bottom-right';
+                    document.getElementById('watermarkOpacity').value = policy.watermarkOpacity || 60;
+                    document.getElementById('opacityValue').textContent = policy.watermarkOpacity || 60;
+                    
+                    // Update UI based on settings
+                    toggleDownloadSettings();
+                    updatePricingModelFields();
+                    toggleWatermarkSettings();
+                    
+                    // Load gallery link
+                    await loadGalleryLink(sessionId);
+                } else {
+                    console.error('Failed to load download settings');
+                    showMessage('Failed to load current settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading download settings:', error);
+                showMessage('Error loading settings', 'error');
+            }
+        }
+
+        // Load gallery access link
+        async function loadGalleryLink(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`);
+                if (response.ok) {
+                    const session = await response.json();
+                    if (session.galleryAccessToken) {
+                        const baseUrl = window.location.origin;
+                        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+                        document.getElementById('galleryLink').textContent = galleryUrl;
+                    } else {
+                        document.getElementById('galleryLink').textContent = 'Gallery link will be generated when you save settings';
+                    }
+                } else {
+                    document.getElementById('galleryLink').textContent = 'Unable to load gallery link';
+                }
+            } catch (error) {
+                console.error('Error loading gallery link:', error);
+                document.getElementById('galleryLink').textContent = 'Error loading gallery link';
+            }
+        }
+
+        // Save download control settings
+        window.saveDownloadControls = async function() {
+            if (!currentDownloadSessionId) {
+                showMessage('No session selected', 'error');
+                return;
+            }
+
+            // Collect form data
+            const downloadEnabled = document.getElementById('downloadEnabled').checked;
+            const pricingModel = document.getElementById('pricingModel').value;
+            const downloadMax = document.getElementById('downloadMax').value || null;
+            const pricePerDownload = document.getElementById('pricePerDownload').value || 
+                                   document.getElementById('freemiumPrice').value || '0';
+            const freeDownloads = document.getElementById('freeDownloads').value || 0;
+            
+            const watermarkEnabled = document.getElementById('watermarkEnabled').checked;
+            const watermarkText = document.getElementById('watermarkText').value || '© Your Studio Name';
+            const watermarkPosition = document.getElementById('watermarkPosition').value;
+            const watermarkOpacity = document.getElementById('watermarkOpacity').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('downloadEnabled', downloadEnabled);
+                formData.append('pricingModel', pricingModel);
+                if (downloadMax) formData.append('downloadMax', downloadMax);
+                formData.append('pricePerDownload', pricePerDownload);
+                if (pricingModel === 'freemium') formData.append('freeDownloads', freeDownloads);
+                formData.append('watermarkEnabled', watermarkEnabled);
+                formData.append('watermarkType', 'text');
+                formData.append('watermarkText', watermarkText);
+                formData.append('watermarkPosition', watermarkPosition);
+                formData.append('watermarkOpacity', watermarkOpacity);
+                formData.append('watermarkScale', 20);
+
+                const response = await fetch(`/api/downloads/sessions/${currentDownloadSessionId}/policy`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('Download settings saved successfully!', 'success');
+                    closeModal('downloadControlsModal');
+                    
+                    // Refresh the session display
+                    if (typeof loadSessions === 'function') {
+                        loadSessions();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showMessage(`Failed to save settings: ${errorData.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving download settings:', error);
+                showMessage('Error saving settings', 'error');
+            }
+        };
+
+        // Copy gallery link to clipboard
+        window.copyGalleryLink = function() {
+            const linkText = document.getElementById('galleryLink').textContent;
+            if (linkText && linkText !== 'Loading gallery link...' && linkText !== 'Error loading gallery link') {
+                navigator.clipboard.writeText(linkText).then(() => {
+                    showMessage('Gallery link copied to clipboard!', 'success');
+                }).catch(err => {
+                    console.error('Failed to copy link:', err);
+                    showMessage('Failed to copy link', 'error');
+                });
+            }
+        };
+
+        // Event listeners for dynamic form updates
+        document.addEventListener('DOMContentLoaded', function() {
+            // Download enabled toggle
+            document.getElementById('downloadEnabled').addEventListener('change', toggleDownloadSettings);
+            
+            // Pricing model change
+            document.getElementById('pricingModel').addEventListener('change', updatePricingModelFields);
+            
+            // Watermark enabled toggle
+            document.getElementById('watermarkEnabled').addEventListener('change', toggleWatermarkSettings);
+            
+            // Opacity slider
+            document.getElementById('watermarkOpacity').addEventListener('input', function() {
+                document.getElementById('opacityValue').textContent = this.value;
+            });
+        });
+
+        function toggleDownloadSettings() {
+            const enabled = document.getElementById('downloadEnabled').checked;
+            document.getElementById('downloadSettings').style.display = enabled ? 'block' : 'none';
+        }
+
+        function updatePricingModelFields() {
+            const pricingModel = document.getElementById('pricingModel').value;
+            
+            // Hide all pricing-specific fields first
+            document.getElementById('paidSettings').style.display = 'none';
+            document.getElementById('freemiumSettings').style.display = 'none';
+            document.getElementById('freeSettings').style.display = 'none';
+            
+            // Show relevant fields based on pricing model
+            if (pricingModel === 'paid') {
+                document.getElementById('paidSettings').style.display = 'block';
+            } else if (pricingModel === 'freemium') {
+                document.getElementById('freemiumSettings').style.display = 'block';
+            } else if (pricingModel === 'free') {
+                document.getElementById('freeSettings').style.display = 'block';
+            }
+        }
+
+        function toggleWatermarkSettings() {
+            const enabled = document.getElementById('watermarkEnabled').checked;
+            document.getElementById('watermarkSettings').style.display = enabled ? 'block' : 'none';
+        }
+    </script>
+
     <!-- Console Cleanup for Production -->
     <script src="static/js/console-cleanup.js"></script>
     
