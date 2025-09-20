@@ -199,18 +199,18 @@ function createDownloadRoutes(isAuthenticated) {
         return res.status(400).json({ error: 'Invalid watermark type. Must be "text" or "logo"' });
       }
 
-      // Build update object (only include defined values)
+      // Build update object (only include defined values) - Use snake_case for database columns
       const updateData = {};
-      if (pricingModel !== undefined) updateData.pricingModel = pricingModel;
-      if (downloadMax !== undefined) updateData.downloadMax = downloadMax;
-      if (pricePerDownload !== undefined) updateData.pricePerDownload = pricePerDownload;
-      if (freeDownloads !== undefined) updateData.freeDownloads = freeDownloads;
-      if (watermarkEnabled !== undefined) updateData.watermarkEnabled = watermarkEnabled;
-      if (watermarkType !== undefined) updateData.watermarkType = watermarkType;
-      if (watermarkText !== undefined) updateData.watermarkText = watermarkText;
-      if (watermarkPosition !== undefined) updateData.watermarkPosition = watermarkPosition;
-      if (watermarkOpacity !== undefined) updateData.watermarkOpacity = watermarkOpacity;
-      if (watermarkScale !== undefined) updateData.watermarkScale = watermarkScale;
+      if (pricingModel !== undefined) updateData.pricing_model = pricingModel;
+      if (downloadMax !== undefined) updateData.download_max = downloadMax;
+      if (pricePerDownload !== undefined) updateData.price_per_download = pricePerDownload;
+      if (freeDownloads !== undefined) updateData.free_downloads = freeDownloads;
+      if (watermarkEnabled !== undefined) updateData.watermark_enabled = watermarkEnabled;
+      if (watermarkType !== undefined) updateData.watermark_type = watermarkType;
+      if (watermarkText !== undefined) updateData.watermark_text = watermarkText;
+      if (watermarkPosition !== undefined) updateData.watermark_position = watermarkPosition;
+      if (watermarkOpacity !== undefined) updateData.watermark_opacity = watermarkOpacity;
+      if (watermarkScale !== undefined) updateData.watermark_scale = watermarkScale;
 
       // Handle logo file upload if provided
       if (req.file && watermarkType === 'logo') {
@@ -238,7 +238,7 @@ function createDownloadRoutes(isAuthenticated) {
           if (uploadResult.success) {
             // Get URL for the uploaded logo
             const logoUrl = await r2Manager.getSignedUrl(r2Key, 31536000); // 1 year expiry for logos
-            updateData.watermarkLogoUrl = logoUrl;
+            updateData.watermark_logo_url = logoUrl;
             console.log(`🖼️ Watermark logo uploaded to R2 for session ${sessionId}`);
           } else {
             console.error('Failed to upload watermark logo to R2:', uploadResult.error);
@@ -250,7 +250,7 @@ function createDownloadRoutes(isAuthenticated) {
       }
 
       // Always update the timestamp
-      updateData.watermarkUpdatedAt = new Date();
+      updateData.watermark_updated_at = new Date();
 
       console.log(`🔍 Updating session ${sessionId} with data:`, updateData);
 
