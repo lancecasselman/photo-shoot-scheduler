@@ -626,6 +626,16 @@ function createSessionCard(session) {
     uploadBtn.style.backgroundColor = '#6b7280'; // Gray background
     uploadBtn.style.color = 'white'; // White text
 
+    // Download Controls Button
+    const downloadControlsBtn = document.createElement('button');
+    downloadControlsBtn.className = 'btn btn-info';
+    downloadControlsBtn.textContent = '📥 Download Controls';
+    downloadControlsBtn.onclick = () => openDownloadControls(session.id);
+    downloadControlsBtn.style.backgroundColor = '#3b82f6'; // Blue background
+    downloadControlsBtn.style.color = 'white';
+    downloadControlsBtn.style.marginBottom = '5px';
+    console.log('✅ DOWNLOAD CONTROLS BUTTON CREATED for session:', session.id);
+
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
     calendarBtn.textContent = 'Schedule: Add to Calendar';
@@ -723,6 +733,7 @@ function createSessionCard(session) {
 
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
+    actions.appendChild(downloadControlsBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(emailClientBtn);
     actions.appendChild(galleryBtn);
@@ -3933,3 +3944,242 @@ window.switchTab = function(tabName) {
                 select.appendChild(option);
             });
         }
+
+// Open Download Controls Interface
+async function openDownloadControls(sessionId) {
+    try {
+        console.log('📥 Opening download controls for session:', sessionId);
+        
+        // Get current download policy
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load download policy');
+        }
+        
+        const policy = await response.json();
+        console.log('Current policy:', policy);
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.zIndex = '1050';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '30px';
+        modalContent.style.borderRadius = '12px';
+        modalContent.style.maxWidth = '600px';
+        modalContent.style.width = '90%';
+        modalContent.style.maxHeight = '80vh';
+        modalContent.style.overflowY = 'auto';
+        modalContent.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+        
+        modalContent.innerHTML = `
+            <h2 style="margin-bottom: 20px; color: #333;">📥 Download Controls</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Download Enabled:</label>
+                <select id="downloadEnabled" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="true" ${policy.downloadEnabled ? 'selected' : ''}>Yes - Allow downloads</option>
+                    <option value="false" ${!policy.downloadEnabled ? 'selected' : ''}>No - Disable downloads</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pricing Model:</label>
+                <select id="pricingModel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="free" ${policy.pricingModel === 'free' ? 'selected' : ''}>Free (with optional limits)</option>
+                    <option value="paid" ${policy.pricingModel === 'paid' ? 'selected' : ''}>Paid (charge per download)</option>
+                    <option value="freemium" ${policy.pricingModel === 'freemium' ? 'selected' : ''}>Freemium (limited free, then paid)</option>
+                </select>
+            </div>
+            
+            <div id="freeOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'free' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Download Limit (0 = unlimited):</label>
+                <input type="number" id="downloadMax" value="${policy.downloadMax || 0}" min="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div id="freemiumOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'freemium' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Free Downloads Allowed:</label>
+                <input type="number" id="freeDownloads" value="${policy.freeDownloads || 0}" min="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div id="paidOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'paid' || policy.pricingModel === 'freemium' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Price Per Download ($):</label>
+                <input type="number" id="pricePerDownload" value="${policy.pricePerDownload || 0}" min="0" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #333;">🎨 Watermark Settings</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Enabled:</label>
+                <select id="watermarkEnabled" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="true" ${policy.watermarkEnabled ? 'selected' : ''}>Yes - Apply watermark</option>
+                    <option value="false" ${!policy.watermarkEnabled ? 'selected' : ''}>No - No watermark</option>
+                </select>
+            </div>
+            
+            <div id="watermarkOptions" style="${policy.watermarkEnabled ? '' : 'display: none;'}">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Type:</label>
+                    <select id="watermarkType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="text" ${policy.watermarkType === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="logo" ${policy.watermarkType === 'logo' ? 'selected' : ''}>Logo</option>
+                    </select>
+                </div>
+                
+                <div id="textWatermark" style="margin-bottom: 20px; ${policy.watermarkType === 'text' ? '' : 'display: none;'}">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Text:</label>
+                    <input type="text" id="watermarkText" value="${policy.watermarkText || '© Photography'}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div id="logoWatermark" style="margin-bottom: 20px; ${policy.watermarkType === 'logo' ? '' : 'display: none;'}">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Upload Logo:</label>
+                    <input type="file" id="watermarkLogo" accept=".png,.jpg,.jpeg" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    ${policy.watermarkLogoUrl ? `<p style="color: #28a745; margin-top: 5px;">✅ Logo uploaded</p>` : ''}
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Position:</label>
+                        <select id="watermarkPosition" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="top-left" ${policy.watermarkPosition === 'top-left' ? 'selected' : ''}>Top Left</option>
+                            <option value="top-right" ${policy.watermarkPosition === 'top-right' ? 'selected' : ''}>Top Right</option>
+                            <option value="bottom-left" ${policy.watermarkPosition === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
+                            <option value="bottom-right" ${policy.watermarkPosition === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
+                            <option value="center" ${policy.watermarkPosition === 'center' ? 'selected' : ''}>Center</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Opacity (%):</label>
+                        <input type="number" id="watermarkOpacity" value="${policy.watermarkOpacity || 60}" min="10" max="100" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button id="savePolicy" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Settings</button>
+                <button id="generateToken" style="flex: 1; padding: 12px; background: #17a2b8; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🔗 Generate Access Token</button>
+                <button id="closeModal" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+            </div>
+        `;
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // Handle dropdown changes
+        document.getElementById('pricingModel').onchange = function() {
+            const value = this.value;
+            document.getElementById('freeOptions').style.display = value === 'free' ? 'block' : 'none';
+            document.getElementById('freemiumOptions').style.display = value === 'freemium' ? 'block' : 'none';
+            document.getElementById('paidOptions').style.display = (value === 'paid' || value === 'freemium') ? 'block' : 'none';
+        };
+        
+        document.getElementById('watermarkEnabled').onchange = function() {
+            document.getElementById('watermarkOptions').style.display = this.value === 'true' ? 'block' : 'none';
+        };
+        
+        document.getElementById('watermarkType').onchange = function() {
+            const value = this.value;
+            document.getElementById('textWatermark').style.display = value === 'text' ? 'block' : 'none';
+            document.getElementById('logoWatermark').style.display = value === 'logo' ? 'block' : 'none';
+        };
+        
+        // Handle save
+        document.getElementById('savePolicy').onclick = async function() {
+            try {
+                const formData = new FormData();
+                formData.append('downloadEnabled', document.getElementById('downloadEnabled').value);
+                formData.append('pricingModel', document.getElementById('pricingModel').value);
+                formData.append('downloadMax', document.getElementById('downloadMax').value);
+                formData.append('freeDownloads', document.getElementById('freeDownloads').value);
+                formData.append('pricePerDownload', document.getElementById('pricePerDownload').value);
+                formData.append('watermarkEnabled', document.getElementById('watermarkEnabled').value);
+                formData.append('watermarkType', document.getElementById('watermarkType').value);
+                formData.append('watermarkText', document.getElementById('watermarkText').value);
+                formData.append('watermarkPosition', document.getElementById('watermarkPosition').value);
+                formData.append('watermarkOpacity', document.getElementById('watermarkOpacity').value);
+                
+                const logoFile = document.getElementById('watermarkLogo').files[0];
+                if (logoFile) {
+                    formData.append('logo', logoFile);
+                }
+                
+                const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (!saveResponse.ok) {
+                    throw new Error('Failed to save policy');
+                }
+                
+                showMessage('Download policy saved successfully!', 'success');
+                document.body.removeChild(modal);
+                
+            } catch (error) {
+                console.error('Error saving policy:', error);
+                showMessage('Failed to save policy: ' + error.message, 'error');
+            }
+        };
+        
+        // Handle token generation
+        document.getElementById('generateToken').onclick = async function() {
+            try {
+                const tokenResponse = await fetch(`/api/downloads/sessions/${sessionId}/generate-token`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clientEmail: 'client@example.com', // Can be customized
+                        expiresInDays: 180
+                    })
+                });
+                
+                if (!tokenResponse.ok) {
+                    throw new Error('Failed to generate token');
+                }
+                
+                const tokenData = await tokenResponse.json();
+                const galleryUrl = `${window.location.origin}/gallery/${sessionId}?token=${tokenData.token}`;
+                
+                // Copy to clipboard
+                navigator.clipboard.writeText(galleryUrl);
+                
+                showMessage('Gallery URL copied to clipboard!', 'success');
+                
+            } catch (error) {
+                console.error('Error generating token:', error);
+                showMessage('Failed to generate access token: ' + error.message, 'error');
+            }
+        };
+        
+        // Handle close
+        document.getElementById('closeModal').onclick = function() {
+            document.body.removeChild(modal);
+        };
+        
+        // Close on background click
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
+        
+    } catch (error) {
+        console.error('Error opening download controls:', error);
+        showMessage('Failed to load download controls: ' + error.message, 'error');
+    }
+}
