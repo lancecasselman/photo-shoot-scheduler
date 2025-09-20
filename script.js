@@ -2221,10 +2221,10 @@ function createDownloadControlsSection(session) {
         margin-bottom: 15px;
     `;
 
-    const generateTokenBtn = document.createElement('button');
-    generateTokenBtn.className = 'btn btn-success';
-    generateTokenBtn.textContent = '🔑 Generate Download Token';
-    generateTokenBtn.style.cssText = `
+    const galleryLinkBtn = document.createElement('button');
+    galleryLinkBtn.className = 'btn btn-success';
+    galleryLinkBtn.textContent = '🔗 Copy Gallery Link';
+    galleryLinkBtn.style.cssText = `
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         border: none;
         padding: 8px 16px;
@@ -2233,7 +2233,7 @@ function createDownloadControlsSection(session) {
         font-size: 0.9rem;
         cursor: pointer;
     `;
-    generateTokenBtn.onclick = () => generateDownloadToken(session.id);
+    galleryLinkBtn.onclick = () => copyDirectGalleryLink(session.id, session.galleryAccessToken);
 
     const analyticsBtn = document.createElement('button');
     analyticsBtn.className = 'btn btn-info';
@@ -2263,7 +2263,7 @@ function createDownloadControlsSection(session) {
     `;
     watermarkBtn.onclick = () => openWatermarkModal(session.id);
 
-    actionsRow.appendChild(generateTokenBtn);
+    actionsRow.appendChild(galleryLinkBtn);
     actionsRow.appendChild(analyticsBtn);
     actionsRow.appendChild(watermarkBtn);
 
@@ -4751,6 +4751,18 @@ function showContractSelectionDialog(contracts, clientName) {
 // Make function available globally
 window.viewSessionContractsPDF = viewSessionContractsPDF;
 
+// Copy Direct Gallery Link (no token needed)
+async function copyDirectGalleryLink(sessionId, galleryAccessToken) {
+    try {
+        const directGalleryUrl = `${window.location.origin}/gallery/${sessionId}?access=${galleryAccessToken}`;
+        await navigator.clipboard.writeText(directGalleryUrl);
+        showMessage('Gallery link copied to clipboard! 🎉', 'success');
+    } catch (error) {
+        console.error('Error copying gallery link:', error);
+        showMessage('Failed to copy gallery link', 'error');
+    }
+}
+
 // Open Download Controls Interface
 async function openDownloadControls(sessionId) {
     try {
@@ -4941,36 +4953,34 @@ async function openDownloadControls(sessionId) {
             }
         };
         
-        // Handle token generation
-        document.getElementById('generateToken').onclick = async function() {
-            try {
-                const tokenResponse = await fetch(`/api/downloads/sessions/${sessionId}/generate-token`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        clientEmail: 'client@example.com', // Can be customized
-                        expiresInHours: 4320 // 180 days = 4320 hours
-                    })
-                });
-                
-                if (!tokenResponse.ok) {
-                    throw new Error('Failed to generate token');
-                }
-                
-                const tokenData = await tokenResponse.json();
-                const galleryUrl = `${window.location.origin}/gallery/${sessionId}?token=${tokenData.token}`;
-                
-                // Copy to clipboard
-                navigator.clipboard.writeText(galleryUrl);
-                
-                showMessage('Gallery URL copied to clipboard!', 'success');
-                
-            } catch (error) {
-                console.error('Error generating token:', error);
-                showMessage('Failed to generate access token: ' + error.message, 'error');
-            }
-        };
+        // Direct gallery link - no token needed!
+        const directGalleryUrl = `/gallery/${sessionId}?access=${policy.sessionId}`;
+        
+        // Add direct gallery link display
+        const galleryLinkSection = document.createElement('div');
+        galleryLinkSection.innerHTML = `
+            <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h5 style="margin: 0 0 10px 0; color: #28a745;">📱 Client Gallery Link</h5>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" value="${window.location.origin}${directGalleryUrl}" readonly 
+                           style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
+                    <button onclick="navigator.clipboard.writeText('${window.location.origin}${directGalleryUrl}'); showMessage('Gallery link copied!', 'success');" 
+                            style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        📋 Copy
+                    </button>
+                    <button onclick="window.open('${directGalleryUrl}', '_blank')" 
+                            style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        👁️ Preview
+                    </button>
+                </div>
+                <small style="color: #6c757d; margin-top: 8px; display: block;">
+                    Share this link directly with your client - no extra steps required!
+                </small>
+            </div>
+        `;
+        
+        // Insert the gallery link section before the close button
+        modal.querySelector('.modal-content').insertBefore(galleryLinkSection, modal.querySelector('#closeModal').parentElement);
         
         // Handle close
         document.getElementById('closeModal').onclick = function() {
