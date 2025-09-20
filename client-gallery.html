@@ -1082,25 +1082,71 @@
             }
         }
         
-        // Enhanced download with token-based system
+        // Enhanced download with atomic issue/redeem system
         async function downloadPhotoControlled(photoId) {
             try {
-                console.log('📥 Downloading photo with token:', photoId);
+                console.log('📥 Requesting download token for:', photoId);
                 
-                const response = await fetch(`/api/downloads/download/${downloadToken}/${photoId}`);
-                if (!response.ok) {
-                    if (response.status === 402) {
-                        throw new Error('Payment required for this download');
-                    }
-                    throw new Error('Download failed');
+                // Find the photo data
+                const photo = photos.find(p => p.filename === photoId || p.url.includes(photoId));
+                if (!photo) {
+                    throw new Error('Photo not found');
                 }
                 
-                const blob = await response.blob();
+                // Step 1: Issue a download token
+                const issueResponse = await fetch(`/api/downloads/sessions/${sessionData.id}/issue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        photoUrl: photo.url,
+                        filename: photo.filename || photoId,
+                        galleryAccessToken: galleryToken
+                    })
+                });
+                
+                if (!issueResponse.ok) {
+                    const errorData = await issueResponse.json();
+                    if (issueResponse.status === 402) {
+                        // Payment required - trigger purchase flow
+                        console.log('💳 Payment required for download');
+                        return purchasePhoto(photoId);
+                    }
+                    if (issueResponse.status === 403) {
+                        if (errorData.message && errorData.message.includes('limit')) {
+                            throw new Error(errorData.message);
+                        }
+                        throw new Error(errorData.error || 'Download not allowed');
+                    }
+                    throw new Error(errorData.error || 'Failed to request download');
+                }
+                
+                const issueData = await issueResponse.json();
+                console.log('🎫 Download token issued:', issueData.downloadType);
+                
+                // Step 2: Redeem the token for actual download
+                const redeemResponse = await fetch(`/api/downloads/redeem/${issueData.token}`, {
+                    method: 'POST'
+                });
+                
+                if (!redeemResponse.ok) {
+                    const errorData = await redeemResponse.json();
+                    throw new Error(errorData.error || 'Failed to redeem download token');
+                }
+                
+                const redeemData = await redeemResponse.json();
+                
+                // Step 3: Download the file using the signed URL
+                const downloadResponse = await fetch(redeemData.downloadUrl);
+                if (!downloadResponse.ok) {
+                    throw new Error('Failed to download file');
+                }
+                
+                const blob = await downloadResponse.blob();
                 const downloadUrl = window.URL.createObjectURL(blob);
                 
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                link.download = photoId;
+                link.download = redeemData.filename || photoId;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1116,7 +1162,7 @@
                     renderGalleryWithDownloadControls();
                 }
                 
-                console.log('✅ Photo downloaded:', photoId);
+                console.log('✅ Photo downloaded:', redeemData.filename);
             } catch (error) {
                 console.error('❌ Download failed:', error);
                 alert(error.message || 'Download failed. Please try again.');

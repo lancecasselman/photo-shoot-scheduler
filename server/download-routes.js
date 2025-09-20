@@ -1832,6 +1832,262 @@ function createDownloadRoutes(isAuthenticated) {
     }
   });
 
+  // ==================== ATOMIC DOWNLOAD OPERATIONS ====================
+  
+  /**
+   * POST /api/downloads/sessions/:sessionId/issue
+   * Atomically issue a download token with row-level locking
+   * Enforces all limits and determines free vs paid
+   */
+  router.post('/sessions/:sessionId/issue', async (req, res) => {
+    const { sessionId } = req.params;
+    const { photoUrl, filename, galleryAccessToken } = req.body;
+    
+    if (!photoUrl || !filename) {
+      return res.status(400).json({ error: 'photoUrl and filename are required' });
+    }
+
+    // Get database connection for transaction
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Lock the session row to prevent concurrent modifications
+      const sessionResult = await client.query(
+        `SELECT * FROM photography_sessions WHERE id = $1 FOR UPDATE`,
+        [sessionId]
+      );
+      
+      if (sessionResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      const session = sessionResult.rows[0];
+      
+      // Validate gallery access token if provided
+      if (galleryAccessToken) {
+        if (session.gallery_access_token !== galleryAccessToken) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: 'Invalid gallery access token' });
+        }
+        
+        // Check if gallery has expired
+        if (session.gallery_expires_at && new Date(session.gallery_expires_at) < new Date()) {
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: 'Gallery access has expired' });
+        }
+      }
+      
+      // Check if downloads are enabled
+      if (!session.download_enabled) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'Downloads are disabled for this session' });
+      }
+      
+      // Count total downloads (both reserved and completed)
+      const totalCountResult = await client.query(
+        `SELECT COUNT(*) as count FROM gallery_downloads 
+         WHERE session_id = $1 AND status IN ('reserved', 'completed')`,
+        [sessionId]
+      );
+      const totalUsed = parseInt(totalCountResult.rows[0].count);
+      
+      // Check download_max limit
+      if (session.download_max !== null && totalUsed >= session.download_max) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ 
+          error: 'Download limit exceeded',
+          message: `Maximum download limit (${session.download_max}) reached`,
+          downloadMax: session.download_max,
+          currentCount: totalUsed
+        });
+      }
+      
+      // Determine download type
+      let downloadType = 'free';
+      let requiresPayment = false;
+      
+      if (session.pricing_model === 'paid') {
+        downloadType = 'paid';
+        requiresPayment = true;
+      } else if (session.pricing_model === 'freemium') {
+        // Count free downloads used
+        const freeCountResult = await client.query(
+          `SELECT COUNT(*) as count FROM gallery_downloads 
+           WHERE session_id = $1 AND download_type = 'free' 
+           AND status IN ('reserved', 'completed')`,
+          [sessionId]
+        );
+        const freeUsed = parseInt(freeCountResult.rows[0].count);
+        const freeRemaining = (session.free_downloads || 0) - freeUsed;
+        
+        if (freeRemaining <= 0) {
+          downloadType = 'paid';
+          requiresPayment = true;
+        }
+      }
+      
+      // If payment required, create Stripe payment intent
+      if (requiresPayment) {
+        // For now, just return that payment is required
+        // This will be implemented with Stripe Connect in task 5
+        await client.query('ROLLBACK');
+        return res.status(402).json({ 
+          error: 'Payment required',
+          requiresPayment: true,
+          pricePerDownload: session.price_per_download,
+          downloadType: 'paid'
+        });
+      }
+      
+      // Create reservation in gallery_downloads
+      const downloadId = uuidv4();
+      await client.query(
+        `INSERT INTO gallery_downloads 
+         (id, session_id, user_id, client_key, photo_id, photo_url, filename, 
+          download_type, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'reserved', NOW())`,
+        [downloadId, sessionId, session.user_id, galleryAccessToken || 'direct', 
+         filename, photoUrl, filename, downloadType]
+      );
+      
+      // Create download token
+      const token = uuidv4();
+      const tokenId = uuidv4();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+      
+      await client.query(
+        `INSERT INTO download_tokens 
+         (id, token, photo_url, filename, session_id, type, expires_at, 
+          is_used, one_time, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, false, true, NOW())`,
+        [tokenId, token, photoUrl, filename, sessionId, downloadType, expiresAt]
+      );
+      
+      // Update gallery_downloads with token
+      await client.query(
+        `UPDATE gallery_downloads SET download_token = $1 WHERE id = $2`,
+        [token, downloadId]
+      );
+      
+      await client.query('COMMIT');
+      
+      console.log(`🔐 Issued ${downloadType} download token for session ${sessionId}`);
+      
+      res.json({
+        success: true,
+        token,
+        downloadType,
+        expiresAt,
+        downloadId
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error issuing download token:', error);
+      res.status(500).json({ error: 'Failed to issue download token' });
+    } finally {
+      client.release();
+    }
+  });
+  
+  /**
+   * POST /api/downloads/redeem/:token
+   * Atomically redeem a download token (one-time use)
+   */
+  router.post('/redeem/:token', async (req, res) => {
+    const { token } = req.params;
+    
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+    
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Lock and validate token
+      const tokenResult = await client.query(
+        `SELECT * FROM download_tokens WHERE token = $1 FOR UPDATE`,
+        [token]
+      );
+      
+      if (tokenResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Invalid or expired token' });
+      }
+      
+      const tokenData = tokenResult.rows[0];
+      
+      // Check if already used
+      if (tokenData.is_used) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'Token has already been used' });
+      }
+      
+      // Check expiration
+      if (new Date(tokenData.expires_at) < new Date()) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: 'Token has expired' });
+      }
+      
+      // Mark token as used
+      await client.query(
+        `UPDATE download_tokens SET is_used = true, used_at = NOW() WHERE token = $1`,
+        [token]
+      );
+      
+      // Update gallery_downloads status
+      await client.query(
+        `UPDATE gallery_downloads 
+         SET status = 'completed', created_at = NOW() 
+         WHERE download_token = $1`,
+        [token]
+      );
+      
+      // Get session for watermark settings
+      const sessionResult = await client.query(
+        `SELECT * FROM photography_sessions WHERE id = $1`,
+        [tokenData.session_id]
+      );
+      const session = sessionResult.rows[0];
+      
+      await client.query('COMMIT');
+      
+      // Generate signed URL for actual download
+      const downloadUrl = await r2Manager.getSignedUrl(
+        tokenData.photo_url.replace('/r2/file/', ''),
+        300 // 5 minute expiry for actual file download
+      );
+      
+      console.log(`✅ Redeemed ${tokenData.type} token for session ${tokenData.session_id}`);
+      
+      res.json({
+        success: true,
+        downloadUrl,
+        filename: tokenData.filename,
+        watermarkEnabled: session.watermark_enabled,
+        watermarkSettings: session.watermark_enabled ? {
+          type: session.watermark_type,
+          text: session.watermark_text,
+          position: session.watermark_position,
+          opacity: session.watermark_opacity,
+          scale: session.watermark_scale
+        } : null
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error redeeming token:', error);
+      res.status(500).json({ error: 'Failed to redeem token' });
+    } finally {
+      client.release();
+    }
+  });
+
   return router;
 }
 
