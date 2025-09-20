@@ -4754,7 +4754,7 @@ window.viewSessionContractsPDF = viewSessionContractsPDF;
 // Copy Direct Gallery Link (no token needed)
 async function copyDirectGalleryLink(sessionId, galleryAccessToken) {
     try {
-        const directGalleryUrl = `${window.location.origin}/gallery/${sessionId}?access=${galleryAccessToken}`;
+        const directGalleryUrl = `${window.location.origin}/gallery/${galleryAccessToken}`;
         await navigator.clipboard.writeText(directGalleryUrl);
         showMessage('Gallery link copied to clipboard! 🎉', 'success');
     } catch (error) {
@@ -4953,14 +4953,14 @@ async function openDownloadControls(sessionId) {
             }
         };
         
-        // Direct gallery link - no token needed!
-        const directGalleryUrl = `/gallery/${sessionId}?access=${policy.sessionId}`;
+        // Direct gallery link - no token needed! Use the session's existing gallery access token
+        const directGalleryUrl = `/gallery/${policy.sessionId}`;  // Will use gallery_access_token from session
         
-        // Add direct gallery link display
+        // Add direct gallery link display  
         const galleryLinkSection = document.createElement('div');
         galleryLinkSection.innerHTML = `
             <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
-                <h5 style="margin: 0 0 10px 0; color: #28a745;">📱 Client Gallery Link</h5>
+                <h5 style="margin: 0 0 10px 0; color: #28a745;">📱 Direct Gallery Link</h5>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="text" value="${window.location.origin}${directGalleryUrl}" readonly 
                            style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
@@ -4974,7 +4974,7 @@ async function openDownloadControls(sessionId) {
                     </button>
                 </div>
                 <small style="color: #6c757d; margin-top: 8px; display: block;">
-                    Share this link directly with your client - no extra steps required!
+                    🎉 No tokens needed! Share this link directly with your client.
                 </small>
             </div>
         `;
