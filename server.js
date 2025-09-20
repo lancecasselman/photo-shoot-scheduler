@@ -10685,6 +10685,7 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
                 sessionType: session.session_type,
                 dateTime: session.date_time,
                 photoCount: photos.length,
+                photos: photos,  // Include actual photos array for client gallery display
                 downloadEnabled: session.download_enabled,
                 pricingModel: session.pricing_model,
                 downloadMax: session.download_max,

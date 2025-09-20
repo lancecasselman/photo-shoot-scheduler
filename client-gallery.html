@@ -740,7 +740,8 @@
                     throw new Error(error.error || 'Gallery access denied');
                 }
 
-                sessionData = await verifyResponse.json();
+                const responseData = await verifyResponse.json();
+                sessionData = responseData.session || responseData; // Handle nested or flat response
                 console.log('✅ Session data loaded with download policies:', sessionData);
 
                 // Extract photos from verify response (already includes photos)
