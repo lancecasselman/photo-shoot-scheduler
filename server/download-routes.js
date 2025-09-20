@@ -72,6 +72,7 @@ function createDownloadRoutes() {
   const requireValidToken = async (req, res, next) => {
     try {
       const { token } = req.params.token ? req.params : req.query;
+      const sessionId = req.params.sessionId; // For session-bound routes
       
       if (!token) {
         return res.status(403).json({ error: 'Access token required' });
@@ -92,6 +93,16 @@ function createDownloadRoutes() {
       // Check if token is expired
       if (new Date() > tokenData.expiresAt) {
         return res.status(410).json({ error: 'Access token has expired' });
+      }
+
+      // Check if token has already been used (for one-time tokens)
+      if (tokenData.isUsed) {
+        return res.status(403).json({ error: 'Access token has already been used' });
+      }
+
+      // Enforce session binding if sessionId is provided in route
+      if (sessionId && tokenData.sessionId !== sessionId) {
+        return res.status(403).json({ error: 'Access token is not valid for this session' });
       }
 
       // Attach token data to request for use in route handlers
@@ -143,13 +154,13 @@ function createDownloadRoutes() {
         return res.status(404).json({ error: 'Session not found or access denied' });
       }
 
-      // Return download policy data
+      // Return download policy data  
       const policy = {
         sessionId,
         pricingModel: session.pricingModel,
-        downloadLimit: session.downloadLimit,
-        perDownloadPrice: session.perDownloadPrice,
-        freeDownloadLimit: session.freeDownloadLimit,
+        downloadMax: session.downloadMax,
+        pricePerDownload: session.pricePerDownload,
+        freeDownloads: session.freeDownloads,
         watermarkEnabled: session.watermarkEnabled,
         watermarkType: session.watermarkType,
         watermarkText: session.watermarkText,
@@ -177,9 +188,9 @@ function createDownloadRoutes() {
       const { sessionId } = req.params;
       const {
         pricingModel,
-        downloadLimit,
-        perDownloadPrice,
-        freeDownloadLimit,
+        downloadMax,
+        pricePerDownload,
+        freeDownloads,
         watermarkEnabled,
         watermarkType,
         watermarkText,
@@ -199,18 +210,18 @@ function createDownloadRoutes() {
         return res.status(400).json({ error: 'Invalid pricing model' });
       }
 
-      // Validate watermark type
-      const validWatermarkTypes = ['none', 'text', 'logo', 'both'];
+      // Validate watermark type to match schema
+      const validWatermarkTypes = ['text', 'logo'];
       if (watermarkType && !validWatermarkTypes.includes(watermarkType)) {
-        return res.status(400).json({ error: 'Invalid watermark type' });
+        return res.status(400).json({ error: 'Invalid watermark type. Must be "text" or "logo"' });
       }
 
       // Build update object (only include defined values)
       const updateData = {};
       if (pricingModel !== undefined) updateData.pricingModel = pricingModel;
-      if (downloadLimit !== undefined) updateData.downloadLimit = downloadLimit;
-      if (perDownloadPrice !== undefined) updateData.perDownloadPrice = perDownloadPrice;
-      if (freeDownloadLimit !== undefined) updateData.freeDownloadLimit = freeDownloadLimit;
+      if (downloadMax !== undefined) updateData.downloadMax = downloadMax;
+      if (pricePerDownload !== undefined) updateData.pricePerDownload = pricePerDownload;
+      if (freeDownloads !== undefined) updateData.freeDownloads = freeDownloads;
       if (watermarkEnabled !== undefined) updateData.watermarkEnabled = watermarkEnabled;
       if (watermarkType !== undefined) updateData.watermarkType = watermarkType;
       if (watermarkText !== undefined) updateData.watermarkText = watermarkText;
@@ -263,24 +274,39 @@ function createDownloadRoutes() {
         .png({ quality: 90 })
         .toBuffer();
 
-      // TODO: Upload to R2 storage and get URL
-      // For now, we'll store as base64 in the database (not recommended for production)
-      const logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      // Upload logo to R2 storage
+      const logoFilename = `watermark-logo-${sessionId}-${Date.now()}.png`;
+      const r2Key = `photographer-${userId}/session-${sessionId}/watermarks/${logoFilename}`;
+      
+      const uploadResult = await r2Manager.uploadFile(
+        logoBuffer,
+        r2Key,
+        'image/png',
+        logoFilename
+      );
+
+      if (!uploadResult.success) {
+        console.error('Failed to upload watermark logo to R2:', uploadResult.error);
+        return res.status(500).json({ error: 'Failed to save watermark logo' });
+      }
+
+      // Get URL for the uploaded logo
+      const logoUrl = await r2Manager.getSignedUrl(r2Key, 31536000); // 1 year expiry for logos
 
       // Update session with logo URL
       await db
         .update(photographySessions)
         .set({
-          watermarkLogoUrl: logoBase64,
+          watermarkLogoUrl: logoUrl,
           watermarkUpdatedAt: new Date()
         })
         .where(eq(photographySessions.id, sessionId));
 
-      console.log(`🖼️ Watermark logo uploaded for session ${sessionId}`);
+      console.log(`🖼️ Watermark logo uploaded to R2 for session ${sessionId}`);
       res.json({ 
         success: true, 
         message: 'Watermark logo uploaded successfully',
-        logoUrl: logoBase64
+        logoUrl
       });
       
     } catch (error) {
@@ -466,15 +492,15 @@ function createDownloadRoutes() {
           id: sessionData.id,
           sessionName: sessionData.sessionName,
           pricingModel: sessionData.pricingModel,
-          downloadLimit: sessionData.downloadLimit,
-          perDownloadPrice: sessionData.perDownloadPrice,
-          freeDownloadLimit: sessionData.freeDownloadLimit,
+          downloadMax: sessionData.downloadMax,
+          pricePerDownload: sessionData.pricePerDownload,
+          freeDownloads: sessionData.freeDownloads,
           watermarkEnabled: sessionData.watermarkEnabled
         },
         clientAccess: {
           hasAccess: true,
           downloadUsage,
-          remainingDownloads: sessionData.downloadLimit ? sessionData.downloadLimit - downloadUsage : null
+          remainingDownloads: sessionData.downloadMax ? sessionData.downloadMax - downloadUsage : null
         },
         photos
       });
@@ -498,7 +524,7 @@ function createDownloadRoutes() {
         return res.status(403).json({ error: 'Access token required' });
       }
 
-      // Verify token
+      // Verify token with proper session binding
       const downloadToken = await db
         .select()
         .from(downloadTokens)
@@ -507,6 +533,13 @@ function createDownloadRoutes() {
 
       if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt) {
         return res.status(403).json({ error: 'Invalid or expired access token' });
+      }
+
+      const tokenData = downloadToken[0];
+
+      // Enforce session binding - token must belong to this session
+      if (tokenData.sessionId !== sessionId) {
+        return res.status(403).json({ error: 'Access token is not valid for this session' });
       }
 
       // Get session data
@@ -521,14 +554,50 @@ function createDownloadRoutes() {
       }
 
       const sessionData = session[0];
+
+      // Verify photo exists in this session
+      const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionId);
+      const photoExists = sessionFiles.filesByType.gallery?.some(photo => 
+        photo.filename === photoId || photo.key.includes(photoId)
+      );
+
+      if (!photoExists) {
+        return res.status(404).json({ error: 'Photo not found in this session' });
+      }
       
+      // Handle freemium model - check if free downloads are exhausted
+      if (sessionData.pricingModel === 'freemium') {
+        const clientKey = tokenData.clientEmail || 'anonymous';
+        const usageResult = await db
+          .select({ count: count() })
+          .from(galleryDownloads)
+          .where(and(
+            eq(galleryDownloads.sessionId, sessionId),
+            eq(galleryDownloads.clientKey, clientKey),
+            eq(galleryDownloads.status, 'completed')
+          ));
+
+        const currentUsage = usageResult[0]?.count || 0;
+        const freeLimit = sessionData.freeDownloads || 0;
+
+        if (currentUsage < freeLimit) {
+          return res.status(400).json({ 
+            error: 'Free downloads still available',
+            message: `You have ${freeLimit - currentUsage} free downloads remaining` 
+          });
+        }
+      }
+
       if (sessionData.pricingModel === 'free') {
         return res.status(400).json({ error: 'This session uses free downloads' });
       }
 
-      const amount = sessionData.perDownloadPrice || 500; // Default $5.00
+      const amount = parseInt(sessionData.pricePerDownload * 100) || 500; // Convert to cents, default $5.00
 
-      // Create Stripe Payment Intent
+      // Create idempotency key to prevent duplicate charges
+      const idempotencyKey = `purchase-${sessionId}-${photoId}-${token}-${Date.now()}`;
+
+      // Create Stripe Payment Intent with SCA support
       const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'usd',
@@ -541,22 +610,31 @@ function createDownloadRoutes() {
           downloadToken: token,
           clientEmail: clientEmail || 'unknown'
         }
+      }, {
+        idempotencyKey
       });
 
-      // Create digital transaction record
+      // Create digital transaction record with photo binding
       const transactionId = uuidv4();
       await db.insert(digitalTransactions).values({
         id: transactionId,
         sessionId,
         userId: sessionData.userId,
+        photoId, // Add photo binding for specific authorization
         stripePaymentIntentId: paymentIntent.id,
         amount,
         downloadToken: token,
-        status: paymentIntent.status === 'succeeded' ? 'completed' : 'failed',
+        status: paymentIntent.status,
         createdAt: new Date()
       });
 
+      // Handle different payment states
       if (paymentIntent.status === 'succeeded') {
+        // Payment completed successfully
+        await db.update(digitalTransactions)
+          .set({ status: 'completed' })
+          .where(eq(digitalTransactions.id, transactionId));
+
         console.log(`💳 Payment completed for photo ${photoId} in session ${sessionId}`);
         res.json({ 
           success: true,
@@ -564,7 +642,21 @@ function createDownloadRoutes() {
           transactionId,
           downloadReady: true
         });
+      } else if (paymentIntent.status === 'requires_action') {
+        // SCA/3DS authentication required
+        res.json({
+          success: false,
+          requiresAction: true,
+          paymentIntentId: paymentIntent.id,
+          clientSecret: paymentIntent.client_secret,
+          transactionId
+        });
       } else {
+        // Payment failed or other status
+        await db.update(digitalTransactions)
+          .set({ status: 'failed' })
+          .where(eq(digitalTransactions.id, transactionId));
+
         res.status(400).json({ 
           error: 'Payment failed', 
           details: paymentIntent.last_payment_error?.message 
@@ -581,7 +673,7 @@ function createDownloadRoutes() {
    * GET /api/downloads/download/:token/:photoId
    * Download photo with watermark and usage tracking - public endpoint
    */
-  router.get('/download/:token/:photoId', async (req, res) => {
+  router.get('/download/:token/:photoId', requireValidToken, async (req, res) => {
     try {
       const { token, photoId } = req.params;
 
@@ -612,24 +704,54 @@ function createDownloadRoutes() {
       const sessionData = session[0];
       const clientKey = tokenData.clientEmail || 'anonymous';
 
-      // Check download limits for free model
-      if (sessionData.pricingModel === 'free' && sessionData.downloadLimit) {
-        const usageResult = await db
-          .select({ count: count() })
-          .from(galleryDownloads)
-          .where(and(
-            eq(galleryDownloads.sessionId, tokenData.sessionId),
-            eq(galleryDownloads.clientKey, clientKey),
-            eq(galleryDownloads.status, 'completed')
-          ));
+      // Check download limits and payment requirements based on pricing model
+      const usageResult = await db
+        .select({ count: count() })
+        .from(galleryDownloads)
+        .where(and(
+          eq(galleryDownloads.sessionId, tokenData.sessionId),
+          eq(galleryDownloads.clientKey, clientKey),
+          eq(galleryDownloads.status, 'completed')
+        ));
 
-        const currentUsage = usageResult[0]?.count || 0;
-        if (currentUsage >= sessionData.downloadLimit) {
+      const currentUsage = usageResult[0]?.count || 0;
+
+      // Handle different pricing models
+      if (sessionData.pricingModel === 'free') {
+        // Free model - check download limits
+        if (sessionData.downloadMax && currentUsage >= sessionData.downloadMax) {
           return res.status(403).json({ error: 'Download limit exceeded' });
+        }
+      } else if (sessionData.pricingModel === 'freemium') {
+        // Freemium model - check if within free limit or payment required
+        const freeLimit = sessionData.freeDownloads || 0;
+        
+        if (currentUsage < freeLimit) {
+          // Still within free downloads - allow download
+          console.log(`📥 Freemium free download: ${currentUsage + 1}/${freeLimit} for ${clientKey}`);
+        } else {
+          // Free downloads exhausted - verify payment for this photo
+          const transactionResult = await db
+            .select()
+            .from(digitalTransactions)
+            .where(and(
+              eq(digitalTransactions.sessionId, tokenData.sessionId),
+              eq(digitalTransactions.photoId, photoId),
+              eq(digitalTransactions.downloadToken, token),
+              eq(digitalTransactions.status, 'completed')
+            ))
+            .limit(1);
+
+          if (transactionResult.length === 0) {
+            return res.status(402).json({ 
+              error: 'Payment required for download',
+              message: `Free download limit (${freeLimit}) exceeded. Payment required for additional downloads.`
+            });
+          }
         }
       }
 
-      // For paid downloads, verify payment exists
+      // For paid downloads, verify payment exists for this specific photo
       let digitalTransaction = null;
       if (sessionData.pricingModel === 'paid') {
         const transactionResult = await db
@@ -637,13 +759,14 @@ function createDownloadRoutes() {
           .from(digitalTransactions)
           .where(and(
             eq(digitalTransactions.sessionId, tokenData.sessionId),
+            eq(digitalTransactions.photoId, photoId),
             eq(digitalTransactions.downloadToken, token),
             eq(digitalTransactions.status, 'completed')
           ))
           .limit(1);
 
         if (transactionResult.length === 0) {
-          return res.status(402).json({ error: 'Payment required for download' });
+          return res.status(402).json({ error: 'Payment required for this specific photo download' });
         }
         
         digitalTransaction = transactionResult[0];
@@ -665,40 +788,96 @@ function createDownloadRoutes() {
       }
 
       // Apply watermark if enabled
-      if (sessionData.watermarkEnabled && (sessionData.watermarkType === 'text' || sessionData.watermarkType === 'both')) {
+      if (sessionData.watermarkEnabled && sessionData.watermarkType) {
         try {
-          const watermarkText = sessionData.watermarkText || '© Photography';
           const position = sessionData.watermarkPosition || 'bottom-right';
           const opacity = (sessionData.watermarkOpacity || 70) / 100;
+          const scale = (sessionData.watermarkScale || 20) / 100; // Scale as percentage of image width
+          
+          const sharpImage = sharp(photoBuffer);
+          const { width: imageWidth, height: imageHeight } = await sharpImage.metadata();
+          const composites = [];
 
-          // Apply text watermark using Sharp
-          photoBuffer = await sharp(photoBuffer)
-            .composite([{
-              input: await sharp({
-                create: {
-                  width: 800,
-                  height: 100,
-                  channels: 4,
-                  background: { r: 255, g: 255, b: 255, alpha: 0 }
-                }
-              })
+          // Apply logo watermark for 'logo' type
+          if (sessionData.watermarkType === 'logo' && sessionData.watermarkLogoUrl) {
+            try {
+              // Download logo from R2 or use signed URL
+              let logoBuffer;
+              if (sessionData.watermarkLogoUrl.startsWith('http')) {
+                const response = await fetch(sessionData.watermarkLogoUrl);
+                logoBuffer = Buffer.from(await response.arrayBuffer());
+              } else {
+                // Fallback for base64 stored logos
+                logoBuffer = Buffer.from(sessionData.watermarkLogoUrl.split(',')[1], 'base64');
+              }
+
+              // Resize logo based on image scale
+              const logoWidth = Math.floor(imageWidth * scale);
+              const logoProcessed = await sharp(logoBuffer)
+                .resize(logoWidth, null, { fit: 'inside', withoutEnlargement: true })
                 .png()
-                .composite([{
-                  input: Buffer.from(`
-                    <svg width="800" height="100">
-                      <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" 
-                            font-family="Arial" font-size="24" fill="white" opacity="${opacity}">
-                        ${watermarkText}
-                      </text>
-                    </svg>
-                  `),
-                  top: 0,
-                  left: 0
-                }])
-                .toBuffer(),
-              gravity: position === 'center' ? 'center' : position === 'top-left' ? 'northwest' : position === 'top-right' ? 'northeast' : position === 'bottom-left' ? 'southwest' : 'southeast'
+                .toBuffer();
+
+              composites.push({
+                input: logoProcessed,
+                gravity: position === 'center' ? 'center' : 
+                        position === 'top-left' ? 'northwest' : 
+                        position === 'top-right' ? 'northeast' : 
+                        position === 'bottom-left' ? 'southwest' : 'southeast',
+                blend: 'over'
+              });
+
+            } catch (logoError) {
+              console.warn('Logo watermark failed, skipping:', logoError.message);
+            }
+          }
+
+          // Apply text watermark for 'text' type
+          if (sessionData.watermarkType === 'text' && sessionData.watermarkText) {
+            const watermarkText = sessionData.watermarkText;
+            const fontSize = Math.max(16, Math.floor(imageWidth * 0.02)); // Responsive font size
+
+            const textOverlay = await sharp({
+              create: {
+                width: Math.floor(imageWidth * 0.8),
+                height: Math.floor(fontSize * 2),
+                channels: 4,
+                background: { r: 255, g: 255, b: 255, alpha: 0 }
+              }
+            })
+            .png()
+            .composite([{
+              input: Buffer.from(`
+                <svg width="${Math.floor(imageWidth * 0.8)}" height="${Math.floor(fontSize * 2)}">
+                  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" 
+                        font-family="Arial, sans-serif" font-size="${fontSize}" 
+                        fill="white" opacity="${opacity}"
+                        stroke="black" stroke-width="1" stroke-opacity="0.3">
+                    ${watermarkText}
+                  </text>
+                </svg>
+              `),
+              top: 0,
+              left: 0
             }])
             .toBuffer();
+
+            composites.push({
+              input: textOverlay,
+              gravity: position === 'center' ? 'center' : 
+                      position === 'top-left' ? 'northwest' : 
+                      position === 'top-right' ? 'northeast' : 
+                      position === 'bottom-left' ? 'southwest' : 'southeast',
+              blend: 'over'
+            });
+          }
+
+          // Apply all composites if any exist
+          if (composites.length > 0) {
+            photoBuffer = await sharpImage
+              .composite(composites)
+              .toBuffer();
+          }
 
         } catch (error) {
           console.warn('Watermark application failed, serving original:', error.message);
@@ -820,7 +999,7 @@ function createDownloadRoutes() {
           paidDownloads: paidDownloads[0]?.count || 0,
           totalRevenue: totalRevenue[0]?.sum || 0,
           uniqueClients: uniqueClients.length,
-          downloadLimit: session.downloadLimit,
+          downloadMax: session.downloadMax,
           pricingModel: session.pricingModel
         }
       });

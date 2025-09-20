@@ -401,13 +401,12 @@ export const downloadTokens = pgTable("download_tokens", {
 export const digitalTransactions = pgTable("digital_transactions", {
   id: varchar("id").primaryKey().notNull(),
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
-  photoUrl: varchar("photo_url").notNull(),
-  filename: varchar("filename").notNull(),
-  customerEmail: varchar("customer_email").notNull(),
-  customerName: varchar("customer_name"),
+  userId: varchar("user_id").notNull().references(() => users.id), // photographer
+  photoId: varchar("photo_id").notNull(), // ID or filename of purchased photo
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").notNull(), // Stripe Payment Intent ID
   amount: integer("amount").notNull(), // Amount in cents
   downloadToken: varchar("download_token").notNull().unique().references(() => downloadTokens.token, { onDelete: "restrict" }),
-  status: varchar("status").notNull().default("completed").$type<'completed' | 'failed' | 'refunded'>(),
+  status: varchar("status").notNull().default("pending").$type<'pending' | 'completed' | 'failed' | 'refunded'>(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   sessionDateIdx: index("idx_digital_transactions_session_date").on(table.sessionId, table.createdAt),
