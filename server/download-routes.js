@@ -619,6 +619,7 @@ function createDownloadRoutes(isAuthenticated) {
       
       // Apply watermark if enabled
       let finalImage;
+      let finalImageFormat = 'jpeg'; // Default format
       if (sessionData.watermarkEnabled) {
         // Get original file from R2
         const originalFile = await r2Manager.downloadFile(fileUrl.replace('/r2/file/', ''));
@@ -645,22 +646,122 @@ function createDownloadRoutes(isAuthenticated) {
         }
 
         // Apply watermark using Sharp
-        finalImage = await sharp(originalFile.data)
-          .composite([{
-            input: await sharp({
-              create: {
-                width: 200,
-                height: 50,
-                channels: 4,
-                background: { r: 0, g: 0, b: 0, alpha: 0 }
-              }
+        const originalImage = sharp(originalFile.data);
+        const metadata = await originalImage.metadata();
+        
+        if (watermarkConfig.type === 'text') {
+          // Escape text to prevent SVG injection attacks
+          const escapeXml = (str) => {
+            return String(str)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&apos;');
+          };
+          
+          const safeText = escapeXml(watermarkConfig.text || '© Photography');
+          
+          // Calculate text dimensions based on scale (as percentage of image width)
+          const fontSize = Math.max(20, Math.floor(metadata.width * (watermarkConfig.scale || 10) / 100));
+          const textWidth = Math.min(metadata.width * 0.8, fontSize * safeText.length * 0.6);
+          const textHeight = fontSize * 1.5;
+          
+          // Create properly sized SVG for the text
+          const svgText = `
+            <svg width="${Math.ceil(textWidth)}" height="${Math.ceil(textHeight)}" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <style type="text/css">
+                  text { font-family: Arial, sans-serif; font-weight: bold; }
+                </style>
+              </defs>
+              <text x="50%" y="50%" 
+                font-size="${fontSize}" 
+                fill="white" 
+                stroke="black" 
+                stroke-width="2"
+                text-anchor="middle" 
+                dominant-baseline="middle"
+                opacity="${(watermarkConfig.opacity || 60) / 100}">
+                ${safeText}
+              </text>
+            </svg>`;
+          
+          // Determine position
+          let gravity = 'center';
+          if (watermarkConfig.position === 'bottom-right') gravity = 'southeast';
+          else if (watermarkConfig.position === 'bottom-left') gravity = 'southwest';
+          else if (watermarkConfig.position === 'top-right') gravity = 'northeast';
+          else if (watermarkConfig.position === 'top-left') gravity = 'northwest';
+          else if (watermarkConfig.position === 'center') gravity = 'center';
+          else if (watermarkConfig.position === 'bottom-center') gravity = 'south';
+          else if (watermarkConfig.position === 'top-center') gravity = 'north';
+          
+          // Preserve original format
+          const outputFormat = metadata.format === 'png' ? 'png' : 'jpeg';
+          finalImageFormat = outputFormat; // Set format for headers
+          
+          finalImage = await originalImage
+            .composite([{
+              input: Buffer.from(svgText),
+              gravity: gravity
+            }])
+            .toFormat(outputFormat, { quality: 90 })
+            .toBuffer();
+            
+        } else if (watermarkConfig.type === 'logo' && watermarkConfig.logoBuffer) {
+          // Apply logo watermark
+          const logoImage = sharp(watermarkConfig.logoBuffer);
+          const logoMetadata = await logoImage.metadata();
+          
+          // Calculate logo size based on scale percentage (unified with text scale)
+          const targetWidth = Math.floor(metadata.width * (watermarkConfig.scale || 10) / 100);
+          const targetHeight = Math.floor(targetWidth * (logoMetadata.height / logoMetadata.width));
+          
+          // Resize logo with transparency preserved
+          const resizedLogo = await logoImage
+            .resize(targetWidth, targetHeight, { 
+              fit: 'inside',
+              withoutEnlargement: true 
             })
             .png()
-            .toBuffer(),
-            gravity: watermarkConfig.position === 'bottom-right' ? 'southeast' : 'southwest'
-          }])
-          .jpeg({ quality: 90 })
-          .toBuffer();
+            .toBuffer();
+          
+          // Determine position
+          let gravity = 'center';
+          if (watermarkConfig.position === 'bottom-right') gravity = 'southeast';
+          else if (watermarkConfig.position === 'bottom-left') gravity = 'southwest';
+          else if (watermarkConfig.position === 'top-right') gravity = 'northeast';
+          else if (watermarkConfig.position === 'top-left') gravity = 'northwest';
+          else if (watermarkConfig.position === 'center') gravity = 'center';
+          else if (watermarkConfig.position === 'bottom-center') gravity = 'south';
+          else if (watermarkConfig.position === 'top-center') gravity = 'north';
+          
+          // Preserve original format
+          const outputFormat = metadata.format === 'png' ? 'png' : 'jpeg';
+          finalImageFormat = outputFormat; // Set format for headers
+          
+          // Apply logo with opacity in composite operation
+          const logoOpacity = (watermarkConfig.opacity || 60) / 100;
+          
+          finalImage = await originalImage
+            .composite([{
+              input: resizedLogo,
+              gravity: gravity,
+              opacity: logoOpacity
+            }])
+            .toFormat(outputFormat, { quality: 90 })
+            .toBuffer();
+        } else {
+          // Fallback to no watermark if configuration is incomplete
+          // Preserve original format
+          const outputFormat = metadata.format === 'png' ? 'png' : 'jpeg';
+          finalImageFormat = outputFormat; // Set format for headers
+          
+          finalImage = await originalImage
+            .toFormat(outputFormat, { quality: 90 })
+            .toBuffer();
+        }
 
         console.log(`🖼️ Watermark applied to download for session ${tokenData.sessionId}`);
       } else {
@@ -672,6 +773,18 @@ function createDownloadRoutes(isAuthenticated) {
         }
 
         finalImage = originalFile.data;
+        
+        // Try to detect format from filename for non-watermarked files
+        const ext = filename.toLowerCase().split('.').pop();
+        if (ext === 'png') {
+          finalImageFormat = 'png';
+        } else if (ext === 'gif') {
+          finalImageFormat = 'gif';
+        } else if (ext === 'webp') {
+          finalImageFormat = 'webp';
+        } else {
+          finalImageFormat = 'jpeg';
+        }
       }
 
       // Mark token as used if it's a one-time token
@@ -705,12 +818,16 @@ function createDownloadRoutes(isAuthenticated) {
         createdAt: new Date()
       });
 
-      // Serve the file
-      res.setHeader('Content-Type', 'image/jpeg');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      // Serve the file with correct content type
+      const contentType = finalImageFormat === 'png' ? 'image/png' : 'image/jpeg';
+      const fileExtension = finalImageFormat === 'png' ? '.png' : '.jpg';
+      const downloadFilename = filename.replace(/\.[^.]+$/, fileExtension);
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
       res.setHeader('Cache-Control', 'no-cache');
       
-      console.log(`📥 Download delivered via token for session ${tokenData.sessionId}, asset: ${filename}`);
+      console.log(`📥 Download delivered via token for session ${tokenData.sessionId}, asset: ${filename} (${contentType})`);
       res.send(finalImage);
 
     } catch (error) {
