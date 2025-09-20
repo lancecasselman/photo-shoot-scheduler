@@ -710,13 +710,13 @@
                         clientAccess = downloadData.clientAccess || {};
                         downloadUsage = clientAccess?.downloadUsage || 0;
                         
-                        console.log('✅ Download control system loaded:', sessionData?.sessionName || 'unknown session');
+                        console.log('✅ Download control system loaded:', sessionData?.clientName || 'unknown session');
                         console.log('📊 Download usage:', downloadUsage, 'of', sessionData?.downloadMax || 'unlimited');
                         
                         // Update page title and header
-                        document.getElementById('galleryTitle').textContent = `${sessionData?.sessionName || 'Photo'} Gallery`;
+                        document.getElementById('galleryTitle').textContent = `${sessionData?.clientName || 'Photo'} Gallery`;
                         document.getElementById('gallerySubtitle').textContent = getDownloadPolicyDisplay();
-                        document.title = `${sessionData?.sessionName || 'Photo'} - Photo Gallery`;
+                        document.title = `${sessionData?.clientName || 'Photo'} - Photo Gallery`;
 
                         // Hide loading and show gallery
                         document.getElementById('loadingContainer').style.display = 'none';
