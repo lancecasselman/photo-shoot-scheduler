@@ -9,7 +9,11 @@ import {
   integer,
   decimal,
   serial,
+  foreignKey,
+  unique,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -116,9 +120,28 @@ export const photographySessions = pgTable("photography_sessions", {
   monthlyPayment: decimal("monthly_payment", { precision: 10, scale: 2 }),
   paymentsRemaining: integer("payments_remaining").default(0),
   nextPaymentDate: timestamp("next_payment_date"),
+  // Download controls and watermarking
+  downloadEnabled: boolean("download_enabled").default(true),
+  downloadMax: integer("download_max"), // null = unlimited downloads
+  pricingModel: varchar("pricing_model").default("free").$type<'free' | 'paid' | 'freemium'>(),
+  freeDownloads: integer("free_downloads").default(0),
+  pricePerDownload: decimal("price_per_download", { precision: 10, scale: 2 }).default("0.00"),
+  watermarkEnabled: boolean("watermark_enabled").default(false),
+  watermarkType: varchar("watermark_type").default("text").$type<'logo' | 'text'>(),
+  watermarkLogoUrl: varchar("watermark_logo_url"),
+  watermarkText: varchar("watermark_text").default("© Photography"),
+  watermarkOpacity: integer("watermark_opacity").default(60), // 0-100
+  watermarkPosition: varchar("watermark_position").default("bottom-right"), // 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'
+  watermarkScale: integer("watermark_scale").default(20), // 1-100 percentage of image width for logo
+  watermarkUpdatedAt: timestamp("watermark_updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Index for composite foreign key references from gallery_downloads
+  userIdIdx: index("idx_photography_sessions_user_id").on(table.userId, table.id),
+  // Unique constraint for composite FK references
+  userIdUnique: unique("photography_sessions_user_id_id_key").on(table.userId, table.id),
+}));
 
 // Payment plans table
 export const paymentPlans = pgTable("payment_plans", {
@@ -361,31 +384,91 @@ export const downloadTokens = pgTable("download_tokens", {
   token: varchar("token").notNull().unique(),
   photoUrl: varchar("photo_url").notNull(),
   filename: varchar("filename").notNull(),
-  sessionId: varchar("session_id").notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at").notNull(),
   isUsed: boolean("is_used").default(false),
   usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  sessionIdx: index("idx_download_tokens_session").on(table.sessionId),
+  tokenIdx: index("idx_download_tokens_token").on(table.token),
+  expiresIdx: index("idx_download_tokens_expires").on(table.expiresAt),
+  // Composite unique constraint for token-session binding
+  tokenSessionUnique: unique("download_tokens_token_session_key").on(table.token, table.sessionId),
+}));
 
 // Digital transaction records
 export const digitalTransactions = pgTable("digital_transactions", {
   id: varchar("id").primaryKey().notNull(),
-  sessionId: varchar("session_id").notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
   photoUrl: varchar("photo_url").notNull(),
   filename: varchar("filename").notNull(),
   customerEmail: varchar("customer_email").notNull(),
   customerName: varchar("customer_name"),
   amount: integer("amount").notNull(), // Amount in cents
-  downloadToken: varchar("download_token").notNull(),
-  status: varchar("status").notNull().default("completed"), // completed, failed, refunded
+  downloadToken: varchar("download_token").notNull().unique().references(() => downloadTokens.token, { onDelete: "restrict" }),
+  status: varchar("status").notNull().default("completed").$type<'completed' | 'failed' | 'refunded'>(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  sessionDateIdx: index("idx_digital_transactions_session_date").on(table.sessionId, table.createdAt),
+  // Composite FK to ensure token belongs to same session
+  tokenSessionFk: foreignKey({
+    columns: [table.downloadToken, table.sessionId],
+    foreignColumns: [downloadTokens.token, downloadTokens.sessionId],
+    name: "digital_transactions_token_session_fkey"
+  }).onDelete("restrict"),
+}));
+
+// Gallery download usage tracking per session/client
+export const galleryDownloads = pgTable("gallery_downloads", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id), // photographer
+  clientKey: varchar("client_key").notNull(), // unique identifier for client (email/access token)
+  clientEmail: varchar("client_email"),
+  clientName: varchar("client_name"),
+  photoId: varchar("photo_id").notNull(), // ID or filename of downloaded photo
+  photoUrl: varchar("photo_url").notNull(),
+  filename: varchar("filename").notNull(),
+  downloadType: varchar("download_type").notNull().default("free").$type<'free' | 'paid'>(),
+  amountPaid: integer("amount_paid").default(0), // amount in cents
+  stripePaymentId: varchar("stripe_payment_id"), // Stripe payment intent ID
+  digitalTransactionId: varchar("digital_transaction_id").unique().references(() => digitalTransactions.id, { onDelete: "set null" }),
+  downloadToken: varchar("download_token").notNull().unique().references(() => downloadTokens.token), // one-time use token with FK
+  isWatermarked: boolean("is_watermarked").default(false),
+  watermarkConfig: jsonb("watermark_config").default({}), // snapshot of watermark settings at time of download
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  status: varchar("status").notNull().default("completed").$type<'completed' | 'failed' | 'refunded'>(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Business rule enforcement CHECK constraint
+  downloadTypeConsistencyCheck: check("download_type_consistency_check", sql`
+    (download_type = 'free' AND amount_paid = 0 AND digital_transaction_id IS NULL) OR
+    (download_type = 'paid' AND amount_paid > 0 AND digital_transaction_id IS NOT NULL)
+  `),
+  sessionClientIdx: index("idx_gallery_downloads_session_client").on(table.sessionId, table.clientKey, table.status),
+  sessionDateIdx: index("idx_gallery_downloads_session_date").on(table.sessionId, table.createdAt),
+  // Cross-tenant isolation constraint - user_id must match session owner
+  userSessionFk: foreignKey({
+    columns: [table.userId, table.sessionId],
+    foreignColumns: [photographySessions.userId, photographySessions.id],
+    name: "gallery_downloads_user_session_fkey"
+  }).onDelete("cascade"),
+  // Composite FK to ensure token belongs to same session
+  tokenSessionFk: foreignKey({
+    columns: [table.downloadToken, table.sessionId],
+    foreignColumns: [downloadTokens.token, downloadTokens.sessionId],
+    name: "gallery_downloads_token_session_fkey"
+  }).onDelete("restrict"),
+}));
 
 export type InsertDownloadToken = typeof downloadTokens.$inferInsert;
 export type DownloadToken = typeof downloadTokens.$inferSelect;
 export type InsertDigitalTransaction = typeof digitalTransactions.$inferInsert;
 export type DigitalTransaction = typeof digitalTransactions.$inferSelect;
+export type InsertGalleryDownload = typeof galleryDownloads.$inferInsert;
+export type GalleryDownload = typeof galleryDownloads.$inferSelect;
 
 // Community Platform Tables
 export const communityProfiles = pgTable("community_profiles", {
