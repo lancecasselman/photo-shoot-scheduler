@@ -170,6 +170,7 @@ function createDownloadRoutes(isAuthenticated) {
       const userId = getUserId(req);
       const { sessionId } = req.params;
       const {
+        downloadEnabled,
         pricingModel,
         downloadMax,
         pricePerDownload,
@@ -201,6 +202,7 @@ function createDownloadRoutes(isAuthenticated) {
 
       // Build update object (only include defined values) - Use snake_case for database columns
       const updateData = {};
+      if (downloadEnabled !== undefined) updateData.download_enabled = downloadEnabled;
       if (pricingModel !== undefined) updateData.pricing_model = pricingModel;
       if (downloadMax !== undefined) updateData.download_max = downloadMax;
       if (pricePerDownload !== undefined) updateData.price_per_download = pricePerDownload;
