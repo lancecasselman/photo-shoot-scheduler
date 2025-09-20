@@ -4966,44 +4966,41 @@ async function openDownloadControls(sessionId) {
             }
         };
         
-        // Find the session data to get gallery access token
+        // Find the session data to get gallery access token (optional feature)
         const currentSession = sessions.find(s => s.id === sessionId);
         const galleryAccessToken = currentSession?.gallery_access_token || currentSession?.galleryAccessToken;
         
-        // Validate that we have a proper gallery access token
-        if (!galleryAccessToken) {
-            showMessage('Gallery access token unavailable. Please refresh or contact support.', 'error');
-            return;
-        }
-        
-        // Direct gallery link using the session's existing gallery access token
-        const directGalleryUrl = `/gallery/${galleryAccessToken}`;
-        
-        // Add direct gallery link display  
-        const galleryLinkSection = document.createElement('div');
-        galleryLinkSection.innerHTML = `
-            <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
-                <h5 style="margin: 0 0 10px 0; color: #28a745;">📱 Direct Gallery Link</h5>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" value="${window.location.origin}${directGalleryUrl}" readonly 
-                           style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
-                    <button onclick="navigator.clipboard.writeText('${window.location.origin}${directGalleryUrl}'); showMessage('Gallery link copied!', 'success');" 
-                            style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        📋 Copy
-                    </button>
-                    <button onclick="window.open('${directGalleryUrl}', '_blank')" 
-                            style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        👁️ Preview
-                    </button>
+        // Only add gallery link section if gallery access token is available
+        if (galleryAccessToken) {
+            // Direct gallery link using the session's existing gallery access token
+            const directGalleryUrl = `/gallery/${galleryAccessToken}`;
+            
+            // Add direct gallery link display  
+            const galleryLinkSection = document.createElement('div');
+            galleryLinkSection.innerHTML = `
+                <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <h5 style="margin: 0 0 10px 0; color: #28a745;">📱 Direct Gallery Link</h5>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" value="${window.location.origin}${directGalleryUrl}" readonly 
+                               style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
+                        <button onclick="navigator.clipboard.writeText('${window.location.origin}${directGalleryUrl}'); showMessage('Gallery link copied!', 'success');" 
+                                style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            📋 Copy
+                        </button>
+                        <button onclick="window.open('${directGalleryUrl}', '_blank')" 
+                                style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            👁️ Preview
+                        </button>
+                    </div>
+                    <small style="color: #6c757d; margin-top: 8px; display: block;">
+                        🎉 No tokens needed! Share this link directly with your client.
+                    </small>
                 </div>
-                <small style="color: #6c757d; margin-top: 8px; display: block;">
-                    🎉 No tokens needed! Share this link directly with your client.
-                </small>
-            </div>
-        `;
-        
-        // Insert the gallery link section before the close button
-        modalContent.insertBefore(galleryLinkSection, modal.querySelector('#closeModal').parentElement);
+            `;
+            
+            // Insert the gallery link section before the close button
+            modalContent.insertBefore(galleryLinkSection, modal.querySelector('#closeModal').parentElement);
+        }
         
         // Handle close
         document.getElementById('closeModal').onclick = function() {
