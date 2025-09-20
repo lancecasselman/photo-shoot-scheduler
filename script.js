@@ -4950,7 +4950,7 @@ async function openDownloadControls(sessionId) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         clientEmail: 'client@example.com', // Can be customized
-                        expiresInDays: 180
+                        expiresInHours: 4320 // 180 days = 4320 hours
                     })
                 });
                 
