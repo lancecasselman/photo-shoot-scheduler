@@ -478,6 +478,29 @@ function createDownloadRoutes(isAuthenticated) {
       // pricingModel already normalized above
 
       if (pricingModel === 'free') {
+        // Check if download limit is set and enforced
+        const downloadMax = sessionData.download_max || null;
+        
+        if (downloadMax) {
+          // Count total downloads for this session
+          const existingDownloads = await db
+            .select({ count: count() })
+            .from(galleryDownloads)
+            .where(eq(galleryDownloads.sessionId, sessionId));
+          
+          const usedDownloads = existingDownloads[0]?.count || 0;
+          
+          if (usedDownloads >= downloadMax) {
+            console.log(`⚠️ Download limit reached for session ${sessionId}: ${usedDownloads}/${downloadMax}`);
+            return res.status(403).json({
+              status: 'limit_exceeded',
+              message: `Download limit reached (${downloadMax} downloads maximum)`,
+              downloadMax,
+              usedDownloads
+            });
+          }
+        }
+        
         // Free download - generate immediate download token
         const downloadToken = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
@@ -502,6 +525,29 @@ function createDownloadRoutes(isAuthenticated) {
         });
 
       } else if (pricingModel === 'freemium') {
+        // First check if overall download limit is reached
+        const downloadMax = sessionData.download_max || null;
+        
+        if (downloadMax) {
+          // Count total downloads for this session (both free and paid)
+          const totalDownloads = await db
+            .select({ count: count() })
+            .from(galleryDownloads)
+            .where(eq(galleryDownloads.sessionId, sessionId));
+          
+          const totalUsedDownloads = totalDownloads[0]?.count || 0;
+          
+          if (totalUsedDownloads >= downloadMax) {
+            console.log(`⚠️ Total download limit reached for session ${sessionId}: ${totalUsedDownloads}/${downloadMax}`);
+            return res.status(403).json({
+              status: 'limit_exceeded',
+              message: `Total download limit reached (${downloadMax} downloads maximum)`,
+              downloadMax,
+              usedDownloads: totalUsedDownloads
+            });
+          }
+        }
+        
         // Check if user has free downloads remaining
         const freeDownloads = sessionData.free_downloads || 0;
         
@@ -552,6 +598,29 @@ function createDownloadRoutes(isAuthenticated) {
         }
 
       } else if (pricingModel === 'paid') {
+        // First check if overall download limit is reached
+        const downloadMax = sessionData.download_max || null;
+        
+        if (downloadMax) {
+          // Count total downloads for this session
+          const totalDownloads = await db
+            .select({ count: count() })
+            .from(galleryDownloads)
+            .where(eq(galleryDownloads.sessionId, sessionId));
+          
+          const totalUsedDownloads = totalDownloads[0]?.count || 0;
+          
+          if (totalUsedDownloads >= downloadMax) {
+            console.log(`⚠️ Download limit reached for paid session ${sessionId}: ${totalUsedDownloads}/${downloadMax}`);
+            return res.status(403).json({
+              status: 'limit_exceeded',
+              message: `Download limit reached (${downloadMax} downloads maximum)`,
+              downloadMax,
+              usedDownloads: totalUsedDownloads
+            });
+          }
+        }
+        
         // Paid download - redirect to checkout
         const pricePerDownload = parseFloat(sessionData.price_per_download || '0');
         return res.json({
@@ -612,6 +681,28 @@ function createDownloadRoutes(isAuthenticated) {
       }
 
       const sessionData = sessionResult[0];
+
+      // Re-check download limit at fulfillment time to prevent race conditions
+      const downloadMax = sessionData.downloadMax || null;
+      if (downloadMax) {
+        // Count total downloads for this session (atomic check)
+        const currentDownloads = await db
+          .select({ count: count() })
+          .from(galleryDownloads)
+          .where(eq(galleryDownloads.sessionId, tokenData.sessionId));
+        
+        const currentCount = currentDownloads[0]?.count || 0;
+        
+        if (currentCount >= downloadMax) {
+          console.log(`⚠️ Download limit exceeded at fulfillment for session ${tokenData.sessionId}: ${currentCount}/${downloadMax}`);
+          return res.status(403).json({ 
+            error: 'Download limit exceeded',
+            message: `This gallery has reached its maximum download limit (${downloadMax} downloads)`,
+            downloadMax,
+            currentCount
+          });
+        }
+      }
 
       // Get the actual file from R2 storage
       const fileUrl = tokenData.photoUrl;
@@ -796,6 +887,30 @@ function createDownloadRoutes(isAuthenticated) {
         })
         .where(eq(downloadTokens.token, downloadToken));
 
+      // Determine download type based on pricing model
+      // For freemium, we need to check if this is within free quota or paid
+      let downloadType = 'free';
+      if (sessionData.pricingModel === 'paid') {
+        downloadType = 'paid'; // All downloads in paid model are paid
+      } else if (sessionData.pricingModel === 'freemium') {
+        // Check if this is a free download or paid (after free quota exhausted)
+        const freeDownloads = sessionData.freeDownloads || 0;
+        const existingFreeDownloads = await db
+          .select({ count: count() })
+          .from(galleryDownloads)
+          .where(and(
+            eq(galleryDownloads.sessionId, tokenData.sessionId),
+            eq(galleryDownloads.downloadType, 'free')
+          ));
+        const usedFreeDownloads = existingFreeDownloads[0]?.count || 0;
+        
+        // If this download is beyond the free quota, it's paid
+        if (usedFreeDownloads >= freeDownloads) {
+          downloadType = 'paid';
+        }
+      }
+      // For 'free' pricing model, downloadType remains 'free'
+      
       // Record download in analytics
       await db.insert(galleryDownloads).values({
         id: uuidv4(),
@@ -805,7 +920,7 @@ function createDownloadRoutes(isAuthenticated) {
         photoId: filename,
         photoUrl: fileUrl,
         filename,
-        downloadType: 'free', // Paid downloads would be handled via webhook
+        downloadType,
         downloadToken: downloadToken,
         isWatermarked: sessionData.watermarkEnabled,
         watermarkConfig: sessionData.watermarkEnabled ? {
