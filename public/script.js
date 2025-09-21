@@ -1980,6 +1980,23 @@ function openUploadDialog(sessionId) {
                         <span class="btn-icon">🔄</span> Refresh
                     </button>
                 </div>
+                
+                <!-- Download Controls Section -->
+                <div class="toolbar-section download-controls-section">
+                    <div class="section-label">Download Controls:</div>
+                    <button class="toolbar-btn download-control-btn" onclick="quickToggleDownloads('${sessionId}')" id="toggleDownloads_${sessionId}">
+                        <span class="btn-icon">🔓</span> <span id="downloadStatus_${sessionId}">Enable</span>
+                    </button>
+                    <button class="toolbar-btn download-control-btn" onclick="quickSetPricing('${sessionId}')">
+                        <span class="btn-icon">💰</span> Set Pricing
+                    </button>
+                    <button class="toolbar-btn download-control-btn" onclick="quickWatermarkToggle('${sessionId}')" id="toggleWatermark_${sessionId}">
+                        <span class="btn-icon">🎨</span> <span id="watermarkStatus_${sessionId}">Watermark</span>
+                    </button>
+                    <button class="toolbar-btn download-control-btn" onclick="viewDownloadAnalytics('${sessionId}')">
+                        <span class="btn-icon">📊</span> Analytics
+                    </button>
+                </div>
             </div>
             
             <div class="upload-modal-body">
@@ -2115,6 +2132,31 @@ function openUploadDialog(sessionId) {
             }
             .btn-icon {
                 font-size: 16px;
+            }
+            
+            /* Download Controls Section */
+            .download-controls-section {
+                border-top: 1px solid #e5e7eb;
+                padding-top: 15px;
+                margin-top: 15px;
+            }
+            .section-label {
+                font-size: 12px;
+                font-weight: 600;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+            }
+            .download-control-btn {
+                background: #f8fafc;
+                border-color: #e2e8f0;
+                color: #475569;
+            }
+            .download-control-btn:hover {
+                background: #e2e8f0;
+                border-color: #cbd5e1;
+                color: #334155;
             }
             
             /* Tab Navigation Styles */
@@ -2393,6 +2435,164 @@ window.refreshGallery = async function(sessionId) {
     } catch (error) {
         console.error('Error refreshing gallery:', error);
         showMessage('Error refreshing gallery. Please try again.', 'error');
+    }
+};
+
+// Quick Download Control Functions
+window.quickToggleDownloads = async function(sessionId) {
+    try {
+        // Get current policy first
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load current policy');
+        }
+        
+        const policy = await response.json();
+        const newStatus = !policy.downloadEnabled;
+        
+        // Toggle the download status
+        const formData = new FormData();
+        formData.append('downloadEnabled', newStatus.toString());
+        
+        const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData
+        });
+        
+        if (updateResponse.ok) {
+            // Update button text and icon
+            const btn = document.getElementById(`downloadStatus_${sessionId}`);
+            const icon = document.querySelector(`#toggleDownloads_${sessionId} .btn-icon`);
+            
+            if (btn && icon) {
+                btn.textContent = newStatus ? 'Disable' : 'Enable';
+                icon.textContent = newStatus ? '🔒' : '🔓';
+            }
+            
+            showMessage(`Downloads ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
+        } else {
+            throw new Error('Failed to update download status');
+        }
+    } catch (error) {
+        console.error('Error toggling downloads:', error);
+        showMessage('Error updating download status', 'error');
+    }
+};
+
+window.quickSetPricing = async function(sessionId) {
+    const pricingModel = prompt("Select pricing model:\n1. free\n2. paid\n3. freemium\n\nEnter choice (1-3):");
+    
+    if (!pricingModel) return;
+    
+    const models = { '1': 'free', '2': 'paid', '3': 'freemium' };
+    const selectedModel = models[pricingModel];
+    
+    if (!selectedModel) {
+        showMessage('Invalid pricing model selected', 'error');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('pricingModel', selectedModel);
+        
+        if (selectedModel === 'paid' || selectedModel === 'freemium') {
+            const price = prompt("Enter price per download ($):");
+            if (price) {
+                formData.append('pricePerDownload', price);
+            }
+        }
+        
+        if (selectedModel === 'freemium') {
+            const freeDownloads = prompt("Enter number of free downloads:");
+            if (freeDownloads) {
+                formData.append('freeDownloads', freeDownloads);
+            }
+        }
+        
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData
+        });
+        
+        if (response.ok) {
+            showMessage(`Pricing model set to ${selectedModel}`, 'success');
+        } else {
+            throw new Error('Failed to update pricing');
+        }
+    } catch (error) {
+        console.error('Error setting pricing:', error);
+        showMessage('Error updating pricing model', 'error');
+    }
+};
+
+window.quickWatermarkToggle = async function(sessionId) {
+    try {
+        // Get current policy
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load current policy');
+        }
+        
+        const policy = await response.json();
+        const newStatus = !policy.watermarkEnabled;
+        
+        const formData = new FormData();
+        formData.append('watermarkEnabled', newStatus.toString());
+        
+        if (newStatus) {
+            // Set default watermark settings
+            formData.append('watermarkType', 'text');
+            formData.append('watermarkText', '© Photography');
+            formData.append('watermarkPosition', 'bottom-right');
+            formData.append('watermarkOpacity', '60');
+        }
+        
+        const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData
+        });
+        
+        if (updateResponse.ok) {
+            // Update button text
+            const btn = document.getElementById(`watermarkStatus_${sessionId}`);
+            if (btn) {
+                btn.textContent = newStatus ? 'Remove WM' : 'Add WM';
+            }
+            
+            showMessage(`Watermark ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
+        } else {
+            throw new Error('Failed to update watermark status');
+        }
+    } catch (error) {
+        console.error('Error toggling watermark:', error);
+        showMessage('Error updating watermark status', 'error');
+    }
+};
+
+window.viewDownloadAnalytics = async function(sessionId) {
+    try {
+        // This would fetch and display download analytics
+        // For now, show a placeholder message
+        showMessage('Download analytics feature coming soon!', 'info');
+        
+        // Future implementation could fetch download stats:
+        // - Total downloads
+        // - Revenue generated
+        // - Most downloaded images
+        // - Download patterns by time/date
+    } catch (error) {
+        console.error('Error viewing analytics:', error);
+        showMessage('Error loading download analytics', 'error');
     }
 };
 
