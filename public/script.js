@@ -1966,9 +1966,31 @@ function openUploadDialog(sessionId) {
     modal.innerHTML = `
         <div class="upload-modal-content">
             <div class="upload-modal-header">
-                <h3>Upload Photos</h3>
+                <h3>Gallery Manager</h3>
                 <button class="close-btn" onclick="closeUploadModal()">&times;</button>
             </div>
+            
+            <!-- Gallery Management Toolbar -->
+            <div class="gallery-toolbar">
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" onclick="openGalleryView('${sessionId}')">
+                        <span class="btn-icon">🖼️</span> Gallery
+                    </button>
+                    <button class="toolbar-btn" onclick="downloadAllZIP('${sessionId}')">
+                        <span class="btn-icon">📦</span> Download All ZIP
+                    </button>
+                    <button class="toolbar-btn" onclick="deleteAllPhotos('${sessionId}')">
+                        <span class="btn-icon">🗑️</span> Delete All
+                    </button>
+                    <button class="toolbar-btn" onclick="sendToClient('${sessionId}')">
+                        <span class="btn-icon">📧</span> Send to Client
+                    </button>
+                    <button class="toolbar-btn" onclick="refreshGallery('${sessionId}')">
+                        <span class="btn-icon">🔄</span> Refresh
+                    </button>
+                </div>
+            </div>
+            
             <div class="upload-modal-body">
                 <div class="drop-zone" id="dropZone">
                     <div class="drop-zone-content">
@@ -1977,8 +1999,9 @@ function openUploadDialog(sessionId) {
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
-                        <p>Drag & drop files here or click to browse</p>
-                        <p class="file-types">All file types accepted • Max 5GB per file</p>
+                        <h4>Upload Files</h4>
+                        <p>Drag and drop files or click anywhere in this area to browse</p>
+                        <p class="file-types">📁 Upload multiple files • All file types supported</p>
                     </div>
                     <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
                 </div>
@@ -2050,6 +2073,43 @@ function openUploadDialog(sessionId) {
             .upload-modal-header .close-btn:hover {
                 color: #333;
             }
+            
+            /* Gallery Toolbar Styles */
+            .gallery-toolbar {
+                background: #f8fafc;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 15px 20px;
+            }
+            .toolbar-section {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .toolbar-btn {
+                background: white;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.2s ease;
+                color: #374151;
+            }
+            .toolbar-btn:hover {
+                background: #f3f4f6;
+                border-color: #9ca3af;
+                transform: translateY(-1px);
+            }
+            .toolbar-btn:active {
+                transform: translateY(0);
+            }
+            .btn-icon {
+                font-size: 16px;
+            }
+            
             .upload-modal-body {
                 padding: 20px;
                 overflow-y: auto;
@@ -2176,6 +2236,161 @@ function openUploadDialog(sessionId) {
 
     // Show modal
     modal.classList.add('active');
+}
+
+// Gallery Management Functions for the new toolbar buttons
+window.openGalleryView = function(sessionId) {
+    console.log('Opening gallery view for session:', sessionId);
+    
+    // Get the session data to get gallery token
+    const session = window.sessionsData.find(s => s.id === sessionId);
+    if (session && session.galleryAccessToken) {
+        const baseUrl = window.location.origin;
+        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+        window.open(galleryUrl, '_blank');
+    } else {
+        showMessage('Gallery not yet available for this session', 'warning');
+    }
+};
+
+window.downloadAllZIP = async function(sessionId) {
+    console.log('Downloading all photos as ZIP for session:', sessionId);
+    
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/download-all`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `session-${sessionId}-photos.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showMessage('All photos downloaded successfully!', 'success');
+        } else {
+            throw new Error('Failed to download photos');
+        }
+    } catch (error) {
+        console.error('Error downloading all photos:', error);
+        showMessage('Error downloading photos. Please try again.', 'error');
+    }
+};
+
+window.deleteAllPhotos = async function(sessionId) {
+    console.log('Delete all photos requested for session:', sessionId);
+    
+    const confirmed = confirm('Are you sure you want to delete ALL photos from this session? This action cannot be undone.');
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/delete-all-photos`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showMessage(`Successfully deleted all photos. Reclaimed ${result.totalReclaimedMB}MB of storage.`, 'success');
+            // Refresh the session data
+            await loadSessions();
+            // Close the modal
+            closeUploadModal();
+        } else {
+            showMessage(`Failed to delete photos: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting all photos:', error);
+        showMessage('Error deleting photos. Please try again.', 'error');
+    }
+};
+
+window.sendToClient = function(sessionId) {
+    console.log('Send to client requested for session:', sessionId);
+    
+    // Get the session data
+    const session = window.sessionsData.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+    
+    // Open email client with gallery link
+    if (session.galleryAccessToken) {
+        const baseUrl = window.location.origin;
+        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+        const subject = encodeURIComponent(`Your ${session.sessionType} Photos are Ready!`);
+        const body = encodeURIComponent(`Hi ${session.clientName},\n\nYour photos from the ${session.sessionType} session are now ready for viewing and download!\n\nGallery Link: ${galleryUrl}\n\nBest regards,\nYour Photographer`);
+        
+        window.open(`mailto:${session.email}?subject=${subject}&body=${body}`, '_blank');
+    } else {
+        showMessage('Gallery not yet available for this session', 'warning');
+    }
+};
+
+window.refreshGallery = async function(sessionId) {
+    console.log('Refreshing gallery for session:', sessionId);
+    
+    try {
+        // Reload sessions data
+        await loadSessions();
+        
+        // Update the upload modal if it's still open
+        const modal = document.getElementById('uploadModal');
+        if (modal && modal.classList.contains('active')) {
+            // Update the file preview to show current photos
+            await updateFilePreview(sessionId);
+        }
+        
+        showMessage('Gallery refreshed successfully!', 'success');
+    } catch (error) {
+        console.error('Error refreshing gallery:', error);
+        showMessage('Error refreshing gallery. Please try again.', 'error');
+    }
+};
+
+// Helper function to update file preview in the modal
+async function updateFilePreview(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}`, {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const session = await response.json();
+            const previewContainer = document.getElementById('filePreview');
+            
+            if (session.photos && session.photos.length > 0) {
+                previewContainer.innerHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                        <h4 style="margin: 0 0 10px 0; color: #374151;">Current Photos (${session.photos.length})</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+                            ${session.photos.map(photo => `
+                                <div style="text-align: center;">
+                                    <img src="${photo.url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;" alt="${photo.filename}">
+                                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #6b7280;">${photo.filename}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                previewContainer.innerHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; text-align: center; color: #6b7280;">
+                        No photos uploaded yet
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating file preview:', error);
+    }
 }
 
 // Global storage for upload modal event handlers to prevent duplicates
