@@ -17995,15 +17995,62 @@ END:VCALENDAR`;
         // Global variable to track current session for download controls
         let currentDownloadSessionId = null;
 
-        // Open download controls modal
+        // Initialize download controls only when authenticated and DOM ready
+        let downloadControlsReady = false;
+        
+        function initializeDownloadControls() {
+            const modal = document.getElementById('downloadControlsModal');
+            const isAuthenticated = window.currentUser && window.currentUser.uid;
+            
+            console.log('🔍 Initializing download controls:', { 
+                modalExists: !!modal, 
+                isAuthenticated,
+                currentPath: window.location.pathname,
+                readyState: document.readyState 
+            });
+            
+            // Only require modal existence and authentication - no path restrictions
+            if (modal && isAuthenticated) {
+                downloadControlsReady = true;
+                console.log('✅ Download controls initialized successfully');
+                
+                // Attach event listeners if needed
+                const downloadEnabled = document.getElementById('downloadEnabled');
+                const pricingModel = document.getElementById('pricingModel');
+                const watermarkEnabled = document.getElementById('watermarkEnabled');
+                
+                if (downloadEnabled) downloadEnabled.addEventListener('change', toggleDownloadSettings);
+                if (pricingModel) pricingModel.addEventListener('change', updatePricingModelFields);
+                if (watermarkEnabled) watermarkEnabled.addEventListener('change', toggleWatermarkSettings);
+            } else {
+                console.log('🚫 Download controls not initialized - requirements not met:', {
+                    modalExists: !!modal,
+                    isAuthenticated
+                });
+                downloadControlsReady = false;
+            }
+        }
+
+        // Open download controls modal with defensive guards
         window.openDownloadControls = async function(sessionId) {
             console.log('🔍 Opening download controls for session:', sessionId);
+            
+            // Check if download controls are ready
+            if (!downloadControlsReady) {
+                console.warn('⚠️ Download controls not ready - attempting to initialize...');
+                initializeDownloadControls();
+                
+                if (!downloadControlsReady) {
+                    console.error('❌ Download controls initialization failed');
+                    alert('Download controls are not available. Please ensure you are logged in and refresh the page.');
+                    return;
+                }
+            }
+            
             currentDownloadSessionId = sessionId;
             
-            // Find the modal element
+            // Find the modal element with null check
             const modal = document.getElementById('downloadControlsModal');
-            console.log('🔍 Modal element found:', modal);
-            
             if (!modal) {
                 console.error('❌ Download controls modal not found in DOM!');
                 alert('Download controls modal not found. Please refresh the page and try again.');
@@ -18012,25 +18059,48 @@ END:VCALENDAR`;
             
             // Show modal
             modal.style.display = 'flex';
-            console.log('✅ Modal should now be visible');
+            console.log('✅ Modal displayed successfully');
             
-            // Load current settings
-            await loadDownloadControlSettings(sessionId);
+            // Load current settings with error handling
+            try {
+                await loadDownloadControlSettings(sessionId);
+            } catch (error) {
+                console.error('❌ Failed to load download settings:', error);
+                alert('Failed to load current settings. Please try again.');
+                modal.style.display = 'none';
+            }
         };
 
         // Load current download control settings for a session
         async function loadDownloadControlSettings(sessionId) {
             try {
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
                 const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers,
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const policy = data.policy;
+                if (response.status === 401 || response.status === 403) {
+                    console.error('❌ Authentication failed - user not logged in');
+                    alert('Authentication required. Please log in again.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ API Error:', response.status, errorText);
+                    throw new Error(`Failed to load download settings: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const policy = data.policy;
                     
                     // Populate form fields
                     document.getElementById('downloadEnabled').checked = policy.downloadEnabled || false;
@@ -18107,6 +18177,13 @@ END:VCALENDAR`;
             const watermarkOpacity = document.getElementById('watermarkOpacity').value;
 
             try {
+                // Get auth token
+                const authToken = await getAuthToken();
+                const headers = {};
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
                 const formData = new FormData();
                 formData.append('downloadEnabled', downloadEnabled);
                 formData.append('pricingModel', pricingModel);
@@ -18122,8 +18199,15 @@ END:VCALENDAR`;
 
                 const response = await fetch(`/api/downloads/sessions/${currentDownloadSessionId}/policy`, {
                     method: 'PUT',
+                    headers,
                     body: formData
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    console.error('❌ Authentication failed during save');
+                    showMessage('Authentication required. Please log in again.', 'error');
+                    return;
+                }
 
                 if (response.ok) {
                     showMessage('Download settings saved successfully!', 'success');
@@ -18201,24 +18285,35 @@ END:VCALENDAR`;
             document.getElementById('watermarkSettings').style.display = enabled ? 'block' : 'none';
         }
 
-        // Debug modal existence on page load
+        // Initialize download controls when DOM and auth are ready
+        function tryInitializeDownloadControls() {
+            // Wait a bit for auth state to be fully set
+            setTimeout(() => {
+                initializeDownloadControls();
+            }, 1000);
+        }
+
+        // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 DOM loaded - checking for download controls modal...');
-            const modal = document.getElementById('downloadControlsModal');
-            console.log('🔍 Download controls modal found:', modal ? 'YES' : 'NO', modal);
-            if (modal) {
-                console.log('✅ Modal element structure:', modal.outerHTML.substring(0, 100) + '...');
-            }
+            console.log('🔍 DOM loaded - initializing download controls...');
+            tryInitializeDownloadControls();
         });
 
-        // Also check immediately in case DOM is already loaded
+        // Also try immediately if DOM is already loaded
         if (document.readyState !== 'loading') {
-            console.log('🔍 DOM already loaded - checking for download controls modal...');
-            const modal = document.getElementById('downloadControlsModal');
-            console.log('🔍 Download controls modal found:', modal ? 'YES' : 'NO', modal);
-            if (modal) {
-                console.log('✅ Modal element structure:', modal.outerHTML.substring(0, 100) + '...');
-            }
+            console.log('🔍 DOM already loaded - initializing download controls...');
+            tryInitializeDownloadControls();
+        }
+
+        // Initialize when auth state changes (if Firebase auth is available)
+        if (typeof window.firebase !== 'undefined' && window.firebase.auth) {
+            window.firebase.auth().onAuthStateChanged((user) => {
+                console.log('🔍 Auth state changed:', user ? 'logged in' : 'logged out');
+                if (user) {
+                    window.currentUser = user;
+                    tryInitializeDownloadControls();
+                }
+            });
         }
     </script>
 
