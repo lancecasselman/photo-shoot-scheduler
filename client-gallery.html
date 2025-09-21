@@ -683,6 +683,47 @@
         let downloadUsage = null;
         let clientAccess = null;
 
+        // Generate user-friendly display text for download policy
+        function getDownloadPolicyDisplay() {
+            if (!sessionData) return 'Loading policy...';
+            
+            const { pricingModel, downloadEnabled, downloadMax, freeDownloads, pricePerDownload } = sessionData;
+            const usage = downloadUsage || 0;
+            
+            // Check if downloads are disabled
+            if (!downloadEnabled) {
+                return '🚫 Downloads are currently disabled';
+            }
+            
+            // Display based on pricing model
+            switch (pricingModel) {
+                case 'free':
+                    if (downloadMax) {
+                        const remaining = Math.max(0, downloadMax - usage);
+                        return `📥 Free downloads: ${remaining} remaining (${usage}/${downloadMax} used)`;
+                    }
+                    return '📥 Free unlimited downloads available';
+                
+                case 'paid':
+                    const price = parseFloat(pricePerDownload || 0);
+                    return `💳 Paid downloads: $${price.toFixed(2)} per photo`;
+                
+                case 'freemium':
+                    const freeLimit = freeDownloads || 0;
+                    const price2 = parseFloat(pricePerDownload || 0);
+                    
+                    if (usage < freeLimit) {
+                        const freeRemaining = freeLimit - usage;
+                        return `🆓 ${freeRemaining} free downloads remaining, then $${price2.toFixed(2)} per photo`;
+                    } else {
+                        return `💳 Free downloads used. Additional photos: $${price2.toFixed(2)} each`;
+                    }
+                
+                default:
+                    return '📥 Downloads available';
+            }
+        }
+
         // Initialize gallery on page load
         document.addEventListener('DOMContentLoaded', loadGallery);
 
