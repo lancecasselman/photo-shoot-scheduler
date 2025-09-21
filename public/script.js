@@ -626,15 +626,7 @@ function createSessionCard(session) {
     uploadBtn.style.backgroundColor = '#6b7280'; // Gray background
     uploadBtn.style.color = 'white'; // White text
 
-    // Download Controls Button
-    const downloadControlsBtn = document.createElement('button');
-    downloadControlsBtn.className = 'btn btn-info';
-    downloadControlsBtn.textContent = '📥 Download Controls';
-    downloadControlsBtn.onclick = () => openDownloadControls(session.id);
-    downloadControlsBtn.style.backgroundColor = '#3b82f6'; // Blue background
-    downloadControlsBtn.style.color = 'white';
-    downloadControlsBtn.style.marginBottom = '5px';
-    console.log('✅ DOWNLOAD CONTROLS BUTTON CREATED for session:', session.id);
+    // Download Controls is now integrated into Gallery Manager - no separate button needed
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
@@ -733,7 +725,6 @@ function createSessionCard(session) {
 
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
-    actions.appendChild(downloadControlsBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(emailClientBtn);
     actions.appendChild(galleryBtn);
@@ -1992,23 +1983,39 @@ function openUploadDialog(sessionId) {
             </div>
             
             <div class="upload-modal-body">
-                <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-content">
-                        <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <h4>Upload Files</h4>
-                        <p>Drag and drop files or click anywhere in this area to browse</p>
-                        <p class="file-types">📁 Upload multiple files • All file types supported</p>
-                    </div>
-                    <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
+                <!-- Tabs for different sections -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" onclick="switchTab('upload', '${sessionId}')">📁 Upload Files</button>
+                    <button class="tab-btn" onclick="switchTab('downloads', '${sessionId}')">📥 Download Controls</button>
                 </div>
-                <div class="file-preview" id="filePreview"></div>
+                
+                <!-- Upload Tab -->
+                <div id="uploadTab" class="tab-content active">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <h4>Upload Files</h4>
+                            <p>Drag and drop files or click anywhere in this area to browse</p>
+                            <p class="file-types">📁 Upload multiple files • All file types supported</p>
+                        </div>
+                        <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
+                    </div>
+                    <div class="file-preview" id="filePreview"></div>
+                </div>
+                
+                <!-- Download Controls Tab -->
+                <div id="downloadsTab" class="tab-content" style="display: none;">
+                    <div id="downloadControlsContent">
+                        Loading download settings...
+                    </div>
+                </div>
             </div>
             <div class="upload-modal-footer">
-                <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Close</button>
                 <button class="btn btn-primary" id="uploadBtn" disabled>Upload Files</button>
             </div>
         </div>
@@ -2108,6 +2115,40 @@ function openUploadDialog(sessionId) {
             }
             .btn-icon {
                 font-size: 16px;
+            }
+            
+            /* Tab Navigation Styles */
+            .tab-navigation {
+                display: flex;
+                border-bottom: 2px solid #e5e7eb;
+                margin-bottom: 20px;
+                gap: 5px;
+            }
+            .tab-btn {
+                background: none;
+                border: none;
+                padding: 12px 20px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                color: #6b7280;
+                border-bottom: 2px solid transparent;
+                transition: all 0.2s ease;
+            }
+            .tab-btn.active {
+                color: #00D4AA;
+                border-bottom-color: #00D4AA;
+                background: #f0fdf9;
+            }
+            .tab-btn:hover:not(.active) {
+                color: #374151;
+                background: #f9fafb;
+            }
+            .tab-content {
+                display: none;
+            }
+            .tab-content.active {
+                display: block;
             }
             
             .upload-modal-body {
@@ -2354,6 +2395,234 @@ window.refreshGallery = async function(sessionId) {
         showMessage('Error refreshing gallery. Please try again.', 'error');
     }
 };
+
+// Tab switching functionality
+window.switchTab = function(tabName, sessionId) {
+    console.log('Switching to tab:', tabName);
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        content.style.display = 'none';
+    });
+    
+    if (tabName === 'upload') {
+        document.getElementById('uploadTab').classList.add('active');
+        document.getElementById('uploadTab').style.display = 'block';
+        document.getElementById('uploadBtn').style.display = 'block';
+    } else if (tabName === 'downloads') {
+        document.getElementById('downloadsTab').classList.add('active');
+        document.getElementById('downloadsTab').style.display = 'block';
+        document.getElementById('uploadBtn').style.display = 'none';
+        loadDownloadControls(sessionId);
+    }
+};
+
+// Load download controls content into the tab
+async function loadDownloadControls(sessionId) {
+    const container = document.getElementById('downloadControlsContent');
+    
+    try {
+        container.innerHTML = 'Loading download settings...';
+        
+        // Get current download policy
+        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load download policy');
+        }
+        
+        const policy = await response.json();
+        console.log('Current policy:', policy);
+        
+        container.innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Download Enabled:</label>
+                <select id="downloadEnabled" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="true" ${policy.downloadEnabled ? 'selected' : ''}>Yes - Allow downloads</option>
+                    <option value="false" ${!policy.downloadEnabled ? 'selected' : ''}>No - Disable downloads</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pricing Model:</label>
+                <select id="pricingModel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="free" ${policy.pricingModel === 'free' ? 'selected' : ''}>Free (with optional limits)</option>
+                    <option value="paid" ${policy.pricingModel === 'paid' ? 'selected' : ''}>Paid (charge per download)</option>
+                    <option value="freemium" ${policy.pricingModel === 'freemium' ? 'selected' : ''}>Freemium (limited free, then paid)</option>
+                </select>
+            </div>
+            
+            <div id="freeOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'free' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Download Limit (0 = unlimited):</label>
+                <input type="number" id="downloadMax" value="${policy.downloadMax || 0}" min="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div id="freemiumOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'freemium' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Free Downloads Allowed:</label>
+                <input type="number" id="freeDownloads" value="${policy.freeDownloads || 0}" min="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div id="paidOptions" style="margin-bottom: 20px; ${policy.pricingModel === 'paid' || policy.pricingModel === 'freemium' ? '' : 'display: none;'}">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Price Per Download ($):</label>
+                <input type="number" id="pricePerDownload" value="${policy.pricePerDownload || 0}" min="0" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #333;">🎨 Watermark Settings</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Enabled:</label>
+                <select id="watermarkEnabled" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="true" ${policy.watermarkEnabled ? 'selected' : ''}>Yes - Apply watermark</option>
+                    <option value="false" ${!policy.watermarkEnabled ? 'selected' : ''}>No - No watermark</option>
+                </select>
+            </div>
+            
+            <div id="watermarkOptions" style="${policy.watermarkEnabled ? '' : 'display: none;'}">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Type:</label>
+                    <select id="watermarkType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="text" ${policy.watermarkType === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="logo" ${policy.watermarkType === 'logo' ? 'selected' : ''}>Logo</option>
+                    </select>
+                </div>
+                
+                <div id="textWatermark" style="margin-bottom: 20px; ${policy.watermarkType === 'text' ? '' : 'display: none;'}">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Watermark Text:</label>
+                    <input type="text" id="watermarkText" value="${policy.watermarkText || '© Photography'}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div id="logoWatermark" style="margin-bottom: 20px; ${policy.watermarkType === 'logo' ? '' : 'display: none;'}">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Upload Logo:</label>
+                    <input type="file" id="watermarkLogo" accept=".png,.jpg,.jpeg" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    ${policy.watermarkLogoUrl ? `<p style="color: #28a745; margin-top: 5px;">✅ Logo uploaded</p>` : ''}
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Position:</label>
+                        <select id="watermarkPosition" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="top-left" ${policy.watermarkPosition === 'top-left' ? 'selected' : ''}>Top Left</option>
+                            <option value="top-right" ${policy.watermarkPosition === 'top-right' ? 'selected' : ''}>Top Right</option>
+                            <option value="bottom-left" ${policy.watermarkPosition === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
+                            <option value="bottom-right" ${policy.watermarkPosition === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
+                            <option value="center" ${policy.watermarkPosition === 'center' ? 'selected' : ''}>Center</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Opacity (%):</label>
+                        <input type="number" id="watermarkOpacity" value="${policy.watermarkOpacity || 60}" min="10" max="100" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button id="saveDownloadPolicy" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Download Settings</button>
+            </div>
+        `;
+        
+        // Setup event handlers for the download controls
+        setupDownloadControlsHandlers(sessionId);
+        
+    } catch (error) {
+        console.error('Error loading download controls:', error);
+        container.innerHTML = `
+            <div style="color: #dc2626; padding: 20px; text-align: center; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                <h4>Error loading download settings</h4>
+                <p>Please try refreshing the page or contact support if the issue persists.</p>
+            </div>
+        `;
+    }
+}
+
+// Setup event handlers for download controls
+function setupDownloadControlsHandlers(sessionId) {
+    // Handle dropdown changes
+    const pricingModel = document.getElementById('pricingModel');
+    if (pricingModel) {
+        pricingModel.onchange = function() {
+            const value = this.value;
+            const freeOptions = document.getElementById('freeOptions');
+            const freemiumOptions = document.getElementById('freemiumOptions');
+            const paidOptions = document.getElementById('paidOptions');
+            
+            if (freeOptions) freeOptions.style.display = value === 'free' ? 'block' : 'none';
+            if (freemiumOptions) freemiumOptions.style.display = value === 'freemium' ? 'block' : 'none';
+            if (paidOptions) paidOptions.style.display = (value === 'paid' || value === 'freemium') ? 'block' : 'none';
+        };
+    }
+    
+    const watermarkEnabled = document.getElementById('watermarkEnabled');
+    if (watermarkEnabled) {
+        watermarkEnabled.onchange = function() {
+            const watermarkOptions = document.getElementById('watermarkOptions');
+            if (watermarkOptions) {
+                watermarkOptions.style.display = this.value === 'true' ? 'block' : 'none';
+            }
+        };
+    }
+    
+    const watermarkType = document.getElementById('watermarkType');
+    if (watermarkType) {
+        watermarkType.onchange = function() {
+            const value = this.value;
+            const textWatermark = document.getElementById('textWatermark');
+            const logoWatermark = document.getElementById('logoWatermark');
+            
+            if (textWatermark) textWatermark.style.display = value === 'text' ? 'block' : 'none';
+            if (logoWatermark) logoWatermark.style.display = value === 'logo' ? 'block' : 'none';
+        };
+    }
+    
+    // Handle save
+    const saveBtn = document.getElementById('saveDownloadPolicy');
+    if (saveBtn) {
+        saveBtn.onclick = async function() {
+            try {
+                const formData = new FormData();
+                formData.append('downloadEnabled', document.getElementById('downloadEnabled').value);
+                formData.append('pricingModel', document.getElementById('pricingModel').value);
+                formData.append('downloadMax', document.getElementById('downloadMax').value);
+                formData.append('freeDownloads', document.getElementById('freeDownloads').value);
+                formData.append('pricePerDownload', document.getElementById('pricePerDownload').value);
+                formData.append('watermarkEnabled', document.getElementById('watermarkEnabled').value);
+                formData.append('watermarkType', document.getElementById('watermarkType').value);
+                formData.append('watermarkText', document.getElementById('watermarkText').value);
+                formData.append('watermarkPosition', document.getElementById('watermarkPosition').value);
+                formData.append('watermarkOpacity', document.getElementById('watermarkOpacity').value);
+                
+                const logoFile = document.getElementById('watermarkLogo').files[0];
+                if (logoFile) {
+                    formData.append('logo', logoFile);
+                }
+                
+                const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (saveResponse.ok) {
+                    showMessage('Download settings saved successfully!', 'success');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+                
+            } catch (error) {
+                console.error('Error saving download policy:', error);
+                showMessage('Error saving download settings. Please try again.', 'error');
+            }
+        };
+    }
+}
 
 // Helper function to update file preview in the modal
 async function updateFilePreview(sessionId) {
