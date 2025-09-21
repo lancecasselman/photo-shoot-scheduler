@@ -17997,6 +17997,67 @@ END:VCALENDAR`;
 
         // Initialize download controls only when authenticated and DOM ready
         let downloadControlsReady = false;
+
+        // Centralized auth headers function for JSON requests
+        async function getAuthHeaders() {
+            try {
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                return headers;
+            } catch (error) {
+                console.error('❌ Failed to get auth headers:', error);
+                return { 'Content-Type': 'application/json' };
+            }
+        }
+
+        // Auth headers for FormData requests (no Content-Type - browser sets multipart boundary)
+        async function getAuthHeadersFormData() {
+            try {
+                const authToken = await getAuthToken();
+                const headers = {};
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                return headers;
+            } catch (error) {
+                console.error('❌ Failed to get auth headers for FormData:', error);
+                return {};
+            }
+        }
+
+        // Handle API errors with proper JSON parsing
+        async function handleApiResponse(response) {
+            if (response.status === 401 || response.status === 403) {
+                console.error('❌ Authentication failed - status:', response.status);
+                alert('Authentication required. Please log in again.');
+                return null;
+            }
+
+            if (!response.ok) {
+                let errorMessage = `Request failed with status ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch (parseError) {
+                    // Response is not JSON, use status text
+                    errorMessage = response.statusText || errorMessage;
+                }
+                console.error('❌ API Error:', errorMessage);
+                throw new Error(errorMessage);
+            }
+
+            try {
+                return await response.json();
+            } catch (parseError) {
+                console.warn('⚠️ Response is not JSON, returning null');
+                return null;
+            }
+        }
         
         function initializeDownloadControls() {
             const modal = document.getElementById('downloadControlsModal');
@@ -18087,20 +18148,19 @@ END:VCALENDAR`;
                     headers,
                 });
 
-                if (response.status === 401 || response.status === 403) {
-                    console.error('❌ Authentication failed - user not logged in');
-                    alert('Authentication required. Please log in again.');
+                const data = await handleApiResponse(response);
+                if (!data) {
+                    console.error('❌ Failed to load download settings - auth or server error');
+                    showMessage('Failed to load current settings', 'error');
                     return;
                 }
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ API Error:', response.status, errorText);
-                    throw new Error(`Failed to load download settings: ${response.status}`);
-                }
-
-                const data = await response.json();
                 const policy = data.policy;
+                if (!policy) {
+                    console.error('❌ No policy data in response');
+                    showMessage('No download settings found', 'error');
+                    return;
+                }
                     
                     // Populate form fields
                     document.getElementById('downloadEnabled').checked = policy.downloadEnabled || false;
@@ -18137,18 +18197,24 @@ END:VCALENDAR`;
         // Load gallery access link
         async function loadGalleryLink(sessionId) {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}`);
-                if (response.ok) {
-                    const session = await response.json();
-                    if (session.galleryAccessToken) {
-                        const baseUrl = window.location.origin;
-                        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
-                        document.getElementById('galleryLink').textContent = galleryUrl;
-                    } else {
-                        document.getElementById('galleryLink').textContent = 'Gallery link will be generated when you save settings';
-                    }
-                } else {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'GET',
+                    headers,
+                });
+
+                const session = await handleApiResponse(response);
+                if (!session) {
                     document.getElementById('galleryLink').textContent = 'Unable to load gallery link';
+                    return;
+                }
+
+                if (session.galleryAccessToken) {
+                    const baseUrl = window.location.origin;
+                    const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+                    document.getElementById('galleryLink').textContent = galleryUrl;
+                } else {
+                    document.getElementById('galleryLink').textContent = 'Gallery link will be generated when you save settings';
                 }
             } catch (error) {
                 console.error('Error loading gallery link:', error);
@@ -18177,12 +18243,8 @@ END:VCALENDAR`;
             const watermarkOpacity = document.getElementById('watermarkOpacity').value;
 
             try {
-                // Get auth token
-                const authToken = await getAuthToken();
-                const headers = {};
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
-                }
+                // Get auth headers for FormData (no Content-Type - browser sets multipart boundary)
+                const headers = await getAuthHeadersFormData();
 
                 const formData = new FormData();
                 formData.append('downloadEnabled', downloadEnabled);
@@ -18203,6 +18265,7 @@ END:VCALENDAR`;
                     body: formData
                 });
 
+                // Use centralized error handling (but don't expect JSON response)
                 if (response.status === 401 || response.status === 403) {
                     console.error('❌ Authentication failed during save');
                     showMessage('Authentication required. Please log in again.', 'error');
@@ -18218,8 +18281,15 @@ END:VCALENDAR`;
                         loadSessions();
                     }
                 } else {
-                    const errorData = await response.json();
-                    showMessage(`Failed to save settings: ${errorData.error}`, 'error');
+                    let errorMessage = `Failed to save settings: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = `Failed to save settings: ${errorData.error || errorData.message}`;
+                    } catch (parseError) {
+                        errorMessage = `Failed to save settings: ${response.statusText || response.status}`;
+                    }
+                    console.error('❌ Save failed:', errorMessage);
+                    showMessage(errorMessage, 'error');
                 }
             } catch (error) {
                 console.error('Error saving download settings:', error);
