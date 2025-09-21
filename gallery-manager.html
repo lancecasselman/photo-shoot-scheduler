@@ -592,6 +592,28 @@
         </button>
     </div>
 
+    <!-- Download Controls Section -->
+    <div class="toolbar" style="border-top: 1px solid #e0e0e0; margin-top: 20px; padding-top: 20px;">
+        <div style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+            Download Controls:
+        </div>
+        <button class="btn btn-secondary" onclick="quickToggleDownloads()" id="toggleDownloadsBtn">
+            🔓 <span id="downloadStatusText">Enable Downloads</span>
+        </button>
+        <button class="btn btn-secondary" onclick="quickSetPricing()">
+            💰 Set Pricing
+        </button>
+        <button class="btn btn-secondary" onclick="quickWatermarkToggle()" id="toggleWatermarkBtn">
+            🎨 <span id="watermarkStatusText">Add Watermark</span>
+        </button>
+        <button class="btn btn-secondary" onclick="viewDownloadAnalytics()">
+            📊 Analytics
+        </button>
+        <button class="btn btn-secondary" onclick="openFullDownloadControls()" style="background: var(--primary); color: white;">
+            ⚙️ Full Controls
+        </button>
+    </div>
+
     <div id="file-stats" style="
         background: white; 
         padding: 15px; 
@@ -2005,6 +2027,163 @@ Lance - The Legacy Photography`;
                 closeLightbox();
             }
         });
+
+        // Download Controls Functions
+        async function quickToggleDownloads() {
+            try {
+                // Get current policy first
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load current policy');
+                }
+                
+                const policy = await response.json();
+                const newStatus = !policy.downloadEnabled;
+                
+                // Toggle the download status
+                const formData = new FormData();
+                formData.append('downloadEnabled', newStatus.toString());
+                
+                const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (updateResponse.ok) {
+                    // Update button text and icon
+                    const btn = document.getElementById('downloadStatusText');
+                    const icon = document.querySelector('#toggleDownloadsBtn');
+                    
+                    if (btn && icon) {
+                        btn.textContent = newStatus ? 'Disable Downloads' : 'Enable Downloads';
+                        icon.innerHTML = `${newStatus ? '🔒' : '🔓'} <span id="downloadStatusText">${newStatus ? 'Disable Downloads' : 'Enable Downloads'}</span>`;
+                    }
+                    
+                    showMessage(`Downloads ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
+                } else {
+                    throw new Error('Failed to update download status');
+                }
+            } catch (error) {
+                console.error('Error toggling downloads:', error);
+                showMessage('Error updating download status', 'error');
+            }
+        }
+
+        async function quickSetPricing() {
+            const pricingModel = prompt("Select pricing model:\n1. free\n2. paid\n3. freemium\n\nEnter choice (1-3):");
+            
+            if (!pricingModel) return;
+            
+            const models = { '1': 'free', '2': 'paid', '3': 'freemium' };
+            const selectedModel = models[pricingModel];
+            
+            if (!selectedModel) {
+                showMessage('Invalid pricing model selected', 'error');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('pricingModel', selectedModel);
+                
+                if (selectedModel === 'paid' || selectedModel === 'freemium') {
+                    const price = prompt("Enter price per download ($):");
+                    if (price) {
+                        formData.append('pricePerDownload', price);
+                    }
+                }
+                
+                if (selectedModel === 'freemium') {
+                    const freeDownloads = prompt("Enter number of free downloads:");
+                    if (freeDownloads) {
+                        formData.append('freeDownloads', freeDownloads);
+                    }
+                }
+                
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    showMessage(`Pricing model set to ${selectedModel}`, 'success');
+                } else {
+                    throw new Error('Failed to update pricing');
+                }
+            } catch (error) {
+                console.error('Error setting pricing:', error);
+                showMessage('Error updating pricing model', 'error');
+            }
+        }
+
+        async function quickWatermarkToggle() {
+            try {
+                // Get current policy
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load current policy');
+                }
+                
+                const policy = await response.json();
+                const newStatus = !policy.watermarkEnabled;
+                
+                const formData = new FormData();
+                formData.append('watermarkEnabled', newStatus.toString());
+                
+                if (newStatus) {
+                    // Set default watermark settings
+                    formData.append('watermarkType', 'text');
+                    formData.append('watermarkText', '© Photography');
+                    formData.append('watermarkPosition', 'bottom-right');
+                    formData.append('watermarkOpacity', '60');
+                }
+                
+                const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (updateResponse.ok) {
+                    // Update button text
+                    const btn = document.getElementById('watermarkStatusText');
+                    const icon = document.querySelector('#toggleWatermarkBtn');
+                    
+                    if (btn && icon) {
+                        btn.textContent = newStatus ? 'Remove Watermark' : 'Add Watermark';
+                        icon.innerHTML = `🎨 <span id="watermarkStatusText">${newStatus ? 'Remove Watermark' : 'Add Watermark'}</span>`;
+                    }
+                    
+                    showMessage(`Watermark ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
+                } else {
+                    throw new Error('Failed to update watermark status');
+                }
+            } catch (error) {
+                console.error('Error toggling watermark:', error);
+                showMessage('Error updating watermark status', 'error');
+            }
+        }
+
+        function viewDownloadAnalytics() {
+            // This would fetch and display download analytics
+            // For now, show a placeholder message
+            showMessage('Download analytics feature coming soon!', 'info');
+        }
+
+        function openFullDownloadControls() {
+            // Open the full download controls in a modal or new tab
+            const baseUrl = window.location.origin;
+            const fullControlsUrl = `${baseUrl}/download-controls?sessionId=${sessionId}`;
+            window.open(fullControlsUrl, '_blank', 'width=800,height=600');
+        }
     </script>
     
     <!-- Import unified deletion system -->
