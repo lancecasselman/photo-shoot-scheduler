@@ -18030,7 +18030,7 @@ END:VCALENDAR`;
             }
         }
 
-        // Handle API errors with proper JSON parsing
+        // Handle API responses with proper content type handling
         async function handleApiResponse(response) {
             if (response.status === 401 || response.status === 403) {
                 console.error('❌ Authentication failed - status:', response.status);
@@ -18051,15 +18051,43 @@ END:VCALENDAR`;
                 throw new Error(errorMessage);
             }
 
-            try {
-                return await response.json();
-            } catch (parseError) {
-                console.warn('⚠️ Response is not JSON, returning null');
-                return null;
+            // Handle 204 No Content as success
+            if (response.status === 204) {
+                return { success: true };
+            }
+
+            // Check content type to determine how to parse response
+            const contentType = response.headers.get('content-type') || '';
+            
+            if (contentType.includes('application/json')) {
+                try {
+                    return await response.json();
+                } catch (parseError) {
+                    console.error('❌ Failed to parse JSON response:', parseError);
+                    return null;
+                }
+            } else if (contentType.includes('text/')) {
+                try {
+                    const text = await response.text();
+                    return { text: text, success: true };
+                } catch (parseError) {
+                    console.error('❌ Failed to parse text response:', parseError);
+                    return null;
+                }
+            } else {
+                // For other content types or empty responses, assume success
+                console.log('ℹ️ Non-JSON/text response, treating as success');
+                return { success: true };
             }
         }
         
         function initializeDownloadControls() {
+            // Guard against duplicate initialization
+            if (downloadControlsReady) {
+                console.log('✅ Download controls already initialized, skipping');
+                return;
+            }
+
             const modal = document.getElementById('downloadControlsModal');
             const isAuthenticated = window.currentUser && window.currentUser.uid;
             
@@ -18067,7 +18095,8 @@ END:VCALENDAR`;
                 modalExists: !!modal, 
                 isAuthenticated,
                 currentPath: window.location.pathname,
-                readyState: document.readyState 
+                readyState: document.readyState,
+                alreadyReady: downloadControlsReady
             });
             
             // Only require modal existence and authentication - no path restrictions
@@ -18075,7 +18104,7 @@ END:VCALENDAR`;
                 downloadControlsReady = true;
                 console.log('✅ Download controls initialized successfully');
                 
-                // Attach event listeners if needed
+                // Attach event listeners if needed (check if not already attached)
                 const downloadEnabled = document.getElementById('downloadEnabled');
                 const pricingModel = document.getElementById('pricingModel');
                 const watermarkEnabled = document.getElementById('watermarkEnabled');
@@ -18135,13 +18164,7 @@ END:VCALENDAR`;
         // Load current download control settings for a session
         async function loadDownloadControlSettings(sessionId) {
             try {
-                const authToken = await getAuthToken();
-                const headers = {
-                    'Content-Type': 'application/json',
-                };
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
-                }
+                const headers = await getAuthHeaders();
 
                 const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'GET',
