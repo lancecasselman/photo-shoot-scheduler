@@ -1942,34 +1942,28 @@ function createDownloadRoutes(isAuthenticated) {
         });
       }
       
-      // Create reservation in gallery_downloads
-      const downloadId = uuidv4();
-      await client.query(
-        `INSERT INTO gallery_downloads 
-         (id, session_id, user_id, client_key, photo_id, photo_url, filename, 
-          download_type, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'reserved', NOW())`,
-        [downloadId, sessionId, session.user_id, galleryAccessToken || 'direct', 
-         filename, photoUrl, filename, downloadType]
-      );
-      
-      // Create download token
+      // Create download token first
       const token = uuidv4();
       const tokenId = uuidv4();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
       
       await client.query(
         `INSERT INTO download_tokens 
-         (id, token, photo_url, filename, session_id, type, expires_at, 
-          is_used, one_time, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, false, true, NOW())`,
-        [tokenId, token, photoUrl, filename, sessionId, downloadType, expiresAt]
+         (id, token, photo_url, filename, session_id, expires_at, 
+          is_used, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, false, NOW())`,
+        [tokenId, token, photoUrl, filename, sessionId, expiresAt]
       );
       
-      // Update gallery_downloads with token
+      // Create reservation in gallery_downloads with the token
+      const downloadId = uuidv4();
       await client.query(
-        `UPDATE gallery_downloads SET download_token = $1 WHERE id = $2`,
-        [token, downloadId]
+        `INSERT INTO gallery_downloads 
+         (id, session_id, user_id, client_key, download_token, photo_id, photo_url, filename, 
+          download_type, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'reserved', NOW())`,
+        [downloadId, sessionId, session.user_id, galleryAccessToken || 'direct', 
+         token, filename, photoUrl, filename, downloadType]
       );
       
       await client.query('COMMIT');
