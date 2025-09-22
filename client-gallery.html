@@ -1273,8 +1273,8 @@
                 const data = await response.json();
                 
                 // Redirect to Stripe checkout
-                if (data.checkoutUrl) {
-                    window.location.href = data.checkoutUrl;
+                if (data.url) {
+                    window.location.href = data.url;
                 } else {
                     throw new Error('No checkout URL received');
                 }
