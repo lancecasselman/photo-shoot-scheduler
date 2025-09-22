@@ -442,6 +442,60 @@ function createDownloadRoutes(isAuthenticated) {
 
   // ==================== TOKEN BRIDGE SYSTEM ====================
 
+  // ==================== CENTRALIZED ENFORCEMENT HELPERS ====================
+
+  /**
+   * Convert snake_case database fields to camelCase for consistent access
+   * CRITICAL FIX: This resolves the field name mismatch between raw SQL and Drizzle ORM
+   */
+  function toCamelCase(obj) {
+    if (!obj) return obj;
+    
+    const converted = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Convert snake_case to camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      converted[camelKey] = value;
+      // Also keep original key for backward compatibility
+      converted[key] = value;
+    }
+    return converted;
+  }
+
+  /**
+   * Centralized download policy enforcement function
+   * Handles null/0 = unlimited, finite limits properly with atomic check-and-reserve
+   */
+  async function enforceDownloadPolicy(sessionData, sessionId) {
+    const downloadMax = sessionData.downloadMax;
+    
+    // If downloadMax is null or 0, downloads are unlimited
+    if (!downloadMax || downloadMax === 0) {
+      return { allowed: true, reason: 'unlimited' };
+    }
+    
+    // Count total downloads for this session (atomic check)
+    const existingDownloads = await db
+      .select({ count: count() })
+      .from(galleryDownloads)
+      .where(eq(galleryDownloads.sessionId, sessionId));
+    
+    const usedDownloads = existingDownloads[0]?.count || 0;
+    
+    if (usedDownloads >= downloadMax) {
+      return { 
+        allowed: false, 
+        reason: 'limit_exceeded',
+        code: 'limit_exceeded',
+        allowed: downloadMax,
+        used: usedDownloads,
+        message: `Download limit reached (${downloadMax} downloads maximum)`
+      };
+    }
+    
+    return { allowed: true, reason: 'under_limit', remaining: downloadMax - usedDownloads };
+  }
+
   /**
    * POST /api/downloads/sessions/:sessionId/assets/:assetId/request
    * Bridge endpoint: Accepts gallery_access_token, returns downloadToken or checkout URL
@@ -458,20 +512,22 @@ function createDownloadRoutes(isAuthenticated) {
         return res.status(400).json({ error: 'Gallery access token required' });
       }
 
-      // Use raw SQL query like getAllSessions function in server.js
-      const sessionQuery = 'SELECT * FROM photography_sessions WHERE id = $1 AND gallery_access_token = $2 LIMIT 1';
-      console.log('🔍 Raw SQL query:', { sessionQuery, params: [sessionId, galleryToken] });
+      // CRITICAL FIX: Use raw SQL with proper field name conversion
+      console.log('🔍 Using raw SQL with snake_case to camelCase conversion');
       
       let session;
       try {
+        const sessionQuery = 'SELECT * FROM photography_sessions WHERE id = $1 AND gallery_access_token = $2 LIMIT 1';
         const result = await pool.query(sessionQuery, [sessionId, galleryToken]);
         session = result.rows;
-        console.log('🔍 SQL query result:', { 
+        
+        console.log('🔍 Raw SQL query result:', { 
           rowCount: result.rows.length,
           firstRow: result.rows[0] ? {
             id: result.rows[0].id,
             download_enabled: result.rows[0].download_enabled,
-            pricing_model: result.rows[0].pricing_model
+            pricing_model: result.rows[0].pricing_model,
+            download_max: result.rows[0].download_max
           } : null
         });
       } catch (sqlError) {
@@ -483,19 +539,21 @@ function createDownloadRoutes(isAuthenticated) {
         return res.status(403).json({ error: 'Invalid gallery access or session not found' });
       }
 
-      const sessionData = session[0];
+      // CRITICAL FIX: Convert snake_case fields to camelCase
+      const rawSessionData = session[0];
+      const sessionData = toCamelCase(rawSessionData);
       
-      // Normalize session data: Raw SQL returns snake_case, handle both naming conventions with robust boolean coercion
-      const rawDE = sessionData.download_enabled ?? sessionData.downloadEnabled ?? sessionData.downloads_enabled ?? sessionData.downloadsEnabled;
-      const downloadsEnabled = rawDE === true || rawDE === 'true' || rawDE === 1;
-      const pricingModel = sessionData.pricing_model ?? sessionData.pricingModel;
-      const galleryExpiresAt = sessionData.gallery_expires_at ?? sessionData.galleryExpiresAt;
+      // Now we can access fields consistently in camelCase
+      const downloadsEnabled = sessionData.downloadEnabled;
+      const pricingModel = sessionData.pricingModel;
+      const galleryExpiresAt = sessionData.galleryExpiresAt;
+      const downloadMax = sessionData.downloadMax;
       
-      console.log('🔍 Session data normalized fields:', {
-        rawDE,
+      console.log('🔍 Session data (properly accessed):', {
         downloadsEnabled,
         pricingModel,
-        galleryExpiresAt
+        galleryExpiresAt,
+        downloadMax
       });
 
       // Check if gallery is expired
@@ -505,7 +563,7 @@ function createDownloadRoutes(isAuthenticated) {
 
       // Check if downloads are enabled
       if (!downloadsEnabled) {
-        console.log('❌ Downloads disabled check failed:', downloadsEnabled);
+        console.log('❌ Downloads disabled for session:', sessionId);
         return res.status(403).json({ error: 'Downloads are not enabled for this gallery' });
       }
 
@@ -523,27 +581,17 @@ function createDownloadRoutes(isAuthenticated) {
       // pricingModel already normalized above
 
       if (pricingModel === 'free') {
-        // Check if download limit is set and enforced
-        const downloadMax = sessionData.download_max || null;
+        // CRITICAL FIX: Use centralized enforcement logic
+        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId);
         
-        if (downloadMax) {
-          // Count total downloads for this session
-          const existingDownloads = await db
-            .select({ count: count() })
-            .from(galleryDownloads)
-            .where(eq(galleryDownloads.sessionId, sessionId));
-          
-          const usedDownloads = existingDownloads[0]?.count || 0;
-          
-          if (usedDownloads >= downloadMax) {
-            console.log(`⚠️ Download limit reached for session ${sessionId}: ${usedDownloads}/${downloadMax}`);
-            return res.status(403).json({
-              status: 'limit_exceeded',
-              message: `Download limit reached (${downloadMax} downloads maximum)`,
-              downloadMax,
-              usedDownloads
-            });
-          }
+        if (!policyCheck.allowed) {
+          console.log(`❌ Download limit exceeded for session ${sessionId}:`, policyCheck);
+          return res.status(403).json({
+            code: policyCheck.code,
+            message: policyCheck.message,
+            allowed: policyCheck.allowed,
+            used: policyCheck.used
+          });
         }
         
         // Free download - generate immediate download token
@@ -570,31 +618,21 @@ function createDownloadRoutes(isAuthenticated) {
         });
 
       } else if (pricingModel === 'freemium') {
-        // First check if overall download limit is reached
-        const downloadMax = sessionData.download_max || null;
+        // CRITICAL FIX: Check overall download limit first using centralized enforcement
+        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId);
         
-        if (downloadMax) {
-          // Count total downloads for this session (both free and paid)
-          const totalDownloads = await db
-            .select({ count: count() })
-            .from(galleryDownloads)
-            .where(eq(galleryDownloads.sessionId, sessionId));
-          
-          const totalUsedDownloads = totalDownloads[0]?.count || 0;
-          
-          if (totalUsedDownloads >= downloadMax) {
-            console.log(`⚠️ Total download limit reached for session ${sessionId}: ${totalUsedDownloads}/${downloadMax}`);
-            return res.status(403).json({
-              status: 'limit_exceeded',
-              message: `Total download limit reached (${downloadMax} downloads maximum)`,
-              downloadMax,
-              usedDownloads: totalUsedDownloads
-            });
-          }
+        if (!policyCheck.allowed) {
+          console.log(`❌ Total download limit exceeded for session ${sessionId}:`, policyCheck);
+          return res.status(403).json({
+            code: policyCheck.code,
+            message: policyCheck.message,
+            allowed: policyCheck.allowed,
+            used: policyCheck.used
+          });
         }
         
         // Check if user has free downloads remaining
-        const freeDownloads = sessionData.free_downloads || 0;
+        const freeDownloads = sessionData.freeDownloads || 0;
         
         // Count previous free downloads for this gallery
         const existingDownloads = await db
@@ -633,7 +671,7 @@ function createDownloadRoutes(isAuthenticated) {
           });
         } else {
           // No free downloads left - require payment
-          const pricePerDownload = parseFloat(sessionData.price_per_download || '0');
+          const pricePerDownload = parseFloat(sessionData.pricePerDownload || '0');
           return res.json({
             status: 'pay',
             price: pricePerDownload,
@@ -643,31 +681,21 @@ function createDownloadRoutes(isAuthenticated) {
         }
 
       } else if (pricingModel === 'paid') {
-        // First check if overall download limit is reached
-        const downloadMax = sessionData.download_max || null;
+        // CRITICAL FIX: Check overall download limit first using centralized enforcement
+        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId);
         
-        if (downloadMax) {
-          // Count total downloads for this session
-          const totalDownloads = await db
-            .select({ count: count() })
-            .from(galleryDownloads)
-            .where(eq(galleryDownloads.sessionId, sessionId));
-          
-          const totalUsedDownloads = totalDownloads[0]?.count || 0;
-          
-          if (totalUsedDownloads >= downloadMax) {
-            console.log(`⚠️ Download limit reached for paid session ${sessionId}: ${totalUsedDownloads}/${downloadMax}`);
-            return res.status(403).json({
-              status: 'limit_exceeded',
-              message: `Download limit reached (${downloadMax} downloads maximum)`,
-              downloadMax,
-              usedDownloads: totalUsedDownloads
-            });
-          }
+        if (!policyCheck.allowed) {
+          console.log(`❌ Download limit exceeded for paid session ${sessionId}:`, policyCheck);
+          return res.status(403).json({
+            code: policyCheck.code,
+            message: policyCheck.message,
+            allowed: policyCheck.allowed,
+            used: policyCheck.used
+          });
         }
         
         // Paid download - redirect to checkout
-        const pricePerDownload = parseFloat(sessionData.price_per_download || '0');
+        const pricePerDownload = parseFloat(sessionData.pricePerDownload || '0');
         return res.json({
           status: 'pay',
           price: pricePerDownload,
@@ -727,26 +755,17 @@ function createDownloadRoutes(isAuthenticated) {
 
       const sessionData = sessionResult[0];
 
-      // Re-check download limit at fulfillment time to prevent race conditions
-      const downloadMax = sessionData.downloadMax || null;
-      if (downloadMax) {
-        // Count total downloads for this session (atomic check)
-        const currentDownloads = await db
-          .select({ count: count() })
-          .from(galleryDownloads)
-          .where(eq(galleryDownloads.sessionId, tokenData.sessionId));
-        
-        const currentCount = currentDownloads[0]?.count || 0;
-        
-        if (currentCount >= downloadMax) {
-          console.log(`⚠️ Download limit exceeded at fulfillment for session ${tokenData.sessionId}: ${currentCount}/${downloadMax}`);
-          return res.status(403).json({ 
-            error: 'Download limit exceeded',
-            message: `This gallery has reached its maximum download limit (${downloadMax} downloads)`,
-            downloadMax,
-            currentCount
-          });
-        }
+      // CRITICAL FIX: Re-check download limit at fulfillment time using centralized enforcement
+      const policyCheck = await enforceDownloadPolicy(sessionData, tokenData.sessionId);
+      
+      if (!policyCheck.allowed) {
+        console.log(`❌ Download limit exceeded at fulfillment for session ${tokenData.sessionId}:`, policyCheck);
+        return res.status(403).json({
+          code: policyCheck.code,
+          message: policyCheck.message,
+          allowed: policyCheck.allowed,
+          used: policyCheck.used
+        });
       }
 
       // Get the actual file from R2 storage
