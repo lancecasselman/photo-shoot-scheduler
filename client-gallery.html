@@ -771,8 +771,8 @@
                     }
                 }
 
-                // Fallback to basic gallery system
-                console.log('📸 Using basic gallery system');
+                // First, check if this gallery has download policies that require tracking
+                console.log('🔍 Checking if download tracking is needed...');
                 
                 // Verify gallery access and get session info with download policies
                 const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
@@ -785,22 +785,59 @@
                 sessionData = responseData.session || responseData; // Handle nested or flat response
                 console.log('✅ Session data loaded with download policies:', sessionData);
 
+                // Check if this gallery needs download tracking (freemium or paid)
+                const needsDownloadTracking = sessionData.downloadEnabled && 
+                    (sessionData.pricingModel === 'freemium' || sessionData.pricingModel === 'paid' || 
+                     (sessionData.pricingModel === 'free' && sessionData.downloadMax));
+                     
+                if (needsDownloadTracking) {
+                    console.log('📊 Gallery requires download tracking - enabling download controls');
+                    
+                    // Get current download usage from session storage (for immediate UI updates)
+                    const storageKey = `downloads_${galleryToken}`;
+                    downloadUsage = parseInt(sessionStorage.getItem(storageKey) || '0');
+                    console.log('📊 Current download usage from browser:', downloadUsage);
+                    
+                    // Use the download control rendering system for proper tracking
+                    sessionData.needsTracking = true;
+                }
+                
+                // Fallback to basic gallery system (for free unlimited galleries)
+                console.log('📸 Using basic gallery system (no tracking needed)');
+
                 // Extract photos from verify response (already includes photos)
                 photos = sessionData.photos || [];
                 
                 // Update page title and header with download policy info
                 document.getElementById('galleryTitle').textContent = `${sessionData.clientName}'s Gallery`;
                 
-                // Display download policy information
+                // Display download policy information with real-time usage
                 let subtitle = sessionData.sessionType;
                 if (!sessionData.downloadEnabled) {
                     subtitle += ' • Downloads Disabled';
                 } else if (sessionData.pricingModel === 'paid') {
                     subtitle += ` • $${sessionData.pricePerDownload} per photo`;
                 } else if (sessionData.pricingModel === 'freemium') {
-                    subtitle += ` • ${sessionData.freeDownloads} free downloads, then $${sessionData.pricePerDownload} each`;
+                    if (sessionData.needsTracking) {
+                        // Show real-time usage for freemium
+                        const freeLimit = sessionData.freeDownloads || 0;
+                        const usage = downloadUsage || 0;
+                        if (usage < freeLimit) {
+                            const remaining = freeLimit - usage;
+                            subtitle += ` • ${remaining} free downloads remaining, then $${sessionData.pricePerDownload} each`;
+                        } else {
+                            subtitle += ` • Free downloads used. Additional photos: $${sessionData.pricePerDownload} each`;
+                        }
+                    } else {
+                        subtitle += ` • ${sessionData.freeDownloads} free downloads, then $${sessionData.pricePerDownload} each`;
+                    }
                 } else if (sessionData.downloadMax) {
-                    subtitle += ` • ${sessionData.downloadMax} download limit`;
+                    if (sessionData.needsTracking) {
+                        const remaining = Math.max(0, sessionData.downloadMax - (downloadUsage || 0));
+                        subtitle += ` • ${remaining} downloads remaining`;
+                    } else {
+                        subtitle += ` • ${sessionData.downloadMax} download limit`;
+                    }
                 }
                 if (sessionData.watermarkEnabled) {
                     subtitle += ' • Watermarked';
@@ -815,7 +852,11 @@
                 if (photos.length === 0) {
                     showEmptyGallery();
                 } else {
-                    renderGallery();
+                    if (sessionData.needsTracking) {
+                        renderGalleryWithDownloadControls();
+                    } else {
+                        renderGallery();
+                    }
                 }
 
             } catch (error) {
@@ -1027,7 +1068,7 @@
             button.dataset.photoId = photo.filename;
             button.dataset.photoIndex = index;
             
-            if (!downloadToken) {
+            if (!sessionData || !sessionData.needsTracking) {
                 // Basic gallery - simple download
                 button.innerHTML = '📥 Download';
                 button.dataset.action = 'download-basic';
@@ -1061,7 +1102,7 @@
         
         // Check if download is allowed based on limits
         function checkDownloadEligibility() {
-            if (!downloadToken) return { allowed: true };
+            if (!sessionData || !sessionData.needsTracking) return { allowed: true };
             
             const { pricingModel, downloadMax, freeDownloads } = sessionData;
             const usage = downloadUsage || 0;
@@ -1078,7 +1119,7 @@
         
         // Check if payment is required for this download
         function checkPaymentRequired() {
-            if (!downloadToken) return false;
+            if (!sessionData || !sessionData.needsTracking) return false;
             
             const { pricingModel, freeDownloads } = sessionData;
             const usage = downloadUsage || 0;
@@ -1091,7 +1132,7 @@
         
         // Update download all button based on policy
         function updateDownloadAllButton(button) {
-            if (!downloadToken || !sessionData) {
+            if (!sessionData || !sessionData.needsTracking) {
                 button.innerHTML = '📥 Download All Photos';
                 // Remove HTML onclick and set programmatic handler
                 button.removeAttribute('onclick');
@@ -1135,14 +1176,15 @@
                     throw new Error('Photo not found');
                 }
                 
-                // Step 1: Issue a download token
+                // Step 1: Issue a download token with gallery token as client identifier
                 const issueResponse = await fetch(`/api/downloads/sessions/${sessionData.id}/issue`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         photoUrl: photo.url,
                         filename: photo.filename || photoId,
-                        galleryAccessToken: galleryToken
+                        galleryAccessToken: galleryToken,
+                        clientKey: galleryToken // Use gallery token as client identifier for tracking
                     })
                 });
                 
@@ -1200,13 +1242,36 @@
                 
                 window.URL.revokeObjectURL(downloadUrl);
                 
-                // Update usage count
+                // Update usage count in memory and session storage
                 downloadUsage = (downloadUsage || 0) + 1;
+                const storageKey = `downloads_${galleryToken}`;
+                sessionStorage.setItem(storageKey, downloadUsage.toString());
                 
-                // Refresh display
+                // Refresh display with new counts
                 if (sessionData) {
-                    document.getElementById('gallerySubtitle').textContent = getDownloadPolicyDisplay();
-                    renderGalleryWithDownloadControls();
+                    // Update subtitle with new download counts
+                    let subtitle = sessionData.sessionType;
+                    if (sessionData.pricingModel === 'freemium') {
+                        const freeLimit = sessionData.freeDownloads || 0;
+                        if (downloadUsage < freeLimit) {
+                            const remaining = freeLimit - downloadUsage;
+                            subtitle += ` • ${remaining} free downloads remaining, then $${sessionData.pricePerDownload} each`;
+                        } else {
+                            subtitle += ` • Free downloads used. Additional photos: $${sessionData.pricePerDownload} each`;
+                        }
+                    } else if (sessionData.downloadMax) {
+                        const remaining = Math.max(0, sessionData.downloadMax - downloadUsage);
+                        subtitle += ` • ${remaining} downloads remaining`;
+                    }
+                    if (sessionData.watermarkEnabled) {
+                        subtitle += ' • Watermarked';
+                    }
+                    document.getElementById('gallerySubtitle').textContent = subtitle;
+                    
+                    // Re-render gallery with updated button states
+                    if (sessionData.needsTracking) {
+                        renderGalleryWithDownloadControls();
+                    }
                 }
                 
                 console.log('✅ Photo downloaded:', redeemData.filename);
