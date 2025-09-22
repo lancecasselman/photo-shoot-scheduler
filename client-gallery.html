@@ -1007,7 +1007,7 @@
             console.log(`✅ Rendered ${photos.length} photos for ${sessionData?.clientName || 'gallery'}`);
             
             // Add secure event delegation for photo actions
-            setupPhotoActionHandlers();
+            setupDownloadControlHandlers();
         }
 
         function showEmptyGallery() {
@@ -1164,6 +1164,11 @@
                 
                 const issueData = await issueResponse.json();
                 console.log('🎫 Download token issued:', issueData.downloadType);
+                console.log('🔍 Token value for redeem:', issueData.token);
+                
+                if (!issueData.token) {
+                    throw new Error('No download token received from server');
+                }
                 
                 // Step 2: Redeem the token for actual download
                 const redeemResponse = await fetch(`/api/downloads/redeem/${issueData.token}`, {
