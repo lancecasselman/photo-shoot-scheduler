@@ -385,7 +385,6 @@ export const downloadTokens = pgTable("download_tokens", {
   photoUrl: varchar("photo_url").notNull(),
   filename: varchar("filename").notNull(),
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
-  type: varchar("type").notNull().default("free").$type<'free' | 'paid'>(), // Track token type
   expiresAt: timestamp("expires_at").notNull(),
   isUsed: boolean("is_used").default(false),
   usedAt: timestamp("used_at"),
