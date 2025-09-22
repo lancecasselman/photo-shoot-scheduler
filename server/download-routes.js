@@ -1126,46 +1126,17 @@ function createDownloadRoutes(isAuthenticated) {
 
   /**
    * GET /api/downloads/gallery/:sessionId
-   * Get gallery data for clients with download controls (public endpoint with token)
+   * Get gallery data for clients with download controls (public endpoint with gallery access token)
    */
-  router.get('/gallery/:sessionId', async (req, res) => {
+  router.get('/gallery/:sessionId', requireGalleryToken, async (req, res) => {
     try {
       const { sessionId } = req.params;
-      const { token } = req.query;
 
-      // Token is required for this endpoint
-      if (!token) {
-        return res.status(403).json({ error: 'Access token required' });
-      }
-
-      // Verify token
-      const downloadToken = await db
-        .select()
-        .from(downloadTokens)
-        .where(eq(downloadTokens.token, token))
-        .limit(1);
-
-      if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt) {
-        return res.status(403).json({ error: 'Invalid or expired access token' });
-      }
-      
-      const clientAccess = downloadToken[0];
-
-      // Get session data
-      const session = await db
-        .select()
-        .from(photographySessions)
-        .where(eq(photographySessions.id, sessionId))
-        .limit(1);
-
-      if (session.length === 0) {
-        return res.status(404).json({ error: 'Session not found' });
-      }
-
-      const sessionData = session[0];
+      // Session data is available from requireGalleryToken middleware
+      const sessionData = req.sessionData;
 
       // Get download usage for this client/session
-      const clientKey = clientAccess.clientEmail || 'anonymous';
+      const clientKey = 'gallery-client'; // For gallery access, use generic key
       const usageResult = await db
         .select({ count: count() })
         .from(galleryDownloads)
