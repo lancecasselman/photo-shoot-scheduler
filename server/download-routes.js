@@ -8,15 +8,43 @@ const { v4: uuidv4 } = require('uuid');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const crypto = require('crypto');
 
-// Import database schema and ORM
+// Import database schema and ORM with full schema support
+const { drizzle } = require('drizzle-orm/node-postgres');
+const { pgTable, varchar, timestamp, boolean, text, jsonb, decimal, integer } = require('drizzle-orm/pg-core');
+const schema = require('../shared/schema');
 const { 
   photographySessions, 
-  downloadTokens, 
-  digitalTransactions, 
-  galleryDownloads 
-} = require('../shared/schema');
+  digitalTransactions 
+} = schema;
 const { eq, and, desc, count, sum, gte, lte } = require('drizzle-orm');
-const { drizzle } = require('drizzle-orm/node-postgres');
+
+// Define missing table schemas that aren't in compiled schema.js
+const downloadTokens = pgTable("download_tokens", {
+  id: varchar("id").primaryKey().notNull(),
+  token: varchar("token").notNull().unique(),
+  photoUrl: varchar("photo_url"),
+  filename: varchar("filename"),
+  sessionId: varchar("session_id").notNull(),
+  clientEmail: varchar("client_email"),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+const galleryDownloads = pgTable("gallery_downloads", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  clientKey: varchar("client_key").notNull(),
+  downloadToken: varchar("download_token").notNull().unique(),
+  photoId: varchar("photo_id").notNull(),
+  photoUrl: varchar("photo_url").notNull(),
+  filename: varchar("filename").notNull(),
+  downloadType: varchar("download_type").notNull(),
+  status: varchar("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow()
+});
 
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
@@ -30,7 +58,8 @@ function createDownloadRoutes(isAuthenticated) {
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
   
-  const db = drizzle(pool);
+  // Create Drizzle db instance with full schema
+  const db = drizzle(pool, { schema });
   const r2Manager = new R2FileManager(null, pool);
 
   // Configure multer for watermark logo uploads
