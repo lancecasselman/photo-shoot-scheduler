@@ -1894,8 +1894,8 @@ function createDownloadRoutes(isAuthenticated) {
       );
       const totalUsed = parseInt(totalCountResult.rows[0].count);
       
-      // Check download_max limit
-      if (session.download_max !== null && totalUsed >= session.download_max) {
+      // Check download_max limit (0 means unlimited, null means unlimited)
+      if (session.download_max !== null && session.download_max > 0 && totalUsed >= session.download_max) {
         await client.query('ROLLBACK');
         return res.status(403).json({ 
           error: 'Download limit exceeded',
