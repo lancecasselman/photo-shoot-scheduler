@@ -1183,6 +1183,84 @@ function createDownloadRoutes(isAuthenticated) {
   });
 
   /**
+   * GET /api/gallery/:galleryToken/verify
+   * Verify gallery access token and return session data with full download policy settings
+   * This is the endpoint the client gallery calls to get session configuration
+   */
+  router.get('/gallery/:galleryToken/verify', async (req, res) => {
+    try {
+      const { galleryToken } = req.params;
+      
+      console.log('🔍 Gallery verification request for token:', galleryToken);
+
+      // Find session by gallery access token
+      const session = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.galleryAccessToken, galleryToken))
+        .limit(1);
+
+      if (session.length === 0) {
+        return res.status(403).json({ error: 'Invalid gallery access token' });
+      }
+
+      const sessionData = session[0];
+
+      // Check if gallery access has expired
+      if (sessionData.galleryExpiresAt && new Date() > sessionData.galleryExpiresAt) {
+        return res.status(410).json({ error: 'Gallery access has expired' });
+      }
+
+      // Get photos from R2 storage
+      let photos = [];
+      try {
+        const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionData.id);
+        photos = sessionFiles.filesByType.gallery || [];
+      } catch (error) {
+        console.warn('Could not load gallery photos:', error.message);
+      }
+
+      // Convert database fields from snake_case to camelCase for client consumption
+      const clientSessionData = {
+        id: sessionData.id,
+        clientName: sessionData.clientName,
+        sessionType: sessionData.sessionType,
+        sessionName: sessionData.sessionName,
+        downloadEnabled: sessionData.downloadEnabled,
+        pricingModel: sessionData.pricingModel,
+        downloadMax: sessionData.downloadMax,
+        pricePerDownload: sessionData.pricePerDownload,
+        freeDownloads: sessionData.freeDownloads,
+        watermarkEnabled: sessionData.watermarkEnabled,
+        watermarkType: sessionData.watermarkType,
+        watermarkText: sessionData.watermarkText,
+        watermarkLogoUrl: sessionData.watermarkLogoUrl,
+        watermarkPosition: sessionData.watermarkPosition,
+        watermarkOpacity: sessionData.watermarkOpacity,
+        watermarkScale: sessionData.watermarkScale,
+        galleryExpiresAt: sessionData.galleryExpiresAt,
+        photos: photos
+      };
+
+      console.log('✅ Gallery verification successful for:', sessionData.clientName, 'with settings:', {
+        downloadEnabled: sessionData.downloadEnabled,
+        pricingModel: sessionData.pricingModel,
+        watermarkEnabled: sessionData.watermarkEnabled
+      });
+
+      res.json({
+        success: true,
+        sessionId: sessionData.id,
+        session: clientSessionData
+      });
+      
+    } catch (error) {
+      console.error('❌ Gallery verification error:', error);
+      res.status(500).json({ error: 'Gallery verification failed' });
+    }
+  });
+
+  /**
    * POST /api/downloads/purchase/:sessionId/:photoId
    * Process payment for download (for paid/freemium models) - public endpoint with token
    */
