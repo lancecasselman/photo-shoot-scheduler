@@ -198,24 +198,25 @@ function createPreviewApiRoutes() {
  */
 async function validateGalleryToken(pool, token, sessionId) {
     try {
-        // Query gallery tokens table or session-based tokens
+        // Query photography_sessions table directly using gallery_access_token field
         const query = `
             SELECT 
-                ps.id as session_id,
-                ps.user_id,
-                ps.client_name,
-                ps.pricing_model,
-                gt.expires_at,
-                gt.client_key
-            FROM gallery_tokens gt
-            JOIN photography_sessions ps ON ps.id = gt.session_id
-            WHERE gt.token = $1 AND gt.session_id = $2 AND gt.expires_at > NOW()
+                id as session_id,
+                user_id,
+                client_name,
+                pricing_model,
+                gallery_expires_at as expires_at,
+                gallery_access_token
+            FROM photography_sessions
+            WHERE gallery_access_token = $1 
+            AND id = $2 
+            AND (gallery_expires_at IS NULL OR gallery_expires_at > NOW())
         `;
         
         const result = await pool.query(query, [token, sessionId]);
         
         if (result.rows.length === 0) {
-            // Fallback: check if it's a session-based token
+            // Fallback: check if it's a valid session without token validation (for legacy support)
             const sessionQuery = `
                 SELECT 
                     id as session_id,
@@ -247,7 +248,7 @@ async function validateGalleryToken(pool, token, sessionId) {
             userId: tokenData.user_id,
             clientName: tokenData.client_name,
             pricingMode: tokenData.pricing_model || 'freemium',
-            clientKey: tokenData.client_key
+            sessionId: tokenData.session_id
         };
         
     } catch (error) {

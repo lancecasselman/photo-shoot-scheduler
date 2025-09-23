@@ -1163,27 +1163,51 @@
                     const verifyResponse = await fetch(`/api/downloads/gallery/${this.galleryToken}/verify`);
                     const verifyData = await verifyResponse.json();
                     
+                    console.log('🔍 API Response received:', verifyResponse.status, verifyResponse.ok);
+                    console.log('🔍 API Response data structure:', JSON.stringify(verifyData, null, 2));
+                    
                     if (!verifyResponse.ok || !verifyData) {
                         throw new Error(verifyData?.error || 'Gallery access denied');
                     }
                     
+                    // Check if we have success and session data
+                    if (!verifyData.success || !verifyData.session) {
+                        console.error('❌ Invalid API response structure:', verifyData);
+                        throw new Error('Invalid gallery response structure');
+                    }
+                    
+                    const sessionData = verifyData.session;
+                    console.log('🔍 Session data extracted:', sessionData);
+                    
                     // Extract session data from the response (photos are included)
                     this.sessionData = {
-                        id: verifyData.id,
-                        clientName: verifyData.clientName,
-                        sessionName: verifyData.sessionName || 'Photo Gallery',
-                        sessionDate: new Date().toISOString(), // fallback
-                        downloadEnabled: verifyData.downloadEnabled,
-                        pricingModel: verifyData.pricingModel,
-                        downloadMax: verifyData.downloadMax,
-                        pricePerDownload: verifyData.pricePerDownload,
-                        freeDownloads: verifyData.freeDownloads
+                        id: verifyData.sessionId || sessionData.id,
+                        clientName: sessionData.clientName,
+                        sessionName: sessionData.sessionName || 'Photo Gallery',
+                        sessionDate: sessionData.sessionDate || new Date().toISOString(),
+                        downloadEnabled: sessionData.downloadEnabled,
+                        pricingModel: sessionData.pricingModel,
+                        downloadMax: sessionData.downloadMax,
+                        pricePerDownload: sessionData.pricePerDownload,
+                        freeDownloads: sessionData.freeDownloads
                     };
                     console.log('✅ Gallery verified:', this.sessionData);
                     
-                    // Photos are included in the verification response
-                    this.photos = verifyData.photos || [];
+                    // FIX: Photos are in verifyData.session.photos, not verifyData.photos
+                    this.photos = sessionData.photos || [];
+                    console.log(`📸 Photos array found:`, this.photos);
                     console.log(`📸 Loaded ${this.photos.length} photos`);
+                    
+                    // Debug each photo
+                    this.photos.forEach((photo, index) => {
+                        console.log(`📸 Photo ${index + 1}:`, {
+                            id: photo.id,
+                            filename: photo.filename,
+                            url: photo.url,
+                            hasUrl: !!photo.url,
+                            hasFilename: !!photo.filename
+                        });
+                    });
                     
                     // Get download policy
                     await this.loadPolicy();
@@ -1196,15 +1220,22 @@
                     // Hide loading, show gallery
                     document.getElementById('loadingContainer').style.display = 'none';
                     if (this.photos.length > 0) {
+                        console.log('✅ Showing gallery with photos');
                         document.getElementById('galleryActions').style.display = 'flex';
                         document.getElementById('floatingCart').style.display = 'flex';
                     } else {
+                        console.warn('⚠️ No photos found, showing empty gallery');
                         document.getElementById('emptyGallery').style.display = 'block';
                     }
                     
                 } catch (error) {
                     console.error('❌ Error loading gallery:', error);
+                    console.error('❌ Error stack:', error.stack);
                     this.showError(error.message);
+                    
+                    // Hide loading and show error
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    document.getElementById('errorContainer').style.display = 'block';
                 }
             }
             
@@ -1323,16 +1354,32 @@
             }
             
             displayPhotos() {
+                console.log('🎨 Starting to display photos...');
                 const grid = document.getElementById('galleryGrid');
+                if (!grid) {
+                    console.error('❌ Gallery grid element not found!');
+                    return;
+                }
+                
+                console.log(`🎨 Clearing grid and rendering ${this.photos.length} photos`);
                 grid.innerHTML = '';
                 
                 this.photos.forEach((photo, index) => {
-                    const photoCard = this.createPhotoCard(photo, index);
-                    grid.appendChild(photoCard);
+                    console.log(`🎨 Creating photo card ${index + 1}/${this.photos.length}:`, photo.filename);
+                    try {
+                        const photoCard = this.createPhotoCard(photo, index);
+                        grid.appendChild(photoCard);
+                        console.log(`✅ Photo card ${index + 1} added to grid`);
+                    } catch (error) {
+                        console.error(`❌ Error creating photo card ${index + 1}:`, error);
+                    }
                 });
+                
+                console.log(`🎨 Gallery grid now has ${grid.children.length} photo cards`);
                 
                 // Apply screenshot protection to all displayed photos
                 this.applyProtectionToPhotos();
+                console.log('🎨 Photo display complete');
             }
             
             applyProtectionToPhotos() {
@@ -1354,6 +1401,13 @@
             }
             
             createPhotoCard(photo, index) {
+                console.log(`🃏 Creating card for photo ${index + 1}:`, {
+                    id: photo.id,
+                    filename: photo.filename,
+                    url: photo.url,
+                    sessionId: this.sessionData?.id
+                });
+                
                 const card = document.createElement('div');
                 card.className = 'photo-card';
                 card.id = `photo-${index}`;
@@ -1363,16 +1417,20 @@
                 if (inCart) {
                     card.classList.add('in-cart');
                 }
+                console.log(`🃏 Photo ${index + 1} in cart: ${inCart}`);
                 
                 // Check if photo is already purchased (entitled)
                 const isEntitled = this.entitlements.some(e => e.photoId === photo.id || e.photoUrl === photo.url);
+                console.log(`🃏 Photo ${index + 1} entitled: ${isEntitled}`);
                 
                 // Calculate price for this photo
                 const price = this.calculatePhotoPrice(index);
+                console.log(`🃏 Photo ${index + 1} price: ${price}`);
                 
                 // Generate preview URL using the new preview API
                 const filename = photo.filename || photo.name || `photo-${index}.jpg`;
                 const previewUrl = `/api/preview/${this.sessionData.id}/${encodeURIComponent(filename)}?token=${this.galleryToken}`;
+                console.log(`🃏 Photo ${index + 1} preview URL: ${previewUrl}`);
                 
                 card.innerHTML = `
                     <div class="photo-wrapper">
@@ -1383,7 +1441,9 @@
                              data-entitled="${isEntitled}"
                              data-price="${price}"
                              data-original-url="${photo.url}"
-                             class="gallery-photo ${!isEntitled ? 'unpurchased' : 'purchased'}">
+                             class="gallery-photo ${!isEntitled ? 'unpurchased' : 'purchased'}"
+                             onerror="console.error('❌ Failed to load image:', this.src)"
+                             onload="console.log('✅ Image loaded:', this.src)">
                         ${!isEntitled && price !== null ? `
                             <div class="price-badge ${price === 0 ? 'free' : 'paid'}">
                                 ${price === 0 ? 'FREE' : `$${price.toFixed(2)}`}
@@ -1407,6 +1467,7 @@
                     </div>
                 `;
                 
+                console.log(`🃏 Photo card ${index + 1} created successfully`);
                 return card;
             }
             
