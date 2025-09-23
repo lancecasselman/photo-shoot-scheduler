@@ -50,7 +50,7 @@ const galleryDownloads = pgTable("gallery_downloads", {
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
-function createDownloadRoutes(isAuthenticated) {
+function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   const router = express.Router();
   
   // Database connection for API routes
@@ -62,6 +62,9 @@ function createDownloadRoutes(isAuthenticated) {
   // Create Drizzle db instance with full schema
   const db = drizzle(pool, { schema });
   const r2Manager = new R2FileManager(null, pool);
+  
+  // Use provided commerce manager or create a fallback instance
+  const commerceManager = downloadCommerceManager || require('./download-commerce');
 
   // Configure multer for watermark logo uploads
   const storage = multer.memoryStorage();
@@ -2245,6 +2248,197 @@ function createDownloadRoutes(isAuthenticated) {
       res.status(500).json({ error: 'Failed to redeem token' });
     } finally {
       client.release();
+    }
+  });
+
+  // ======================================
+  // COMMERCE ENDPOINTS WITH RATE LIMITING
+  // ======================================
+  
+  // Rate limiter for checkout endpoint - stricter limits
+  const checkoutRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Max 10 checkout attempts per window
+    message: 'Too many checkout attempts. Please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  
+  // Rate limiter for entitlements endpoint
+  const entitlementsRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 30, // Max 30 requests per window
+    message: 'Too many requests. Please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  
+  /**
+   * POST /api/downloads/checkout
+   * Create a Stripe checkout session for download purchases
+   */
+  router.post('/checkout', checkoutRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey, items } = req.body;
+      
+      if (!sessionId || !clientKey || !items || !Array.isArray(items)) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      if (!commerceManager) {
+        return res.status(503).json({ error: 'Commerce service unavailable' });
+      }
+      
+      // Create checkout session using commerce manager
+      const result = await commerceManager.createCheckoutSession(
+        sessionId,
+        clientKey,
+        items
+      );
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      res.json({
+        success: true,
+        checkoutUrl: result.checkoutUrl,
+        sessionId: result.sessionId,
+        orderId: result.orderId
+      });
+      
+    } catch (error) {
+      console.error('Checkout endpoint error:', error);
+      res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+  
+  /**
+   * GET /api/downloads/entitlements
+   * Get download entitlements for a client
+   */
+  router.get('/entitlements', entitlementsRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey } = req.query;
+      
+      if (!sessionId || !clientKey) {
+        return res.status(400).json({ error: 'Missing sessionId or clientKey' });
+      }
+      
+      if (!commerceManager) {
+        return res.status(503).json({ error: 'Commerce service unavailable' });
+      }
+      
+      // Get entitlements using commerce manager
+      const result = await commerceManager.getClientEntitlements(sessionId, clientKey);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      res.json({
+        success: true,
+        entitlements: result.entitlements,
+        summary: result.summary
+      });
+      
+    } catch (error) {
+      console.error('Entitlements endpoint error:', error);
+      res.status(500).json({ error: 'Failed to fetch entitlements' });
+    }
+  });
+  
+  /**
+   * POST /api/downloads/tokens
+   * Generate secure download tokens
+   */
+  router.post('/tokens', requireAuth, async (req, res) => {
+    try {
+      const { sessionId, photoIds, clientKey } = req.body;
+      
+      if (!sessionId || !photoIds || !Array.isArray(photoIds) || !clientKey) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      if (!commerceManager) {
+        return res.status(503).json({ error: 'Commerce service unavailable' });
+      }
+      
+      // Verify user owns the session
+      const sessionCheck = await pool.query(
+        'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+        [sessionId, getUserId(req)]
+      );
+      
+      if (sessionCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      // Get client IP for token binding
+      const clientIp = req.ip || req.connection.remoteAddress;
+      
+      // Generate tokens using commerce manager with security constraints
+      const tokens = [];
+      for (const photoId of photoIds) {
+        const result = await commerceManager.generateDownloadToken(
+          sessionId,
+          photoId,
+          clientKey,
+          clientIp
+        );
+        
+        if (result.success) {
+          tokens.push(result.token);
+        }
+      }
+      
+      res.json({
+        success: true,
+        tokens: tokens
+      });
+      
+    } catch (error) {
+      console.error('Token generation error:', error);
+      res.status(500).json({ error: 'Failed to generate tokens' });
+    }
+  });
+  
+  /**
+   * POST /api/downloads/webhook
+   * Handle Stripe webhook events for download purchases
+   */
+  router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      
+      if (!sig) {
+        return res.status(400).json({ error: 'Missing signature' });
+      }
+      
+      if (!commerceManager) {
+        return res.status(503).json({ error: 'Commerce service unavailable' });
+      }
+      
+      // Process webhook using commerce manager with raw body and signature
+      const result = await commerceManager.handleStripeWebhook(
+        req.body,  // Raw body buffer
+        sig        // Stripe signature header
+      );
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      // Return success (handle idempotent duplicates gracefully)
+      if (result.duplicate) {
+        res.status(200).json({ received: true, duplicate: true });
+      } else {
+        res.json({ received: true });
+      }
+      
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(400).json({ error: 'Webhook processing failed' });
     }
   });
 

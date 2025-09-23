@@ -2647,7 +2647,7 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 app.use('/api/r2', createR2Routes());
 
 // Download Control API Routes - Photo delivery with pricing and watermarks
-app.use('/api/downloads', createDownloadRoutes(isAuthenticated));
+app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
 
 // Enhanced Multipart Upload Routes - Optimized for large file uploads
 // app.use('/api/r2/multipart', createMultipartRoutes(pool)); // Removed - was only for Uppy/ObjectUploader

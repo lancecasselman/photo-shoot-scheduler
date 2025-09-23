@@ -544,6 +544,8 @@ export const downloadEntitlements = pgTable("download_entitlements", {
   sessionIdx: index("idx_download_entitlements_session").on(table.sessionId),
   clientKeyIdx: index("idx_download_entitlements_client").on(table.clientKey),
   sessionClientIdx: index("idx_download_entitlements_session_client").on(table.sessionId, table.clientKey),
+  // Unique constraint to prevent duplicate entitlements for the same photo
+  uniqueEntitlement: unique("download_entitlements_unique").on(table.clientKey, table.sessionId, table.photoId),
 }));
 
 // Download History table - tracks all download attempts

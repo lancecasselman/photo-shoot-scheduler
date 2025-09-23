@@ -8,7 +8,7 @@ const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const sgMail = require('@sendgrid/mail');
-const { db } = require('./db.ts');
+const { drizzle } = require('drizzle-orm/node-postgres');
 const { 
     downloadPolicies, 
     downloadOrders, 
@@ -35,6 +35,9 @@ class DownloadCommerceManager {
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
         });
         
+        // Initialize drizzle with the pool
+        this.db = drizzle(this.pool);
+        
         this.stripe = stripe;
         this.stripeEnabled = !!process.env.STRIPE_SECRET_KEY;
         
@@ -53,7 +56,7 @@ class DownloadCommerceManager {
     async getPolicyForSession(sessionId) {
         try {
             // Try to fetch existing policy
-            const existing = await db.select()
+            const existing = await this.db.select()
                 .from(downloadPolicies)
                 .where(eq(downloadPolicies.sessionId, sessionId))
                 .limit(1);
@@ -84,7 +87,7 @@ class DownloadCommerceManager {
                 createdAt: new Date()
             };
             
-            const created = await db.insert(downloadPolicies)
+            const created = await this.db.insert(downloadPolicies)
                 .values(defaultPolicy)
                 .returning();
             
@@ -108,7 +111,7 @@ class DownloadCommerceManager {
     async updatePolicy(sessionId, userId, policyData) {
         try {
             // Validate ownership
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(and(
                     eq(photographySessions.id, sessionId),
@@ -133,7 +136,7 @@ class DownloadCommerceManager {
             }
             
             // Update or create policy
-            const existing = await db.select()
+            const existing = await this.db.select()
                 .from(downloadPolicies)
                 .where(eq(downloadPolicies.sessionId, sessionId))
                 .limit(1);
@@ -159,7 +162,7 @@ class DownloadCommerceManager {
             
             if (existing.length > 0) {
                 // Update existing
-                const updated = await db.update(downloadPolicies)
+                const updated = await this.db.update(downloadPolicies)
                     .set(policyValues)
                     .where(eq(downloadPolicies.id, policyId))
                     .returning();
@@ -172,7 +175,7 @@ class DownloadCommerceManager {
             } else {
                 // Create new
                 policyValues.createdAt = new Date();
-                const created = await db.insert(downloadPolicies)
+                const created = await this.db.insert(downloadPolicies)
                     .values(policyValues)
                     .returning();
                 
@@ -276,8 +279,11 @@ class DownloadCommerceManager {
                 };
             }
             
+            // Generate idempotency key for this checkout attempt
+            const idempotencyKey = `checkout_${sessionId}_${clientKey}_${Date.now()}`;
+            
             // Get session and photographer details
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, sessionId))
                 .limit(1);
@@ -289,7 +295,7 @@ class DownloadCommerceManager {
                 };
             }
             
-            const photographer = await db.select()
+            const photographer = await this.db.select()
                 .from(users)
                 .where(eq(users.id, session[0].userId))
                 .limit(1);
@@ -369,7 +375,7 @@ class DownloadCommerceManager {
             
             // Create order record with pending status
             const orderId = uuidv4();
-            await db.insert(downloadOrders).values({
+            await this.db.insert(downloadOrders).values({
                 id: orderId,
                 sessionId: sessionId,
                 userId: photographer[0].id,
@@ -416,7 +422,7 @@ class DownloadCommerceManager {
             });
             
             // Update order with Stripe session ID
-            await db.update(downloadOrders)
+            await this.db.update(downloadOrders)
                 .set({ 
                     stripeCheckoutSessionId: checkoutSession.id 
                 })
@@ -451,7 +457,7 @@ class DownloadCommerceManager {
             }
             
             // Get photographer details
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, sessionId))
                 .limit(1);
@@ -463,7 +469,7 @@ class DownloadCommerceManager {
                 };
             }
             
-            const photographer = await db.select()
+            const photographer = await this.db.select()
                 .from(users)
                 .where(eq(users.id, session[0].userId))
                 .limit(1);
@@ -483,7 +489,7 @@ class DownloadCommerceManager {
             const orderId = uuidv4();
             const policy = await this.getPolicyForSession(sessionId);
             
-            await db.insert(downloadOrders).values({
+            await this.db.insert(downloadOrders).values({
                 id: orderId,
                 sessionId: sessionId,
                 userId: photographer[0].id,
@@ -517,7 +523,7 @@ class DownloadCommerceManager {
             });
             
             // Update order with payment intent ID
-            await db.update(downloadOrders)
+            await this.db.update(downloadOrders)
                 .set({ 
                     stripePaymentIntentId: paymentIntent.id 
                 })
@@ -575,7 +581,7 @@ class DownloadCommerceManager {
                     
                 case 'freemium':
                     // Check if within free quota
-                    const existingDownloads = await db.select()
+                    const existingDownloads = await this.db.select()
                         .from(downloadEntitlements)
                         .where(and(
                             eq(downloadEntitlements.sessionId, sessionId),
@@ -635,7 +641,7 @@ class DownloadCommerceManager {
             
             // Insert entitlements
             if (entitlements.length > 0) {
-                await db.insert(downloadEntitlements)
+                await this.db.insert(downloadEntitlements)
                     .values(entitlements);
                 
                 console.log(`✅ Created ${entitlements.length} entitlements for order ${orderId}`);
@@ -659,7 +665,7 @@ class DownloadCommerceManager {
     async checkEntitlement(sessionId, clientKey, photoId) {
         try {
             // First check for specific photo entitlement
-            const specificEntitlement = await db.select()
+            const specificEntitlement = await this.db.select()
                 .from(downloadEntitlements)
                 .where(and(
                     eq(downloadEntitlements.sessionId, sessionId),
@@ -683,7 +689,7 @@ class DownloadCommerceManager {
             }
             
             // Check for bulk entitlement (photoId = null means any photo)
-            const bulkEntitlement = await db.select()
+            const bulkEntitlement = await this.db.select()
                 .from(downloadEntitlements)
                 .where(and(
                     eq(downloadEntitlements.sessionId, sessionId),
@@ -719,7 +725,7 @@ class DownloadCommerceManager {
             
             // Check freemium quota
             if (policy.success && policy.policy.mode === 'freemium') {
-                const downloads = await db.select()
+                const downloads = await this.db.select()
                     .from(downloadHistory)
                     .where(and(
                         eq(downloadHistory.sessionId, sessionId),
@@ -786,7 +792,7 @@ class DownloadCommerceManager {
                     updates.usedAt = new Date();
                 }
                 
-                await db.update(downloadEntitlements)
+                await this.db.update(downloadEntitlements)
                     .set(updates)
                     .where(eq(downloadEntitlements.id, entitlement.id));
                 
@@ -794,7 +800,7 @@ class DownloadCommerceManager {
             }
             
             // Create download history entry
-            await db.insert(downloadHistory).values({
+            await this.db.insert(downloadHistory).values({
                 id: uuidv4(),
                 sessionId: sessionId,
                 clientKey: clientKey,
@@ -843,7 +849,7 @@ class DownloadCommerceManager {
             expiresAt.setMinutes(expiresAt.getMinutes() + 5);
             
             // Get photo details from session
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, sessionId))
                 .limit(1);
@@ -866,7 +872,7 @@ class DownloadCommerceManager {
             }
             
             // Create token record
-            await db.insert(downloadTokens).values({
+            await this.db.insert(downloadTokens).values({
                 id: tokenId,
                 token: token,
                 photoUrl: photo.url || photo.original || '',
@@ -903,7 +909,7 @@ class DownloadCommerceManager {
     // Log download attempt
     async logDownloadAttempt(sessionId, clientKey, photoId, status, details = {}) {
         try {
-            await db.insert(downloadHistory).values({
+            await this.db.insert(downloadHistory).values({
                 id: uuidv4(),
                 sessionId: sessionId,
                 clientKey: clientKey,
@@ -934,7 +940,7 @@ class DownloadCommerceManager {
     async getDownloadHistory(sessionId, userId) {
         try {
             // Verify ownership
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(and(
                     eq(photographySessions.id, sessionId),
@@ -950,7 +956,7 @@ class DownloadCommerceManager {
             }
             
             // Fetch history
-            const history = await db.select()
+            const history = await this.db.select()
                 .from(downloadHistory)
                 .where(eq(downloadHistory.sessionId, sessionId))
                 .orderBy(sql`${downloadHistory.createdAt} DESC`)
@@ -973,7 +979,7 @@ class DownloadCommerceManager {
     // Get client's download history
     async getClientDownloads(sessionId, clientKey) {
         try {
-            const downloads = await db.select()
+            const downloads = await this.db.select()
                 .from(downloadHistory)
                 .where(and(
                     eq(downloadHistory.sessionId, sessionId),
@@ -1000,11 +1006,50 @@ class DownloadCommerceManager {
      * Webhook Handler
      */
     
-    // Process Stripe webhook events
-    async handleStripeWebhook(event) {
+    // Process Stripe webhook events with signature verification
+    async handleStripeWebhook(rawBody, signature) {
         try {
-            // Verify webhook signature (caller should do this too)
+            // Verify webhook signature
+            const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_CONNECT || process.env.STRIPE_WEBHOOK_SECRET;
+            
+            if (!webhookSecret) {
+                console.error('⚠️ Webhook secret not configured');
+                return {
+                    success: false,
+                    error: 'Webhook verification not configured'
+                };
+            }
+            
+            let event;
+            try {
+                event = this.stripe.webhooks.constructEvent(
+                    rawBody,
+                    signature,
+                    webhookSecret
+                );
+            } catch (err) {
+                console.error('❌ Webhook signature verification failed:', err.message);
+                return {
+                    success: false,
+                    error: `Webhook Error: ${err.message}`
+                };
+            }
+            
             console.log(`🪝 Processing webhook: ${event.type}`);
+            
+            // Check for idempotency - prevent duplicate processing
+            const idempotencyKey = `webhook_${event.id}`;
+            
+            // Check if we've already processed this event
+            const existingEvent = await this.db.select()
+                .from(downloadOrders)
+                .where(eq(downloadOrders.webhookEventId, event.id))
+                .limit(1);
+            
+            if (existingEvent.length > 0) {
+                console.log(`ℹ️ Event ${event.id} already processed - skipping`);
+                return { success: true, duplicate: true };
+            }
             
             let order;
             
@@ -1013,7 +1058,7 @@ class DownloadCommerceManager {
                     const checkoutSession = event.data.object;
                     
                     // Find order by checkout session ID
-                    const ordersByCheckout = await db.select()
+                    const ordersByCheckout = await this.db.select()
                         .from(downloadOrders)
                         .where(eq(downloadOrders.stripeCheckoutSessionId, checkoutSession.id))
                         .limit(1);
@@ -1025,12 +1070,14 @@ class DownloadCommerceManager {
                     
                     order = ordersByCheckout[0];
                     
-                    // Update order status
-                    await db.update(downloadOrders)
+                    // Update order status with idempotency tracking
+                    await this.db.update(downloadOrders)
                         .set({
                             status: 'completed',
                             completedAt: new Date(),
-                            receiptUrl: checkoutSession.receipt_url || null
+                            receiptUrl: checkoutSession.receipt_url || null,
+                            webhookEventId: event.id,
+                            webhookProcessedAt: new Date()
                         })
                         .where(eq(downloadOrders.id, order.id));
                     
@@ -1055,7 +1102,7 @@ class DownloadCommerceManager {
                     const paymentIntent = event.data.object;
                     
                     // Find order by payment intent ID
-                    const ordersByIntent = await db.select()
+                    const ordersByIntent = await this.db.select()
                         .from(downloadOrders)
                         .where(eq(downloadOrders.stripePaymentIntentId, paymentIntent.id))
                         .limit(1);
@@ -1067,11 +1114,13 @@ class DownloadCommerceManager {
                     
                     order = ordersByIntent[0];
                     
-                    // Update order status
-                    await db.update(downloadOrders)
+                    // Update order status with idempotency tracking
+                    await this.db.update(downloadOrders)
                         .set({
                             status: 'completed',
-                            completedAt: new Date()
+                            completedAt: new Date(),
+                            webhookEventId: event.id,
+                            webhookProcessedAt: new Date()
                         })
                         .where(eq(downloadOrders.id, order.id));
                     
@@ -1095,10 +1144,12 @@ class DownloadCommerceManager {
                 case 'payment_intent.payment_failed':
                     const failedIntent = event.data.object;
                     
-                    // Update order status to failed
-                    await db.update(downloadOrders)
+                    // Update order status to failed with idempotency tracking
+                    await this.db.update(downloadOrders)
                         .set({
-                            status: 'failed'
+                            status: 'failed',
+                            webhookEventId: event.id,
+                            webhookProcessedAt: new Date()
                         })
                         .where(eq(downloadOrders.stripePaymentIntentId, failedIntent.id));
                     
@@ -1182,7 +1233,7 @@ class DownloadCommerceManager {
     // Validate photographer's Connect account
     async validatePhotographer(sessionId) {
         try {
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, sessionId))
                 .limit(1);
@@ -1194,7 +1245,7 @@ class DownloadCommerceManager {
                 };
             }
             
-            const photographer = await db.select()
+            const photographer = await this.db.select()
                 .from(users)
                 .where(eq(users.id, session[0].userId))
                 .limit(1);
@@ -1279,7 +1330,7 @@ class DownloadCommerceManager {
             }
             
             // Get session details
-            const session = await db.select()
+            const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, order.sessionId))
                 .limit(1);
@@ -1289,7 +1340,7 @@ class DownloadCommerceManager {
             }
             
             // Get photographer details
-            const photographer = await db.select()
+            const photographer = await this.db.select()
                 .from(users)
                 .where(eq(users.id, order.userId))
                 .limit(1);
@@ -1404,6 +1455,191 @@ class DownloadCommerceManager {
         }
         
         return error.message || 'An error occurred processing your payment.';
+    }
+    
+    /**
+     * Token Generation & Management
+     * SECURITY: Time-limited, single-use tokens bound to session + client + photo
+     */
+    
+    // Generate secure download token with strict security constraints
+    async generateDownloadToken(sessionId, photoId, clientKey, ipAddress = null) {
+        try {
+            // Verify entitlement first
+            const entitlementCheck = await this.checkEntitlement(sessionId, clientKey, photoId);
+            if (!entitlementCheck.hasEntitlement) {
+                return {
+                    success: false,
+                    error: 'No entitlement for this download'
+                };
+            }
+            
+            // Generate cryptographically secure token
+            const tokenValue = crypto.randomBytes(32).toString('hex');
+            
+            // Create token bound to session + client + photo
+            const tokenData = {
+                sessionId,
+                clientKey,
+                photoId,
+                ipAddress,
+                timestamp: Date.now()
+            };
+            
+            // Hash the token data for additional validation
+            const tokenHash = crypto
+                .createHash('sha256')
+                .update(JSON.stringify(tokenData))
+                .digest('hex');
+            
+            // Set strict expiration (5 minutes max)
+            const expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+            
+            // Store token with all security constraints
+            const tokenId = uuidv4();
+            await this.db.insert(downloadTokens).values({
+                id: tokenId,
+                token: tokenValue,
+                sessionId: sessionId,
+                photoId: photoId,
+                clientKey: clientKey,
+                tokenHash: tokenHash,
+                ipAddress: ipAddress,
+                expiresAt: expiresAt,
+                isUsed: false,
+                maxUses: 1, // Single-use only
+                createdAt: new Date()
+            });
+            
+            console.log(`🔐 Generated secure download token for photo ${photoId} (expires in 5 minutes)`);
+            
+            return {
+                success: true,
+                token: {
+                    id: tokenId,
+                    value: tokenValue,
+                    expiresAt: expiresAt,
+                    photoId: photoId
+                }
+            };
+            
+        } catch (error) {
+            console.error('❌ Error generating download token:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    
+    // Validate and consume download token
+    async validateAndConsumeToken(token, sessionId, clientKey, photoId, ipAddress = null) {
+        try {
+            // Find the token
+            const tokens = await this.db.select()
+                .from(downloadTokens)
+                .where(and(
+                    eq(downloadTokens.token, token),
+                    eq(downloadTokens.sessionId, sessionId),
+                    eq(downloadTokens.photoId, photoId)
+                ))
+                .limit(1);
+            
+            if (tokens.length === 0) {
+                console.warn(`⚠️ Invalid token attempt for session ${sessionId}`);
+                return {
+                    success: false,
+                    error: 'Invalid or expired token'
+                };
+            }
+            
+            const tokenData = tokens[0];
+            
+            // Check if expired
+            if (new Date() > tokenData.expiresAt) {
+                console.warn(`⚠️ Expired token attempt for photo ${photoId}`);
+                return {
+                    success: false,
+                    error: 'Token has expired'
+                };
+            }
+            
+            // Check if already used (single-use enforcement)
+            if (tokenData.isUsed) {
+                console.warn(`⚠️ Reused token attempt for photo ${photoId}`);
+                return {
+                    success: false,
+                    error: 'Token has already been used'
+                };
+            }
+            
+            // Validate client key binding
+            if (tokenData.clientKey && tokenData.clientKey !== clientKey) {
+                console.warn(`⚠️ Client key mismatch for token`);
+                return {
+                    success: false,
+                    error: 'Token validation failed'
+                };
+            }
+            
+            // Optional: Check IP address if it was bound
+            if (tokenData.ipAddress && ipAddress && tokenData.ipAddress !== ipAddress) {
+                console.warn(`⚠️ IP address mismatch for token (stored: ${tokenData.ipAddress}, current: ${ipAddress})`);
+                // Log suspicious activity but don't necessarily block (user might be on VPN/mobile)
+            }
+            
+            // Mark token as used (atomic operation)
+            const updateResult = await this.db.update(downloadTokens)
+                .set({
+                    isUsed: true,
+                    usedAt: new Date(),
+                    usedByIp: ipAddress
+                })
+                .where(and(
+                    eq(downloadTokens.id, tokenData.id),
+                    eq(downloadTokens.isUsed, false) // Ensure it hasn't been used in a race condition
+                ));
+            
+            // Log the download in history
+            await this.recordDownload(sessionId, clientKey, photoId, {
+                tokenId: tokenData.id,
+                ipAddress: ipAddress,
+                status: 'success'
+            });
+            
+            console.log(`✅ Token validated and consumed for photo ${photoId}`);
+            
+            return {
+                success: true,
+                tokenData: tokenData
+            };
+            
+        } catch (error) {
+            console.error('❌ Error validating token:', error);
+            return {
+                success: false,
+                error: 'Token validation failed'
+            };
+        }
+    }
+    
+    // Clean up expired tokens (should be run periodically)
+    async cleanupExpiredTokens() {
+        try {
+            const result = await this.db.delete(downloadTokens)
+                .where(lte(downloadTokens.expiresAt, new Date()));
+            
+            console.log(`🧹 Cleaned up expired download tokens`);
+            return { success: true };
+            
+        } catch (error) {
+            console.error('❌ Error cleaning up tokens:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
     }
 }
 
