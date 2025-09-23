@@ -7,6 +7,7 @@ const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 
 // Import database schema and ORM with full schema support
 const { drizzle } = require('drizzle-orm/node-postgres');
@@ -79,6 +80,56 @@ function createDownloadRoutes(isAuthenticated) {
 
   // Use the same authentication middleware as the main server
   const requireAuth = isAuthenticated;
+  
+  // Rate limiting configurations
+  const downloadRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many download requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  
+  const strictDownloadRateLimit = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 50, // Limit each IP to 50 actual downloads per hour
+    message: 'Download limit exceeded. Please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Use skipSuccessfulRequests to not count successful cached responses
+    skipSuccessfulRequests: false
+  });
+  
+  // Suspicious activity tracking
+  const suspiciousActivity = new Map();
+  
+  // Referer validation middleware
+  const validateReferer = (req, res, next) => {
+    const referer = req.headers.referer || req.headers.referrer;
+    const host = req.headers.host;
+    
+    // Allow requests from same origin or no referer (direct access)
+    if (!referer || referer.includes(host)) {
+      return next();
+    }
+    
+    // Track suspicious activity
+    const ip = req.ip || req.connection.remoteAddress;
+    const activity = suspiciousActivity.get(ip) || { count: 0, firstSeen: Date.now() };
+    activity.count++;
+    activity.lastSeen = Date.now();
+    suspiciousActivity.set(ip, activity);
+    
+    // Log suspicious activity
+    console.warn(`⚠️ Suspicious download attempt from IP ${ip} with referer ${referer}`);
+    
+    // Block if too many suspicious attempts
+    if (activity.count > 10) {
+      return res.status(403).json({ error: 'Access denied due to suspicious activity' });
+    }
+    
+    next();
+  };
 
   // Token validation middleware for public endpoints
   const requireValidToken = async (req, res, next) => {
@@ -181,7 +232,10 @@ function createDownloadRoutes(isAuthenticated) {
         watermarkPosition: session.watermarkPosition,
         watermarkOpacity: session.watermarkOpacity,
         watermarkScale: session.watermarkScale,
-        watermarkUpdatedAt: session.watermarkUpdatedAt
+        watermarkUpdatedAt: session.watermarkUpdatedAt,
+        // Add screenshot protection settings
+        screenshotProtection: session.screenshotProtection !== false, // Default to true for security
+        protectionLevel: session.protectionLevel || 'medium' // low, medium, high
       };
 
       res.json({ success: true, policy });
@@ -210,7 +264,9 @@ function createDownloadRoutes(isAuthenticated) {
         watermarkText,
         watermarkPosition,
         watermarkOpacity,
-        watermarkScale
+        watermarkScale,
+        screenshotProtection,
+        protectionLevel
       } = req.body;
 
       const session = await verifySessionOwnership(sessionId, userId);
@@ -264,6 +320,18 @@ function createDownloadRoutes(isAuthenticated) {
       if (watermarkScale !== undefined) {
         // Convert to integer
         updateData.watermarkScale = parseInt(watermarkScale) || 20;
+      }
+      
+      // Add screenshot protection settings
+      if (screenshotProtection !== undefined) {
+        updateData.screenshotProtection = screenshotProtection === true || screenshotProtection === 'true' || screenshotProtection === '1';
+      }
+      if (protectionLevel !== undefined) {
+        // Validate protection level
+        const validLevels = ['low', 'medium', 'high'];
+        if (validLevels.includes(protectionLevel)) {
+          updateData.protectionLevel = protectionLevel;
+        }
       }
 
       // Handle logo file upload if provided

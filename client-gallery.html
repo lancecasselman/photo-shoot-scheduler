@@ -1041,6 +1041,9 @@
         <div class="download-queue-title">Downloads in Progress</div>
         <div id="downloadQueueItems"></div>
     </div>
+    
+    <!-- Include Screenshot Protection Script -->
+    <script src="/static/js/screenshot-protection.js"></script>
 
     <script>
         // ClientGalleryCart Class
@@ -1085,6 +1088,9 @@
             async init() {
                 console.log('🛒 Initializing ClientGalleryCart...');
                 
+                // Initialize screenshot protection system
+                this.initializeProtection();
+                
                 // Load saved cart and client info
                 this.loadCart();
                 this.loadClientInfo();
@@ -1103,6 +1109,16 @@
                 // Load entitlements if we have client info
                 if (this.clientEmail) {
                     await this.loadEntitlements();
+                }
+            }
+            
+            initializeProtection() {
+                // Initialize screenshot protection if available
+                if (window.ScreenshotProtection) {
+                    this.protection = new ScreenshotProtection();
+                    console.log('🛡️ Screenshot protection initialized');
+                } else {
+                    console.warn('⚠️ Screenshot protection module not loaded');
                 }
             }
             
@@ -1200,6 +1216,12 @@
                     if (data.success) {
                         this.policy = data.policy;
                         console.log('📋 Loaded pricing policy:', this.policy);
+                        
+                        // Update screenshot protection settings
+                        if (this.protection && this.policy.screenshotProtection !== undefined) {
+                            this.protection.toggleProtection(this.policy.screenshotProtection);
+                            console.log(`🛡️ Screenshot protection ${this.policy.screenshotProtection ? 'enabled' : 'disabled'} from policy`);
+                        }
                     } else {
                         // Default to free mode if no policy
                         this.policy = { mode: 'free' };
@@ -1286,6 +1308,27 @@
                     const photoCard = this.createPhotoCard(photo, index);
                     grid.appendChild(photoCard);
                 });
+                
+                // Apply screenshot protection to all displayed photos
+                this.applyProtectionToPhotos();
+            }
+            
+            applyProtectionToPhotos() {
+                if (!this.protection) return;
+                
+                // Apply protection to all images based on entitlement status
+                document.querySelectorAll('.gallery-photo').forEach(img => {
+                    const photoId = img.dataset.photoId;
+                    const isEntitled = img.dataset.entitled === 'true';
+                    
+                    // Only protect unpurchased photos
+                    if (!isEntitled) {
+                        this.protection.protectImage(img, false);
+                    } else {
+                        // Mark as purchased for lighter protection
+                        this.protection.purchasedPhotos.add(photoId);
+                    }
+                });
             }
             
             createPhotoCard(photo, index) {
@@ -1307,7 +1350,13 @@
                 
                 card.innerHTML = `
                     <div class="photo-wrapper">
-                        <img src="${photo.url}" alt="${photo.filename}" loading="lazy">
+                        <img src="${photo.url}" 
+                             alt="${photo.filename}" 
+                             loading="lazy"
+                             data-photo-id="${photo.id || index}"
+                             data-entitled="${isEntitled}"
+                             data-price="${price}"
+                             class="gallery-photo ${!isEntitled ? 'unpurchased' : 'purchased'}">
                         ${inCart ? '<div class="cart-indicator">✓</div>' : ''}
                         ${!isEntitled && price !== null ? `
                             <div class="price-badge ${price === 0 ? 'free' : 'paid'}">
