@@ -53,6 +53,7 @@ const createR2Routes = require('./server/r2-api-routes');
 
 // Import download control services
 const createDownloadRoutes = require('./server/download-routes');
+const DownloadCommerceManager = require('./server/download-commerce');
 // const createMultipartRoutes = require('./server/multipart-endpoints'); // Removed - was only for Uppy/ObjectUploader
 
 // Import new storage system
@@ -355,6 +356,9 @@ const localBackup = new LocalBackupFallback();
 const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
+
+// Initialize Download Commerce Manager for advanced pricing and entitlement management
+const downloadCommerceManager = new DownloadCommerceManager();
 
 // Import and initialize multipart uploader for FAST uploads
 const MultipartUploader = require('./server/multipart-upload');
