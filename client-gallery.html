@@ -1286,7 +1286,9 @@
                     case 'bulk':
                         if (this.policy.bulkTiers && this.policy.bulkTiers.length > 0) {
                             const firstTier = this.policy.bulkTiers[0];
-                            message = `📦 Bulk pricing: ${firstTier.qty}+ photos at $${firstTier.price.toFixed(2)} each`;
+                            const price = parseFloat(firstTier.price) || 0;
+                            const qty = parseInt(firstTier.qty) || 1;
+                            message = `📦 Bulk pricing: ${qty}+ photos at $${price.toFixed(2)} each`;
                         } else {
                             message = '📦 Bulk pricing available';
                         }
