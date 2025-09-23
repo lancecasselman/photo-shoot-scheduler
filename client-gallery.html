@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Gallery</title>
+    <title>Photo Gallery - Shopping Cart</title>
     <style>
         * {
             margin: 0;
@@ -37,6 +37,7 @@
             margin: 0 auto;
         }
 
+        /* Header Styles */
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -83,6 +84,37 @@
             opacity: 0.8;
         }
 
+        /* Pricing Info Banner */
+        .pricing-banner {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            display: none;
+        }
+        
+        .pricing-banner.show {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Gallery Actions */
         .gallery-actions {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
@@ -117,45 +149,31 @@
             font-size: 1.5rem;
         }
 
-        .download-all-btn {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .select-all-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 12px 25px;
             border-radius: 12px;
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .download-all-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.6s ease;
-        }
-        
-        .download-all-btn:hover::before {
-            left: 100%;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
         }
 
-        .download-all-btn:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 35px rgba(72, 187, 120, 0.4);
-        }
-        
-        .download-all-btn:active {
-            transform: translateY(-1px) scale(0.98);
+        .select-all-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(139, 92, 246, 0.4);
         }
 
+        /* Gallery Grid */
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -164,6 +182,7 @@
             padding: 0 5px;
         }
 
+        /* Photo Card */
         .photo-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -174,28 +193,14 @@
             cursor: pointer;
             position: relative;
         }
-        
-        .photo-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(102, 126, 234, 0.1) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 1;
-            pointer-events: none;
+
+        .photo-card.in-cart {
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3), 0 0 0 3px rgba(102, 126, 234, 0.5);
         }
 
         .photo-card:hover {
             transform: translateY(-8px) scale(1.02);
             box-shadow: 0 25px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(102, 126, 234, 0.1);
-        }
-        
-        .photo-card:hover::before {
-            opacity: 1;
         }
 
         .photo-wrapper {
@@ -217,23 +222,59 @@
         .photo-card:hover .photo-wrapper img {
             transform: scale(1.08) rotate(0.5deg);
         }
-        
-        .photo-wrapper::after {
-            content: '';
+
+        /* Cart Indicator on Photo */
+        .cart-indicator {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.1) 100%);
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
             opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .photo-card:hover .photo-wrapper::after {
-            opacity: 1;
+            transform: scale(0);
+            transition: all 0.3s ease;
+            z-index: 10;
         }
 
+        .photo-card.in-cart .cart-indicator {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Price Badge */
+        .price-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .price-badge.free {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .price-badge.paid {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        /* Photo Info */
         .photo-info {
             padding: 20px;
             display: flex;
@@ -241,56 +282,6 @@
             gap: 15px;
             position: relative;
             z-index: 2;
-        }
-        
-        .photo-actions {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .photo-btn {
-            flex: 1;
-            padding: 12px 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .photo-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .photo-btn:hover::before {
-            left: 100%;
-        }
-        
-        /* Print button CSS removed */
-        
-        .download-btn {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
-        }
-        
-        .download-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
-        }
-        
-        .photo-btn:active {
-            transform: translateY(0) scale(0.95);
         }
 
         .photo-filename {
@@ -307,29 +298,472 @@
             gap: 10px;
         }
 
+        .photo-btn {
+            flex: 1;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
 
+        .add-to-cart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
 
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .add-to-cart-btn.in-cart {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        /* Floating Cart Icon */
+        .floating-cart {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5), 0 0 0 3px rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5), 0 0 0 3px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.7), 0 0 0 6px rgba(255,255,255,0.1); }
+            100% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5), 0 0 0 3px rgba(255,255,255,0.3); }
+        }
+
+        .floating-cart:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6), 0 0 0 3px rgba(255,255,255,0.4);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Cart Drawer */
+        .cart-drawer {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: -10px 0 50px rgba(0,0,0,0.2);
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-drawer.open {
+            right: 0;
+        }
+
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1999;
+        }
+
+        .cart-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cart-header {
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-cart {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .close-cart:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .cart-empty-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(248, 250, 252, 0.9);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            background: rgba(241, 245, 249, 1);
+            transform: translateX(-5px);
+        }
+
+        .cart-item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .cart-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cart-item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .cart-item-price {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .cart-item-remove {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: center;
+        }
+
+        .cart-item-remove:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Cart Footer */
+        .cart-footer {
+            padding: 20px;
+            background: rgba(248, 250, 252, 0.95);
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+        }
+
+        .cart-total-label {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .cart-total-amount {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cart-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkout-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .clear-cart-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 2px solid #dc2626;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-cart-btn:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Client Email Modal */
+        .email-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .email-modal.show {
+            display: flex;
+        }
+
+        .email-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .email-modal h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .email-modal p {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 1.05rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .form-actions button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-email {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .cancel-email {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* Success Message */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 3000;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        /* Loading States */
         .loading {
             text-align: center;
             padding: 60px 40px;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             margin: 40px 0;
-        }
-        
-        .loading h3 {
-            color: #667eea;
-            font-size: 1.4rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        
-        .loading p {
-            color: #64748b;
-            font-size: 1.1rem;
-            margin-bottom: 30px;
         }
 
         .loading-spinner {
@@ -340,20 +774,6 @@
             border-radius: 50%;
             animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
             margin: 0 auto 25px;
-            position: relative;
-        }
-        
-        .loading-spinner::before {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            right: 5px;
-            bottom: 5px;
-            border: 2px solid transparent;
-            border-top: 2px solid #764ba2;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite reverse;
         }
 
         @keyframes spin {
@@ -361,6 +781,124 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Download Manager */
+        .download-queue {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            max-width: 400px;
+            display: none;
+            z-index: 999;
+        }
+
+        .download-queue.show {
+            display: block;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .download-queue-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .download-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .download-progress {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .download-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .cart-drawer {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .floating-cart {
+                width: 60px;
+                height: 60px;
+                font-size: 25px;
+            }
+            
+            .header {
+                padding: 30px 25px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .gallery-actions {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .select-all-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .cart-drawer {
+                padding-top: env(safe-area-inset-top);
+            }
+        }
+
+        /* Error Styles */
         .error {
             background: linear-gradient(135deg, rgba(254, 215, 215, 0.9) 0%, rgba(252, 129, 129, 0.1) 100%);
             backdrop-filter: blur(10px);
@@ -372,17 +910,6 @@
             border: 1px solid rgba(197, 48, 48, 0.2);
             box-shadow: 0 10px 40px rgba(197, 48, 48, 0.1);
         }
-        
-        .error h2 {
-            margin-bottom: 10px;
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-        
-        .error p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
 
         .empty-gallery {
             text-align: center;
@@ -390,1147 +917,919 @@
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             margin: 40px 0;
-        }
-        
-        .empty-gallery::before {
-            content: '📷';
-            font-size: 4rem;
-            display: block;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-
-        .empty-gallery h2 {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .empty-gallery p {
-            color: #64748b;
-            font-size: 1.2rem;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 15px;
-            }
-            
-            .gallery-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 0;
-            }
-            
-            .header {
-                padding: 30px 25px;
-                margin-bottom: 25px;
-            }
-            
-            .header h1 {
-                font-size: 2.2rem;
-            }
-            
-            .header p {
-                font-size: 1.1rem;
-            }
-            
-            .gallery-actions {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px;
-                gap: 15px;
-                position: relative;
-                top: auto;
-            }
-            
-            .photo-count {
-                font-size: 1.2rem;
-            }
-            
-            .download-all-btn {
-                padding: 12px 25px;
-                font-size: 1rem;
-            }
-            
-            .photo-actions {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .photo-btn {
-                padding: 12px 16px;
-                font-size: 0.9rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 25px 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .header p {
-                font-size: 1rem;
-            }
-            
-            .gallery-actions {
-                padding: 15px;
-            }
-        }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in {
-            animation: fadeInUp 0.8s ease forwards;
-        }
-        
-        /* Smooth transitions for all interactive elements */
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Custom scrollbar for webkit browsers */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
-        }
-        /* Lightbox Modal */
-        .lightbox-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .lightbox-modal.show {
-            opacity: 1;
-        }
-        
-        .lightbox-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 90vw;
-            max-height: 90vh;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .lightbox-image {
-            width: 100%;
-            height: auto;
-            max-height: 70vh;
-            object-fit: contain;
-            border-radius: 10px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        
-        .lightbox-info {
-            color: white;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 1.1rem;
-        }
-        
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: none;
-            color: white;
-            font-size: 2rem;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .lightbox-nav:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-50%) scale(1.1);
-        }
-        
-        .lightbox-nav.prev {
-            left: 20px;
-        }
-        
-        .lightbox-nav.next {
-            right: 20px;
-        }
-        
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .lightbox-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
             <h1 id="galleryTitle">Loading Gallery...</h1>
             <p id="gallerySubtitle">Please wait while we load your photos</p>
         </div>
 
+        <!-- Pricing Banner -->
+        <div id="pricingBanner" class="pricing-banner">
+            <span id="pricingInfo">Loading pricing information...</span>
+        </div>
+
+        <!-- Loading State -->
         <div id="loadingContainer" class="loading">
             <div class="loading-spinner"></div>
             <h3>Preparing Your Gallery</h3>
             <p>Loading beautiful memories...</p>
         </div>
 
+        <!-- Error Container -->
         <div id="errorContainer" class="error" style="display: none;">
             <h2>Gallery Access Error</h2>
             <p id="errorMessage">Unable to access this gallery. Please check your link and try again.</p>
         </div>
 
+        <!-- Gallery Actions -->
         <div id="galleryActions" class="gallery-actions" style="display: none;">
             <div class="photo-count" id="photoCount">0 photos</div>
-            <button class="download-all-btn" id="downloadAllBtn">
-                📥 Download All Photos
-            </button>
+            <div class="action-buttons">
+                <button class="select-all-btn" id="selectAllBtn">
+                    ✨ Select All Photos
+                </button>
+            </div>
         </div>
 
+        <!-- Gallery Grid -->
         <div id="galleryGrid" class="gallery-grid"></div>
 
+        <!-- Empty Gallery -->
         <div id="emptyGallery" class="empty-gallery" style="display: none;">
             <h2>No Photos Available</h2>
             <p>This gallery doesn't have any photos available yet. Please check back later.</p>
         </div>
     </div>
 
+    <!-- Floating Cart Icon -->
+    <div class="floating-cart" id="floatingCart" style="display: none;">
+        🛒
+        <span class="cart-count" id="cartCount">0</span>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+
+    <!-- Cart Drawer -->
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <div class="cart-title">
+                🛒 Shopping Cart
+            </div>
+            <button class="close-cart" id="closeCart">✕</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <div class="cart-empty-icon">🛒</div>
+                <h3>Your cart is empty</h3>
+                <p>Add photos to start your collection</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span class="cart-total-label">Total:</span>
+                <span class="cart-total-amount" id="cartTotal">$0.00</span>
+            </div>
+            <div class="cart-actions">
+                <button class="checkout-btn" id="checkoutBtn" disabled>
+                    Proceed to Checkout
+                </button>
+                <button class="clear-cart-btn" id="clearCartBtn">
+                    Clear Cart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Email Modal -->
+    <div class="email-modal" id="emailModal">
+        <div class="email-modal-content">
+            <h2>Complete Your Order</h2>
+            <p>Please provide your email to receive your photos and receipt</p>
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="clientEmail">Email Address *</label>
+                    <input type="email" id="clientEmail" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="clientName">Name (optional)</label>
+                    <input type="text" id="clientName" name="name" placeholder="Your Name">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-email">Continue to Payment</button>
+                    <button type="button" class="cancel-email" id="cancelEmail">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message" id="successMessage">
+        <span>✓</span>
+        <span id="successText">Photo added to cart!</span>
+    </div>
+
+    <!-- Download Queue -->
+    <div class="download-queue" id="downloadQueue">
+        <div class="download-queue-title">Downloads in Progress</div>
+        <div id="downloadQueueItems"></div>
+    </div>
+
     <script>
-        // Extract gallery token from URL path
-        const pathParts = window.location.pathname.split('/');
-        const galleryToken = pathParts[pathParts.length - 1];
-        
-        // Check if we have a download access token in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const downloadToken = urlParams.get('token');
-        
-        let sessionData = null;
-        let photos = [];
-        let downloadPolicy = null;
-        let downloadUsage = null;
-        let clientAccess = null;
-
-        // Generate user-friendly display text for download policy
-        function getDownloadPolicyDisplay() {
-            if (!sessionData) return 'Loading policy...';
-            
-            const { pricingModel, downloadEnabled, downloadMax, freeDownloads, pricePerDownload } = sessionData;
-            const usage = downloadUsage || 0;
-            
-            // Check if downloads are disabled
-            if (!downloadEnabled) {
-                return '🚫 Downloads are currently disabled';
+        // ClientGalleryCart Class
+        class ClientGalleryCart {
+            constructor() {
+                this.cart = [];
+                this.entitlements = [];
+                this.policy = null;
+                this.sessionData = null;
+                this.photos = [];
+                this.galleryToken = null;
+                this.clientEmail = null;
+                this.clientName = null;
+                this.downloadQueue = [];
+                
+                // Initialize from URL
+                const pathParts = window.location.pathname.split('/');
+                this.galleryToken = pathParts[pathParts.length - 1];
+                
+                // Check for success/cancel from Stripe
+                const urlParams = new URLSearchParams(window.location.search);
+                this.checkoutStatus = urlParams.get('status');
+                this.sessionId = urlParams.get('session_id');
+                
+                // Bind methods
+                this.init = this.init.bind(this);
+                this.loadCart = this.loadCart.bind(this);
+                this.saveCart = this.saveCart.bind(this);
+                this.addToCart = this.addToCart.bind(this);
+                this.removeFromCart = this.removeFromCart.bind(this);
+                this.updateCartUI = this.updateCartUI.bind(this);
+                this.calculateTotal = this.calculateTotal.bind(this);
+                this.proceedToCheckout = this.proceedToCheckout.bind(this);
+                this.loadEntitlements = this.loadEntitlements.bind(this);
+                this.downloadPhoto = this.downloadPhoto.bind(this);
+                this.handleCheckoutReturn = this.handleCheckoutReturn.bind(this);
+                
+                // Initialize
+                this.init();
             }
             
-            // Display based on pricing model
-            switch (pricingModel) {
-                case 'free':
-                    if (downloadMax) {
-                        const remaining = Math.max(0, downloadMax - usage);
-                        return `📥 Free downloads: ${remaining} remaining (${usage}/${downloadMax} used)`;
-                    }
-                    return '📥 Free unlimited downloads available';
+            async init() {
+                console.log('🛒 Initializing ClientGalleryCart...');
                 
-                case 'paid':
-                    const price = parseFloat(pricePerDownload || 0);
-                    return `💳 Paid downloads: $${price.toFixed(2)} per photo`;
+                // Load saved cart and client info
+                this.loadCart();
+                this.loadClientInfo();
                 
-                case 'freemium':
-                    const freeLimit = freeDownloads || 0;
-                    const price2 = parseFloat(pricePerDownload || 0);
-                    
-                    if (usage < freeLimit) {
-                        const freeRemaining = freeLimit - usage;
-                        return `🆓 ${freeRemaining} free downloads remaining, then $${price2.toFixed(2)} per photo`;
-                    } else {
-                        return `💳 Free downloads used. Additional photos: $${price2.toFixed(2)} each`;
-                    }
+                // Setup UI event listeners
+                this.setupEventListeners();
                 
-                default:
-                    return '📥 Downloads available';
+                // Load gallery data
+                await this.loadGallery();
+                
+                // Handle checkout return
+                if (this.checkoutStatus) {
+                    await this.handleCheckoutReturn();
+                }
+                
+                // Load entitlements if we have client info
+                if (this.clientEmail) {
+                    await this.loadEntitlements();
+                }
             }
-        }
-
-        // Initialize gallery on page load
-        document.addEventListener('DOMContentLoaded', loadGallery);
-
-        async function loadGallery() {
-            try {
-                console.log('🔒 Loading gallery with token:', galleryToken);
-
-                if (downloadToken) {
-                    // Try loading with download control system first
-                    console.log('📊 Using download control system with token:', downloadToken);
-                    
-                    // First get the sessionId from the gallery token
-                    const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
-                    if (!verifyResponse.ok) {
-                        throw new Error('Failed to verify gallery access');
+            
+            setupEventListeners() {
+                // Cart toggle
+                const floatingCart = document.getElementById('floatingCart');
+                const closeCart = document.getElementById('closeCart');
+                const cartOverlay = document.getElementById('cartOverlay');
+                
+                floatingCart?.addEventListener('click', () => this.openCart());
+                closeCart?.addEventListener('click', () => this.closeCart());
+                cartOverlay?.addEventListener('click', () => this.closeCart());
+                
+                // Cart actions
+                document.getElementById('checkoutBtn')?.addEventListener('click', () => this.proceedToCheckout());
+                document.getElementById('clearCartBtn')?.addEventListener('click', () => this.clearCart());
+                
+                // Select all button
+                document.getElementById('selectAllBtn')?.addEventListener('click', () => this.selectAllPhotos());
+                
+                // Email modal
+                document.getElementById('emailForm')?.addEventListener('submit', (e) => this.handleEmailSubmit(e));
+                document.getElementById('cancelEmail')?.addEventListener('click', () => this.closeEmailModal());
+                
+                // Mobile swipe to close cart
+                let startX = 0;
+                const cartDrawer = document.getElementById('cartDrawer');
+                
+                cartDrawer?.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                });
+                
+                cartDrawer?.addEventListener('touchend', (e) => {
+                    const endX = e.changedTouches[0].clientX;
+                    if (endX - startX > 100) { // Swipe right
+                        this.closeCart();
                     }
+                });
+            }
+            
+            async loadGallery() {
+                try {
+                    console.log('📸 Loading gallery with token:', this.galleryToken);
+                    
+                    // Verify gallery access
+                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
                     const verifyData = await verifyResponse.json();
-                    const sessionId = verifyData.sessionId || galleryToken; // Fallback to galleryToken
                     
-                    const downloadResponse = await fetch(`/api/downloads/client-gallery/${sessionId}?token=${downloadToken}`);
-                    if (downloadResponse.ok) {
-                        const downloadData = await downloadResponse.json();
-                        sessionData = downloadData.session;
-                        photos = downloadData.photos || [];
-                        clientAccess = downloadData.clientAccess || {};
-                        downloadUsage = clientAccess?.downloadUsage || 0;
-                        
-                        console.log('✅ Download control system loaded:', sessionData?.clientName || 'unknown session');
-                        console.log('📊 Download usage:', downloadUsage, 'of', sessionData?.downloadMax || 'unlimited');
-                        
-                        // Update page title and header
-                        document.getElementById('galleryTitle').textContent = `${sessionData?.clientName || 'Photo'} Gallery`;
-                        document.getElementById('gallerySubtitle').textContent = getDownloadPolicyDisplay();
-                        document.title = `${sessionData?.clientName || 'Photo'} - Photo Gallery`;
-
-                        // Hide loading and show gallery
-                        document.getElementById('loadingContainer').style.display = 'none';
-
-                        if (photos.length === 0) {
-                            showEmptyGallery();
-                        } else {
-                            renderGalleryWithDownloadControls();
-                        }
-                        return;
+                    if (!verifyData.success) {
+                        throw new Error(verifyData.error || 'Gallery access denied');
                     }
-                }
-
-                // First, check if this gallery has download policies that require tracking
-                console.log('🔍 Checking if download tracking is needed...');
-                
-                // Verify gallery access and get session info with download policies
-                const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
-                if (!verifyResponse.ok) {
-                    const error = await verifyResponse.json();
-                    throw new Error(error.error || 'Gallery access denied');
-                }
-
-                const responseData = await verifyResponse.json();
-                sessionData = responseData.session || responseData; // Handle nested or flat response
-                console.log('✅ Session data loaded with download policies:', sessionData);
-
-                // Check if this gallery needs download tracking (freemium or paid)
-                const needsDownloadTracking = sessionData.downloadEnabled && 
-                    (sessionData.pricingModel === 'freemium' || sessionData.pricingModel === 'paid' || 
-                     (sessionData.pricingModel === 'free' && sessionData.downloadMax));
-                     
-                if (needsDownloadTracking) {
-                    console.log('📊 Gallery requires download tracking - enabling download controls');
                     
-                    // Get current download usage from session storage (for immediate UI updates)
-                    const storageKey = `downloads_${galleryToken}`;
-                    downloadUsage = parseInt(sessionStorage.getItem(storageKey) || '0');
-                    console.log('📊 Current download usage from browser:', downloadUsage);
+                    this.sessionData = verifyData.session;
+                    console.log('✅ Gallery verified:', this.sessionData);
                     
-                    // Use the download control rendering system for proper tracking
-                    sessionData.needsTracking = true;
-                }
-                
-                // Fallback to basic gallery system (for free unlimited galleries)
-                console.log('📸 Using basic gallery system (no tracking needed)');
-
-                // Extract photos from verify response (already includes photos)
-                photos = sessionData.photos || [];
-                
-                // Update page title and header with download policy info
-                document.getElementById('galleryTitle').textContent = `${sessionData.clientName}'s Gallery`;
-                
-                // Display download policy information with real-time usage
-                let subtitle = sessionData.sessionType;
-                if (!sessionData.downloadEnabled) {
-                    subtitle += ' • Downloads Disabled';
-                } else if (sessionData.pricingModel === 'paid') {
-                    subtitle += ` • $${sessionData.pricePerDownload} per photo`;
-                } else if (sessionData.pricingModel === 'freemium') {
-                    if (sessionData.needsTracking) {
-                        // Show real-time usage for freemium
-                        const freeLimit = sessionData.freeDownloads || 0;
-                        const usage = downloadUsage || 0;
-                        if (usage < freeLimit) {
-                            const remaining = freeLimit - usage;
-                            subtitle += ` • ${remaining} free downloads remaining, then $${sessionData.pricePerDownload} each`;
-                        } else {
-                            subtitle += ` • Free downloads used. Additional photos: $${sessionData.pricePerDownload} each`;
-                        }
+                    // Get download policy
+                    await this.loadPolicy();
+                    
+                    // Load photos
+                    const photosResponse = await fetch(`/api/gallery/${this.galleryToken}/photos`);
+                    const photosData = await photosResponse.json();
+                    
+                    if (!photosData.success) {
+                        throw new Error(photosData.error || 'Failed to load photos');
+                    }
+                    
+                    this.photos = photosData.photos || [];
+                    console.log(`📸 Loaded ${this.photos.length} photos`);
+                    
+                    // Update UI
+                    this.updateGalleryUI();
+                    this.updatePricingBanner();
+                    this.displayPhotos();
+                    
+                    // Hide loading, show gallery
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    if (this.photos.length > 0) {
+                        document.getElementById('galleryActions').style.display = 'flex';
+                        document.getElementById('floatingCart').style.display = 'flex';
                     } else {
-                        subtitle += ` • ${sessionData.freeDownloads} free downloads, then $${sessionData.pricePerDownload} each`;
+                        document.getElementById('emptyGallery').style.display = 'block';
                     }
-                } else if (sessionData.downloadMax) {
-                    if (sessionData.needsTracking) {
-                        const remaining = Math.max(0, sessionData.downloadMax - (downloadUsage || 0));
-                        subtitle += ` • ${remaining} downloads remaining`;
-                    } else {
-                        subtitle += ` • ${sessionData.downloadMax} download limit`;
-                    }
-                }
-                if (sessionData.watermarkEnabled) {
-                    subtitle += ' • Watermarked';
-                }
-                
-                document.getElementById('gallerySubtitle').textContent = subtitle;
-                document.title = `${sessionData.clientName}'s Photo Gallery`;
-
-                // Hide loading and show gallery
-                document.getElementById('loadingContainer').style.display = 'none';
-
-                if (photos.length === 0) {
-                    showEmptyGallery();
-                } else {
-                    if (sessionData.needsTracking) {
-                        renderGalleryWithDownloadControls();
-                    } else {
-                        renderGallery();
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error loading gallery:', error);
-                showError(error.message);
-            }
-        }
-
-        // Helper function to display download policy information
-        function getDownloadPolicyDisplay() {
-            if (!sessionData) return '';
-            
-            const pricingModel = sessionData.pricingModel;
-            const downloadMax = sessionData.downloadMax;
-            const pricePerDownload = sessionData.pricePerDownload;
-            const freeDownloads = sessionData.freeDownloads;
-            const watermarkEnabled = sessionData.watermarkEnabled;
-            
-            let display = '';
-            
-            if (pricingModel === 'free') {
-                if (downloadMax) {
-                    const remaining = downloadMax - (downloadUsage || 0);
-                    display = `Free Downloads: ${remaining}/${downloadMax} remaining`;
-                } else {
-                    display = 'Free Unlimited Downloads';
-                }
-            } else if (pricingModel === 'paid') {
-                display = `Paid Downloads: $${parseFloat(pricePerDownload || 0).toFixed(2)} per photo`;
-            } else if (pricingModel === 'freemium') {
-                const freeRemaining = Math.max(0, (freeDownloads || 0) - (downloadUsage || 0));
-                if (freeRemaining > 0) {
-                    display = `${freeRemaining} free downloads remaining, then $${parseFloat(pricePerDownload || 0).toFixed(2)} each`;
-                } else {
-                    display = `$${parseFloat(pricePerDownload || 0).toFixed(2)} per download`;
-                }
-            }
-            
-            if (watermarkEnabled) {
-                display += ' • Watermarked';
-            }
-            
-            return display;
-        }
-
-        // Enhanced gallery rendering with download controls
-        function renderGalleryWithDownloadControls() {
-            const galleryGrid = document.getElementById('galleryGrid');
-            const galleryActions = document.getElementById('galleryActions');
-            const photoCount = document.getElementById('photoCount');
-
-            // Update photo count and show actions
-            photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
-            galleryActions.style.display = 'flex';
-
-            // Update download all button based on policy
-            const downloadAllBtn = galleryActions.querySelector('.download-all-btn');
-            if (downloadAllBtn) {
-                updateDownloadAllButton(downloadAllBtn);
-            }
-
-            // Clear existing gallery
-            galleryGrid.innerHTML = '';
-
-            photos.forEach((photo, index) => {
-                const photoCard = document.createElement('div');
-                photoCard.className = 'photo-card fade-in';
-                photoCard.style.animationDelay = `${index * 0.1}s`;
-
-                const photoWrapper = document.createElement('div');
-                photoWrapper.className = 'photo-wrapper';
-
-                const img = document.createElement('img');
-                img.src = photo.thumbnailUrl || photo.url || photo.filename;
-                img.alt = photo.filename;
-                img.loading = 'lazy';
-                img.className = 'photo-img';
-
-                photoWrapper.appendChild(img);
-
-                const photoInfo = document.createElement('div');
-                photoInfo.className = 'photo-info';
-
-                const filenameDiv = document.createElement('div');
-                filenameDiv.className = 'filename';
-                filenameDiv.textContent = photo.filename;
-
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'photo-actions';
-
-                // Create download button with appropriate state
-                const downloadBtn = createDownloadButton(photo, index);
-                actionsDiv.appendChild(downloadBtn);
-
-                photoInfo.appendChild(filenameDiv);
-                photoInfo.appendChild(actionsDiv);
-
-                photoCard.appendChild(photoWrapper);
-                photoCard.appendChild(photoInfo);
-
-                galleryGrid.appendChild(photoCard);
-            });
-
-            console.log(`✅ Rendered ${photos.length} photos with download controls`);
-            
-            // Add enhanced event delegation for photo actions
-            setupDownloadControlHandlers();
-        }
-
-        function renderGallery() {
-            const galleryGrid = document.getElementById('galleryGrid');
-            const galleryActions = document.getElementById('galleryActions');
-            const photoCount = document.getElementById('photoCount');
-
-            // Update photo count and show actions
-            photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
-            galleryActions.style.display = 'flex';
-
-            // Set up download all button for basic gallery
-            const downloadAllBtn = document.getElementById('downloadAllBtn');
-            if (downloadAllBtn) {
-                downloadAllBtn.innerHTML = '📥 Download All Photos';
-                downloadAllBtn.removeAttribute('onclick');
-                downloadAllBtn.onclick = downloadAllPhotos;
-                downloadAllBtn.disabled = false;
-            }
-
-            // Generate photo cards with staggered animations using secure DOM construction
-            galleryGrid.innerHTML = '';
-            
-            photos.forEach((photo, index) => {
-                const photoUrl = photo.url || photo.filename;
-                const filename = photo.filename || `photo-${index + 1}.jpg`;
-                
-                // Create photo card element securely
-                const photoCard = document.createElement('div');
-                photoCard.className = 'photo-card';
-                photoCard.style.animation = `fadeInUp 0.6s ease forwards`;
-                photoCard.style.animationDelay = `${index * 0.1}s`;
-                photoCard.style.opacity = '0';
-                
-                // Create photo wrapper
-                const photoWrapper = document.createElement('div');
-                photoWrapper.className = 'photo-wrapper';
-                
-                // Create image element with secure attribute assignment
-                const img = document.createElement('img');
-                img.src = photoUrl;
-                img.alt = filename;
-                img.loading = 'lazy';
-                img.onerror = function() {
-                    this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjdmYWZjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Loading Image...</text></svg>';
-                };
-                
-                photoWrapper.appendChild(img);
-                
-                // Create photo info section
-                const photoInfo = document.createElement('div');
-                photoInfo.className = 'photo-info';
-                
-                const filenameDiv = document.createElement('div');
-                filenameDiv.className = 'filename';
-                filenameDiv.textContent = filename;
-                
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'photo-actions';
-                
-                // Create download button with secure data attributes
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'photo-btn download-btn';
-                downloadBtn.dataset.action = 'download-basic';
-                downloadBtn.dataset.photoUrl = photoUrl;
-                downloadBtn.dataset.filename = filename;
-                downloadBtn.innerHTML = '📥 Download';
-                
-                // Print functionality has been removed
-                
-                actionsDiv.appendChild(downloadBtn);
-                
-                photoInfo.appendChild(filenameDiv);
-                photoInfo.appendChild(actionsDiv);
-                
-                photoCard.appendChild(photoWrapper);
-                photoCard.appendChild(photoInfo);
-                
-                galleryGrid.appendChild(photoCard);
-            });
-
-            console.log(`✅ Rendered ${photos.length} photos for ${sessionData?.clientName || 'gallery'}`);
-            
-            // Add secure event delegation for photo actions
-            setupDownloadControlHandlers();
-        }
-
-        function showEmptyGallery() {
-            document.getElementById('emptyGallery').style.display = 'block';
-        }
-
-        function showError(message) {
-            document.getElementById('loadingContainer').style.display = 'none';
-            document.getElementById('errorMessage').textContent = message;
-            document.getElementById('errorContainer').style.display = 'block';
-        }
-
-        // Create download button with appropriate state based on download policy
-        function createDownloadButton(photo, index) {
-            const button = document.createElement('button');
-            button.className = 'photo-btn download-btn';
-            button.dataset.photoId = photo.filename;
-            button.dataset.photoIndex = index;
-            
-            if (!sessionData || !sessionData.needsTracking) {
-                // Basic gallery - simple download
-                button.innerHTML = '📥 Download';
-                button.dataset.action = 'download-basic';
-                button.dataset.photoUrl = photo.url || photo.filename;
-                button.dataset.filename = photo.filename;
-                return button;
-            }
-            
-            // Download control system - check limits and pricing
-            const canDownload = checkDownloadEligibility();
-            const needsPayment = checkPaymentRequired();
-            
-            if (!canDownload.allowed) {
-                button.innerHTML = '🚫 Limit Reached';
-                button.disabled = true;
-                button.title = canDownload.reason;
-                return button;
-            }
-            
-            if (needsPayment) {
-                button.innerHTML = `💳 Buy ($${parseFloat(sessionData.pricePerDownload || 0).toFixed(2)})`;
-                button.dataset.action = 'purchase';
-                button.className += ' purchase-btn';
-            } else {
-                button.innerHTML = '📥 Download';
-                button.dataset.action = 'download-controlled';
-            }
-            
-            return button;
-        }
-        
-        // Check if download is allowed based on limits
-        function checkDownloadEligibility() {
-            if (!sessionData || !sessionData.needsTracking) return { allowed: true };
-            
-            const { pricingModel, downloadMax, freeDownloads } = sessionData;
-            const usage = downloadUsage || 0;
-            
-            if (pricingModel === 'free' && downloadMax && usage >= downloadMax) {
-                return { 
-                    allowed: false, 
-                    reason: `Download limit reached (${usage}/${downloadMax})` 
-                };
-            }
-            
-            return { allowed: true };
-        }
-        
-        // Check if payment is required for this download
-        function checkPaymentRequired() {
-            if (!sessionData || !sessionData.needsTracking) return false;
-            
-            const { pricingModel, freeDownloads } = sessionData;
-            const usage = downloadUsage || 0;
-            
-            if (pricingModel === 'paid') return true;
-            if (pricingModel === 'freemium' && usage >= (freeDownloads || 0)) return true;
-            
-            return false;
-        }
-        
-        // Update download all button based on policy
-        function updateDownloadAllButton(button) {
-            if (!sessionData || !sessionData.needsTracking) {
-                button.innerHTML = '📥 Download All Photos';
-                // Remove HTML onclick and set programmatic handler
-                button.removeAttribute('onclick');
-                button.onclick = downloadAllPhotos;
-                return;
-            }
-            
-            const canDownload = checkDownloadEligibility();
-            const needsPayment = checkPaymentRequired();
-            
-            if (!canDownload.allowed) {
-                button.innerHTML = '🚫 Download Limit Reached';
-                button.disabled = true;
-                button.title = canDownload.reason;
-                button.removeAttribute('onclick');
-                button.onclick = null;
-                return;
-            }
-            
-            // Remove HTML onclick and set programmatic handler
-            button.removeAttribute('onclick');
-            
-            if (needsPayment) {
-                const totalCost = photos.length * parseFloat(sessionData.pricePerDownload || 0);
-                button.innerHTML = `💳 Buy All ($${totalCost.toFixed(2)})`;
-                button.onclick = () => purchaseAllPhotos();
-            } else {
-                button.innerHTML = '📥 Download All Photos';
-                button.onclick = downloadAllPhotosControlled;
-            }
-        }
-        
-        // Enhanced download with atomic issue/redeem system
-        async function downloadPhotoControlled(photoId) {
-            try {
-                console.log('📥 Requesting download token for:', photoId);
-                
-                // Find the photo data
-                const photo = photos.find(p => p.filename === photoId || p.url.includes(photoId));
-                if (!photo) {
-                    throw new Error('Photo not found');
-                }
-                
-                // Step 1: Issue a download token with gallery token as client identifier
-                const issueResponse = await fetch(`/api/downloads/sessions/${sessionData.id}/issue`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        photoUrl: photo.url,
-                        filename: photo.filename || photoId,
-                        galleryAccessToken: galleryToken,
-                        clientKey: galleryToken // Use gallery token as client identifier for tracking
-                    })
-                });
-                
-                if (!issueResponse.ok) {
-                    const errorData = await issueResponse.json();
-                    if (issueResponse.status === 402) {
-                        // Payment required - trigger purchase flow
-                        console.log('💳 Payment required for download');
-                        return purchasePhoto(photoId);
-                    }
-                    if (issueResponse.status === 403) {
-                        if (errorData.message && errorData.message.includes('limit')) {
-                            throw new Error(errorData.message);
-                        }
-                        throw new Error(errorData.error || 'Download not allowed');
-                    }
-                    throw new Error(errorData.error || 'Failed to request download');
-                }
-                
-                const issueData = await issueResponse.json();
-                console.log('🎫 Download token issued:', issueData.downloadType);
-                console.log('🔍 Token value for redeem:', issueData.token);
-                
-                if (!issueData.token) {
-                    throw new Error('No download token received from server');
-                }
-                
-                // Step 2: Redeem the token for actual download
-                const redeemResponse = await fetch(`/api/downloads/redeem/${issueData.token}`, {
-                    method: 'POST'
-                });
-                
-                if (!redeemResponse.ok) {
-                    const errorData = await redeemResponse.json();
-                    throw new Error(errorData.error || 'Failed to redeem download token');
-                }
-                
-                const redeemData = await redeemResponse.json();
-                
-                // Step 3: Download the file using the signed URL
-                const downloadResponse = await fetch(redeemData.downloadUrl);
-                if (!downloadResponse.ok) {
-                    throw new Error('Failed to download file');
-                }
-                
-                const blob = await downloadResponse.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = redeemData.filename || photoId;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                // Update usage count in memory and session storage
-                downloadUsage = (downloadUsage || 0) + 1;
-                const storageKey = `downloads_${galleryToken}`;
-                sessionStorage.setItem(storageKey, downloadUsage.toString());
-                
-                // Refresh display with new counts
-                if (sessionData) {
-                    // Update subtitle with new download counts
-                    let subtitle = sessionData.sessionType;
-                    if (sessionData.pricingModel === 'freemium') {
-                        const freeLimit = sessionData.freeDownloads || 0;
-                        if (downloadUsage < freeLimit) {
-                            const remaining = freeLimit - downloadUsage;
-                            subtitle += ` • ${remaining} free downloads remaining, then $${sessionData.pricePerDownload} each`;
-                        } else {
-                            subtitle += ` • Free downloads used. Additional photos: $${sessionData.pricePerDownload} each`;
-                        }
-                    } else if (sessionData.downloadMax) {
-                        const remaining = Math.max(0, sessionData.downloadMax - downloadUsage);
-                        subtitle += ` • ${remaining} downloads remaining`;
-                    }
-                    if (sessionData.watermarkEnabled) {
-                        subtitle += ' • Watermarked';
-                    }
-                    document.getElementById('gallerySubtitle').textContent = subtitle;
                     
-                    // Re-render gallery with updated button states
-                    if (sessionData.needsTracking) {
-                        renderGalleryWithDownloadControls();
+                } catch (error) {
+                    console.error('❌ Error loading gallery:', error);
+                    this.showError(error.message);
+                }
+            }
+            
+            async loadPolicy() {
+                try {
+                    const response = await fetch(`/api/downloads/policies/${this.sessionData.id}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.policy = data.policy;
+                        console.log('📋 Loaded pricing policy:', this.policy);
+                    } else {
+                        // Default to free mode if no policy
+                        this.policy = { mode: 'free' };
+                        console.log('📋 Using default free policy');
                     }
+                } catch (error) {
+                    console.error('⚠️ Could not load policy, defaulting to free:', error);
+                    this.policy = { mode: 'free' };
                 }
-                
-                console.log('✅ Photo downloaded:', redeemData.filename);
-            } catch (error) {
-                console.error('❌ Download failed:', error);
-                alert(error.message || 'Download failed. Please try again.');
             }
-        }
-
-        async function downloadPhoto(url, filename) {
-            try {
-                console.log('📥 Downloading photo:', filename);
+            
+            updateGalleryUI() {
+                // Update header
+                document.getElementById('galleryTitle').textContent = 
+                    this.sessionData.sessionName || 'Photo Gallery';
+                document.getElementById('gallerySubtitle').textContent = 
+                    `${this.sessionData.clientName || ''} - ${new Date(this.sessionData.sessionDate).toLocaleDateString()}`;
                 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Download failed');
-                
-                const blob = await response.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                console.log('✅ Photo downloaded:', filename);
-            } catch (error) {
-                console.error('❌ Download failed:', error);
-                alert('Download failed. Please try again.');
+                // Update photo count
+                document.getElementById('photoCount').textContent = 
+                    `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''}`;
             }
-        }
-
-        // Purchase individual photo
-        async function purchasePhoto(photoId) {
-            try {
-                console.log('💳 Purchasing photo:', photoId);
+            
+            updatePricingBanner() {
+                const banner = document.getElementById('pricingBanner');
+                const info = document.getElementById('pricingInfo');
                 
-                const clientEmail = prompt('Enter your email address for purchase receipt:');
-                if (!clientEmail) return;
-                
-                const clientName = prompt('Enter your name for the purchase:') || 'Customer';
-                
-                // Create Stripe checkout session (get sessionId first)
-                const verifyResponse = await fetch(`/api/gallery/${galleryToken}/verify`);
-                if (!verifyResponse.ok) {
-                    throw new Error('Failed to verify gallery access');
-                }
-                const verifyData = await verifyResponse.json();
-                const sessionId = verifyData.sessionId || galleryToken;
-                
-                const response = await fetch(`/api/downloads/purchase/${sessionId}/${photoId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        token: downloadToken,
-                        clientEmail,
-                        clientName
-                    })
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Purchase failed');
-                }
-                
-                const data = await response.json();
-                
-                // Redirect to Stripe checkout
-                if (data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error('No checkout URL received');
-                }
-                
-            } catch (error) {
-                console.error('❌ Purchase failed:', error);
-                alert(error.message || 'Purchase failed. Please try again.');
-            }
-        }
-        
-        // Purchase all photos
-        async function purchaseAllPhotos() {
-            try {
-                console.log('💳 Purchasing all photos');
-                
-                const clientEmail = prompt('Enter your email address for purchase receipt:');
-                if (!clientEmail) return;
-                
-                const clientName = prompt('Enter your name for the purchase:') || 'Customer';
-                const totalCost = photos.length * parseFloat(sessionData.pricePerDownload || 0);
-                
-                if (!confirm(`Purchase all ${photos.length} photos for $${totalCost.toFixed(2)}?`)) {
+                if (!this.policy) {
+                    banner.classList.remove('show');
                     return;
                 }
                 
-                // Create bulk purchase - this would need a new endpoint
-                alert('Bulk purchase feature coming soon! Please purchase photos individually for now.');
+                let message = '';
                 
-            } catch (error) {
-                console.error('❌ Bulk purchase failed:', error);
-                alert(error.message || 'Bulk purchase failed. Please try again.');
+                switch (this.policy.mode) {
+                    case 'free':
+                        message = '✨ All photos are FREE to download!';
+                        break;
+                        
+                    case 'fixed':
+                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || 0);
+                        message = `💳 Fixed price: $${fixedPrice.toFixed(2)} per photo`;
+                        break;
+                        
+                    case 'freemium':
+                        const freeCount = parseInt(this.policy.freeCount || 0);
+                        const afterPrice = parseFloat(this.policy.pricePerPhoto || 0);
+                        const usedFree = this.entitlements.filter(e => e.type === 'free').length;
+                        const remaining = Math.max(0, freeCount - usedFree);
+                        
+                        if (remaining > 0) {
+                            message = `🆓 ${remaining} of ${freeCount} free downloads remaining • Then $${afterPrice.toFixed(2)} each`;
+                        } else {
+                            message = `💳 Free downloads used • Additional photos: $${afterPrice.toFixed(2)} each`;
+                        }
+                        break;
+                        
+                    case 'per_photo':
+                        message = '💳 Individual pricing per photo';
+                        break;
+                        
+                    case 'bulk':
+                        if (this.policy.bulkTiers && this.policy.bulkTiers.length > 0) {
+                            const firstTier = this.policy.bulkTiers[0];
+                            message = `📦 Bulk pricing: ${firstTier.qty}+ photos at $${firstTier.price.toFixed(2)} each`;
+                        } else {
+                            message = '📦 Bulk pricing available';
+                        }
+                        break;
+                        
+                    default:
+                        message = '📥 Downloads available';
+                }
+                
+                info.textContent = message;
+                banner.classList.add('show');
             }
-        }
-        
-        // Download all photos with download controls
-        async function downloadAllPhotosControlled() {
-            if (photos.length === 0) return;
             
-            try {
-                console.log('📥 Starting controlled bulk download of', photos.length, 'photos');
+            displayPhotos() {
+                const grid = document.getElementById('galleryGrid');
+                grid.innerHTML = '';
                 
-                for (let i = 0; i < photos.length; i++) {
-                    const photo = photos[i];
-                    const photoId = photo.filename;
+                this.photos.forEach((photo, index) => {
+                    const photoCard = this.createPhotoCard(photo, index);
+                    grid.appendChild(photoCard);
+                });
+            }
+            
+            createPhotoCard(photo, index) {
+                const card = document.createElement('div');
+                card.className = 'photo-card';
+                card.id = `photo-${index}`;
+                
+                // Check if photo is in cart
+                const inCart = this.cart.some(item => item.photoId === photo.id || item.photoId === index.toString());
+                if (inCart) {
+                    card.classList.add('in-cart');
+                }
+                
+                // Check if photo is already purchased (entitled)
+                const isEntitled = this.entitlements.some(e => e.photoId === photo.id || e.photoUrl === photo.url);
+                
+                // Calculate price for this photo
+                const price = this.calculatePhotoPrice(index);
+                
+                card.innerHTML = `
+                    <div class="photo-wrapper">
+                        <img src="${photo.url}" alt="${photo.filename}" loading="lazy">
+                        ${inCart ? '<div class="cart-indicator">✓</div>' : ''}
+                        ${!isEntitled && price !== null ? `
+                            <div class="price-badge ${price === 0 ? 'free' : 'paid'}">
+                                ${price === 0 ? 'FREE' : `$${price.toFixed(2)}`}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="photo-info">
+                        <p class="photo-filename">${photo.filename || `Photo ${index + 1}`}</p>
+                        <div class="photo-actions">
+                            ${isEntitled ? `
+                                <button class="photo-btn download-btn" onclick="galleryCart.downloadPhoto('${photo.id || index}', '${photo.url}', '${photo.filename}')">
+                                    📥 Download
+                                </button>
+                            ` : `
+                                <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
+                                        onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
+                                    ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                
+                return card;
+            }
+            
+            calculatePhotoPrice(photoIndex) {
+                if (!this.policy) return null;
+                
+                switch (this.policy.mode) {
+                    case 'free':
+                        return 0;
+                        
+                    case 'fixed':
+                    case 'per_photo':
+                        return parseFloat(this.policy.pricePerPhoto || 0);
+                        
+                    case 'freemium':
+                        const freeCount = parseInt(this.policy.freeCount || 0);
+                        const cartFreeItems = this.cart.slice(0, freeCount);
+                        const isFree = cartFreeItems.length < freeCount && 
+                                       !cartFreeItems.some(item => item.photoId === photoIndex.toString());
+                        return isFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        
+                    case 'bulk':
+                        // Calculate based on current cart size
+                        const cartSize = this.cart.length + 1; // Including this photo
+                        if (this.policy.bulkTiers) {
+                            // Find applicable tier
+                            let applicableTier = null;
+                            for (const tier of this.policy.bulkTiers.sort((a, b) => b.qty - a.qty)) {
+                                if (cartSize >= tier.qty) {
+                                    applicableTier = tier;
+                                    break;
+                                }
+                            }
+                            return applicableTier ? parseFloat(applicableTier.price) : parseFloat(this.policy.pricePerPhoto || 0);
+                        }
+                        return parseFloat(this.policy.pricePerPhoto || 0);
+                        
+                    default:
+                        return null;
+                }
+            }
+            
+            toggleCartItem(photoId, photoUrl, filename, index) {
+                const inCart = this.cart.some(item => item.photoId === photoId);
+                
+                if (inCart) {
+                    this.removeFromCart(photoId);
+                } else {
+                    const price = this.calculatePhotoPrice(index);
+                    this.addToCart(photoId, photoUrl, filename, price);
+                }
+            }
+            
+            addToCart(photoId, photoUrl, filename, price) {
+                // Check if already in cart
+                if (this.cart.some(item => item.photoId === photoId)) {
+                    return;
+                }
+                
+                this.cart.push({
+                    photoId,
+                    photoUrl,
+                    filename: filename || `Photo ${photoId}`,
+                    price: price || 0
+                });
+                
+                this.saveCart();
+                this.updateCartUI();
+                this.updatePhotoCard(photoId, true);
+                this.showSuccess('Photo added to cart!');
+                
+                // Recalculate all prices for freemium/bulk modes
+                if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                    this.recalculatePrices();
+                }
+            }
+            
+            removeFromCart(photoId) {
+                this.cart = this.cart.filter(item => item.photoId !== photoId);
+                this.saveCart();
+                this.updateCartUI();
+                this.updatePhotoCard(photoId, false);
+                
+                // Recalculate all prices for freemium/bulk modes
+                if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                    this.recalculatePrices();
+                }
+            }
+            
+            recalculatePrices() {
+                // Recalculate prices for all items in cart based on current policy
+                this.cart.forEach((item, index) => {
+                    const photoIndex = this.photos.findIndex(p => p.id === item.photoId || 
+                                                                  this.photos.indexOf(p).toString() === item.photoId);
+                    if (photoIndex !== -1) {
+                        item.price = this.calculatePhotoPrice(photoIndex);
+                    }
+                });
+                
+                this.saveCart();
+                this.updateCartUI();
+                this.displayPhotos(); // Refresh price badges
+            }
+            
+            updatePhotoCard(photoId, inCart) {
+                const cards = document.querySelectorAll('.photo-card');
+                cards.forEach((card) => {
+                    const photoIndex = card.id.replace('photo-', '');
+                    const photo = this.photos[photoIndex];
+                    if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                        if (inCart) {
+                            card.classList.add('in-cart');
+                        } else {
+                            card.classList.remove('in-cart');
+                        }
+                        
+                        // Update button text
+                        const btn = card.querySelector('.add-to-cart-btn');
+                        if (btn) {
+                            btn.textContent = inCart ? '✓ In Cart' : '🛒 Add to Cart';
+                            btn.classList.toggle('in-cart', inCart);
+                        }
+                        
+                        // Update cart indicator
+                        const indicator = card.querySelector('.cart-indicator');
+                        if (inCart && !indicator) {
+                            const wrapper = card.querySelector('.photo-wrapper');
+                            wrapper.insertAdjacentHTML('beforeend', '<div class="cart-indicator">✓</div>');
+                        } else if (!inCart && indicator) {
+                            indicator.remove();
+                        }
+                    }
+                });
+            }
+            
+            updateCartUI() {
+                const cartCount = document.getElementById('cartCount');
+                const cartItems = document.getElementById('cartItems');
+                const cartTotal = document.getElementById('cartTotal');
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                
+                // Update count
+                cartCount.textContent = this.cart.length;
+                
+                // Update items display
+                if (this.cart.length === 0) {
+                    cartItems.innerHTML = `
+                        <div class="cart-empty">
+                            <div class="cart-empty-icon">🛒</div>
+                            <h3>Your cart is empty</h3>
+                            <p>Add photos to start your collection</p>
+                        </div>
+                    `;
+                    checkoutBtn.disabled = true;
+                } else {
+                    cartItems.innerHTML = this.cart.map(item => `
+                        <div class="cart-item" data-photo-id="${item.photoId}">
+                            <div class="cart-item-image">
+                                <img src="${item.photoUrl}" alt="${item.filename}">
+                            </div>
+                            <div class="cart-item-details">
+                                <div class="cart-item-name">${item.filename}</div>
+                                <div class="cart-item-price">
+                                    ${item.price === 0 ? 'FREE' : `$${item.price.toFixed(2)}`}
+                                </div>
+                            </div>
+                            <button class="cart-item-remove" onclick="galleryCart.removeFromCart('${item.photoId}')">
+                                ✕
+                            </button>
+                        </div>
+                    `).join('');
+                    checkoutBtn.disabled = false;
+                }
+                
+                // Update total
+                const total = this.calculateTotal();
+                cartTotal.textContent = total === 0 ? 'FREE' : `$${total.toFixed(2)}`;
+            }
+            
+            calculateTotal() {
+                return this.cart.reduce((total, item) => total + (item.price || 0), 0);
+            }
+            
+            selectAllPhotos() {
+                // Add all photos to cart that aren't already entitled
+                this.photos.forEach((photo, index) => {
+                    const photoId = photo.id || index.toString();
+                    const isEntitled = this.entitlements.some(e => e.photoId === photoId || e.photoUrl === photo.url);
+                    const inCart = this.cart.some(item => item.photoId === photoId);
                     
+                    if (!isEntitled && !inCart) {
+                        const price = this.calculatePhotoPrice(index);
+                        this.addToCart(photoId, photo.url, photo.filename, price);
+                    }
+                });
+                
+                this.showSuccess('All available photos added to cart!');
+            }
+            
+            clearCart() {
+                if (confirm('Are you sure you want to clear your cart?')) {
+                    this.cart = [];
+                    this.saveCart();
+                    this.updateCartUI();
+                    this.displayPhotos(); // Reset all photo cards
+                    this.closeCart();
+                }
+            }
+            
+            async proceedToCheckout() {
+                const total = this.calculateTotal();
+                
+                // If total is 0 (all free), process without payment
+                if (total === 0) {
+                    await this.processFreeDownloads();
+                    return;
+                }
+                
+                // Check if we have client email
+                if (!this.clientEmail) {
+                    this.showEmailModal();
+                    return;
+                }
+                
+                // Create checkout session
+                await this.createCheckoutSession();
+            }
+            
+            async processFreeDownloads() {
+                try {
+                    // For free downloads, create entitlements directly
+                    const items = this.cart.map(item => ({
+                        photoId: item.photoId,
+                        photoUrl: item.photoUrl,
+                        filename: item.filename
+                    }));
+                    
+                    const response = await fetch('/api/downloads/entitlements', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionData.id,
+                            clientKey: this.clientEmail || 'free-download',
+                            items: items,
+                            type: 'free'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.clearCart();
+                        this.closeCart();
+                        await this.loadEntitlements();
+                        this.displayPhotos();
+                        this.showSuccess('Free downloads are ready! Click download on each photo.');
+                    } else {
+                        throw new Error(data.error || 'Failed to process free downloads');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error processing free downloads:', error);
+                    alert('Failed to process downloads. Please try again.');
+                }
+            }
+            
+            async createCheckoutSession() {
+                try {
+                    // Show loading state
+                    const checkoutBtn = document.getElementById('checkoutBtn');
+                    const originalText = checkoutBtn.textContent;
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.textContent = 'Processing...';
+                    
+                    // Prepare items for checkout
+                    const items = this.cart.map(item => item.photoId);
+                    
+                    const response = await fetch('/api/downloads/checkout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionData.id,
+                            clientKey: this.clientEmail,
+                            clientName: this.clientName,
+                            items: items
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.checkoutUrl) {
+                        // Redirect to Stripe Checkout
+                        window.location.href = data.checkoutUrl;
+                    } else {
+                        throw new Error(data.error || 'Failed to create checkout session');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error creating checkout:', error);
+                    alert(`Checkout failed: ${error.message}`);
+                    
+                    // Reset button
+                    const checkoutBtn = document.getElementById('checkoutBtn');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Proceed to Checkout';
+                }
+            }
+            
+            async handleCheckoutReturn() {
+                if (this.checkoutStatus === 'success') {
+                    // Clear cart after successful purchase
+                    this.clearCart();
+                    
+                    // Load entitlements to show purchased items
+                    if (this.clientEmail) {
+                        await this.loadEntitlements();
+                    }
+                    
+                    // Refresh gallery to show download buttons
+                    this.displayPhotos();
+                    
+                    // Show success message
+                    this.showSuccess('Payment successful! Your photos are ready to download.');
+                    
+                    // Remove URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                } else if (this.checkoutStatus === 'cancel') {
+                    // Show message that checkout was cancelled
+                    this.showSuccess('Checkout cancelled. Your cart has been saved.');
+                    
+                    // Remove URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+            
+            async loadEntitlements() {
+                try {
+                    if (!this.clientEmail || !this.sessionData) return;
+                    
+                    const response = await fetch(`/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${this.clientEmail}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.entitlements = data.entitlements || [];
+                        console.log(`✅ Loaded ${this.entitlements.length} entitlements`);
+                        
+                        // Update pricing banner for freemium mode
+                        this.updatePricingBanner();
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading entitlements:', error);
+                }
+            }
+            
+            async downloadPhoto(photoId, photoUrl, filename) {
+                try {
+                    // Create download token
+                    const response = await fetch('/api/downloads/tokens', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionData.id,
+                            clientKey: this.clientEmail || 'gallery-download',
+                            photoId: photoId,
+                            photoUrl: photoUrl,
+                            filename: filename
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.token) {
+                        // Start download
+                        const downloadUrl = `/api/downloads/photo/${data.token}`;
+                        
+                        // Create temporary link and click it
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = filename || 'photo.jpg';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        this.showSuccess(`Downloading ${filename}...`);
+                        
+                    } else {
+                        throw new Error(data.error || 'Failed to generate download token');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error downloading photo:', error);
+                    alert(`Download failed: ${error.message}`);
+                }
+            }
+            
+            // UI Helper Methods
+            openCart() {
+                document.getElementById('cartDrawer').classList.add('open');
+                document.getElementById('cartOverlay').classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeCart() {
+                document.getElementById('cartDrawer').classList.remove('open');
+                document.getElementById('cartOverlay').classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            
+            showEmailModal() {
+                document.getElementById('emailModal').classList.add('show');
+                
+                // Pre-fill if we have saved info
+                if (this.clientEmail) {
+                    document.getElementById('clientEmail').value = this.clientEmail;
+                }
+                if (this.clientName) {
+                    document.getElementById('clientName').value = this.clientName;
+                }
+            }
+            
+            closeEmailModal() {
+                document.getElementById('emailModal').classList.remove('show');
+            }
+            
+            handleEmailSubmit(e) {
+                e.preventDefault();
+                
+                this.clientEmail = document.getElementById('clientEmail').value;
+                this.clientName = document.getElementById('clientName').value;
+                
+                // Save client info
+                this.saveClientInfo();
+                
+                // Close modal and proceed with checkout
+                this.closeEmailModal();
+                this.createCheckoutSession();
+            }
+            
+            showSuccess(message) {
+                const successMessage = document.getElementById('successMessage');
+                const successText = document.getElementById('successText');
+                
+                successText.textContent = message;
+                successMessage.classList.add('show');
+                
+                setTimeout(() => {
+                    successMessage.classList.remove('show');
+                }, 3000);
+            }
+            
+            showError(message) {
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('errorContainer').style.display = 'block';
+                document.getElementById('errorMessage').textContent = message;
+            }
+            
+            // Storage Methods
+            saveCart() {
+                localStorage.setItem(`cart_${this.galleryToken}`, JSON.stringify(this.cart));
+            }
+            
+            loadCart() {
+                const saved = localStorage.getItem(`cart_${this.galleryToken}`);
+                if (saved) {
                     try {
-                        await downloadPhotoControlled(photoId);
-                        // Small delay between downloads to avoid overwhelming the browser
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        this.cart = JSON.parse(saved);
+                        console.log(`📦 Loaded ${this.cart.length} items from saved cart`);
                     } catch (error) {
-                        console.error(`❌ Failed to download ${photoId}:`, error);
+                        console.error('Error loading cart:', error);
+                        this.cart = [];
                     }
                 }
-                
-                console.log('✅ Controlled bulk download completed');
-            } catch (error) {
-                console.error('❌ Bulk download failed:', error);
-                alert('Bulk download failed. Some photos may not have downloaded.');
-            }
-        }
-
-        async function downloadAllPhotos() {
-            if (photos.length === 0) return;
-            
-            console.log('📥 Starting bulk download of', photos.length, 'photos');
-            
-            for (let i = 0; i < photos.length; i++) {
-                const photo = photos[i];
-                const photoUrl = photo.url || photo.filename;
-                const filename = photo.filename || `photo-${i + 1}.jpg`;
-                
-                try {
-                    await downloadPhoto(photoUrl, filename);
-                    // Small delay between downloads to avoid overwhelming the browser
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (error) {
-                    console.error(`❌ Failed to download ${filename}:`, error);
-                }
             }
             
-            console.log('✅ Bulk download completed');
-        }
-
-        // Print functionality has been removed
-
-        // Enhanced event handlers for download controls
-        function setupDownloadControlHandlers() {
-            const galleryGrid = document.getElementById('galleryGrid');
-            
-            if (galleryGrid.dataset.downloadHandlersAttached === 'true') {
-                return; // Handlers already attached
+            saveClientInfo() {
+                localStorage.setItem('clientEmail', this.clientEmail || '');
+                localStorage.setItem('clientName', this.clientName || '');
             }
             
-            // Use event delegation for secure event handling
-            galleryGrid.addEventListener('click', (e) => {
-                // Handle download control actions
-                if (e.target.matches('[data-action="download-controlled"]')) {
-                    e.stopPropagation();
-                    const photoId = e.target.getAttribute('data-photo-id');
-                    downloadPhotoControlled(photoId);
-                }
-                else if (e.target.matches('[data-action="purchase"]')) {
-                    e.stopPropagation();
-                    const photoId = e.target.getAttribute('data-photo-id');
-                    purchasePhoto(photoId);
-                }
-                else if (e.target.matches('[data-action="download-basic"]')) {
-                    e.stopPropagation();
-                    const photoUrl = e.target.getAttribute('data-photo-url');
-                    const filename = e.target.getAttribute('data-filename');
-                    downloadPhoto(photoUrl, filename);
-                }
-                // Handle photo card clicks for lightbox
-                else if (e.target.closest('.photo-card') && !e.target.closest('.photo-actions')) {
-                    const photoCard = e.target.closest('.photo-card');
-                    const photoIndex = Array.from(galleryGrid.children).indexOf(photoCard);
-                    openLightbox(photoIndex);
-                }
-            });
-            
-            // Mark handlers as attached to prevent duplicates
-            galleryGrid.dataset.downloadHandlersAttached = 'true';
-        }
-
-        function setupPhotoActionHandlers() {
-            // Prevent duplicate event listeners
-            const galleryGrid = document.getElementById('galleryGrid');
-            
-            if (galleryGrid.dataset.handlersAttached === 'true') {
-                return; // Handlers already attached
+            loadClientInfo() {
+                this.clientEmail = localStorage.getItem('clientEmail') || null;
+                this.clientName = localStorage.getItem('clientName') || null;
             }
-            
-            // Use event delegation for secure event handling
-            galleryGrid.addEventListener('click', (e) => {
-                // Handle photo action buttons
-                if (e.target.matches('[data-action="download"]')) {
-                    e.stopPropagation();
-                    const photoUrl = e.target.getAttribute('data-photo-url');
-                    const filename = e.target.getAttribute('data-filename');
-                    downloadPhoto(photoUrl, filename);
-                }
-                // Print purchase functionality has been removed
-                // Handle photo card clicks for lightbox
-                else if (e.target.closest('.photo-card') && !e.target.closest('.photo-actions')) {
-                    const photoCard = e.target.closest('.photo-card');
-                    const photoIndex = Array.from(galleryGrid.children).indexOf(photoCard);
-                    openLightbox(photoIndex);
-                }
-            });
-            
-            // Mark handlers as attached to prevent duplicates
-            galleryGrid.dataset.handlersAttached = 'true';
         }
         
-        function openLightbox(index) {
-            // Simple lightbox implementation
-            const photo = photos[index];
-            const photoUrl = photo.url || photo.filename;
-            const filename = photo.filename || `photo-${index + 1}.jpg`;
-            
-            const lightbox = document.createElement('div');
-            lightbox.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.9);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                cursor: pointer;
-            `;
-            
-            lightbox.innerHTML = `
-                <div style="max-width: 95%; max-height: 95%; text-align: center;">
-                    <img src="${photoUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
-                    <div style="color: white; margin-top: 20px; font-size: 18px;">${filename}</div>
-                    <div style="color: #ccc; margin-top: 10px;">Click anywhere to close</div>
-                </div>
-            `;
-            
-            lightbox.onclick = () => document.body.removeChild(lightbox);
-            document.body.appendChild(lightbox);
-        }
+        // Initialize cart when page loads
+        let galleryCart;
+        document.addEventListener('DOMContentLoaded', () => {
+            galleryCart = new ClientGalleryCart();
+        });
     </script>
 </body>
 </html>
