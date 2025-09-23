@@ -204,11 +204,364 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   }
 
+  // ==================== COMMERCE API ROUTES ====================
+  
+  /**
+   * POST /api/downloads/checkout
+   * Create Stripe checkout session for photo downloads
+   */
+  router.post('/checkout', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey, clientName, items, mode = 'payment' } = req.body;
+      
+      if (!sessionId || !clientKey || !items || !Array.isArray(items)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, clientKey, and items array' 
+        });
+      }
+      
+      console.log(`💳 Creating checkout session for ${items.length} items from client: ${clientKey}`);
+      
+      // Call commerce manager to create checkout session
+      const result = await commerceManager.createCheckoutSession(
+        sessionId, 
+        clientKey, 
+        items, 
+        mode
+      );
+      
+      if (result.success) {
+        console.log(`✅ Checkout session created: ${result.sessionId}`);
+        res.json({
+          success: true,
+          checkoutUrl: result.checkoutUrl,
+          sessionId: result.sessionId
+        });
+      } else {
+        console.error(`❌ Checkout creation failed: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error creating checkout session:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to create checkout session' 
+      });
+    }
+  });
+  
+  /**
+   * GET /api/downloads/entitlements
+   * Check client's download entitlements
+   */
+  router.get('/entitlements', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey } = req.query;
+      
+      if (!sessionId || !clientKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required parameters: sessionId and clientKey' 
+        });
+      }
+      
+      console.log(`🔍 Checking entitlements for client: ${clientKey} in session: ${sessionId}`);
+      
+      // Get entitlements from commerce manager
+      const result = await commerceManager.getClientEntitlements(sessionId, clientKey);
+      
+      if (result.success) {
+        console.log(`✅ Found ${result.entitlements.length} entitlements`);
+        res.json({
+          success: true,
+          entitlements: result.entitlements
+        });
+      } else {
+        console.error(`❌ Failed to get entitlements: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error,
+          entitlements: []
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching entitlements:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch entitlements',
+        entitlements: []
+      });
+    }
+  });
+  
+  /**
+   * POST /api/downloads/entitlements
+   * Create entitlements for free downloads
+   */
+  router.post('/entitlements', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey, items, type = 'free' } = req.body;
+      
+      if (!sessionId || !clientKey || !items || !Array.isArray(items)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, clientKey, and items array' 
+        });
+      }
+      
+      // Only allow free entitlements through this endpoint
+      if (type !== 'free') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'This endpoint only processes free downloads' 
+        });
+      }
+      
+      console.log(`🆓 Processing ${items.length} free downloads for client: ${clientKey}`);
+      
+      // Create free entitlements
+      const result = await commerceManager.createFreeEntitlements(sessionId, clientKey, items);
+      
+      if (result.success) {
+        console.log(`✅ Created ${result.count} free entitlements`);
+        res.json({
+          success: true,
+          message: 'Free downloads processed successfully',
+          count: result.count
+        });
+      } else {
+        console.error(`❌ Failed to create free entitlements: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error creating free entitlements:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to process free downloads' 
+      });
+    }
+  });
+  
+  /**
+   * POST /api/downloads/tokens
+   * Issue download token for entitled photo
+   */
+  router.post('/tokens', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId, clientKey, photoId, photoUrl, filename } = req.body;
+      
+      if (!sessionId || !clientKey || !photoId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, clientKey, and photoId' 
+        });
+      }
+      
+      console.log(`🎟️ Issuing download token for photo ${photoId} to client: ${clientKey}`);
+      
+      // First verify entitlement exists
+      const entitlementCheck = await commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
+      
+      if (!entitlementCheck.success) {
+        console.warn(`⚠️ Entitlement not found for photo ${photoId}`);
+        return res.status(403).json({
+          success: false,
+          error: 'No download entitlement found for this photo'
+        });
+      }
+      
+      // Issue download token
+      const result = await commerceManager.issueDownloadToken(
+        sessionId, 
+        clientKey, 
+        photoId, 
+        photoUrl, 
+        filename
+      );
+      
+      if (result.success) {
+        console.log(`✅ Download token issued: ${result.token.substring(0, 8)}...`);
+        res.json({
+          success: true,
+          token: result.token,
+          expiresIn: result.expiresIn
+        });
+      } else {
+        console.error(`❌ Failed to issue token: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error issuing download token:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to issue download token' 
+      });
+    }
+  });
+  
+  /**
+   * POST /api/downloads/webhook
+   * Handle Stripe webhooks for payment confirmation
+   */
+  router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (!sig || !endpointSecret) {
+        console.error('⚠️ Missing webhook signature or secret');
+        return res.status(400).json({ error: 'Webhook configuration error' });
+      }
+      
+      // Verify webhook signature
+      let event;
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      } catch (err) {
+        console.error(`❌ Webhook signature verification failed: ${err.message}`);
+        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+      }
+      
+      console.log(`📨 Webhook received: ${event.type}`);
+      
+      // Handle the event with commerce manager
+      const result = await commerceManager.handleStripeWebhook(event);
+      
+      if (result.success) {
+        console.log(`✅ Webhook processed successfully`);
+        res.json({ received: true });
+      } else {
+        console.error(`❌ Webhook processing failed: ${result.error}`);
+        res.status(400).json({ error: result.error });
+      }
+      
+    } catch (error) {
+      console.error('❌ Webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+  
+  /**
+   * GET /api/downloads/history/:sessionId
+   * Get download history for a session (photographer only)
+   */
+  router.get('/history/:sessionId', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { sessionId } = req.params;
+      const { startDate, endDate, clientKey } = req.query;
+      
+      // Verify session ownership
+      const session = await verifySessionOwnership(sessionId, userId);
+      if (!session) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Session not found or access denied' 
+        });
+      }
+      
+      console.log(`📊 Fetching download history for session: ${sessionId}`);
+      
+      // Get download history from commerce manager
+      const result = await commerceManager.getDownloadHistory(sessionId, {
+        startDate,
+        endDate,
+        clientKey
+      });
+      
+      if (result.success) {
+        console.log(`✅ Retrieved ${result.history.length} download records`);
+        
+        // Add summary statistics
+        const summary = {
+          totalDownloads: result.history.length,
+          uniqueClients: [...new Set(result.history.map(h => h.clientKey))].length,
+          totalRevenue: result.history
+            .filter(h => h.price > 0)
+            .reduce((sum, h) => sum + parseFloat(h.price), 0),
+          freeDownloads: result.history.filter(h => h.price === 0).length,
+          paidDownloads: result.history.filter(h => h.price > 0).length
+        };
+        
+        res.json({
+          success: true,
+          history: result.history,
+          summary: summary
+        });
+      } else {
+        console.error(`❌ Failed to get history: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error,
+          history: []
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching download history:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch download history',
+        history: []
+      });
+    }
+  });
+
   // ==================== SESSION POLICY MANAGEMENT ====================
+  
+  /**
+   * GET /api/downloads/policies/:sessionId
+   * Get download policy for a session (public endpoint for client gallery)
+   */
+  router.get('/policies/:sessionId', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      console.log(`📋 Fetching policy for session: ${sessionId}`);
+      
+      // Get policy from commerce manager (handles creation of default if needed)
+      const result = await commerceManager.getPolicyForSession(sessionId);
+      
+      if (result.success) {
+        console.log(`✅ Policy retrieved for session ${sessionId}`);
+        res.json({
+          success: true,
+          policy: result.policy
+        });
+      } else {
+        console.error(`❌ Failed to get policy: ${result.error}`);
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching policy:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch download policy' 
+      });
+    }
+  });
 
   /**
    * GET /api/downloads/sessions/:sessionId/policy
-   * Get current download policy for a session
+   * Get current download policy for a session (authenticated endpoint for photographer)
    */
   router.get('/sessions/:sessionId/policy', requireAuth, async (req, res) => {
     try {

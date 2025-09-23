@@ -266,6 +266,110 @@ class DownloadCommerceManager {
     }
 
     /**
+     * Get client entitlements for a session
+     */
+    async getClientEntitlements(sessionId, clientKey) {
+        try {
+            const entitlements = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.clientKey, clientKey),
+                    eq(downloadEntitlements.isActive, true)
+                ));
+            
+            return {
+                success: true,
+                entitlements: entitlements
+            };
+        } catch (error) {
+            console.error('Error getting client entitlements:', error);
+            return {
+                success: false,
+                error: error.message,
+                entitlements: []
+            };
+        }
+    }
+    
+    /**
+     * Create free entitlements for a client
+     */
+    async createFreeEntitlements(sessionId, clientKey, items) {
+        try {
+            const entitlementIds = [];
+            
+            for (const item of items) {
+                const entitlementId = uuidv4();
+                await this.db.insert(downloadEntitlements)
+                    .values({
+                        id: entitlementId,
+                        sessionId: sessionId,
+                        clientKey: clientKey,
+                        photoId: item.photoId,
+                        photoUrl: item.photoUrl,
+                        filename: item.filename,
+                        type: 'free',
+                        orderId: null,
+                        isActive: true,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                entitlementIds.push(entitlementId);
+            }
+            
+            console.log(`✅ Created ${entitlementIds.length} free entitlements for ${clientKey}`);
+            
+            return {
+                success: true,
+                count: entitlementIds.length,
+                entitlementIds: entitlementIds
+            };
+        } catch (error) {
+            console.error('Error creating free entitlements:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    
+    /**
+     * Verify if an entitlement exists for a client
+     */
+    async verifyEntitlement(sessionId, clientKey, photoId) {
+        try {
+            const entitlement = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.clientKey, clientKey),
+                    eq(downloadEntitlements.photoId, photoId),
+                    eq(downloadEntitlements.isActive, true)
+                ))
+                .limit(1);
+            
+            if (entitlement.length > 0) {
+                return {
+                    success: true,
+                    entitlement: entitlement[0]
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'No entitlement found'
+            };
+        } catch (error) {
+            console.error('Error verifying entitlement:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
      * Checkout & Payment Processing
      */
     
