@@ -1059,12 +1059,26 @@
                 this.clientName = null;
                 this.downloadQueue = [];
                 
-                // Initialize from URL
+                // Initialize from URL - support both path and query parameter patterns
+                const urlParams = new URLSearchParams(window.location.search);
                 const pathParts = window.location.pathname.split('/');
-                this.galleryToken = pathParts[pathParts.length - 1];
+                
+                // Try to get token from URL parameters first (e.g., ?token=abc123)
+                this.galleryToken = urlParams.get('token');
+                
+                // If no token in parameters, extract from URL path 
+                if (!this.galleryToken) {
+                    // Support patterns like /gallery/token or /g/token
+                    const lastPathSegment = pathParts[pathParts.length - 1];
+                    if (lastPathSegment && lastPathSegment !== 'client-gallery.html' && lastPathSegment !== '') {
+                        this.galleryToken = lastPathSegment;
+                    }
+                }
+                
+                console.log('🔑 Extracted gallery token:', this.galleryToken ? 'Found' : 'Not found', 'from', 
+                           urlParams.get('token') ? 'URL parameters' : 'URL path');
                 
                 // Check for success/cancel from Stripe
-                const urlParams = new URLSearchParams(window.location.search);
                 this.checkoutStatus = urlParams.get('status');
                 this.sessionId = urlParams.get('session_id');
                 
@@ -1163,30 +1177,34 @@
                 try {
                     console.log('📸 Loading gallery with token:', this.galleryToken);
                     
-                    // Verify gallery access
-                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
+                    // Verify gallery access using correct endpoint
+                    const verifyResponse = await fetch(`/api/downloads/gallery/${this.galleryToken}/verify`);
                     const verifyData = await verifyResponse.json();
                     
-                    if (!verifyData.success) {
-                        throw new Error(verifyData.error || 'Gallery access denied');
+                    if (!verifyResponse.ok || !verifyData) {
+                        throw new Error(verifyData?.error || 'Gallery access denied');
                     }
                     
-                    this.sessionData = verifyData.session;
+                    // Extract session data from the response (photos are included)
+                    this.sessionData = {
+                        id: verifyData.id,
+                        clientName: verifyData.clientName,
+                        sessionName: verifyData.sessionName || 'Photo Gallery',
+                        sessionDate: new Date().toISOString(), // fallback
+                        downloadEnabled: verifyData.downloadEnabled,
+                        pricingModel: verifyData.pricingModel,
+                        downloadMax: verifyData.downloadMax,
+                        pricePerDownload: verifyData.pricePerDownload,
+                        freeDownloads: verifyData.freeDownloads
+                    };
                     console.log('✅ Gallery verified:', this.sessionData);
+                    
+                    // Photos are included in the verification response
+                    this.photos = verifyData.photos || [];
+                    console.log(`📸 Loaded ${this.photos.length} photos`);
                     
                     // Get download policy
                     await this.loadPolicy();
-                    
-                    // Load photos
-                    const photosResponse = await fetch(`/api/gallery/${this.galleryToken}/photos`);
-                    const photosData = await photosResponse.json();
-                    
-                    if (!photosData.success) {
-                        throw new Error(photosData.error || 'Failed to load photos');
-                    }
-                    
-                    this.photos = photosData.photos || [];
-                    console.log(`📸 Loaded ${this.photos.length} photos`);
                     
                     // Update UI
                     this.updateGalleryUI();
@@ -1209,27 +1227,47 @@
             }
             
             async loadPolicy() {
-                try {
-                    const response = await fetch(`/api/downloads/policies/${this.sessionData.id}`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        this.policy = data.policy;
-                        console.log('📋 Loaded pricing policy:', this.policy);
-                        
-                        // Update screenshot protection settings
-                        if (this.protection && this.policy.screenshotProtection !== undefined) {
-                            this.protection.toggleProtection(this.policy.screenshotProtection);
-                            console.log(`🛡️ Screenshot protection ${this.policy.screenshotProtection ? 'enabled' : 'disabled'} from policy`);
-                        }
-                    } else {
-                        // Default to free mode if no policy
-                        this.policy = { mode: 'free' };
-                        console.log('📋 Using default free policy');
+                // Policy information is now included in the session data from verification
+                // Build policy object from session data
+                if (this.sessionData) {
+                    // Map pricing model to policy mode
+                    let mode = 'free';
+                    switch (this.sessionData.pricingModel) {
+                        case 'free':
+                            mode = 'free';
+                            break;
+                        case 'paid':
+                        case 'fixed':
+                            mode = 'fixed';
+                            break;
+                        case 'freemium':
+                            mode = 'freemium';
+                            break;
+                        case 'per_photo':
+                            mode = 'per_photo';
+                            break;
+                        default:
+                            mode = 'free';
                     }
-                } catch (error) {
-                    console.error('⚠️ Could not load policy, defaulting to free:', error);
-                    this.policy = { mode: 'free' };
+                    
+                    this.policy = {
+                        mode: mode,
+                        pricePerPhoto: this.sessionData.pricePerDownload || 0,
+                        freeCount: this.sessionData.freeDownloads || 0,
+                        screenshotProtection: true // Enable by default for previews
+                    };
+                    
+                    console.log('📋 Built policy from session data:', this.policy);
+                    
+                    // Update screenshot protection settings
+                    if (this.protection && this.policy.screenshotProtection !== undefined) {
+                        this.protection.toggleProtection(this.policy.screenshotProtection);
+                        console.log(`🛡️ Screenshot protection ${this.policy.screenshotProtection ? 'enabled' : 'disabled'} from policy`);
+                    }
+                } else {
+                    // Fallback if no session data
+                    this.policy = { mode: 'free', screenshotProtection: true };
+                    console.log('📋 Using fallback free policy');
                 }
             }
             
@@ -1350,14 +1388,19 @@
                 // Calculate price for this photo
                 const price = this.calculatePhotoPrice(index);
                 
+                // Generate preview URL using the new preview API
+                const filename = photo.filename || photo.name || `photo-${index}.jpg`;
+                const previewUrl = `/api/preview/${this.sessionData.id}/${encodeURIComponent(filename)}?token=${this.galleryToken}`;
+                
                 card.innerHTML = `
                     <div class="photo-wrapper">
-                        <img src="${photo.url}" 
+                        <img src="${previewUrl}" 
                              alt="${photo.filename}" 
                              loading="lazy"
                              data-photo-id="${photo.id || index}"
                              data-entitled="${isEntitled}"
                              data-price="${price}"
+                             data-original-url="${photo.url}"
                              class="gallery-photo ${!isEntitled ? 'unpurchased' : 'purchased'}">
                         ${inCart ? '<div class="cart-indicator">✓</div>' : ''}
                         ${!isEntitled && price !== null ? `
