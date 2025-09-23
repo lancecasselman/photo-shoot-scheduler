@@ -10549,6 +10549,25 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// BACKWARD COMPATIBILITY REDIRECT - Legacy /gallery/:token URLs redirect to /g/:token
+app.get('/gallery/:token([A-Za-z0-9_-]{20,})', (req, res) => {
+    const { token } = req.params;
+    const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+    const redirectUrl = `/g/${token}${queryString ? '?' + queryString : ''}`;
+    
+    console.log('📱 LEGACY GALLERY REDIRECT:', {
+        from: req.originalUrl,
+        to: redirectUrl,
+        token: token,
+        queryParams: queryString || 'none',
+        userAgent: req.headers['user-agent']?.substring(0, 50),
+        timestamp: new Date().toISOString()
+    });
+    
+    // HTTP 301 Permanent Redirect for SEO and caching benefits
+    res.redirect(301, redirectUrl);
+});
+
 // EXPLICIT STATIC FILE ROUTE - Serve client-gallery.html BEFORE gallery token routes
 app.get('/client-gallery.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'client-gallery.html'));
