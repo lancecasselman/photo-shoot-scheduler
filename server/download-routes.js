@@ -169,6 +169,7 @@ function createDownloadRoutes(isAuthenticated) {
       // Return download policy data  
       const policy = {
         sessionId,
+        downloadEnabled: session.downloadEnabled, // CRITICAL FIX: Add missing downloadEnabled field
         pricingModel: session.pricingModel,
         downloadMax: session.downloadMax,
         pricePerDownload: session.pricePerDownload,
