@@ -51,23 +51,38 @@
         // Get photo sale data from saved content or defaults
         const saleData = await extractSaleData(photoBlock);
         
-        // Create purchase overlay
+        // Add mobile touch handler
+        if (window.innerWidth <= 480) {
+            img.addEventListener('click', () => {
+                toggleMobileActionSheet(index);
+            });
+        }
+        
+        // Create gradient scrim overlay (non-blocking, max 35% height)
         const purchaseOverlay = document.createElement('div');
-        purchaseOverlay.className = 'photo-purchase-overlay';
-        purchaseOverlay.innerHTML = `
-            <div class="purchase-controls">
-                <div class="price-display">Starting at $${saleData.basePrice.toFixed(2)}</div>
-                <div class="purchase-buttons">
-                    ${saleData.allowPrints ? `<button class="purchase-btn print-btn" onclick="startPrintOrder('${index}')">🖼️ Order Prints</button>` : ''}
-                    ${saleData.allowDigital ? `<button class="purchase-btn digital-btn" onclick="orderDigital('${index}')">💾 Buy Digital ($${saleData.digitalPrice.toFixed(2)})</button>` : ''}
-                </div>
-            </div>
+        purchaseOverlay.className = 'photo-purchase-scrim';
+        
+        // Create corner price badge
+        const priceBadge = document.createElement('div');
+        priceBadge.className = `price-badge ${saleData.isForSale ? 'paid' : 'free'}`;
+        priceBadge.textContent = saleData.isForSale ? `$${saleData.basePrice.toFixed(2)}` : 'Free';
+        
+        // Create minimal action buttons in scrim
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'scrim-actions';
+        actionButtons.innerHTML = `
+            ${saleData.allowPrints ? `<button class="scrim-btn print-btn" onclick="startPrintOrder('${index}')" title="Order Prints">🖼️</button>` : ''}
+            ${saleData.allowDigital ? `<button class="scrim-btn digital-btn" onclick="orderDigital('${index}')" title="Buy Digital ($${saleData.digitalPrice.toFixed(2)})">💾</button>` : ''}
+            <button class="scrim-btn cart-btn" onclick="toggleCart('${index}')" title="Add to Cart">🛒</button>
         `;
+        
+        purchaseOverlay.appendChild(actionButtons);
         
         // Make photo block container relative for overlay positioning
         photoBlock.style.position = 'relative';
         
-        // Add overlay to photo block
+        // Add corner badge and scrim to photo block
+        photoBlock.appendChild(priceBadge);
         photoBlock.appendChild(purchaseOverlay);
         
         // Store sale data on the photo block for easy access
@@ -159,94 +174,226 @@
         const style = document.createElement('style');
         style.id = 'photo-sale-styles';
         style.textContent = `
-            /* Photo Purchase Overlay Styles */
-            .photo-purchase-overlay {
+            /* Professional Preview Overlay System */
+            .photo-purchase-scrim {
                 position: absolute;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-                padding: 20px;
-                transform: translateY(100%);
-                transition: transform 0.3s ease;
-                z-index: 10;
-            }
-            
-            .photo-block.for-sale:hover .photo-purchase-overlay {
-                transform: translateY(0);
-            }
-            
-            .purchase-controls {
-                text-align: center;
-            }
-            
-            .price-display {
-                color: white;
-                font-size: 16px;
-                font-weight: 600;
-                margin-bottom: 10px;
-            }
-            
-            .purchase-buttons {
+                height: 35%; /* Limited to 35% of image height */
+                background: linear-gradient(to top, 
+                    rgba(0,0,0,0.75) 0%, 
+                    rgba(0,0,0,0.4) 40%, 
+                    transparent 100%);
                 display: flex;
-                gap: 10px;
+                align-items: flex-end;
                 justify-content: center;
-                flex-wrap: wrap;
+                padding: 16px;
+                z-index: 5;
+                opacity: 0;
+                transition: opacity 0.3s ease;
             }
             
-            .purchase-btn {
-                padding: 8px 16px;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
+            .photo-block.for-sale:hover .photo-purchase-scrim {
+                opacity: 1;
+            }
+            
+            /* Corner Price Badge */
+            .price-badge {
+                position: absolute;
+                top: 12px;
+                left: 12px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(8px);
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-weight: 700;
+                font-size: 0.85rem;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                z-index: 10;
                 transition: all 0.3s ease;
-                min-width: 120px;
             }
             
-            .print-btn {
+            .price-badge.free {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+            }
+            
+            .price-badge.paid {
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+            }
+            
+            /* Scrim Action Buttons */
+            .scrim-actions {
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .scrim-btn {
+                width: 44px;
+                height: 44px;
+                border: none;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                color: #2d3748;
+                font-size: 18px;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .scrim-btn:hover {
+                transform: translateY(-2px) scale(1.1);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            }
+            
+            .scrim-btn.print-btn {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
             }
             
-            .print-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            }
-            
-            .digital-btn {
+            .scrim-btn.digital-btn {
                 background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
                 color: white;
             }
             
-            .digital-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+            .scrim-btn.cart-btn {
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
             }
             
-            /* Mobile responsive */
+            /* Mobile Optimization */
             @media (max-width: 768px) {
-                .photo-purchase-overlay {
-                    position: static;
-                    transform: none;
-                    background: rgba(0,0,0,0.8);
-                    margin-top: 10px;
-                    border-radius: 8px;
+                .photo-purchase-scrim {
+                    height: 40%; /* Slightly larger on mobile for easier touch */
+                    background: linear-gradient(to top, 
+                        rgba(0,0,0,0.85) 0%, 
+                        rgba(0,0,0,0.5) 50%, 
+                        transparent 100%);
+                    opacity: 1; /* Always visible on mobile */
                 }
                 
-                .purchase-buttons {
+                .price-badge {
+                    top: 8px;
+                    left: 8px;
+                    font-size: 0.8rem;
+                    padding: 4px 10px;
+                }
+                
+                .scrim-actions {
+                    gap: 12px; /* Larger gaps for easier touch */
+                }
+                
+                .scrim-btn {
+                    width: 48px; /* Larger touch targets */
+                    height: 48px;
+                    font-size: 20px;
+                }
+            }
+            
+            /* Mobile Action Sheet (for enhanced UX) */
+            @media (max-width: 480px) {
+                .photo-purchase-scrim {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: auto;
+                    background: rgba(255, 255, 255, 0.98);
+                    backdrop-filter: blur(20px);
+                    border-radius: 16px 16px 0 0;
+                    transform: translateY(100%);
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+                    padding: 20px;
+                    z-index: 1000;
+                }
+                
+                .photo-block.for-sale.active .photo-purchase-scrim {
+                    transform: translateY(0);
+                }
+                
+                .scrim-actions {
+                    justify-content: space-around;
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }
+                
+                .scrim-btn {
+                    width: 60px;
+                    height: 60px;
+                    font-size: 24px;
                     flex-direction: column;
-                }
-                
-                .purchase-btn {
-                    width: 100%;
+                    gap: 4px;
                 }
             }
         `;
         
         document.head.appendChild(style);
     }
+    
+    // Cart management functions
+    window.toggleCart = function(photoIndex) {
+        console.log('🛒 Toggling cart for photo:', photoIndex);
+        
+        const photoBlock = document.querySelector(`[data-photo-index="${photoIndex}"]`);
+        if (!photoBlock) return;
+        
+        const isInCart = photoBlock.classList.contains('in-cart');
+        
+        if (isInCart) {
+            photoBlock.classList.remove('in-cart');
+            console.log('✅ Removed from cart:', photoIndex);
+        } else {
+            photoBlock.classList.add('in-cart');
+            console.log('✅ Added to cart:', photoIndex);
+        }
+        
+        updateCartIndicator();
+    };
+    
+    // Update cart indicator
+    function updateCartIndicator() {
+        const cartItems = document.querySelectorAll('.photo-block.in-cart').length;
+        const cartBadge = document.querySelector('.cart-badge');
+        
+        if (cartBadge) {
+            cartBadge.textContent = cartItems;
+            cartBadge.style.display = cartItems > 0 ? 'block' : 'none';
+        }
+        
+        // Update floating cart if present
+        const floatingCart = document.querySelector('.floating-cart');
+        if (floatingCart) {
+            const badge = floatingCart.querySelector('.cart-count');
+            if (badge) {
+                badge.textContent = cartItems;
+                badge.style.display = cartItems > 0 ? 'block' : 'none';
+            }
+        }
+    }
+    
+    // Mobile action sheet toggle
+    window.toggleMobileActionSheet = function(photoIndex) {
+        const photoBlock = document.querySelector(`[data-photo-index="${photoIndex}"]`);
+        if (!photoBlock) return;
+        
+        // Close other action sheets
+        document.querySelectorAll('.photo-block.active').forEach(block => {
+            if (block !== photoBlock) {
+                block.classList.remove('active');
+            }
+        });
+        
+        photoBlock.classList.toggle('active');
+    };
     
     // Show coming soon modal for WHCC features
     function showComingSoonModal(title, message) {

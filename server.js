@@ -2649,6 +2649,10 @@ app.use('/api/r2', createR2Routes());
 // Download Control API Routes - Photo delivery with pricing and watermarks
 app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
 
+// Preview Generation API Routes - Watermarked previews for gallery viewing
+const createPreviewApiRoutes = require('./server/preview-api-routes');
+app.use('/api/preview', createPreviewApiRoutes());
+
 // Enhanced Multipart Upload Routes - Optimized for large file uploads
 // app.use('/api/r2/multipart', createMultipartRoutes(pool)); // Removed - was only for Uppy/ObjectUploader
 
@@ -10545,9 +10549,14 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// BULLETPROOF CLIENT GALLERY SYSTEM - Serves clean client gallery
-app.get('/gallery/:id', async (req, res) => {
-    const galleryToken = req.params.id;
+// EXPLICIT STATIC FILE ROUTE - Serve client-gallery.html BEFORE gallery token routes
+app.get('/client-gallery.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client-gallery.html'));
+});
+
+// BULLETPROOF CLIENT GALLERY SYSTEM - Updated to use /g/:token pattern to avoid conflicts
+app.get('/g/:token([A-Za-z0-9_-]{20,})', async (req, res) => {
+    const galleryToken = req.params.token;
     
     console.log('🔒 BULLETPROOF GALLERY ACCESS:', {
         token: galleryToken,
@@ -10629,8 +10638,8 @@ app.get('/gallery/:id', async (req, res) => {
     }
 });
 
-// API endpoint for gallery verification (required by client-gallery.html)
-app.get('/api/gallery/:token/verify', async (req, res) => {
+// API endpoint for gallery verification (required by client-gallery.html) - with token constraints
+app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
     const galleryToken = req.params.token;
     
     try {
@@ -10714,8 +10723,8 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
     }
 });
 
-// API endpoint for getting gallery photos (required by client-gallery.html)
-app.get('/api/gallery/:token/photos', async (req, res) => {
+// API endpoint for getting gallery photos (required by client-gallery.html) - with token constraints
+app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
     const galleryToken = req.params.token;
     
     try {
@@ -10806,8 +10815,8 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
     }
 });
 
-// Public gallery photo serving route (no authentication required)
-app.get('/gallery/:token/photo/:filename', async (req, res) => {
+// Public gallery photo serving route (no authentication required) - updated to /g/ pattern with constraints
+app.get('/g/:token([A-Za-z0-9_-]{20,})/photo/:filename', async (req, res) => {
     const { token, filename } = req.params;
     
     try {
@@ -10889,7 +10898,7 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
             baseUrl = `https://${host}`;
         }
 
-        const galleryUrl = `${baseUrl}/gallery/${accessToken}`;
+        const galleryUrl = `${baseUrl}/g/${accessToken}`;
 
         console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
         console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
@@ -10906,8 +10915,8 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
     }
 });
 
-// Verify gallery access (API endpoint for client gallery)
-app.get('/api/gallery/:token/verify', async (req, res) => {
+// DUPLICATE ROUTE REMOVED - Verify gallery access (API endpoint for client gallery) - with token constraints
+app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify-duplicate', async (req, res) => {
     const galleryToken = req.params.token;
     
     console.log('🔒 GALLERY API VERIFY:', {
@@ -11014,8 +11023,9 @@ app.get('/api/gallery/:token/verify', async (req, res) => {
     }
 });
 
-// Get photos for gallery (client endpoint)
-// BULLETPROOF API PHOTOS - Replaces R2 complexity with verified database photos
+// DUPLICATE ROUTE REMOVED - Get photos for gallery (client endpoint) 
+// BULLETPROOF API PHOTOS - This duplicate route has been removed, using the first occurrence instead
+/*
 app.get('/api/gallery/:token/photos', async (req, res) => {
     const galleryToken = req.params.token;
     
@@ -11092,6 +11102,7 @@ app.get('/api/gallery/:token/photos', async (req, res) => {
         res.status(500).json({ error: 'Failed to get gallery photos' });
     }
 });
+*/
 
 // Serve individual photo from gallery
 app.get('/api/gallery/:id/photo/:filename', async (req, res) => {
