@@ -14,6 +14,7 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -134,6 +135,10 @@ export const photographySessions = pgTable("photography_sessions", {
   watermarkPosition: varchar("watermark_position").default("bottom-right"), // 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'
   watermarkScale: integer("watermark_scale").default(20), // 1-100 percentage of image width for logo
   watermarkUpdatedAt: timestamp("watermark_updated_at").defaultNow(),
+  // Enhanced download commerce fields
+  downloadPolicyId: varchar("download_policy_id"),
+  totalDownloadRevenue: decimal("total_download_revenue", { precision: 10, scale: 2 }).default("0.00"),
+  lastDownloadActivity: timestamp("last_download_activity"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -469,6 +474,172 @@ export type InsertDigitalTransaction = typeof digitalTransactions.$inferInsert;
 export type DigitalTransaction = typeof digitalTransactions.$inferSelect;
 export type InsertGalleryDownload = typeof galleryDownloads.$inferInsert;
 export type GalleryDownload = typeof galleryDownloads.$inferSelect;
+
+// Enhanced Download Commerce Tables
+
+// Download Policies table - defines pricing models for photo sessions
+export const downloadPolicies = pgTable("download_policies", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  mode: varchar("mode").notNull().$type<'free' | 'fixed' | 'freemium' | 'per_photo' | 'bulk'>(),
+  pricePerPhoto: decimal("price_per_photo", { precision: 10, scale: 2 }), // For fixed/per_photo modes
+  freeCount: integer("free_count"), // For freemium mode
+  bulkTiers: jsonb("bulk_tiers").default([]), // Array of {qty, price} for bulk pricing
+  maxPerClient: integer("max_per_client"), // Max downloads per client
+  maxGlobal: integer("max_global"), // Max total downloads for session
+  screenshotProtection: boolean("screenshot_protection").default(false),
+  currency: varchar("currency").default("USD"),
+  taxIncluded: boolean("tax_included").default(false),
+  watermarkPreset: varchar("watermark_preset"), // References watermark configuration
+  updatedBy: varchar("updated_by"), // User who last updated
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  sessionIdx: index("idx_download_policies_session").on(table.sessionId),
+  modeCheck: check("download_policies_mode_check", sql`
+    mode IN ('free', 'fixed', 'freemium', 'per_photo', 'bulk')
+  `),
+}));
+
+// Download Orders table - tracks payments for downloads
+export const downloadOrders = pgTable("download_orders", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id), // Photographer
+  clientKey: varchar("client_key").notNull(), // Client identifier/email
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").notNull(),
+  mode: varchar("mode").notNull(), // Pricing mode used
+  items: jsonb("items").notNull().default([]), // Array of photoIds or pack details
+  stripeCheckoutSessionId: varchar("stripe_checkout_session_id").unique(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").unique(),
+  stripeConnectAccountId: varchar("stripe_connect_account_id"),
+  platformFeeAmount: decimal("platform_fee_amount", { precision: 10, scale: 2 }),
+  status: varchar("status").notNull().default("pending").$type<'pending' | 'processing' | 'completed' | 'failed' | 'refunded'>(),
+  receiptUrl: varchar("receipt_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  sessionIdx: index("idx_download_orders_session").on(table.sessionId),
+  statusIdx: index("idx_download_orders_status").on(table.status),
+  stripeCheckoutIdx: index("idx_download_orders_stripe_checkout").on(table.stripeCheckoutSessionId),
+  stripePaymentIdx: index("idx_download_orders_stripe_payment").on(table.stripePaymentIntentId),
+  statusCheck: check("download_orders_status_check", sql`
+    status IN ('pending', 'processing', 'completed', 'failed', 'refunded')
+  `),
+}));
+
+// Download Entitlements table - tracks what clients are allowed to download
+export const downloadEntitlements = pgTable("download_entitlements", {
+  id: varchar("id").primaryKey().notNull(),
+  orderId: varchar("order_id").references(() => downloadOrders.id, { onDelete: "cascade" }),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  clientKey: varchar("client_key").notNull(),
+  photoId: varchar("photo_id"), // null for bulk entitlements
+  remaining: integer("remaining").notNull(), // Number of downloads remaining
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  usedAt: timestamp("used_at"), // When fully consumed
+}, (table) => ({
+  sessionIdx: index("idx_download_entitlements_session").on(table.sessionId),
+  clientKeyIdx: index("idx_download_entitlements_client").on(table.clientKey),
+  sessionClientIdx: index("idx_download_entitlements_session_client").on(table.sessionId, table.clientKey),
+}));
+
+// Download History table - tracks all download attempts
+export const downloadHistory = pgTable("download_history", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  clientKey: varchar("client_key").notNull(),
+  photoId: varchar("photo_id").notNull(),
+  tokenId: varchar("token_id").references(() => downloadTokens.id, { onDelete: "set null" }),
+  orderId: varchar("order_id").references(() => downloadOrders.id, { onDelete: "set null" }),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  status: varchar("status").notNull().$type<'success' | 'failed' | 'denied' | 'expired'>(),
+  failureReason: varchar("failure_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  sessionIdx: index("idx_download_history_session").on(table.sessionId),
+  clientKeyIdx: index("idx_download_history_client").on(table.clientKey),
+  statusCheck: check("download_history_status_check", sql`
+    status IN ('success', 'failed', 'denied', 'expired')
+  `),
+}));
+
+// Relations for enhanced download commerce tables
+export const downloadPoliciesRelations = relations(downloadPolicies, ({ one, many }) => ({
+  session: one(photographySessions, {
+    fields: [downloadPolicies.sessionId],
+    references: [photographySessions.id],
+  }),
+}));
+
+export const downloadOrdersRelations = relations(downloadOrders, ({ one, many }) => ({
+  session: one(photographySessions, {
+    fields: [downloadOrders.sessionId],
+    references: [photographySessions.id],
+  }),
+  user: one(users, {
+    fields: [downloadOrders.userId],
+    references: [users.id],
+  }),
+  entitlements: many(downloadEntitlements),
+  histories: many(downloadHistory),
+}));
+
+export const downloadEntitlementsRelations = relations(downloadEntitlements, ({ one }) => ({
+  order: one(downloadOrders, {
+    fields: [downloadEntitlements.orderId],
+    references: [downloadOrders.id],
+  }),
+  session: one(photographySessions, {
+    fields: [downloadEntitlements.sessionId],
+    references: [photographySessions.id],
+  }),
+}));
+
+export const downloadHistoryRelations = relations(downloadHistory, ({ one }) => ({
+  session: one(photographySessions, {
+    fields: [downloadHistory.sessionId],
+    references: [photographySessions.id],
+  }),
+  token: one(downloadTokens, {
+    fields: [downloadHistory.tokenId],
+    references: [downloadTokens.id],
+  }),
+  order: one(downloadOrders, {
+    fields: [downloadHistory.orderId],
+    references: [downloadOrders.id],
+  }),
+}));
+
+export const photographySessionsRelations = relations(photographySessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [photographySessions.userId],
+    references: [users.id],
+  }),
+  downloadPolicy: one(downloadPolicies, {
+    fields: [photographySessions.downloadPolicyId],
+    references: [downloadPolicies.id],
+  }),
+  downloadOrders: many(downloadOrders),
+  downloadEntitlements: many(downloadEntitlements),
+  downloadHistories: many(downloadHistory),
+  downloadTokens: many(downloadTokens),
+  digitalTransactions: many(digitalTransactions),
+  galleryDownloads: many(galleryDownloads),
+}));
+
+// TypeScript type exports for new tables
+export type InsertDownloadPolicy = typeof downloadPolicies.$inferInsert;
+export type DownloadPolicy = typeof downloadPolicies.$inferSelect;
+export type InsertDownloadOrder = typeof downloadOrders.$inferInsert;
+export type DownloadOrder = typeof downloadOrders.$inferSelect;
+export type InsertDownloadEntitlement = typeof downloadEntitlements.$inferInsert;
+export type DownloadEntitlement = typeof downloadEntitlements.$inferSelect;
+export type InsertDownloadHistory = typeof downloadHistory.$inferInsert;
+export type DownloadHistory = typeof downloadHistory.$inferSelect;
 
 // Community Platform Tables
 export const communityProfiles = pgTable("community_profiles", {
