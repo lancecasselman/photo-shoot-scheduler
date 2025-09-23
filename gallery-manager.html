@@ -567,6 +567,682 @@
                 gap: 30px;
             }
         }
+        /* Advanced Download Controls Panel Styles */
+        .download-control-panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin: 30px 0;
+            overflow: hidden;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .control-panel-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .panel-icon {
+            font-size: 1.2em;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .quick-btn.preview {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Control Sections */
+        .control-section {
+            padding: 25px 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Status Toggle */
+        .status-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .status-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 80px;
+            height: 40px;
+        }
+
+        .toggle-switch.large {
+            width: 100px;
+            height: 50px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #dc3545;
+            transition: 0.4s;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        .toggle-icon {
+            font-size: 1.5em;
+            transition: opacity 0.3s;
+        }
+
+        .toggle-icon.unlocked {
+            opacity: 0;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: #28a745;
+        }
+
+        .toggle-switch input:checked + .toggle-slider .locked {
+            opacity: 0;
+        }
+
+        .toggle-switch input:checked + .toggle-slider .unlocked {
+            opacity: 1;
+        }
+
+        .status-info h4 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--text-primary);
+        }
+
+        .status-info p {
+            margin: 5px 0 0 0;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 20px;
+        }
+
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active .indicator-dot {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Pricing Modes */
+        .pricing-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .mode-option input[type="radio"] {
+            display: none;
+        }
+
+        .mode-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mode-option:hover .mode-card {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .mode-option input:checked + .mode-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .mode-icon {
+            font-size: 1.8em;
+        }
+
+        .mode-name {
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .mode-desc {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        /* Pricing Configuration */
+        .pricing-config {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .config-message {
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config-message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .config-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+
+        .form-control {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-prefix {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .input-group input {
+            flex: 1;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1em;
+        }
+
+        .input-group input:focus {
+            outline: none;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Freemium Flow */
+        .freemium-flow {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+        }
+
+        .flow-step {
+            flex: 1;
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--primary);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: var(--primary);
+        }
+
+        /* Bulk Tiers */
+        .bulk-tiers {
+            margin-bottom: 20px;
+        }
+
+        .tier-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .tier-number {
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 60px;
+        }
+
+        .tier-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .tier-separator {
+            color: var(--text-secondary);
+        }
+
+        .tier-remove {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .tier-remove:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        .btn-add-tier {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-add-tier:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Protection & Watermark */
+        .toggle-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-option:hover {
+            background: #e9ecef;
+        }
+
+        .toggle-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .toggle-info small {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .protection-methods,
+        .watermark-config {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .range-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .range-group input[type="range"] {
+            flex: 1;
+        }
+
+        .range-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.clickable {
+            cursor: pointer;
+            border-color: var(--primary);
+        }
+
+        .stat-card.clickable:hover {
+            border-color: var(--primary-dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .stat-card.clickable:hover .stat-icon,
+        .stat-card.clickable:hover .stat-value,
+        .stat-card.clickable:hover .stat-label {
+            color: white;
+        }
+
+        .stat-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* Action Buttons */
+        .actions-section {
+            display: flex;
+            gap: 15px;
+            padding: 30px;
+            background: #f8f9fa;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-action.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-action.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-action.secondary {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-action.secondary:hover {
+            border-color: var(--primary);
+            background: #f8f9fa;
+        }
+
+        .btn-icon {
+            font-size: 1.2em;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .control-panel-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .quick-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .status-toggle-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .status-indicator {
+                margin: 20px auto 0;
+            }
+
+            .pricing-modes {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 10px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .freemium-flow {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions-section {
+                flex-direction: column;
+            }
+
+            .btn-action {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -592,26 +1268,355 @@
         </button>
     </div>
 
-    <!-- Download Controls Section -->
-    <div class="toolbar" style="border-top: 1px solid #e0e0e0; margin-top: 20px; padding-top: 20px;">
-        <div style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-            Download Controls:
+    <!-- Advanced Download Commerce Control Panel -->
+    <div id="downloadControlPanel" class="download-control-panel">
+        <!-- Header with Quick Actions -->
+        <div class="control-panel-header">
+            <h3 class="panel-title">
+                <span class="panel-icon">💰</span>
+                Download Commerce Controls
+            </h3>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="downloadControls.quickPreset('free')" title="Free Downloads">
+                    Free
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(5)" title="$5 per download">
+                    $5
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(10)" title="$10 per download">
+                    $10
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(25)" title="$25 per download">
+                    $25
+                </button>
+                <button class="quick-btn preview" onclick="downloadControls.previewAsClient()">
+                    <span>👁️</span> Preview as Client
+                </button>
+            </div>
         </div>
-        <button class="btn btn-secondary" onclick="quickToggleDownloads()" id="toggleDownloadsBtn">
-            🔓 <span id="downloadStatusText">Enable Downloads</span>
-        </button>
-        <button class="btn btn-secondary" onclick="quickSetPricing()">
-            💰 Set Pricing
-        </button>
-        <button class="btn btn-secondary" onclick="quickWatermarkToggle()" id="toggleWatermarkBtn">
-            🎨 <span id="watermarkStatusText">Add Watermark</span>
-        </button>
-        <button class="btn btn-secondary" onclick="viewDownloadAnalytics()">
-            📊 Analytics
-        </button>
-        <button class="btn btn-secondary" onclick="openFullDownloadControls()" style="background: var(--primary); color: white;">
-            ⚙️ Full Controls
-        </button>
+
+        <!-- Main Status Toggle -->
+        <div class="control-section status-section">
+            <div class="status-toggle-container">
+                <label class="toggle-switch large">
+                    <input type="checkbox" id="downloadEnabled" onchange="downloadControls.updateStatus()">
+                    <span class="toggle-slider">
+                        <span class="toggle-icon locked">🔒</span>
+                        <span class="toggle-icon unlocked">🔓</span>
+                    </span>
+                </label>
+                <div class="status-info">
+                    <h4 id="statusText">Downloads Disabled</h4>
+                    <p id="statusDescription">Clients cannot download photos</p>
+                </div>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="indicator-dot"></span>
+                    <span class="indicator-text">INACTIVE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Mode Selection -->
+        <div class="control-section pricing-mode-section">
+            <h4 class="section-title">Pricing Model</h4>
+            <div class="pricing-modes">
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="free" id="mode-free" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">🎁</span>
+                        <span class="mode-name">Free</span>
+                        <span class="mode-desc">No charge</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="fixed" id="mode-fixed" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">💵</span>
+                        <span class="mode-name">Fixed Price</span>
+                        <span class="mode-desc">Per download</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="freemium" id="mode-freemium" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">⭐</span>
+                        <span class="mode-name">Freemium</span>
+                        <span class="mode-desc">Free + Paid</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="perPhoto" id="mode-perPhoto" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">📸</span>
+                        <span class="mode-name">Per Photo</span>
+                        <span class="mode-desc">Individual</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="bulk" id="mode-bulk" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">📦</span>
+                        <span class="mode-name">Bulk Pricing</span>
+                        <span class="mode-desc">Volume tiers</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Dynamic Pricing Configuration -->
+        <div class="control-section pricing-config-section" id="pricingConfig">
+            <h4 class="section-title">Pricing Configuration</h4>
+            
+            <!-- Free Mode Config -->
+            <div class="pricing-config" id="config-free" style="display: none;">
+                <div class="config-message success">
+                    <span class="message-icon">✅</span>
+                    <p>All downloads are free for clients</p>
+                </div>
+                <div class="form-group">
+                    <label>Download Limit (optional)</label>
+                    <input type="number" id="free-limit" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Leave empty for unlimited downloads</small>
+                </div>
+            </div>
+
+            <!-- Fixed Price Config -->
+            <div class="pricing-config" id="config-fixed" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price per Download</label>
+                        <div class="input-group">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="fixed-price" class="form-control" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="fixed-currency" class="form-control">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="CAD">CAD (C$)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="fixed-tax-included">
+                        <span>Tax included in price</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Freemium Config -->
+            <div class="pricing-config" id="config-freemium" style="display: none;">
+                <div class="freemium-flow">
+                    <div class="flow-step">
+                        <span class="step-number">1</span>
+                        <div class="form-group">
+                            <label>Free Downloads</label>
+                            <input type="number" id="freemium-free-count" class="form-control" placeholder="5" min="1">
+                            <small>Number of free downloads</small>
+                        </div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <span class="step-number">2</span>
+                        <div class="form-group">
+                            <label>Then charge</label>
+                            <div class="input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" id="freemium-price" class="form-control" placeholder="5.00" step="0.01" min="0">
+                            </div>
+                            <small>Per additional download</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per Photo Config -->
+            <div class="pricing-config" id="config-perPhoto" style="display: none;">
+                <div class="form-group">
+                    <label>Base Price per Photo</label>
+                    <div class="input-group">
+                        <span class="input-prefix">$</span>
+                        <input type="number" id="perPhoto-base-price" class="form-control" placeholder="10.00" step="0.01" min="0">
+                    </div>
+                    <small>Default price for all photos</small>
+                </div>
+                <div class="config-message info">
+                    <span class="message-icon">ℹ️</span>
+                    <p>Individual photo pricing coming soon. For now, all photos use the base price.</p>
+                </div>
+            </div>
+
+            <!-- Bulk Pricing Config -->
+            <div class="pricing-config" id="config-bulk" style="display: none;">
+                <div class="bulk-tiers" id="bulkTiers">
+                    <div class="tier-item" data-tier="1">
+                        <span class="tier-number">Tier 1</span>
+                        <div class="tier-inputs">
+                            <input type="number" class="form-control tier-quantity" placeholder="Quantity (e.g., 5)" min="1">
+                            <span class="tier-separator">photos for</span>
+                            <div class="input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" class="form-control tier-price" placeholder="25.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <button class="tier-remove" onclick="downloadControls.removeTier(1)" style="display: none;">×</button>
+                    </div>
+                </div>
+                <button class="btn-add-tier" onclick="downloadControls.addTier()">
+                    <span>+</span> Add Pricing Tier
+                </button>
+            </div>
+        </div>
+
+        <!-- Limits & Restrictions -->
+        <div class="control-section limits-section">
+            <h4 class="section-title">Download Limits</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Per Client Limit</label>
+                    <input type="number" id="limit-per-client" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Max downloads per client</small>
+                </div>
+                <div class="form-group">
+                    <label>Global Session Limit</label>
+                    <input type="number" id="limit-global" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Total downloads allowed</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screenshot Prevention -->
+        <div class="control-section protection-section">
+            <h4 class="section-title">Protection Settings</h4>
+            <div class="protection-options">
+                <label class="toggle-option">
+                    <input type="checkbox" id="screenshot-prevention">
+                    <div class="toggle-info">
+                        <strong>Screenshot Prevention</strong>
+                        <small>Deter screenshots (web limitations apply)</small>
+                    </div>
+                </label>
+                <div class="protection-methods" id="protectionMethods" style="display: none;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="disable-right-click" checked>
+                        <span>Disable right-click</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="prevent-shortcuts" checked>
+                        <span>Block keyboard shortcuts</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="blur-unpurchased">
+                        <span>Blur unpurchased photos</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watermark Controls -->
+        <div class="control-section watermark-section">
+            <h4 class="section-title">Watermark Settings</h4>
+            <label class="toggle-option">
+                <input type="checkbox" id="watermark-enabled">
+                <div class="toggle-info">
+                    <strong>Enable Watermark</strong>
+                    <small>Add watermark to preview images</small>
+                </div>
+            </label>
+            <div class="watermark-config" id="watermarkConfig" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Watermark Type</label>
+                        <select id="watermark-type" class="form-control" onchange="downloadControls.toggleWatermarkType()">
+                            <option value="text">Text</option>
+                            <option value="logo">Logo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="watermark-text-group">
+                        <label>Watermark Text</label>
+                        <input type="text" id="watermark-text" class="form-control" placeholder="© Your Studio Name">
+                    </div>
+                    <div class="form-group" id="watermark-logo-group" style="display: none;">
+                        <label>Upload Logo</label>
+                        <input type="file" id="watermark-logo" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Position</label>
+                        <select id="watermark-position" class="form-control">
+                            <option value="center">Center</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="bottom-right">Bottom Right</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Opacity</label>
+                        <div class="range-group">
+                            <input type="range" id="watermark-opacity" min="10" max="100" value="60" oninput="downloadControls.updateOpacityValue()">
+                            <span class="range-value" id="opacity-value">60%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div class="control-section analytics-section">
+            <h4 class="section-title">Download Analytics</h4>
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📥</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-downloads">0</div>
+                        <div class="stat-label">Total Downloads</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-revenue">$0</div>
+                        <div class="stat-label">Revenue</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛍️</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-orders">0</div>
+                        <div class="stat-label">Active Orders</div>
+                    </div>
+                </div>
+                <div class="stat-card clickable" onclick="downloadControls.viewFullHistory()">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-value">→</div>
+                        <div class="stat-label">View History</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="control-section actions-section">
+            <button class="btn-action primary" onclick="downloadControls.savePolicy()">
+                <span class="btn-icon">💾</span>
+                Save Changes
+            </button>
+            <button class="btn-action secondary" onclick="downloadControls.resetForm()">
+                <span class="btn-icon">↺</span>
+                Reset
+            </button>
+            <button class="btn-action secondary" onclick="downloadControls.copyFromSession()">
+                <span class="btn-icon">📋</span>
+                Copy from Session
+            </button>
+        </div>
     </div>
 
     <div id="file-stats" style="
@@ -683,6 +1688,432 @@
         let totalBytes = 0;
         let uploadedBytes = 0;
 
+        // Advanced Download Controls Manager
+        class DownloadControlsManager {
+            constructor() {
+                this.sessionId = sessionId;
+                this.currentPolicy = null;
+                this.tierCount = 1;
+                this.init();
+            }
+
+            async init() {
+                // Load initial policy
+                await this.loadPolicy();
+                
+                // Set up event listeners
+                this.setupEventListeners();
+                
+                // Load analytics
+                await this.loadAnalytics();
+            }
+
+            setupEventListeners() {
+                // Screenshot prevention toggle
+                document.getElementById('screenshot-prevention')?.addEventListener('change', (e) => {
+                    const methods = document.getElementById('protectionMethods');
+                    if (methods) {
+                        methods.style.display = e.target.checked ? 'block' : 'none';
+                    }
+                });
+
+                // Watermark enable toggle
+                document.getElementById('watermark-enabled')?.addEventListener('change', (e) => {
+                    const config = document.getElementById('watermarkConfig');
+                    if (config) {
+                        config.style.display = e.target.checked ? 'block' : 'none';
+                    }
+                });
+            }
+
+            async loadPolicy() {
+                try {
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load policy');
+                    }
+                    
+                    const data = await response.json();
+                    this.currentPolicy = data.policy;
+                    
+                    // Populate UI with current policy
+                    this.populateUI();
+                    
+                } catch (error) {
+                    console.error('Error loading policy:', error);
+                    showMessage('Failed to load download settings', 'error');
+                }
+            }
+
+            populateUI() {
+                if (!this.currentPolicy) return;
+                
+                const policy = this.currentPolicy;
+                
+                // Set download enabled status
+                const downloadEnabled = document.getElementById('downloadEnabled');
+                if (downloadEnabled) {
+                    downloadEnabled.checked = policy.downloadEnabled || false;
+                    this.updateStatus();
+                }
+                
+                // Set pricing mode
+                const pricingModel = policy.pricingModel || 'free';
+                const modeRadio = document.getElementById(`mode-${pricingModel === 'paid' ? 'fixed' : pricingModel}`);
+                if (modeRadio) {
+                    modeRadio.checked = true;
+                    this.updatePricingMode();
+                }
+                
+                // Set pricing values based on mode
+                if (pricingModel === 'paid' || pricingModel === 'fixed') {
+                    const fixedPrice = document.getElementById('fixed-price');
+                    if (fixedPrice) {
+                        fixedPrice.value = policy.pricePerDownload || '0.00';
+                    }
+                }
+                
+                if (pricingModel === 'freemium') {
+                    const freeCount = document.getElementById('freemium-free-count');
+                    const freemiumPrice = document.getElementById('freemium-price');
+                    if (freeCount) freeCount.value = policy.freeDownloads || 5;
+                    if (freemiumPrice) freemiumPrice.value = policy.pricePerDownload || '5.00';
+                }
+                
+                // Set download limits
+                if (policy.downloadMax) {
+                    const limitGlobal = document.getElementById('limit-global');
+                    if (limitGlobal) limitGlobal.value = policy.downloadMax;
+                }
+                
+                // Set watermark settings
+                const watermarkEnabled = document.getElementById('watermark-enabled');
+                if (watermarkEnabled) {
+                    watermarkEnabled.checked = policy.watermarkEnabled || false;
+                    const config = document.getElementById('watermarkConfig');
+                    if (config) {
+                        config.style.display = watermarkEnabled.checked ? 'block' : 'none';
+                    }
+                }
+                
+                if (policy.watermarkText) {
+                    const watermarkText = document.getElementById('watermark-text');
+                    if (watermarkText) watermarkText.value = policy.watermarkText;
+                }
+                
+                if (policy.watermarkPosition) {
+                    const watermarkPosition = document.getElementById('watermark-position');
+                    if (watermarkPosition) watermarkPosition.value = policy.watermarkPosition;
+                }
+                
+                if (policy.watermarkOpacity) {
+                    const watermarkOpacity = document.getElementById('watermark-opacity');
+                    if (watermarkOpacity) {
+                        watermarkOpacity.value = policy.watermarkOpacity;
+                        this.updateOpacityValue();
+                    }
+                }
+            }
+
+            updateStatus() {
+                const enabled = document.getElementById('downloadEnabled').checked;
+                const statusText = document.getElementById('statusText');
+                const statusDesc = document.getElementById('statusDescription');
+                const indicator = document.getElementById('statusIndicator');
+                const indicatorText = indicator?.querySelector('.indicator-text');
+                
+                if (statusText) {
+                    statusText.textContent = enabled ? 'Downloads Enabled' : 'Downloads Disabled';
+                }
+                
+                if (statusDesc) {
+                    statusDesc.textContent = enabled ? 
+                        'Clients can download photos based on your pricing settings' : 
+                        'Clients cannot download photos';
+                }
+                
+                if (indicator) {
+                    indicator.classList.toggle('active', enabled);
+                    if (indicatorText) {
+                        indicatorText.textContent = enabled ? 'ACTIVE' : 'INACTIVE';
+                    }
+                }
+            }
+
+            updatePricingMode() {
+                // Hide all config sections
+                document.querySelectorAll('.pricing-config').forEach(config => {
+                    config.style.display = 'none';
+                });
+                
+                // Get selected mode
+                const selectedMode = document.querySelector('input[name="pricingMode"]:checked')?.value;
+                if (!selectedMode) return;
+                
+                // Map mode values to config IDs
+                const modeMap = {
+                    'free': 'config-free',
+                    'fixed': 'config-fixed',
+                    'paid': 'config-fixed', // Map 'paid' to fixed for backward compatibility
+                    'freemium': 'config-freemium',
+                    'perPhoto': 'config-perPhoto',
+                    'bulk': 'config-bulk'
+                };
+                
+                // Show selected config
+                const configId = modeMap[selectedMode];
+                const config = document.getElementById(configId);
+                if (config) {
+                    config.style.display = 'block';
+                }
+            }
+
+            toggleWatermarkType() {
+                const type = document.getElementById('watermark-type')?.value;
+                const textGroup = document.getElementById('watermark-text-group');
+                const logoGroup = document.getElementById('watermark-logo-group');
+                
+                if (textGroup && logoGroup) {
+                    if (type === 'text') {
+                        textGroup.style.display = 'block';
+                        logoGroup.style.display = 'none';
+                    } else {
+                        textGroup.style.display = 'none';
+                        logoGroup.style.display = 'block';
+                    }
+                }
+            }
+
+            updateOpacityValue() {
+                const opacity = document.getElementById('watermark-opacity')?.value;
+                const valueDisplay = document.getElementById('opacity-value');
+                if (valueDisplay && opacity) {
+                    valueDisplay.textContent = `${opacity}%`;
+                }
+            }
+
+            addTier() {
+                this.tierCount++;
+                const tierHtml = `
+                    <div class="tier-item" data-tier="${this.tierCount}">
+                        <span class="tier-number">Tier ${this.tierCount}</span>
+                        <div class="tier-inputs">
+                            <input type="number" class="form-control tier-quantity" placeholder="Quantity" min="1">
+                            <span class="tier-separator">photos for</span>
+                            <div class="input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" class="form-control tier-price" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <button class="tier-remove" onclick="downloadControls.removeTier(${this.tierCount})" style="display: block;">×</button>
+                    </div>
+                `;
+                
+                const container = document.getElementById('bulkTiers');
+                if (container) {
+                    container.insertAdjacentHTML('beforeend', tierHtml);
+                }
+                
+                // Show remove button on first tier if there are multiple
+                if (this.tierCount > 1) {
+                    const firstRemove = document.querySelector('.tier-item[data-tier="1"] .tier-remove');
+                    if (firstRemove) {
+                        firstRemove.style.display = 'block';
+                    }
+                }
+            }
+
+            removeTier(tierNum) {
+                const tier = document.querySelector(`.tier-item[data-tier="${tierNum}"]`);
+                if (tier) {
+                    tier.remove();
+                    
+                    // Hide remove button on first tier if it's the only one
+                    const remainingTiers = document.querySelectorAll('.tier-item');
+                    if (remainingTiers.length === 1) {
+                        const firstRemove = remainingTiers[0].querySelector('.tier-remove');
+                        if (firstRemove) {
+                            firstRemove.style.display = 'none';
+                        }
+                    }
+                }
+            }
+
+            async quickPreset(value) {
+                if (value === 'free') {
+                    document.getElementById('mode-free').checked = true;
+                } else {
+                    document.getElementById('mode-fixed').checked = true;
+                    const priceInput = document.getElementById('fixed-price');
+                    if (priceInput) {
+                        priceInput.value = value.toFixed(2);
+                    }
+                }
+                this.updatePricingMode();
+                
+                // Auto-save for quick presets
+                await this.savePolicy();
+            }
+
+            async savePolicy() {
+                try {
+                    const formData = new FormData();
+                    
+                    // Get download enabled status
+                    formData.append('downloadEnabled', document.getElementById('downloadEnabled').checked);
+                    
+                    // Get pricing mode
+                    const pricingMode = document.querySelector('input[name="pricingMode"]:checked')?.value || 'free';
+                    const modeMapping = {
+                        'fixed': 'paid',
+                        'perPhoto': 'paid',
+                        'bulk': 'paid'
+                    };
+                    formData.append('pricingModel', modeMapping[pricingMode] || pricingMode);
+                    
+                    // Get pricing values based on mode
+                    if (pricingMode === 'fixed') {
+                        const price = document.getElementById('fixed-price')?.value || '0';
+                        formData.append('pricePerDownload', price);
+                    } else if (pricingMode === 'freemium') {
+                        const freeCount = document.getElementById('freemium-free-count')?.value || '5';
+                        const price = document.getElementById('freemium-price')?.value || '0';
+                        formData.append('freeDownloads', freeCount);
+                        formData.append('pricePerDownload', price);
+                    } else if (pricingMode === 'perPhoto') {
+                        const price = document.getElementById('perPhoto-base-price')?.value || '0';
+                        formData.append('pricePerDownload', price);
+                    } else if (pricingMode === 'bulk') {
+                        // For now, just set a base price
+                        const firstTierPrice = document.querySelector('.tier-price')?.value || '0';
+                        formData.append('pricePerDownload', firstTierPrice);
+                    }
+                    
+                    // Get download limits
+                    const globalLimit = document.getElementById('limit-global')?.value;
+                    if (globalLimit) {
+                        formData.append('downloadMax', globalLimit);
+                    }
+                    
+                    // Get watermark settings
+                    const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
+                    formData.append('watermarkEnabled', watermarkEnabled);
+                    
+                    if (watermarkEnabled) {
+                        const watermarkType = document.getElementById('watermark-type')?.value || 'text';
+                        formData.append('watermarkType', watermarkType);
+                        
+                        if (watermarkType === 'text') {
+                            const watermarkText = document.getElementById('watermark-text')?.value;
+                            if (watermarkText) {
+                                formData.append('watermarkText', watermarkText);
+                            }
+                        } else {
+                            // Handle logo upload if needed
+                            const logoInput = document.getElementById('watermark-logo');
+                            if (logoInput?.files?.length > 0) {
+                                formData.append('logo', logoInput.files[0]);
+                            }
+                        }
+                        
+                        formData.append('watermarkPosition', document.getElementById('watermark-position')?.value || 'center');
+                        formData.append('watermarkOpacity', document.getElementById('watermark-opacity')?.value || '60');
+                    }
+                    
+                    // Send update request
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
+                        method: 'PUT',
+                        credentials: 'include',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        showMessage('Download settings saved successfully!', 'success');
+                        // Reload policy to ensure UI is in sync
+                        await this.loadPolicy();
+                    } else {
+                        throw new Error('Failed to save settings');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error saving policy:', error);
+                    showMessage('Failed to save download settings', 'error');
+                }
+            }
+
+            resetForm() {
+                if (confirm('Reset all settings to their last saved state?')) {
+                    this.loadPolicy();
+                    showMessage('Settings reset to last saved state', 'info');
+                }
+            }
+
+            async copyFromSession() {
+                const otherSessionId = prompt('Enter the session ID to copy settings from:');
+                if (!otherSessionId) return;
+                
+                try {
+                    const response = await fetch(`/api/downloads/sessions/${otherSessionId}/policy`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.currentPolicy = data.policy;
+                        this.populateUI();
+                        showMessage('Settings copied! Remember to save changes.', 'success');
+                    } else {
+                        throw new Error('Failed to load other session');
+                    }
+                } catch (error) {
+                    console.error('Error copying from session:', error);
+                    showMessage('Failed to copy settings from other session', 'error');
+                }
+            }
+
+            previewAsClient() {
+                const galleryUrl = `/gallery.html?session=${this.sessionId}`;
+                window.open(galleryUrl, '_blank');
+            }
+
+            async loadAnalytics() {
+                try {
+                    // Fetch analytics data
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/analytics`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update analytics display
+                        const downloads = document.getElementById('stat-downloads');
+                        const revenue = document.getElementById('stat-revenue');
+                        const orders = document.getElementById('stat-orders');
+                        
+                        if (downloads) downloads.textContent = data.totalDownloads || '0';
+                        if (revenue) revenue.textContent = `$${(data.totalRevenue || 0).toFixed(2)}`;
+                        if (orders) orders.textContent = data.activeOrders || '0';
+                    }
+                } catch (error) {
+                    console.error('Error loading analytics:', error);
+                    // Don't show error message for analytics, it's not critical
+                }
+            }
+
+            viewFullHistory() {
+                // Open download history in a modal or new page
+                showMessage('Download history coming soon!', 'info');
+                // TODO: Implement full history view
+            }
+        }
+
+        // Initialize the download controls manager
+        let downloadControls = null;
+
         // Load session data to get client contact info
         async function loadSessionData() {
             try {
@@ -749,6 +2180,9 @@
             if (getUrlParams()) {
                 // Load complete session data to get client contact info
                 await loadSessionData();
+                
+                // Initialize the download controls manager
+                downloadControls = new DownloadControlsManager();
                 
                 loadFiles();
                 setupDragAndDrop();
