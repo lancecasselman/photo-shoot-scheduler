@@ -1636,13 +1636,15 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         return res.status(410).json({ error: 'Gallery access has expired' });
       }
 
-      // Get photos from R2 storage
+      // Get photos from database - photos are stored in the session's photos JSONB field
       let photos = [];
       try {
-        const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionData.id);
-        photos = sessionFiles.filesByType.gallery || [];
+        // Photos are stored directly in the database as JSONB
+        photos = sessionData.photos || [];
+        console.log(`📸 Found ${photos.length} photos in database for session ${sessionData.id}`);
       } catch (error) {
-        console.warn('Could not load gallery photos:', error.message);
+        console.warn('Could not load gallery photos from database:', error.message);
+        photos = [];
       }
 
       // Convert database fields from snake_case to camelCase for client consumption
