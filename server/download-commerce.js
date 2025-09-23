@@ -307,13 +307,8 @@ class DownloadCommerceManager {
                         sessionId: sessionId,
                         clientKey: clientKey,
                         photoId: item.photoId,
-                        photoUrl: item.photoUrl,
-                        filename: item.filename,
-                        type: 'free',
-                        orderId: null,
-                        isActive: true,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
+                        remaining: 1, // Explicitly set remaining value
+                        isActive: true // Explicitly set active status
                     });
                 entitlementIds.push(entitlementId);
             }
@@ -737,7 +732,8 @@ class DownloadCommerceManager {
                             photoId: item.photoId || item.id,
                             remaining: policy?.maxPerClient || 3, // Default 3 downloads per photo
                             expiresAt: expiresAt,
-                            createdAt: new Date()
+                            createdAt: new Date(),
+                            isActive: true // Explicitly set active status
                         });
                     }
                     break;

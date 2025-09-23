@@ -536,10 +536,11 @@ export const downloadEntitlements = pgTable("download_entitlements", {
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
   clientKey: varchar("client_key").notNull(),
   photoId: varchar("photo_id"), // null for bulk entitlements
-  remaining: integer("remaining").notNull(), // Number of downloads remaining
+  remaining: integer("remaining").notNull().default(1), // Number of downloads remaining
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   usedAt: timestamp("used_at"), // When fully consumed
+  isActive: boolean("is_active").default(true).notNull(), // Whether entitlement is active
 }, (table) => ({
   sessionIdx: index("idx_download_entitlements_session").on(table.sessionId),
   clientKeyIdx: index("idx_download_entitlements_client").on(table.clientKey),
