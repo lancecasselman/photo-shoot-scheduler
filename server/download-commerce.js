@@ -504,9 +504,10 @@ class DownloadCommerceManager {
                 };
             }
             
+            const sessionData = session[0];
             const photographer = await this.db.select()
                 .from(users)
-                .where(eq(users.id, session[0].userId))
+                .where(eq(users.id, sessionData.userId))
                 .limit(1);
             
             if (photographer.length === 0) {
@@ -516,36 +517,80 @@ class DownloadCommerceManager {
                 };
             }
             
-            // Validate photographer's Connect account
+            // **FREEMIUM MODE HANDLING** - Check if this is a freemium session
+            const isFreemiumSession = sessionData.pricing_model === 'freemium' || sessionData.pricingModel === 'freemium';
+            
+            let freeItems = [];
+            let paidItems = [];
+            let freeEntitlementResult = null;
+            
+            if (isFreemiumSession) {
+                console.log(`🎯 FREEMIUM MODE: Processing checkout for freemium session ${sessionId}`);
+                
+                // Try to auto-grant free entitlements for items within free quota
+                freeEntitlementResult = await this.createFreeEntitlements(sessionId, clientKey, items);
+                
+                if (freeEntitlementResult.success && freeEntitlementResult.count > 0) {
+                    // Split items into free and paid based on how many free entitlements were granted
+                    freeItems = items.slice(0, freeEntitlementResult.count);
+                    paidItems = items.slice(freeEntitlementResult.count);
+                    
+                    console.log(`🎯 FREEMIUM: Granted ${freeEntitlementResult.count} free entitlements, ${paidItems.length} items require payment`);
+                } else {
+                    // No free entitlements available, all items require payment
+                    paidItems = items;
+                    console.log(`🎯 FREEMIUM: No free entitlements available, all ${paidItems.length} items require payment`);
+                }
+            } else {
+                // Non-freemium session, all items require payment
+                paidItems = items;
+                console.log(`💰 NON-FREEMIUM: All ${paidItems.length} items require payment`);
+            }
+            
+            // If all items are free, return success without creating Stripe session
+            if (paidItems.length === 0) {
+                console.log(`✅ FREEMIUM: All items processed as free downloads, no payment required`);
+                return {
+                    success: true,
+                    checkoutUrl: null, // No checkout needed
+                    sessionId: null,
+                    orderId: null,
+                    freeItemsProcessed: freeItems.length,
+                    paidItemsProcessed: 0,
+                    message: `All ${freeItems.length} items have been granted as free downloads`
+                };
+            }
+            
+            // Validate photographer's Connect account for paid items
             const connectValidation = await this.validatePhotographer(sessionId);
             if (!connectValidation.success) {
                 return connectValidation;
             }
             
-            // Get policy and calculate total
+            // Get policy and calculate total for paid items only
             const policyResult = await this.getPolicyForSession(sessionId);
             if (!policyResult.success) {
                 return policyResult;
             }
             
             const policy = policyResult.policy;
-            const totalPrice = await this.calculateTotalPrice(items, policy);
+            const totalPrice = await this.calculateTotalPrice(paidItems, policy);
             
             if (totalPrice <= 0) {
                 return {
                     success: false,
-                    error: 'Invalid price calculation'
+                    error: 'Invalid price calculation for paid items'
                 };
             }
             
             // Calculate platform fee
             const platformFee = Math.round(totalPrice * (PLATFORM_FEE_PERCENTAGE / 100));
             
-            // Prepare line items (aggregate if too many)
+            // Prepare line items for PAID ITEMS ONLY (aggregate if too many)
             let lineItems = [];
-            if (items.length <= 10) {
+            if (paidItems.length <= 10) {
                 // Individual line items for small carts
-                for (const item of items) {
+                for (const item of paidItems) {
                     const itemPrice = await this.calculateItemPrice(item, policy);
                     lineItems.push({
                         price_data: {
@@ -569,11 +614,12 @@ class DownloadCommerceManager {
                     price_data: {
                         currency: policy.currency || 'usd',
                         product_data: {
-                            name: `Download Package (${items.length} photos)`,
+                            name: `Download Package (${paidItems.length} photos)`,
                             description: `High-resolution digital downloads from session`,
                             metadata: {
                                 sessionId: sessionId,
-                                itemCount: items.length
+                                itemCount: paidItems.length,
+                                freeItemsGranted: freeItems.length
                             }
                         },
                         unit_amount: Math.round(totalPrice * 100)
@@ -582,7 +628,7 @@ class DownloadCommerceManager {
                 });
             }
             
-            // Create order record with pending status
+            // Create order record with pending status (PAID ITEMS ONLY)
             const orderId = uuidv4();
             await this.db.insert(downloadOrders).values({
                 id: orderId,
@@ -592,7 +638,7 @@ class DownloadCommerceManager {
                 amount: totalPrice.toFixed(2),
                 currency: policy.currency || 'USD',
                 mode: policy.mode,
-                items: items,
+                items: paidItems, // Only paid items in the order
                 stripeConnectAccountId: photographer[0].stripeConnectAccountId,
                 platformFeeAmount: (platformFee / 100).toFixed(2),
                 status: 'pending',
@@ -610,7 +656,9 @@ class DownloadCommerceManager {
                     orderId: orderId,
                     sessionId: sessionId,
                     clientKey: clientKey,
-                    itemCount: items.length,
+                    itemCount: paidItems.length, // Only paid items count
+                    freeItemsGranted: freeItems.length, // Track free items granted
+                    totalItemsRequested: items.length, // Total items in original request
                     photographerId: photographer[0].id,
                     type: 'download_purchase'
                 },
@@ -637,13 +685,19 @@ class DownloadCommerceManager {
                 })
                 .where(eq(downloadOrders.id, orderId));
             
-            console.log(`💳 Created checkout session for order ${orderId}`);
+            console.log(`💳 Created checkout session for order ${orderId} (${paidItems.length} paid items, ${freeItems.length} free items)`);
             
             return {
                 success: true,
                 checkoutUrl: checkoutSession.url,
                 sessionId: checkoutSession.id,
-                orderId: orderId
+                orderId: orderId,
+                freeItemsProcessed: freeItems.length,
+                paidItemsProcessed: paidItems.length,
+                totalItemsRequested: items.length,
+                message: freeItems.length > 0 ? 
+                    `${freeItems.length} free downloads granted, ${paidItems.length} items require payment` :
+                    `All ${paidItems.length} items require payment`
             };
             
         } catch (error) {
