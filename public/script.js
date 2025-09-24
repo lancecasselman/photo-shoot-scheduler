@@ -2329,7 +2329,7 @@ window.openGalleryView = function(sessionId) {
     const session = window.sessionsData.find(s => s.id === sessionId);
     if (session && session.galleryAccessToken) {
         const baseUrl = window.location.origin;
-        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+        const galleryUrl = `${baseUrl}/g/${session.galleryAccessToken}`;
         window.open(galleryUrl, '_blank');
     } else {
         showMessage('Gallery not yet available for this session', 'warning');
@@ -2407,7 +2407,7 @@ window.sendToClient = function(sessionId) {
     // Open email client with gallery link
     if (session.galleryAccessToken) {
         const baseUrl = window.location.origin;
-        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+        const galleryUrl = `${baseUrl}/g/${session.galleryAccessToken}`;
         const subject = encodeURIComponent(`Your ${session.sessionType} Photos are Ready!`);
         const body = encodeURIComponent(`Hi ${session.clientName},\n\nYour photos from the ${session.sessionType} session are now ready for viewing and download!\n\nGallery Link: ${galleryUrl}\n\nBest regards,\nYour Photographer`);
         
@@ -3574,7 +3574,7 @@ async function deletePhoto(sessionId, photoIndex) {
         const filename = photo.originalName || photo.filename;
 
         // Use unified deletion endpoint that removes from both storage and database
-        const response = await fetch(`/api/sessions/${sessionId}/files/gallery/${encodeURIComponent(filename)}`, {
+        const response = await fetch(`/api/sessions/${sessionId}/files/g/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -4836,7 +4836,7 @@ async function openDownloadControls(sessionId) {
                 }
                 
                 const tokenData = await tokenResponse.json();
-                const galleryUrl = `${window.location.origin}/gallery/${sessionId}?token=${tokenData.token}`;
+                const galleryUrl = `${window.location.origin}/g/${sessionId}?token=${tokenData.token}`;
                 
                 // Copy to clipboard
                 navigator.clipboard.writeText(galleryUrl);

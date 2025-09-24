@@ -4755,7 +4755,7 @@ window.viewSessionContractsPDF = viewSessionContractsPDF;
 // Copy Direct Gallery Link (no token needed)
 async function copyDirectGalleryLink(sessionId, galleryAccessToken) {
     try {
-        const directGalleryUrl = `${window.location.origin}/gallery/${galleryAccessToken}`;
+        const directGalleryUrl = `${window.location.origin}/g/${galleryAccessToken}`;
         await navigator.clipboard.writeText(directGalleryUrl);
         showMessage('Gallery link copied to clipboard! 🎉', 'success');
     } catch (error) {
@@ -4973,7 +4973,7 @@ async function openDownloadControls(sessionId) {
         // Only add gallery link section if gallery access token is available
         if (galleryAccessToken) {
             // Direct gallery link using the session's existing gallery access token
-            const directGalleryUrl = `/gallery/${galleryAccessToken}`;
+            const directGalleryUrl = `/g/${galleryAccessToken}`;
             
             // Add direct gallery link display  
             const galleryLinkSection = document.createElement('div');
