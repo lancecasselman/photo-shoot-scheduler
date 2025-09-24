@@ -8,6 +8,21 @@ const { v4: uuidv4 } = require('uuid');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
+// Import stream utilities for proper stream handling in AWS SDK v3
+const { Readable } = require('stream');
+
+/**
+ * Utility function to convert AWS SDK v3 stream to buffer
+ * Replaces the browser-only transformToByteArray() method
+ */
+async function streamToBuffer(stream) {
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
 
 // Import database schema and ORM with full schema support
 const { drizzle } = require('drizzle-orm/node-postgres');
@@ -2758,6 +2773,169 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
   
+  /**
+   * GET /api/downloads/photo/:token
+   * Download photo file using valid token
+   * This is the core download endpoint that streams files from R2 storage
+   */
+  router.get('/photo/:token', strictDownloadRateLimit, validateReferer, requireValidToken, async (req, res) => {
+    try {
+      const { token } = req.params;
+      const tokenData = req.tokenData; // Attached by requireValidToken middleware
+      
+      console.log(`📥 Processing download request for token: ${token.substring(0, 8)}...`);
+      console.log(`📥 Token data - Session: ${tokenData.sessionId}, Photo: ${tokenData.photoUrl}, File: ${tokenData.filename}`);
+      
+      // Extract file path from photoUrl - handle both formats
+      let r2Key;
+      if (tokenData.photoUrl.startsWith('/r2/file/')) {
+        // Format: /r2/file/photographer-userId/session-sessionId/gallery/filename.jpg
+        r2Key = tokenData.photoUrl.replace('/r2/file/', '');
+      } else if (tokenData.photoUrl.startsWith('photographer-')) {
+        // Already in R2 key format
+        r2Key = tokenData.photoUrl;
+      } else {
+        throw new Error('Invalid photo URL format');
+      }
+      
+      console.log(`🔍 Attempting to download from R2 key: ${r2Key}`);
+      
+      // Download file from R2 storage using existing method
+      let fileData;
+      try {
+        // Try direct R2 download with the key
+        const getFileCommand = new (require('@aws-sdk/client-s3').GetObjectCommand)({ 
+          Bucket: r2Manager.bucketName, 
+          Key: r2Key 
+        });
+        const fileResponse = await r2Manager.s3Client.send(getFileCommand);
+        
+        // FIXED: Convert stream to buffer using proper Node.js stream handling
+        // Replace transformToByteArray() which doesn't exist in Node.js AWS SDK v3
+        const fileBuffer = await streamToBuffer(fileResponse.Body);
+        
+        fileData = {
+          success: true,
+          filename: tokenData.filename,
+          buffer: fileBuffer,
+          contentType: fileResponse.ContentType || 'image/jpeg',
+          contentLength: fileResponse.ContentLength
+        };
+        
+        console.log(`✅ Successfully downloaded from R2: ${tokenData.filename} (${fileData.buffer.length} bytes)`);
+        
+      } catch (r2Error) {
+        console.error(`❌ R2 download failed for key ${r2Key}:`, r2Error.message);
+        return res.status(404).json({ 
+          error: 'File not found',
+          details: 'The requested photo file could not be located in storage'
+        });
+      }
+      
+      // FIXED: Do NOT mark token as used before delivery - this will be done AFTER successful send
+      
+      // Log successful download for analytics
+      try {
+        // Insert into download history if table exists
+        const downloadHistoryInsert = {
+          id: uuidv4(),
+          sessionId: tokenData.sessionId,
+          token: token,
+          filename: tokenData.filename,
+          fileSize: fileData.buffer.length,
+          downloadedAt: new Date(),
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent'] || 'Unknown'
+        };
+        
+        // Try to insert into download history (ignore if table doesn't exist)
+        try {
+          await pool.query(`
+            INSERT INTO download_history (id, session_id, token, filename, file_size, downloaded_at, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [
+            downloadHistoryInsert.id,
+            downloadHistoryInsert.sessionId,
+            downloadHistoryInsert.token,
+            downloadHistoryInsert.filename,
+            downloadHistoryInsert.fileSize,
+            downloadHistoryInsert.downloadedAt,
+            downloadHistoryInsert.ipAddress,
+            downloadHistoryInsert.userAgent
+          ]);
+          console.log(`📊 Download tracked in analytics`);
+        } catch (historyError) {
+          // Ignore if download_history table doesn't exist yet
+          if (!historyError.message.includes('does not exist')) {
+            console.warn('Download history tracking failed:', historyError.message);
+          }
+        }
+        
+      } catch (analyticsError) {
+        console.warn('Analytics logging failed:', analyticsError.message);
+        // Continue with download
+      }
+      
+      // Determine filename for download
+      const downloadFilename = tokenData.filename || 'photo.jpg';
+      
+      // Set response headers for file download
+      res.setHeader('Content-Type', fileData.contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+      res.setHeader('Content-Length', fileData.buffer.length);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Stream the file to client
+      console.log(`📤 Streaming file to client: ${downloadFilename} (${fileData.buffer.length} bytes)`);
+      
+      // Send the file with proper error handling
+      try {
+        res.send(fileData.buffer);
+        
+        // FIXED: Mark token as used ONLY AFTER successful file delivery
+        try {
+          await db.update(downloadTokens)
+            .set({ 
+              isUsed: true, 
+              usedAt: new Date(),
+              usedByIp: req.ip || req.connection.remoteAddress
+            })
+            .where(eq(downloadTokens.token, token));
+          
+          console.log(`🔒 Token marked as used after successful delivery: ${token.substring(0, 8)}...`);
+        } catch (dbError) {
+          console.error('Warning: Failed to mark token as used after delivery:', dbError.message);
+          // Don't fail the response as file was already sent successfully
+        }
+        
+        console.log(`✅ Download completed successfully for session ${tokenData.sessionId}`);
+        
+      } catch (sendError) {
+        console.error('❌ Failed to send file to client:', sendError.message);
+        // Token remains unused since delivery failed
+        throw new Error(`File delivery failed: ${sendError.message}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Download endpoint error:', error);
+      
+      // Don't expose internal errors to client
+      if (error.message.includes('File not found') || error.message.includes('not exist')) {
+        res.status(404).json({ 
+          error: 'File not found',
+          details: 'The requested photo file could not be located'
+        });
+      } else {
+        res.status(500).json({ 
+          error: 'Download failed',
+          details: 'An internal error occurred while processing your download'
+        });
+      }
+    }
+  });
+
   /**
    * POST /api/downloads/webhook
    * Handle Stripe webhook events for download purchases

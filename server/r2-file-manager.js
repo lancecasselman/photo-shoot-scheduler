@@ -3,6 +3,19 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const sharp = require('sharp');
 
+/**
+ * Utility function to convert AWS SDK v3 stream to buffer
+ * Replaces the browser-only transformToByteArray() method
+ */
+async function streamToBuffer(stream) {
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
+
 class R2FileManager {
   constructor(localBackup, pool = null) {
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
@@ -283,7 +296,8 @@ class R2FileManager {
       });
       
       const response = await this.s3Client.send(getCommand);
-      const buffer = await response.Body.transformToByteArray();
+      // FIXED: Use proper Node.js stream handling instead of transformToByteArray()
+      const buffer = await streamToBuffer(response.Body);
       
       return {
         success: true,
@@ -848,8 +862,9 @@ class R2FileManager {
       });
       const fileResponse = await this.s3Client.send(getFileCommand);
       
-      // Convert stream to buffer
-      const fileBuffer = await fileResponse.Body.transformToByteArray();
+      // FIXED: Convert stream to buffer using proper Node.js stream handling
+      // Replace transformToByteArray() which doesn't exist in Node.js AWS SDK v3
+      const fileBuffer = await streamToBuffer(fileResponse.Body);
       
       console.log(` Downloaded from R2: ${filename} (${fileBuffer.length} bytes)`);
       
