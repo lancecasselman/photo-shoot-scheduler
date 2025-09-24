@@ -24,7 +24,7 @@ class PreviewGenerationService {
         
         // R2 Configuration
         this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
-        this.accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+        this.accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
         this.accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
         this.secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
         

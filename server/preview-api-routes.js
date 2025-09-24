@@ -33,7 +33,7 @@ function createPreviewApiRoutes() {
     // R2 Configuration for original file access
     const r2Config = {
         bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-        accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+        accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID,
         accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
     };
