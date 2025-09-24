@@ -1658,8 +1658,8 @@
                 this.showSuccess('All available photos added to cart!');
             }
             
-            clearCart() {
-                if (confirm('Are you sure you want to clear your cart?')) {
+            clearCart(silent = false) {
+                if (silent || confirm('Are you sure you want to clear your cart?')) {
                     this.cart = [];
                     this.saveCart();
                     this.updateCartUI();
@@ -1712,7 +1712,7 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        this.clearCart();
+                        this.clearCart(true); // Silent clear after successful free downloads
                         this.closeCart();
                         await this.loadEntitlements();
                         this.displayPhotos();
@@ -1773,8 +1773,8 @@
             
             async handleCheckoutReturn() {
                 if (this.checkoutStatus === 'success') {
-                    // Clear cart after successful purchase
-                    this.clearCart();
+                    // Clear cart after successful purchase (silent - no confirmation)
+                    this.clearCart(true);
                     
                     // Load entitlements to show purchased items
                     if (this.clientEmail) {
