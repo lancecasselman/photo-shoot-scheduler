@@ -1328,10 +1328,12 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
     }
 });
 
+// SECURITY FIX: Trust proxy configuration for Replit environment
+// Replit always runs behind a proxy, so this must be set for rate limiting to work
+app.set('trust proxy', 1);
+
 // Production Security Middleware (AFTER webhooks to preserve raw body)
 if (process.env.NODE_ENV === 'production') {
-    // Trust proxy for Replit/production deployment
-    app.set('trust proxy', 1);
     
     // Security headers with Helmet - Relaxed CSP for development compatibility
     app.use(helmet({

@@ -80,26 +80,29 @@ const sessionFiles = pgTable("session_files", {
 const R2FileManager = require('./r2-file-manager');
 
 /**
- * Generate unique client key based on gallery access token and additional identifiers
- * This ensures each gallery visitor gets their own download quotas
+ * Generate unique client key based on gallery access token and server-derived identifiers ONLY
+ * SECURITY: Uses only server-controlled data to prevent client-side quota bypass
+ * This ensures each gallery visitor gets their own download quotas that cannot be manipulated
  */
-function generateUniqueClientKey(galleryAccessToken, sessionId, userAgent = '', ipAddress = '') {
+function generateUniqueClientKey(galleryAccessToken, sessionId, ipAddress = '') {
   const crypto = require('crypto');
   
-  // Create a deterministic hash that will be consistent for the same visitor
-  // but unique across different visitors
+  // SECURITY FIX: Use only server-derived data that client cannot manipulate
+  // Base identity on gallery token + session + IP address (server-derived)
   const baseString = `${galleryAccessToken}-${sessionId}`;
   
-  // Add a secondary identifier for extra uniqueness while keeping it deterministic
-  // Use a hash of user agent (first part) to create session-specific but consistent identity
-  const userAgentHash = userAgent ? crypto.createHash('md5').update(userAgent).digest('hex').substring(0, 8) : 'anonymous';
+  // Use IP address as secondary identifier (server-derived, not client-controllable)
+  // Normalize IP to handle IPv6/IPv4 mapping and potential proxy headers
+  const normalizedIP = ipAddress ? 
+    crypto.createHash('md5').update(ipAddress).digest('hex').substring(0, 8) : 
+    'direct';
   
-  const fullIdentifier = `${baseString}-${userAgentHash}`;
+  const fullIdentifier = `${baseString}-${normalizedIP}`;
   
   // Create a SHA-256 hash for the final client key
   const clientKey = `gallery-${crypto.createHash('sha256').update(fullIdentifier).digest('hex').substring(0, 16)}`;
   
-  console.log(`🔑 Generated client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}...`);
+  console.log(`🔑 Generated secure client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}... (IP: ${normalizedIP})`);
   
   return clientKey;
 }
@@ -309,6 +312,205 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
   
+  /**
+   * POST /api/downloads/free-entitlement
+   * Create immediate free entitlement for freemium mode downloads
+   * Bypasses cart for first N free downloads
+   */
+  router.post('/free-entitlement', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId, photoId, photoUrl, filename, galleryToken } = req.body;
+      
+      // SECURITY FIX: Never trust client-supplied clientKey for quota enforcement
+      // Generate client identity server-side based on reliable identifiers
+      // SECURITY FIX: Use only server-derived IP address, never client-controllable headers
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // CRITICAL SECURITY: Generate client key using ONLY server-derived data
+      // Never trust client headers like User-Agent that can be manipulated for quota bypass
+      const clientKey = generateUniqueClientKey(galleryToken, sessionId, clientIP);
+      
+      if (!sessionId || !photoId || !photoUrl || !filename || !galleryToken) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, photoId, photoUrl, filename, galleryToken' 
+        });
+      }
+      
+      // Security logging: Log any attempt to bypass quota enforcement
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      console.log(`🔒 SECURITY: Server-generated client key ${clientKey} for photo ${photoId} (IP: ${clientIP}, UA: ${userAgent.substring(0, 50)}...)`);
+      
+      // Validate gallery access token and get session data
+      let session;
+      try {
+        const sessionQuery = 'SELECT * FROM photography_sessions WHERE id = $1 AND gallery_access_token = $2 LIMIT 1';
+        const result = await pool.query(sessionQuery, [sessionId, galleryToken]);
+        session = result.rows;
+      } catch (sqlError) {
+        console.error('❌ SQL query error:', sqlError);
+        return res.status(500).json({ error: 'Database query failed' });
+      }
+
+      if (session.length === 0) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Invalid gallery access or session not found' 
+        });
+      }
+
+      // Convert snake_case fields to camelCase  
+      const rawSessionData = session[0];
+      const sessionData = toCamelCase(rawSessionData);
+      
+      // Check if gallery is expired
+      if (sessionData.galleryExpiresAt && new Date() > new Date(sessionData.galleryExpiresAt)) {
+        return res.status(410).json({ 
+          success: false, 
+          error: 'Gallery access has expired' 
+        });
+      }
+
+      // Check if downloads are enabled
+      if (!sessionData.downloadEnabled) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Downloads are not enabled for this gallery' 
+        });
+      }
+      
+      // Get policy to check for freemium mode
+      const policy = await commerceManager.getPolicyForSession(sessionId);
+      if (!policy.success) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to get session policy'
+        });
+      }
+      
+      // Validate this is freemium mode
+      if (policy.policy.mode !== 'freemium') {
+        return res.status(400).json({
+          success: false,
+          error: `Free entitlement endpoint only supports freemium mode. Current mode: ${policy.policy.mode}`
+        });
+      }
+      
+      console.log(`📋 Session policy mode: ${policy.policy.mode}, freeCount: ${policy.policy.freeCount}`);
+      
+      // Check if user has free downloads remaining (PER CLIENT)
+      const freeDownloads = parseInt(policy.policy.freeCount || 0);
+      
+      if (freeDownloads <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No free downloads available in current policy'
+        });
+      }
+      
+      console.log(`📊 Session allows ${freeDownloads} free downloads per client`);
+      
+      // Count existing entitlements for this client to check quota
+      const existingEntitlements = await db
+        .select()
+        .from(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey)
+        ));
+
+      const usedDownloads = existingEntitlements.length;
+      
+      console.log(`📈 QUOTA CHECK: Client ${clientKey} has used ${usedDownloads} of ${freeDownloads} free downloads`);
+
+      // Security audit: Log quota enforcement for security monitoring
+      console.log(`🔐 SECURITY AUDIT: Free download quota check - Session: ${sessionId}, Client: ${clientKey}, Used: ${usedDownloads}/${freeDownloads}, IP: ${clientIP}`);
+
+      if (usedDownloads >= freeDownloads) {
+        // Log quota bypass attempt for security monitoring
+        console.warn(`⚠️ SECURITY: Free download quota exceeded by client ${clientKey} (IP: ${clientIP}, Session: ${sessionId}). Used: ${usedDownloads}, Limit: ${freeDownloads}`);
+        
+        return res.status(403).json({
+          success: false,
+          error: 'Free download limit exceeded',
+          freeDownloads: freeDownloads,
+          usedDownloads: usedDownloads
+        });
+      }
+      
+      // Check if photo is already purchased (has valid entitlement)
+      const entitlementCheck = await commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
+      if (entitlementCheck.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Photo is already entitled for download',
+          entitlement: entitlementCheck.entitlement
+        });
+      }
+      
+      // Create free entitlement immediately
+      const entitlementId = uuidv4();
+      const downloadToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+
+      // Create entitlement record
+      await db.insert(downloadEntitlements).values({
+        id: entitlementId,
+        sessionId: sessionId,
+        clientKey: clientKey,
+        photoId: photoId,
+        photoUrl: photoUrl,
+        filename: filename,
+        type: 'free',
+        status: 'active',
+        maxDownloads: 1,
+        remaining: 1,
+        isActive: true,
+        createdAt: new Date(),
+        expiresAt: expiresAt
+      });
+
+      // Create download token
+      await db.insert(downloadTokens).values({
+        id: uuidv4(),
+        token: downloadToken,
+        photoUrl: photoUrl,
+        filename: filename,
+        sessionId: sessionId,
+        clientEmail: clientKey,
+        expiresAt: expiresAt,
+        isUsed: false,
+        createdAt: new Date()
+      });
+
+      console.log(`🆓 Free entitlement created: ${entitlementId} with download token for photo ${photoId}`);
+      
+      res.json({
+        success: true,
+        entitlement: {
+          id: entitlementId,
+          photoId: photoId,
+          type: 'free',
+          downloadToken: downloadToken,
+          expiresAt: expiresAt,
+          downloadUrl: `/api/downloads/${downloadToken}`
+        },
+        quotaInfo: {
+          remaining: freeDownloads - usedDownloads - 1,
+          total: freeDownloads,
+          used: usedDownloads + 1
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error creating free entitlement:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to create free entitlement' 
+      });
+    }
+  });
+
   /**
    * GET /api/downloads/entitlements
    * Check client's download entitlements

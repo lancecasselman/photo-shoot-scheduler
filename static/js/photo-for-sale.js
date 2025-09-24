@@ -544,7 +544,7 @@
         window.location.href = previewUrl;
     };
     
-    window.orderDigital = function(photoIndex) {
+    window.orderDigital = async function(photoIndex) {
         const photoBlock = document.querySelector(`[data-photo-index="${photoIndex}"]`);
         if (!photoBlock) return;
         
@@ -558,7 +558,65 @@
         
         console.log('💾 Starting digital order for photo:', photoIndex + 1);
         
-        // Create digital purchase modal
+        // Get session information
+        const sessionId = getSessionId();
+        const galleryToken = getGalleryToken();
+        const clientKey = generateClientKey(galleryToken, sessionId);
+        
+        if (!sessionId || !galleryToken) {
+            console.warn('⚠️ Missing session info, falling back to standard purchase modal');
+            showDigitalPurchaseModal(img.src, img.alt || `photo-${photoIndex + 1}.jpg`, saleData.digitalPrice);
+            return;
+        }
+        
+        // Try freemium mode first - check for immediate free download
+        try {
+            console.log('🎯 Checking for freemium mode free download...');
+            
+            const photoId = img.src.split('/').pop().split('?')[0]; // Extract filename as photoId
+            const filename = img.alt || `photo-${photoIndex + 1}.jpg`;
+            
+            const response = await fetch('/api/downloads/free-entitlement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    clientKey: clientKey,
+                    photoId: photoId,
+                    photoUrl: img.src,
+                    filename: filename,
+                    galleryToken: galleryToken
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                // Free download available! Trigger immediate download
+                console.log('🆓 Free download granted:', result);
+                
+                // Show success message
+                showFreeDownloadSuccess(result.entitlement, result.quotaInfo);
+                
+                // Trigger download immediately
+                window.location.href = result.entitlement.downloadUrl;
+                
+                return;
+            } else {
+                // Free downloads exhausted or not freemium mode
+                console.log('💰 Free downloads not available:', result.error);
+                
+                // Check if it's specifically because free limit exceeded
+                if (result.error && result.error.includes('Free download limit exceeded')) {
+                    showFreemiumLimitMessage(result.freeDownloads, result.usedDownloads);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error checking free download:', error);
+        }
+        
+        // Fall back to standard purchase modal
+        console.log('💳 Falling back to standard purchase flow');
         showDigitalPurchaseModal(img.src, img.alt || `photo-${photoIndex + 1}.jpg`, saleData.digitalPrice);
     };
     
@@ -700,6 +758,247 @@
         document.body.appendChild(modal);
     }
     
+    // Helper functions for freemium mode
+    function getSessionId() {
+        // Try multiple ways to get session ID
+        if (typeof window.sessionData !== 'undefined' && window.sessionData && window.sessionData.id) {
+            return window.sessionData.id;
+        }
+        
+        // Try URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id') || urlParams.get('sessionId');
+        if (sessionId) return sessionId;
+        
+        // Try extracting from current URL path
+        const pathParts = window.location.pathname.split('/');
+        const galleryIndex = pathParts.findIndex(part => part === 'gallery');
+        if (galleryIndex !== -1 && pathParts[galleryIndex + 1]) {
+            return pathParts[galleryIndex + 1];
+        }
+        
+        return null;
+    }
+    
+    function getGalleryToken() {
+        // Try multiple ways to get gallery token
+        if (typeof window.galleryToken !== 'undefined' && window.galleryToken) {
+            return window.galleryToken;
+        }
+        
+        // Try URL parameters  
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token) return token;
+        
+        // Try extracting from path (last segment if it looks like a token)
+        const pathParts = window.location.pathname.split('/');
+        const lastSegment = pathParts[pathParts.length - 1];
+        if (lastSegment && lastSegment.length > 10 && !lastSegment.includes('.')) {
+            return lastSegment;
+        }
+        
+        return null;
+    }
+    
+    function generateClientKey(galleryToken, sessionId) {
+        if (!galleryToken || !sessionId) {
+            return `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+        
+        // Generate client key similar to server-side logic
+        const userAgent = navigator.userAgent || '';
+        const userAgentHash = btoa(userAgent).substring(0, 8);
+        const baseString = `${galleryToken}-${sessionId}`;
+        const fullIdentifier = `${baseString}-${userAgentHash}`;
+        
+        // Create a simple hash (since we don't have crypto in browser, use a simple approach)
+        let hash = 0;
+        for (let i = 0; i < fullIdentifier.length; i++) {
+            const char = fullIdentifier.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        
+        const clientKey = `gallery-${Math.abs(hash).toString(16).substring(0, 16)}`;
+        return clientKey;
+    }
+    
+    function showFreeDownloadSuccess(entitlement, quotaInfo) {
+        // Create success notification
+        const notification = document.createElement('div');
+        notification.className = 'free-download-success';
+        notification.innerHTML = `
+            <div class="success-content">
+                <div class="success-icon">🆓</div>
+                <h3>Free Download Started!</h3>
+                <p>Your download should begin automatically.</p>
+                <div class="quota-info">
+                    ${quotaInfo.remaining} of ${quotaInfo.total} free downloads remaining
+                </div>
+                <button onclick="this.closest('.free-download-success').remove()">Close</button>
+            </div>
+        `;
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .free-download-success {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            }
+            
+            .success-content {
+                text-align: center;
+            }
+            
+            .success-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+            
+            .success-content h3 {
+                margin: 0 0 10px;
+                font-size: 1.2rem;
+            }
+            
+            .success-content p {
+                margin: 0 0 15px;
+                opacity: 0.9;
+            }
+            
+            .quota-info {
+                background: rgba(255,255,255,0.2);
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            
+            .success-content button {
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+            }
+            
+            .success-content button:hover {
+                background: rgba(255,255,255,0.3);
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    function showFreemiumLimitMessage(freeDownloads, usedDownloads) {
+        // Create limit message
+        const notification = document.createElement('div');
+        notification.className = 'freemium-limit-message';
+        notification.innerHTML = `
+            <div class="limit-content">
+                <div class="limit-icon">⚠️</div>
+                <h3>Free Downloads Used</h3>
+                <p>You've used all ${freeDownloads} free downloads.</p>
+                <p>Additional downloads require payment.</p>
+                <button onclick="this.closest('.freemium-limit-message').remove()">Continue to Purchase</button>
+            </div>
+        `;
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .freemium-limit-message {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            }
+            
+            .limit-content {
+                text-align: center;
+            }
+            
+            .limit-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+            
+            .limit-content h3 {
+                margin: 0 0 10px;
+                font-size: 1.2rem;
+            }
+            
+            .limit-content p {
+                margin: 0 0 10px;
+                opacity: 0.9;
+                font-size: 0.9rem;
+            }
+            
+            .limit-content button {
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                padding: 10px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                margin-top: 10px;
+            }
+            
+            .limit-content button:hover {
+                background: rgba(255,255,255,0.3);
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 8000);
+    }
+
     window.processDigitalPurchase = async function(photoUrl, filename, price) {
         console.log('💳 Processing digital purchase:', { photoUrl, filename, price });
         
