@@ -1671,10 +1671,28 @@
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
+                        // Count how many free downloads have already been used (purchased/entitled)
                         const usedFreeDownloads = this.entitlements.filter(e => e.type === 'free' || e.price === 0).length;
-                        const currentCartFreeItems = this.cart.filter(item => item.price === 0).length;
-                        const totalFreeUsed = usedFreeDownloads + currentCartFreeItems;
-                        return totalFreeUsed < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        
+                        // Calculate remaining free downloads
+                        const remainingFreeDownloads = Math.max(0, freeCount - usedFreeDownloads);
+                        
+                        // Count how many photos before this one are in cart as free
+                        let freeCartItemsBeforeThis = 0;
+                        for (let i = 0; i < photoIndex; i++) {
+                            const cartItem = this.cart.find(item => 
+                                item.photoId === this.photos[i]?.id || 
+                                item.photoId === i.toString()
+                            );
+                            if (cartItem && cartItem.price === 0) {
+                                freeCartItemsBeforeThis++;
+                            }
+                        }
+                        
+                        // This photo is FREE if there are still free slots available
+                        // considering both used entitlements and cart items before this photo
+                        const totalFreeUsedIncludingCart = usedFreeDownloads + freeCartItemsBeforeThis;
+                        return totalFreeUsedIncludingCart < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         
                     case 'bulk':
                         // Calculate based on current cart size
