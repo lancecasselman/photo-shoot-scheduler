@@ -1414,7 +1414,9 @@
                 if (this.sessionData) {
                     // Map pricing model to policy mode
                     let mode = 'free';
-                    switch (this.sessionData.pricingModel) {
+                    const pricingModel = this.sessionData.pricingModel || this.sessionData.pricing_model;
+                    console.log('🔍 Pricing model from session data:', pricingModel);
+                    switch (pricingModel) {
                         case 'free':
                             mode = 'free';
                             break;
@@ -1434,8 +1436,8 @@
                     
                     this.policy = {
                         mode: mode,
-                        pricePerPhoto: this.sessionData.pricePerDownload || 0,
-                        freeCount: this.sessionData.freeDownloads || 0,
+                        pricePerPhoto: this.sessionData.pricePerDownload || this.sessionData.price_per_download || 0,
+                        freeCount: this.sessionData.freeDownloads || this.sessionData.free_downloads || 0,
                         screenshotProtection: true // Enable by default for previews
                     };
                     
