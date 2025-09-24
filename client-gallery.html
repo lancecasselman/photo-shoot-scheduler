@@ -319,6 +319,24 @@
             box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
         }
 
+        .download-btn.immediate.free {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .download-btn.immediate.free:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .download-btn.immediate.paid {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .download-btn.immediate.paid:hover {
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+
         /* Floating Cart Icon */
         .floating-cart {
             position: fixed;
@@ -1620,6 +1638,12 @@
                                     📥 Download
                                 </button>
                             ` : `
+                                ${this.policy && this.policy.mode === 'freemium' ? `
+                                    <button class="photo-btn download-btn immediate ${price === 0 ? 'free' : 'paid'}" 
+                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})">
+                                        📥 ${price === 0 ? 'FREE' : `$${price.toFixed(2)}`}
+                                    </button>
+                                ` : ''}
                                 <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
                                         onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
                                     ${inCart ? '✓ Added - Remove' : '🛒 Add to Cart'}
@@ -1646,8 +1670,10 @@
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
-                        const currentCartSize = this.cart.length;
-                        return currentCartSize < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        const usedFreeDownloads = this.entitlements.filter(e => e.type === 'free' || e.price === 0).length;
+                        const currentCartFreeItems = this.cart.filter(item => item.price === 0).length;
+                        const totalFreeUsed = usedFreeDownloads + currentCartFreeItems;
+                        return totalFreeUsed < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         
                     case 'bulk':
                         // Calculate based on current cart size
@@ -2180,6 +2206,69 @@
                 } catch (error) {
                     console.error('Error downloading photo:', error);
                     alert(`Download failed: ${error.message}`);
+                }
+            }
+            
+            async downloadPhotoImmediately(event, photoId, photoUrl, filename, price) {
+                try {
+                    console.log(`🚀 Starting immediate download for photo: ${filename} (price: ${price})`);
+                    
+                    // Show loading state on button
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Processing...';
+                    
+                    // For free downloads, use the free entitlement endpoint
+                    if (price === 0) {
+                        const response = await fetch('/api/downloads/free-entitlement', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                sessionId: this.sessionData.id,
+                                galleryAccessToken: this.galleryToken,
+                                photoUrl: photoUrl,
+                                filename: filename
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success && data.downloadUrl) {
+                            // Start download immediately
+                            const link = document.createElement('a');
+                            link.href = data.downloadUrl;
+                            link.download = filename || 'photo.jpg';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            this.showSuccess(`Downloading ${filename} for FREE!`);
+                            
+                            // Refresh the gallery to update pricing and entitlements
+                            await this.loadEntitlements();
+                            this.displayPhotos();
+                            
+                        } else {
+                            throw new Error(data.error || 'Failed to process free download');
+                        }
+                    } else {
+                        // For paid downloads, add to cart instead
+                        this.showSuccess(`Adding ${filename} to cart - $${price.toFixed(2)}`);
+                        await this.addToCart(photoId, photoUrl, filename, price);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error with immediate download:', error);
+                    alert(`Download failed: ${error.message}`);
+                    
+                    // Reset button state
+                    if (button) {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
                 }
             }
             
