@@ -78,6 +78,31 @@ const sessionFiles = pgTable("session_files", {
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
+/**
+ * Generate unique client key based on gallery access token and additional identifiers
+ * This ensures each gallery visitor gets their own download quotas
+ */
+function generateUniqueClientKey(galleryAccessToken, sessionId, userAgent = '', ipAddress = '') {
+  const crypto = require('crypto');
+  
+  // Create a deterministic hash that will be consistent for the same visitor
+  // but unique across different visitors
+  const baseString = `${galleryAccessToken}-${sessionId}`;
+  
+  // Add a secondary identifier for extra uniqueness while keeping it deterministic
+  // Use a hash of user agent (first part) to create session-specific but consistent identity
+  const userAgentHash = userAgent ? crypto.createHash('md5').update(userAgent).digest('hex').substring(0, 8) : 'anonymous';
+  
+  const fullIdentifier = `${baseString}-${userAgentHash}`;
+  
+  // Create a SHA-256 hash for the final client key
+  const clientKey = `gallery-${crypto.createHash('sha256').update(fullIdentifier).digest('hex').substring(0, 16)}`;
+  
+  console.log(`🔑 Generated client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}...`);
+  
+  return clientKey;
+}
+
 function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   const router = express.Router();
   
@@ -1100,19 +1125,32 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           });
         }
         
-        // Check if user has free downloads remaining
+        // CRITICAL FIX: Use client-provided UUID instead of server-generated key
+        // Client sends their uniqueVisitorId in the request body as clientKey
+        const clientKey = req.body.clientKey || `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.log(`🔑 Using client-provided key: ${clientKey} (from client's uniqueVisitorId)`);
+        
+        console.log(`🎯 Freemium check for client: ${clientKey}`);
+        
+        // Check if user has free downloads remaining (PER CLIENT)
         const freeDownloads = sessionData.freeDownloads || 0;
         
-        // Count previous free downloads for this gallery
+        console.log(`📊 Session allows ${freeDownloads} free downloads per client`);
+        
+        // Count previous downloads for THIS SPECIFIC CLIENT (not all clients)
         const existingDownloads = await db
           .select({ count: count() })
           .from(galleryDownloads)
           .where(and(
             eq(galleryDownloads.sessionId, sessionId),
-            eq(galleryDownloads.downloadType, 'free')
+            eq(galleryDownloads.clientKey, clientKey), // CRITICAL: Filter by specific client
+            eq(galleryDownloads.status, 'completed')
           ));
 
         const usedFreeDownloads = existingDownloads[0]?.count || 0;
+        
+        console.log(`📈 Client ${clientKey} has used ${usedFreeDownloads} of ${freeDownloads} free downloads`);
 
         if (usedFreeDownloads < freeDownloads) {
           // Free download available - generate immediate download token
@@ -1125,17 +1163,34 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
             photoUrl: requestedPhoto.url,
             filename: requestedPhoto.filename,
             sessionId,
+            clientEmail: clientKey, // Track client for this token
             expiresAt,
             isUsed: false,
             createdAt: new Date()
           });
+          
+          // Record this as a reserved download for this client
+          await db.insert(galleryDownloads).values({
+            id: uuidv4(),
+            sessionId: sessionId,
+            userId: sessionData.userId,
+            clientKey: clientKey, // Associate with specific client
+            downloadToken: downloadToken,
+            photoId: assetId,
+            photoUrl: requestedPhoto.url,
+            filename: requestedPhoto.filename,
+            downloadType: 'free',
+            status: 'reserved', // Will be marked 'completed' when token is used
+            createdAt: new Date()
+          });
 
-          console.log(`🆓 Freemium free download token generated for asset ${assetId} (${usedFreeDownloads + 1}/${freeDownloads})`);
+          console.log(`🆓 Freemium free download token generated for asset ${assetId}, client ${clientKey} (${usedFreeDownloads + 1}/${freeDownloads})`);
           return res.json({ 
             status: 'granted', 
             downloadToken,
             expiresAt,
             downloadUrl: `/api/downloads/${downloadToken}`,
+            clientKey: clientKey,
             freeDownloadsRemaining: freeDownloads - usedFreeDownloads - 1
           });
         } else {
@@ -1604,8 +1659,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // Session data is available from requireGalleryToken middleware
       const sessionData = req.sessionData;
 
-      // Get download usage for this client/session
-      const clientKey = 'gallery-client'; // For gallery access, use generic key
+      // CRITICAL FIX: Use client-provided UUID instead of server-generated key
+      // Client sends their uniqueVisitorId as clientKey parameter or in query
+      const clientKey = req.query.clientKey || req.body.clientKey || `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log(`🔑 Using client-provided key: ${clientKey} (from client's uniqueVisitorId)`);
+      
+      console.log(`🔍 Gallery access - Client key: ${clientKey} for session: ${sessionId}`);
       const usageResult = await db
         .select({ count: count() })
         .from(galleryDownloads)

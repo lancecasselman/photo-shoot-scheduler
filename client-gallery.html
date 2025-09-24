@@ -1040,6 +1040,7 @@
                 this.clientEmail = null;
                 this.clientName = null;
                 this.downloadQueue = [];
+                this.uniqueVisitorId = null;
                 
                 // Initialize from URL - support both path and query parameter patterns
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1086,6 +1087,9 @@
                 
                 // Initialize screenshot protection system
                 this.initializeProtection();
+                
+                // Generate unique visitor ID first for proper quota tracking
+                this.generateUniqueVisitorId();
                 
                 // Load saved cart and client info
                 this.loadCart();
@@ -1714,7 +1718,7 @@
                         },
                         body: JSON.stringify({
                             sessionId: this.sessionData.id,
-                            clientKey: this.clientEmail || 'free-download',
+                            clientKey: this.getClientKey(),
                             items: items,
                             type: 'free'
                         })
@@ -1815,7 +1819,7 @@
                     if (!this.sessionData) return;
                     
                     // Use same clientKey logic as processFreeDownloads to avoid mismatch
-                    const clientKey = this.clientEmail || 'free-download';
+                    const clientKey = this.getClientKey();
                     
                     console.log(`🔍 Loading entitlements for clientKey: ${clientKey}`);
                     
@@ -1849,7 +1853,7 @@
                         },
                         body: JSON.stringify({
                             sessionId: this.sessionData.id,
-                            clientKey: this.clientEmail || 'free-download',
+                            clientKey: this.getClientKey(),
                             photoId: photoId,
                             photoUrl: photoUrl,
                             filename: filename
@@ -1969,6 +1973,45 @@
             loadClientInfo() {
                 this.clientEmail = localStorage.getItem('clientEmail') || null;
                 this.clientName = localStorage.getItem('clientName') || null;
+            }
+            
+            /**
+             * Generate or load unique visitor ID for proper quota tracking
+             * This ensures each browser tab/visitor gets separate download quotas
+             */
+            generateUniqueVisitorId() {
+                // Try to load existing visitor ID from localStorage
+                let visitorId = localStorage.getItem('uniqueVisitorId');
+                
+                if (!visitorId) {
+                    // Generate a new UUID for this visitor
+                    visitorId = 'visitor-' + this.generateUUID();
+                    localStorage.setItem('uniqueVisitorId', visitorId);
+                    console.log(`🆔 Generated new unique visitor ID: ${visitorId}`);
+                } else {
+                    console.log(`🆔 Loaded existing visitor ID: ${visitorId}`);
+                }
+                
+                this.uniqueVisitorId = visitorId;
+            }
+            
+            /**
+             * Generate a random UUID v4
+             */
+            generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            /**
+             * Get the unique client key for this visitor
+             */
+            getClientKey() {
+                // Use email if provided (for paid downloads), otherwise use unique visitor ID
+                return this.clientEmail || this.uniqueVisitorId || 'anonymous';
             }
         }
         

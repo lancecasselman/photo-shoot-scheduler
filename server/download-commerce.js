@@ -301,9 +301,56 @@ class DownloadCommerceManager {
      */
     async createFreeEntitlements(sessionId, clientKey, items) {
         try {
-            const entitlementIds = [];
+            // Get session data to determine free download limit
+            const session = await this.db.select()
+                .from(photographySessions)
+                .where(eq(photographySessions.id, sessionId))
+                .limit(1);
+
+            if (session.length === 0) {
+                return {
+                    success: false,
+                    error: 'Session not found'
+                };
+            }
+
+            const sessionData = session[0];
+            const freeDownloads = sessionData.freeDownloads || sessionData.free_downloads || 1;
             
-            for (const item of items) {
+            console.log(`📊 Creating free entitlements: session allows ${freeDownloads} free downloads per client`);
+
+            // Check existing entitlements for this client and count actual downloads consumed
+            const existingEntitlements = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.clientKey, clientKey)
+                ));
+
+            // CRITICAL FIX: Count actual downloads consumed by counting how many entitlements were created
+            // Each entitlement represents one photo download attempt (whether used or not)
+            // This prevents the quota accounting bug where maxDownloads=sessionTotal caused wrong calculations
+            let totalConsumedDownloads = existingEntitlements.length;
+            
+            console.log(`📊 Client ${clientKey} has ${existingEntitlements.length} existing entitlements (each represents 1 download attempt)`);
+
+            const remainingFreeDownloads = Math.max(0, freeDownloads - totalConsumedDownloads);
+
+            console.log(`📊 Client ${clientKey}: ${totalConsumedDownloads} download slots used out of ${freeDownloads} free downloads, ${remainingFreeDownloads} remaining free`);
+
+            if (remainingFreeDownloads <= 0) {
+                return {
+                    success: false,
+                    error: 'Free download limit exceeded',
+                    freeDownloads: freeDownloads,
+                    usedDownloads: totalConsumedDownloads
+                };
+            }
+
+            const entitlementIds = [];
+            const itemsToProcess = items.slice(0, remainingFreeDownloads); // Only create entitlements for remaining free slots
+            
+            for (const item of itemsToProcess) {
                 const entitlementId = uuidv4();
                 await this.db.insert(downloadEntitlements)
                     .values({
@@ -311,17 +358,24 @@ class DownloadCommerceManager {
                         sessionId: sessionId,
                         clientKey: clientKey,
                         photoId: item.photoId,
-                        remaining: 1 // Explicitly set remaining value
+                        remaining: 1, // Each photo gets 1 download
+                        maxDownloads: 1, // CRITICAL FIX: Each photo entitlement is for 1 download, not session total
+                        orderId: null, // Free entitlements have no order
+                        expiresAt: null, // Free entitlements don't expire
+                        createdAt: new Date()
                     });
                 entitlementIds.push(entitlementId);
             }
             
-            console.log(`✅ Created ${entitlementIds.length} free entitlements for ${clientKey}`);
+            console.log(`✅ Created ${entitlementIds.length} free entitlements for ${clientKey} (${remainingFreeDownloads} free slots available)`);
             
             return {
                 success: true,
                 count: entitlementIds.length,
-                entitlementIds: entitlementIds
+                entitlementIds: entitlementIds,
+                freeDownloads: freeDownloads,
+                usedDownloads: totalConsumedDownloads + entitlementIds.length,
+                remainingFree: remainingFreeDownloads - entitlementIds.length
             };
         } catch (error) {
             console.error('Error creating free entitlements:', error);
@@ -735,7 +789,16 @@ class DownloadCommerceManager {
                     break;
                     
                 case 'freemium':
-                    // Check if within free quota
+                    // Get session data for freemium settings
+                    const sessionForFreemium = await this.db.select()
+                        .from(photographySessions)
+                        .where(eq(photographySessions.id, sessionId))
+                        .limit(1);
+                    
+                    const sessionFreemiumData = sessionForFreemium[0];
+                    const sessionFreeDownloads = sessionFreemiumData?.freeDownloads || sessionFreemiumData?.free_downloads || 0;
+                    
+                    // Check existing downloads for this client
                     const existingDownloads = await this.db.select()
                         .from(downloadEntitlements)
                         .where(and(
@@ -743,7 +806,9 @@ class DownloadCommerceManager {
                             eq(downloadEntitlements.clientKey, clientKey)
                         ));
                     
-                    const freeRemaining = (policy?.freeCount || 0) - existingDownloads.length;
+                    const freeRemaining = Math.max(0, sessionFreeDownloads - existingDownloads.length);
+                    
+                    console.log(`🎯 Freemium mode: session allows ${sessionFreeDownloads} free, client has ${existingDownloads.length} used, ${freeRemaining} remaining`);
                     
                     for (let i = 0; i < items.length; i++) {
                         const item = items[i];
