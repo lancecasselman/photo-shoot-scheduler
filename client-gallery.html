@@ -1238,6 +1238,13 @@
                 // Load gallery data
                 await this.loadGallery();
                 
+                // Recalculate cart prices based on correct freemium logic
+                // This fixes any cart items that were saved with incorrect prices
+                if (this.cart.length > 0 && this.policy) {
+                    console.log('🛒 Recalculating cart prices after loading gallery policy...');
+                    this.recalculatePrices();
+                }
+                
                 // Handle checkout return
                 if (this.checkoutStatus) {
                     await this.handleCheckoutReturn();
