@@ -1420,8 +1420,19 @@
                 console.log(`🃏 Photo ${index + 1} in cart: ${inCart}`);
                 
                 // Check if photo is already purchased (entitled)
-                const isEntitled = this.entitlements.some(e => e.photoId === photo.id || e.photoUrl === photo.url);
-                console.log(`🃏 Photo ${index + 1} entitled: ${isEntitled}`);
+                // Check multiple possible photoId formats to handle mismatches
+                const photoIdToCheck = photo.id || index.toString();
+                const isEntitled = this.entitlements.some(e => 
+                    e.photoId === photo.id ||           // Direct photo.id match
+                    e.photoId === index.toString() ||   // Index-based match (0, 1, 2...)
+                    e.photoId === photoIdToCheck ||     // Fallback match
+                    e.photoUrl === photo.url ||         // URL-based match
+                    e.photoId === photo.filename        // Filename-based match
+                );
+                console.log(`🃏 Photo ${index + 1} (photoId: ${photoIdToCheck}) entitled: ${isEntitled}`, {
+                    availableEntitlements: this.entitlements.map(e => ({ photoId: e.photoId, photoUrl: e.photoUrl })),
+                    checkingFor: { photoId: photo.id, index: index.toString(), filename: photo.filename, url: photo.url }
+                });
                 
                 // Calculate price for this photo
                 const price = this.calculatePhotoPrice(index);
@@ -1801,21 +1812,30 @@
             
             async loadEntitlements() {
                 try {
-                    if (!this.clientEmail || !this.sessionData) return;
+                    if (!this.sessionData) return;
                     
-                    const response = await fetch(`/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${this.clientEmail}`);
+                    // Use same clientKey logic as processFreeDownloads to avoid mismatch
+                    const clientKey = this.clientEmail || 'free-download';
+                    
+                    console.log(`🔍 Loading entitlements for clientKey: ${clientKey}`);
+                    
+                    const response = await fetch(`/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${clientKey}`);
                     const data = await response.json();
                     
                     if (data.success) {
                         this.entitlements = data.entitlements || [];
-                        console.log(`✅ Loaded ${this.entitlements.length} entitlements`);
+                        console.log(`✅ Loaded ${this.entitlements.length} entitlements for ${clientKey}`);
                         
                         // Update pricing banner for freemium mode
                         this.updatePricingBanner();
+                    } else {
+                        console.error('Failed to load entitlements:', data.error);
+                        this.entitlements = [];
                     }
                     
                 } catch (error) {
                     console.error('Error loading entitlements:', error);
+                    this.entitlements = [];
                 }
             }
             

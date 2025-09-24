@@ -274,13 +274,17 @@ class DownloadCommerceManager {
                 .from(downloadEntitlements)
                 .where(and(
                     eq(downloadEntitlements.sessionId, sessionId),
-                    eq(downloadEntitlements.clientKey, clientKey),
-                    eq(downloadEntitlements.isActive, true)
-                ));
+                    eq(downloadEntitlements.clientKey, clientKey)
+                    // Temporarily removed isActive filter due to SQL generation issue
+                ))
+                .orderBy(sql`${downloadEntitlements.createdAt} DESC`);
+            
+            // Filter active entitlements in application logic for now
+            const activeEntitlements = entitlements.filter(e => e.isActive !== false);
             
             return {
                 success: true,
-                entitlements: entitlements
+                entitlements: activeEntitlements
             };
         } catch (error) {
             console.error('Error getting client entitlements:', error);
