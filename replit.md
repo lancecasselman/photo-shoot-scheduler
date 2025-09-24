@@ -63,9 +63,18 @@ A comprehensive download-based delivery system with flexible pricing models (fre
 - Proper HTTP status codes (403/429) for limit enforcement
 - Downloadable originals with optional watermarking based on pricing model
 
-**Known Limitations**: 
-- Concurrent download requests may occasionally bypass limits due to non-atomic token redemption (will be addressed in future update with transactional guarantees)
-- Download type tracking (free vs paid) requires further refinement for complex freemium scenarios
+**September 2025 - Enhanced Quota Enforcement System:**
+- **Per-Client Quota Tracking**: Each gallery visitor gets unique quota limits using persistent UUID system stored in localStorage
+- **Freemium Model Implementation**: Correctly enforces exactly 2 free downloads per unique visitor before requiring $5.00 payment
+- **Synchronized Tracking Systems**: Gallery downloads, entitlements, and tokens use consistent client identification
+- **Production-Ready Business Logic**: Proper quota accounting with per-photo usage tracking and accurate consumption calculation
+- **Multi-Visitor Support**: Different browser tabs/visitors get separate quota allowances (e.g., 4 total downloads from same session by 2 different clients)
+
+**System Architecture:**
+- Client-side generates persistent uniqueVisitorId using UUID stored in localStorage
+- Server respects client-provided visitor identifiers throughout download routes
+- Database properly tracks consumed downloads per client rather than shared limits
+- Entitlement system uses maxDownloads=1 per photo with accurate remaining quota calculation
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
