@@ -30,7 +30,8 @@ const { pgTable, varchar, timestamp, boolean, text, jsonb, decimal, integer } = 
 const schema = require('../shared/schema');
 const { 
   photographySessions, 
-  digitalTransactions 
+  digitalTransactions,
+  downloadEntitlements
 } = schema;
 const { eq, and, desc, count, sum, gte, lte } = require('drizzle-orm');
 
@@ -2753,34 +2754,29 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         });
       }
 
-      // Get current cart reservations
-      const cartReservations = await db
+      // Get all entitlements for this client (both used and unused)
+      const allEntitlements = await db
         .select()
         .from(downloadEntitlements)
         .where(and(
           eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, false),
-          eq(downloadEntitlements.type, 'cart_reservation')
+          eq(downloadEntitlements.clientKey, clientKey)
         ));
 
-      // Get actual entitlements (purchases)
-      const actualEntitlements = await db
-        .select()
-        .from(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, true)
-        ));
+      // Separate into active (remaining > 0) and used (remaining = 0 or used)
+      const activeEntitlements = allEntitlements.filter(e => e.remaining > 0);
+      const usedEntitlements = allEntitlements.filter(e => e.remaining === 0 || e.usedAt);
+      
+      // For cart reservations, we'll use a simple approach
+      const cartReservations = []; // Cart reservations not implemented in this schema
 
-      const totalUsedSlots = cartReservations.length + actualEntitlements.length;
+      const totalUsedSlots = allEntitlements.length; // Total entitlements (both active and used)
 
       // Calculate quota information based on policy
       let quotaInfo = {
         mode: policy.policy.mode,
-        cartItems: cartReservations.length,
-        purchasedItems: actualEntitlements.length,
+        cartItems: 0, // No cart reservations in this schema
+        purchasedItems: activeEntitlements.length,
         totalUsed: totalUsedSlots,
         remaining: null,
         total: null,
@@ -2804,10 +2800,12 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       res.json({
         success: true,
         quotaInfo: quotaInfo,
-        cartReservations: cartReservations.map(r => ({
-          photoId: r.photoId,
-          reservationId: r.id,
-          expiresAt: r.expiresAt
+        cartReservations: [], // No cart reservations in current schema
+        entitlements: activeEntitlements.map(e => ({
+          photoId: e.photoId,
+          id: e.id,
+          remaining: e.remaining,
+          expiresAt: e.expiresAt
         }))
       });
 

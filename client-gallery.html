@@ -1707,7 +1707,7 @@
                     }
 
                     // Call server API to validate quota and reserve slot
-                    const response = await fetch('/api/cart/add-item', {
+                    const response = await fetch('/api/downloads/cart/add-item', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1792,7 +1792,7 @@
 
                 try {
                     // Call server API to release quota reservation
-                    const response = await fetch('/api/cart/remove-item', {
+                    const response = await fetch('/api/downloads/cart/remove-item', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1954,7 +1954,7 @@
                 if (silent || confirm('Are you sure you want to clear your cart?')) {
                     try {
                         // Call server API to clear all reservations
-                        await fetch('/api/cart/clear', {
+                        await fetch('/api/downloads/cart/clear', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -2338,7 +2338,7 @@
                 try {
                     if (!this.sessionData) return;
 
-                    const response = await fetch(`/api/cart/status?sessionId=${this.sessionData.id}&clientKey=${this.getClientKey()}`);
+                    const response = await fetch(`/api/downloads/cart/status?sessionId=${this.sessionData.id}&clientKey=${this.getClientKey()}`);
                     const data = await response.json();
 
                     if (data.success && data.quota) {
