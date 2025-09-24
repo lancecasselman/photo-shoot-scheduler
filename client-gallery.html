@@ -1639,10 +1639,8 @@
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
-                        const cartFreeItems = this.cart.slice(0, freeCount);
-                        const isFree = cartFreeItems.length < freeCount && 
-                                       !cartFreeItems.some(item => item.photoId === photoIndex.toString());
-                        return isFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        const currentCartSize = this.cart.length;
+                        return currentCartSize < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         
                     case 'bulk':
                         // Calculate based on current cart size
