@@ -893,6 +893,134 @@
             box-shadow: 0 10px 40px rgba(197, 48, 48, 0.1);
         }
 
+        /* Quota Display Styles */
+        .quota-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 20px;
+            font-size: 14px;
+        }
+
+        .quota-text {
+            color: #374151;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .quota-progress {
+            background: rgba(156, 163, 175, 0.2);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .quota-bar {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.3s ease, background 0.3s ease;
+            position: relative;
+        }
+
+        .quota-bar.quota-good {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+
+        .quota-bar.quota-warning {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+        }
+
+        .quota-bar.quota-critical {
+            background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+        }
+
+        /* Quota Modal Styles */
+        .quota-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            backdrop-filter: blur(4px);
+        }
+
+        .quota-modal {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .quota-modal-header {
+            background: linear-gradient(135deg, rgba(254, 215, 215, 0.8) 0%, rgba(252, 129, 129, 0.2) 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(252, 129, 129, 0.2);
+        }
+
+        .quota-modal-header h3 {
+            margin: 0;
+            color: #c53030;
+            font-size: 20px;
+        }
+
+        .quota-modal-body {
+            padding: 25px;
+            line-height: 1.6;
+        }
+
+        .quota-details {
+            background: rgba(243, 244, 246, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .quota-details ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .quota-details li {
+            margin: 5px 0;
+        }
+
+        .quota-modal-actions {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid rgba(243, 244, 246, 0.8);
+        }
+
+        .quota-modal-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .quota-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
         .empty-gallery {
             text-align: center;
             padding: 60px 40px;
@@ -967,6 +1095,15 @@
             </div>
             <button class="close-cart" id="closeCart">✕</button>
         </div>
+        
+        <!-- Quota Information Display -->
+        <div class="quota-info" id="quotaInfo" style="display: none;">
+            <div class="quota-text" id="quotaText">Loading quota...</div>
+            <div class="quota-progress" id="quotaProgress">
+                <div class="quota-bar quota-good" id="quotaBar"></div>
+            </div>
+        </div>
+        
         <div class="cart-items" id="cartItems">
             <div class="cart-empty">
                 <div class="cart-empty-icon">🛒</div>
@@ -1110,6 +1247,9 @@
                 if (this.clientEmail) {
                     await this.loadEntitlements();
                 }
+
+                // Load initial quota status
+                await this.loadQuotaStatus();
             }
             
             initializeProtection() {
@@ -1536,39 +1676,171 @@
                 }
             }
             
-            addToCart(photoId, photoUrl, filename, price) {
+            async addToCart(photoId, photoUrl, filename, price) {
                 // Check if already in cart
                 if (this.cart.some(item => item.photoId === photoId)) {
                     return;
                 }
-                
-                this.cart.push({
-                    photoId,
-                    photoUrl,
-                    filename: filename || `Photo ${photoId}`,
-                    price: price || 0
-                });
-                
-                this.saveCart();
-                this.updateCartUI();
-                this.updatePhotoCard(photoId, true);
-                this.showSuccess('Photo added to cart!');
-                
-                // Recalculate all prices for freemium/bulk modes
-                if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
-                    this.recalculatePrices();
+
+                try {
+                    // Show loading state on the button
+                    const cards = document.querySelectorAll('.photo-card');
+                    let targetCard = null;
+                    cards.forEach((card) => {
+                        const photoIndex = card.id.replace('photo-', '');
+                        const photo = this.photos[photoIndex];
+                        if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                            targetCard = card;
+                        }
+                    });
+
+                    const btn = targetCard?.querySelector('.add-to-cart-btn');
+                    const originalText = btn?.textContent;
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = 'Checking quota...';
+                    }
+
+                    // Call server API to validate quota and reserve slot
+                    const response = await fetch('/api/cart/add-item', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionData.id,
+                            clientKey: this.getClientKey(),
+                            photoId: photoId,
+                            photoUrl: photoUrl,
+                            filename: filename || `Photo ${photoId}`
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Server validated quota - now add to local cart
+                        this.cart.push({
+                            photoId,
+                            photoUrl,
+                            filename: filename || `Photo ${photoId}`,
+                            price: price || 0,
+                            reservationId: data.reservationId // Track server reservation
+                        });
+                        
+                        this.saveCart();
+                        this.updateCartUI();
+                        this.updatePhotoCard(photoId, true);
+                        this.showSuccess('Photo added to cart!');
+                        
+                        // Update quota display with server response
+                        this.updateQuotaDisplay(data.quota);
+                        
+                        // Recalculate all prices for freemium/bulk modes
+                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                            this.recalculatePrices();
+                        }
+                    } else {
+                        // Handle quota exceeded or other errors
+                        if (data.quotaExceeded) {
+                            this.showQuotaExceededError(data.error, data.quota);
+                        } else if (data.alreadyPurchased) {
+                            this.showError('This photo has already been purchased.');
+                        } else {
+                            this.showError(data.error || 'Failed to add photo to cart');
+                        }
+                        
+                        // Update quota display even on failure to show current state
+                        if (data.quota) {
+                            this.updateQuotaDisplay(data.quota);
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error adding photo to cart:', error);
+                    this.showError('Network error. Please check your connection and try again.');
+                } finally {
+                    // Reset button state
+                    const cards = document.querySelectorAll('.photo-card');
+                    cards.forEach((card) => {
+                        const photoIndex = card.id.replace('photo-', '');
+                        const photo = this.photos[photoIndex];
+                        if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                            const btn = card.querySelector('.add-to-cart-btn');
+                            if (btn) {
+                                btn.disabled = false;
+                                // Check if item was actually added to cart
+                                const inCart = this.cart.some(item => item.photoId === photoId);
+                                btn.textContent = inCart ? '✓ Added - Remove' : '🛒 Add to Cart';
+                            }
+                        }
+                    });
                 }
             }
             
-            removeFromCart(photoId) {
-                this.cart = this.cart.filter(item => item.photoId !== photoId);
-                this.saveCart();
-                this.updateCartUI();
-                this.updatePhotoCard(photoId, false);
-                
-                // Recalculate all prices for freemium/bulk modes
-                if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
-                    this.recalculatePrices();
+            async removeFromCart(photoId) {
+                // Find the cart item to get reservation ID
+                const cartItem = this.cart.find(item => item.photoId === photoId);
+                if (!cartItem) {
+                    return; // Item not in cart
+                }
+
+                try {
+                    // Call server API to release quota reservation
+                    const response = await fetch('/api/cart/remove-item', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionData.id,
+                            clientKey: this.getClientKey(),
+                            photoId: photoId
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success || response.status === 404) {
+                        // Remove from local cart (allow removal even if server reservation not found)
+                        this.cart = this.cart.filter(item => item.photoId !== photoId);
+                        this.saveCart();
+                        this.updateCartUI();
+                        this.updatePhotoCard(photoId, false);
+                        
+                        // Update quota display with server response
+                        if (data.quota) {
+                            this.updateQuotaDisplay(data.quota);
+                        }
+                        
+                        // Recalculate all prices for freemium/bulk modes
+                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                            this.recalculatePrices();
+                        }
+                    } else {
+                        console.error('Failed to release server reservation:', data.error);
+                        // Still remove from local cart to avoid inconsistency
+                        this.cart = this.cart.filter(item => item.photoId !== photoId);
+                        this.saveCart();
+                        this.updateCartUI();
+                        this.updatePhotoCard(photoId, false);
+                        
+                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                            this.recalculatePrices();
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error removing photo from cart:', error);
+                    // Remove from local cart even if server call fails to avoid inconsistency
+                    this.cart = this.cart.filter(item => item.photoId !== photoId);
+                    this.saveCart();
+                    this.updateCartUI();
+                    this.updatePhotoCard(photoId, false);
+                    
+                    if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                        this.recalculatePrices();
+                    }
                 }
             }
             
@@ -1673,13 +1945,33 @@
                 this.showSuccess('All available photos added to cart!');
             }
             
-            clearCart(silent = false) {
+            async clearCart(silent = false) {
                 if (silent || confirm('Are you sure you want to clear your cart?')) {
+                    try {
+                        // Call server API to clear all reservations
+                        await fetch('/api/cart/clear', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                sessionId: this.sessionData.id,
+                                clientKey: this.getClientKey()
+                            })
+                        });
+                    } catch (error) {
+                        console.error('Error clearing server cart reservations:', error);
+                        // Continue with local clear even if server call fails
+                    }
+
                     this.cart = [];
                     this.saveCart();
                     this.updateCartUI();
                     this.displayPhotos(); // Reset all photo cards
                     this.closeCart();
+
+                    // Refresh quota display
+                    await this.loadQuotaStatus();
                 }
             }
             
@@ -1945,6 +2237,111 @@
                 document.getElementById('loadingContainer').style.display = 'none';
                 document.getElementById('errorContainer').style.display = 'block';
                 document.getElementById('errorMessage').textContent = message;
+            }
+
+            // ========================================
+            // QUOTA MANAGEMENT METHODS
+            // ========================================
+
+            updateQuotaDisplay(quotaInfo) {
+                const quotaContainer = document.getElementById('quotaInfo');
+                if (!quotaInfo) return;
+
+                // Show/hide quota info based on quota limits
+                if (quotaInfo.unlimited || (!quotaInfo.limit && quotaInfo.limit !== 0)) {
+                    quotaContainer.style.display = 'none';
+                    return;
+                }
+
+                quotaContainer.style.display = 'block';
+                
+                const quotaText = document.getElementById('quotaText');
+                const quotaProgress = document.getElementById('quotaProgress');
+                const quotaBar = document.getElementById('quotaBar');
+
+                const remaining = quotaInfo.remaining || 0;
+                const total = quotaInfo.limit || 0;
+                const used = quotaInfo.used || 0;
+                const reserved = quotaInfo.reserved || 0;
+
+                // Update text with reserved count info
+                const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
+                quotaText.textContent = `${remaining} of ${total} downloads remaining${reservedText}`;
+
+                // Update progress bar
+                if (total > 0) {
+                    const percentage = Math.max(0, (remaining / total) * 100);
+                    quotaBar.style.width = `${percentage}%`;
+                    
+                    // Color coding based on remaining quota
+                    quotaBar.className = 'quota-bar';
+                    if (percentage <= 10) {
+                        quotaBar.classList.add('quota-critical');
+                    } else if (percentage <= 25) {
+                        quotaBar.classList.add('quota-warning');
+                    } else {
+                        quotaBar.classList.add('quota-good');
+                    }
+                }
+
+                // Store quota info for use in other methods
+                this.currentQuota = quotaInfo;
+            }
+
+            showQuotaExceededError(message, quotaInfo) {
+                // Create a more detailed error modal for quota exceeded
+                const modal = document.createElement('div');
+                modal.className = 'quota-modal-overlay';
+                modal.innerHTML = `
+                    <div class="quota-modal">
+                        <div class="quota-modal-header">
+                            <h3>⚠️ Download Limit Reached</h3>
+                        </div>
+                        <div class="quota-modal-body">
+                            <p>${message}</p>
+                            ${quotaInfo ? `
+                                <div class="quota-details">
+                                    <p><strong>Your Current Usage:</strong></p>
+                                    <ul>
+                                        <li>Used: ${quotaInfo.used || 0} downloads</li>
+                                        <li>Limit: ${quotaInfo.total || 0} downloads</li>
+                                        <li>Remaining: ${quotaInfo.remaining || 0} downloads</li>
+                                    </ul>
+                                </div>
+                            ` : ''}
+                            <p>Remove items from your cart or complete your purchase to continue.</p>
+                        </div>
+                        <div class="quota-modal-actions">
+                            <button class="quota-modal-btn primary" onclick="this.closest('.quota-modal-overlay').remove()">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Auto-remove after 8 seconds
+                setTimeout(() => {
+                    if (modal.parentNode) {
+                        modal.remove();
+                    }
+                }, 8000);
+            }
+
+            async loadQuotaStatus() {
+                try {
+                    if (!this.sessionData) return;
+
+                    const response = await fetch(`/api/cart/status?sessionId=${this.sessionData.id}&clientKey=${this.getClientKey()}`);
+                    const data = await response.json();
+
+                    if (data.success && data.quota) {
+                        this.updateQuotaDisplay(data.quota);
+                    }
+                } catch (error) {
+                    console.error('Error loading quota status:', error);
+                }
             }
             
             // Storage Methods
