@@ -431,12 +431,37 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       }
       
       console.log(`🎟️ Issuing download token for photo ${photoId} to client: ${clientKey}`);
+      
+      // FREEMIUM MODE FIX: Check if this is freemium mode and create free entitlements if needed
+      console.log(`🔍 [FREEMIUM FIX] Getting policy for session to check if freemium mode`);
+      const policyResult = await commerceManager.getPolicyForSession(sessionId);
+      
+      if (policyResult.success && policyResult.policy.mode === 'freemium') {
+        console.log(`🆓 [FREEMIUM FIX] Session is in freemium mode - checking for free downloads`);
+        
+        // Try to create free entitlement first for this photo
+        const freeEntitlementResult = await commerceManager.createFreeEntitlements(
+          sessionId, 
+          clientKey, 
+          [{ photoId: photoId }]
+        );
+        
+        if (freeEntitlementResult.success) {
+          console.log(`✅ [FREEMIUM FIX] Created free entitlement for photo ${photoId} (${freeEntitlementResult.count} entitlements created)`);
+        } else {
+          console.log(`⚠️ [FREEMIUM FIX] Failed to create free entitlement: ${freeEntitlementResult.error}`);
+          // Continue to verification - might be paid entitlement or other issue
+        }
+      } else {
+        console.log(`💰 [FREEMIUM FIX] Session not in freemium mode (mode: ${policyResult.policy?.mode || 'unknown'})`);
+      }
+      
       console.log(`🔍 [DEBUG] About to call verifyEntitlement with:`);
       console.log(`  - sessionId: "${sessionId}"`);
       console.log(`  - clientKey: "${clientKey}"`);
       console.log(`  - photoId: "${photoId}"`);
       
-      // First verify entitlement exists
+      // Now verify entitlement exists (either just created or previously existing)
       const entitlementCheck = await commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
       
       console.log(`🔍 [DEBUG] verifyEntitlement result:`, JSON.stringify(entitlementCheck, null, 2));
