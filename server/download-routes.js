@@ -1707,7 +1707,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         photos = sessionFileResults.map(photo => ({
           filename: photo.filename,
           originalName: photo.originalName,
-          url: `/r2/file/${sessionData.user_id}/${sessionData.id}/gallery/${photo.filename}`,
+          url: `/r2/file/photographer-${sessionData.user_id}/session-${sessionData.id}/gallery/${photo.filename}`,
           size: photo.fileSize,
           uploadedAt: photo.uploadedAt,
           r2Key: photo.r2Key
