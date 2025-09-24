@@ -1667,15 +1667,44 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         return res.status(410).json({ error: 'Gallery access has expired' });
       }
 
-      // Get photos from database - photos are stored in the session's photos JSONB field
+      // Get photos from session_files table (complete gallery photos)
       let photos = [];
       try {
-        // Photos are stored directly in the database as JSONB
-        photos = sessionData.photos || [];
-        console.log(`📸 Found ${photos.length} photos in database for session ${sessionData.id}`);
+        console.log(`🔍 Loading photos from session_files table for session ${sessionData.id}`);
+        
+        // Query session_files table for all gallery photos
+        const client = await pool.connect();
+        const result = await client.query(`
+          SELECT 
+            filename,
+            original_name,
+            file_size,
+            uploaded_at,
+            r2_key
+          FROM session_files 
+          WHERE session_id = $1 
+            AND folder_type = 'gallery'
+            AND deleted = false
+          ORDER BY uploaded_at DESC
+        `, [sessionData.id]);
+        client.release();
+        
+        // Transform database results to match expected photo format
+        photos = result.rows.map(photo => ({
+          filename: photo.filename,
+          originalName: photo.original_name,
+          url: `/r2/file/${sessionData.userId}/${sessionData.id}/gallery/${photo.filename}`,
+          size: photo.file_size,
+          uploadedAt: photo.uploaded_at,
+          r2Key: photo.r2_key
+        }));
+        
+        console.log(`📸 Found ${photos.length} photos in session_files table for session ${sessionData.id}`);
       } catch (error) {
-        console.warn('Could not load gallery photos from database:', error.message);
-        photos = [];
+        console.warn('Could not load gallery photos from session_files table:', error.message);
+        // Fallback to sessionData.photos if session_files query fails
+        photos = sessionData.photos || [];
+        console.log(`📸 Fallback: Using ${photos.length} photos from sessions table`);
       }
 
       // Convert database fields from snake_case to camelCase for client consumption
