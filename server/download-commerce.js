@@ -337,6 +337,39 @@ class DownloadCommerceManager {
      */
     async verifyEntitlement(sessionId, clientKey, photoId) {
         try {
+            console.log(`🔍 [DEBUG] verifyEntitlement called with:`);
+            console.log(`  🗂️ sessionId: "${sessionId}" (type: ${typeof sessionId})`);
+            console.log(`  🔑 clientKey: "${clientKey}" (type: ${typeof clientKey})`);
+            console.log(`  📷 photoId: "${photoId}" (type: ${typeof photoId})`);
+            
+            // First, let's get ALL entitlements for this client to see what exists
+            console.log(`🔍 [DEBUG] Fetching ALL entitlements for client "${clientKey}" in session "${sessionId}"`);
+            const allClientEntitlements = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.clientKey, clientKey)
+                ));
+            
+            console.log(`🔍 [DEBUG] Found ${allClientEntitlements.length} total entitlements for client:`);
+            allClientEntitlements.forEach((ent, index) => {
+                console.log(`  📋 Entitlement ${index + 1}:`);
+                console.log(`    • ID: ${ent.id}`);
+                console.log(`    • photoId: "${ent.photoId}" (type: ${typeof ent.photoId})`);
+                console.log(`    • remaining: ${ent.remaining} (type: ${typeof ent.remaining})`);
+                console.log(`    • isActive: ${ent.isActive}`);
+                console.log(`    • createdAt: ${ent.createdAt}`);
+                console.log(`    • photoId matches target: ${ent.photoId === photoId}`);
+                console.log(`    • remaining > 0: ${ent.remaining > 0}`);
+            });
+            
+            // Now perform the specific entitlement query with strict matching
+            console.log(`🔍 [DEBUG] Performing specific entitlement search with criteria:`);
+            console.log(`  - sessionId === "${sessionId}"`);
+            console.log(`  - clientKey === "${clientKey}"`);
+            console.log(`  - photoId === "${photoId}"`);
+            console.log(`  - remaining > 0`);
+            
             const entitlement = await this.db.select()
                 .from(downloadEntitlements)
                 .where(and(
@@ -347,19 +380,39 @@ class DownloadCommerceManager {
                 ))
                 .limit(1);
             
+            console.log(`🔍 [DEBUG] Specific entitlement query returned ${entitlement.length} results`);
             if (entitlement.length > 0) {
+                console.log(`✅ [DEBUG] Found matching entitlement:`, JSON.stringify(entitlement[0], null, 2));
                 return {
                     success: true,
                     entitlement: entitlement[0]
                 };
+            } else {
+                console.warn(`❌ [DEBUG] No matching entitlement found for the specific criteria`);
+                console.warn(`  📷 Looking for photoId: "${photoId}"`);
+                console.warn(`  📋 Available photoIds:`, allClientEntitlements.map(e => `"${e.photoId}"`));
+                
+                // Check for potential matches with different criteria
+                const activeEntitlements = allClientEntitlements.filter(e => e.remaining > 0);
+                const matchingPhotoId = allClientEntitlements.filter(e => e.photoId === photoId);
+                
+                console.warn(`  🔄 Active entitlements (remaining > 0): ${activeEntitlements.length}`);
+                console.warn(`  🎯 PhotoId matches (any remaining): ${matchingPhotoId.length}`);
+                
+                return {
+                    success: false,
+                    error: 'No entitlement found',
+                    debug: {
+                        totalEntitlements: allClientEntitlements.length,
+                        activeEntitlements: activeEntitlements.length,
+                        photoIdMatches: matchingPhotoId.length,
+                        searchedPhotoId: photoId,
+                        availablePhotoIds: allClientEntitlements.map(e => e.photoId)
+                    }
+                };
             }
-            
-            return {
-                success: false,
-                error: 'No entitlement found'
-            };
         } catch (error) {
-            console.error('Error verifying entitlement:', error);
+            console.error('❌ [DEBUG] Error verifying entitlement:', error);
             return {
                 success: false,
                 error: error.message
@@ -965,9 +1018,32 @@ class DownloadCommerceManager {
             }
             
             const photos = session[0].photos || [];
-            const photo = photos.find(p => p.id === photoId || p.filename === photoId);
+            
+            // Try multiple strategies to find the photo
+            let photo = null;
+            
+            // Strategy 1: Direct match on id or filename
+            photo = photos.find(p => p.id === photoId || p.filename === photoId);
+            
+            // Strategy 2: If photoId is a numeric index, try array access
+            if (!photo && /^\d+$/.test(photoId)) {
+                const index = parseInt(photoId);
+                if (index >= 0 && index < photos.length) {
+                    photo = photos[index];
+                    console.log(`📷 Found photo using index ${index}: ${photo.filename}`);
+                }
+            }
+            
+            // Strategy 3: Try to match by partial filename
+            if (!photo) {
+                photo = photos.find(p => p.filename && p.filename.includes(photoId));
+                if (photo) {
+                    console.log(`📷 Found photo using partial filename match: ${photo.filename}`);
+                }
+            }
             
             if (!photo) {
+                console.error(`❌ Photo not found for photoId "${photoId}"`);
                 return {
                     success: false,
                     error: 'Photo not found'

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-23T04:37:25.612Z",
+  "timestamp": "2025-09-24T03:08:44.979Z",
   "summary": {
     "passed": 38,
     "failed": 2,
@@ -181,22 +181,22 @@
       {
         "category": "Performance",
         "test": "Database query speed",
-        "details": "163ms"
+        "details": "188ms"
       },
       {
         "category": "Performance",
         "test": "Policy retrieval speed",
-        "details": "23ms"
+        "details": "22ms"
       },
       {
         "category": "Performance",
         "test": "Entitlement check speed",
-        "details": "21ms"
+        "details": "34ms"
       },
       {
         "category": "Performance",
         "test": "Average operation time",
-        "details": "69.00ms"
+        "details": "81.33ms"
       }
     ],
     "failed": [

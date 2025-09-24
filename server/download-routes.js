@@ -375,7 +375,17 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     try {
       const { sessionId, clientKey, photoId, photoUrl, filename } = req.body;
       
+      // DEBUG: Log all incoming parameters
+      console.log(`🔍 [DEBUG] /api/downloads/tokens - Incoming parameters:`);
+      console.log(`  📋 Request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`  🗂️ sessionId: "${sessionId}" (type: ${typeof sessionId})`);
+      console.log(`  🔑 clientKey: "${clientKey}" (type: ${typeof clientKey})`);
+      console.log(`  📷 photoId: "${photoId}" (type: ${typeof photoId})`);
+      console.log(`  🔗 photoUrl: "${photoUrl}" (type: ${typeof photoUrl})`);
+      console.log(`  📄 filename: "${filename}" (type: ${typeof filename})`);
+      
       if (!sessionId || !clientKey || !photoId) {
+        console.error(`❌ Missing required fields - sessionId: ${!!sessionId}, clientKey: ${!!clientKey}, photoId: ${!!photoId}`);
         return res.status(400).json({ 
           success: false, 
           error: 'Missing required fields: sessionId, clientKey, and photoId' 
@@ -383,9 +393,15 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       }
       
       console.log(`🎟️ Issuing download token for photo ${photoId} to client: ${clientKey}`);
+      console.log(`🔍 [DEBUG] About to call verifyEntitlement with:`);
+      console.log(`  - sessionId: "${sessionId}"`);
+      console.log(`  - clientKey: "${clientKey}"`);
+      console.log(`  - photoId: "${photoId}"`);
       
       // First verify entitlement exists
       const entitlementCheck = await commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
+      
+      console.log(`🔍 [DEBUG] verifyEntitlement result:`, JSON.stringify(entitlementCheck, null, 2));
       
       if (!entitlementCheck.success) {
         console.warn(`⚠️ Entitlement not found for photo ${photoId}`);
