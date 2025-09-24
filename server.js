@@ -568,7 +568,7 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
                 },
                 galleryDelivery: {
                     subject: `Your Photos Are Ready! `,
-                    message: `Dear ${clientData.clientName}, we're excited to share that your ${clientData.sessionType} photos are ready for viewing and download. Access your private gallery here: ${process.env.APP_URL}/gallery/${sessionId}`
+                    message: `Dear ${clientData.clientName}, we're excited to share that your ${clientData.sessionType} photos are ready for viewing and download. Access your private gallery here: ${process.env.BASE_URL || 'https://photomanagementsystem.com'}/g/${clientData.galleryAccessToken}`
                 },
                 feedbackRequest: {
                     subject: `We'd Love Your Feedback`,
@@ -578,13 +578,13 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
             friendly: {
                 galleryDelivery: {
                     subject: `Your amazing photos are ready! `,
-                    message: `Hey ${clientData.clientName}! Your ${clientData.sessionType} photos turned out absolutely stunning! Can't wait for you to see them: ${process.env.APP_URL}/gallery/${sessionId}`
+                    message: `Hey ${clientData.clientName}! Your ${clientData.sessionType} photos turned out absolutely stunning! Can't wait for you to see them: ${process.env.BASE_URL || 'https://photomanagementsystem.com'}/g/${clientData.galleryAccessToken}`
                 }
             },
             luxury: {
                 galleryDelivery: {
                     subject: `Your Exclusive Gallery Awaits`,
-                    message: `Dear ${clientData.clientName}, it is our pleasure to present your bespoke ${clientData.sessionType} collection. Your private gallery showcases the artistry of your session: ${process.env.APP_URL}/gallery/${sessionId}`
+                    message: `Dear ${clientData.clientName}, it is our pleasure to present your bespoke ${clientData.sessionType} collection. Your private gallery showcases the artistry of your session: ${process.env.BASE_URL || 'https://photomanagementsystem.com'}/g/${clientData.galleryAccessToken}`
                 }
             }
         };
@@ -11192,21 +11192,10 @@ app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (
         const host = req.get('host');
         let baseUrl;
 
-        // Always prefer external domain for gallery links to work on mobile devices
-        const externalDomain = process.env.REPLIT_DOMAINS;
+        // Use production domain for gallery links
+        baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
 
-        if (externalDomain) {
-            // Use external Replit domain for mobile compatibility
-            baseUrl = `https://${externalDomain}`;
-        } else if (host.includes('replit.app') || host.includes('repl.co') || host.includes('replit.dev')) {
-            // Replit deployment - use the actual domain
-            baseUrl = `${req.protocol}://${host}`;
-        } else {
-            // Fallback to request host
-            baseUrl = `${req.protocol}://${host}`;
-        }
-
-        const galleryUrl = `${baseUrl}/gallery/${session.galleryAccessToken}`;
+        const galleryUrl = `${baseUrl}/g/${session.galleryAccessToken}`;
 
         console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
 
