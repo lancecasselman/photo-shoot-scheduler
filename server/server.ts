@@ -28,7 +28,7 @@ function getMimeType(filePath: string): string {
 function setCorsHeaders(res: any, req?: any) {
   // Secure CORS configuration - restrict to trusted domains
   const allowedOrigins = [
-    'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev',
+    'https://photomanagementsystem.com',
     'https://photomanagementsystem.com',
     'http://localhost:3000', // Development
     'http://localhost:5000'  // Development
@@ -47,7 +47,7 @@ function setCorsHeaders(res: any, req?: any) {
   }
   // Default fallback for development
   else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev');
+    res.setHeader('Access-Control-Allow-Origin', 'https://photomanagementsystem.com');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

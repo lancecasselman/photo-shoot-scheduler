@@ -209,7 +209,7 @@ class UnifiedSubscriptionManager {
             // Use production domain if available, otherwise fall back to development
             const baseUrl = process.env.NODE_ENV === 'production' || process.env.PRODUCTION_DOMAIN
                 ? `https://${domain}`
-                : `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}`;
+                : `https://photomanagementsystem.com`;
 
             const session = await stripe.checkout.sessions.create({
                 customer: customer.id,
@@ -274,9 +274,9 @@ class UnifiedSubscriptionManager {
                     planType: 'storage',
                     tbCount: tbCount.toString()
                 },
-                // Use proper domain from REPLIT_DOMAINS environment variable
-                success_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-checkout.html`,
+                // Use production domain
+                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/subscription-checkout.html`,
                 allow_promotion_codes: true
             });
 

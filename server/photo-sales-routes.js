@@ -1066,8 +1066,8 @@ router.post('/client-print-order', requireGalleryAccess, (req, res) => {
                 allowed_countries: ['US', 'CA']
             },
             customer_email: customerValidation.sanitized.email,
-            success_url: `${req.protocol}://${req.get('host')}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.protocol}://${req.get('host')}/cancel`,
+            success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/cancel`,
             metadata: {
                 order_type: 'client_print',
                 gallery_token: req.accessToken,
@@ -1159,8 +1159,8 @@ router.post('/client-digital-order', requireGalleryAccess, async (req, res) => {
                 quantity: 1
             }],
             customer_email: customerValidation.sanitized.email,
-            success_url: `${req.protocol}://${req.get('host')}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.protocol}://${req.get('host')}/cancel`,
+            success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/cancel`,
             metadata: {
                 order_type: 'client_digital',
                 gallery_token: req.accessToken,
@@ -1310,8 +1310,8 @@ router.post('/digital-order', async (req, res) => {
                     photoUrl: photoUrl,
                     filename: filename
                 },
-                success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`,
-                cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
+                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`,
+                cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/print-checkout.html?cancelled=true`
             });
             
             console.log('✅ Created Stripe session for digital download:', session.id);
@@ -1469,8 +1469,8 @@ router.post('/print-order', (req, res) => {
                     userId: userId || 'anonymous',
                     serverValidatedTotal: totalPrice.toFixed(2)
                 },
-                success_url: `${req.protocol}://${req.get('host')}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=print`,
-                cancel_url: `${req.protocol}://${req.get('host')}/print-checkout.html?cancelled=true`
+                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=print`,
+                cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/print-checkout.html?cancelled=true`
             });
             
             console.log('✅ Created Stripe session for print order:', session.id);

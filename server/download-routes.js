@@ -1601,7 +1601,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         success: true, 
         token,
         expiresAt,
-        downloadUrl: `${process.env.APP_URL || req.protocol + '://' + req.get('host')}/gallery/${sessionId}?token=${token}`
+        downloadUrl: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/gallery/${sessionId}?token=${token}`
       });
       
     } catch (error) {
@@ -1949,7 +1949,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const amount = Math.max(50, Math.round(Number(sessionData.pricePerDownload) * 100)) || 500; // Convert to cents with proper rounding, minimum 50 cents
 
       // Create success and cancel URLs
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const baseUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}`;
       const successUrl = `${baseUrl}/api/downloads/purchase-success?session_id={CHECKOUT_SESSION_ID}&token=${token}&sessionId=${sessionId}&photoId=${photoId}`;
       const cancelUrl = `${baseUrl}/gallery/${sessionId}?token=${token}`;
 

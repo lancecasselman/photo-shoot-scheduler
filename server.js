@@ -4535,8 +4535,8 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
                 quantity: req.body.quantity || 1
             }],
             mode: 'subscription',
-            success_url: `${req.protocol}://${req.get('host')}/subscription-success`,
-            cancel_url: `${req.protocol}://${req.get('host')}/`
+            success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/subscription-success`,
+            cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/`
         });
 
         res.json({ checkoutUrl: session.url });
@@ -6416,7 +6416,7 @@ app.post('/api/whcc/editor-session', async (req, res) => {
         }
         
         // Construct callback URL for when user completes editing
-        const callbackUrl = `${req.protocol}://${req.get('host')}/api/whcc/editor-callback`;
+        const callbackUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/api/whcc/editor-callback`;
         
         const editorSession = await printService.createEditorSession({
             productUID,
@@ -10358,7 +10358,7 @@ app.post('/api/storefront/publish', isAuthenticated, async (req, res) => {
         // Generate public site files (simplified version)
         await generateStaticSite(username, siteData);
 
-        const siteUrl = `${req.protocol}://${req.get('host')}/sites/${username}`;
+        const siteUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/sites/${username}`;
         res.json({ 
             success: true, 
             message: 'Site published successfully',
@@ -10880,23 +10880,8 @@ app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (re
             galleryExpiresAt: null
         });
 
-        // Generate gallery URL with external domain detection
-        const host = req.get('host');
-        let baseUrl;
-
-        if (host && host.includes('localhost')) {
-            // For localhost, check for external domain in environment
-            const replitDomains = process.env.REPLIT_DOMAINS;
-            if (replitDomains) {
-                const domains = replitDomains.split(',');
-                baseUrl = `https://${domains[0]}`;
-            } else {
-                baseUrl = `${req.protocol}://${host}`;
-            }
-        } else {
-            // Always use HTTPS for external domains
-            baseUrl = `https://${host}`;
-        }
+        // Use production domain for gallery URL
+        const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
 
         const galleryUrl = `${baseUrl}/g/${accessToken}`;
 
@@ -11633,8 +11618,8 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
                 quantity: 1
             }],
             mode: 'payment',
-            success_url: `${req.protocol}://${req.get('host')}/?credits_purchased=true`,
-            cancel_url: `${req.protocol}://${req.get('host')}/`,
+            success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/?credits_purchased=true`,
+            cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/`,
             metadata: {
                 userId: userId,
                 credits: creditsNum.toString(),
@@ -12086,7 +12071,7 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
         }
 
         // Create tip URL for this invoice using payment record ID
-        const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${paymentRecordId}`;
+        const invoiceCustomUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/invoice.html?payment=${paymentRecordId}`;
         
         // Get photographer's Stripe Connect account ID
         const userId = req.user?.uid || req.user?.id || '3Tc0PNSL9ePct34MXNiTUjfCo5s1';
@@ -13696,7 +13681,7 @@ app.post('/api/website/publish', (req, res, next) => {
             websiteId,
             subdomain,
             url: `/site/${subdomain}`,
-            fullUrl: `${req.protocol}://${req.get('host')}/site/${subdomain}`,
+            fullUrl: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/site/${subdomain}`,
             message: 'Website published successfully!'
         });
         
@@ -13752,7 +13737,7 @@ app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
             isPublished: website.is_published,
             publishedAt: website.published_at,
             url: `/site/${website.subdomain}`,
-            fullUrl: `${req.protocol}://${req.get('host')}/site/${website.subdomain}`
+            fullUrl: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/site/${website.subdomain}`
         });
         
     } catch (error) {
@@ -14814,7 +14799,7 @@ app.post('/api/publish-static-site', isAuthenticated, requirePremium, async (req
                 user_email = $1
         `, [req.user.email, cleanUsername, JSON.stringify(siteConfig), theme]);
 
-        const publishedUrl = `${req.protocol}://${req.get('host')}/site/${cleanUsername}`;
+        const publishedUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/site/${cleanUsername}`;
 
         res.json({
             success: true,

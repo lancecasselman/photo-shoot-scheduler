@@ -239,9 +239,7 @@ function createBookingAgreementRoutes(pool) {
                 const agreement = result.rows[0];
                 
                 // Generate the full signing URL
-                const baseUrl = process.env.NODE_ENV === 'production' 
-                    ? 'https://photomanagementsystem.com' 
-                    : `https://${req.get('host')}`;
+                const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
                 const signingUrl = `${baseUrl}/sign/${agreement.access_token}`;
 
                 // Send based on method
