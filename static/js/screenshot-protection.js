@@ -541,11 +541,8 @@ class ScreenshotProtection {
                 this.addWatermarkOverlay(wrapper);
             }
             
-            // Add blur effect for unpurchased photos
-            if (this.settings.useBlurEffect && this.protectionEnabled) {
-                imgElement.classList.add('blur-unpurchased');
-                this.addPurchaseOverlay(wrapper);
-            }
+            // Note: Removed blur effect and purchase overlay - users can now see watermarked previews directly
+            // Server-side watermarked previews provide sufficient protection while allowing purchase decisions
             
             // Use blob URLs for enhanced protection
             if (this.settings.useBlobUrls && this.protectionEnabled) {
