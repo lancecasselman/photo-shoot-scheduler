@@ -1268,10 +1268,10 @@
                     await this.handleCheckoutReturn();
                 }
                 
-                // Load entitlements if we have client info
-                if (this.clientEmail) {
-                    await this.loadEntitlements();
-                }
+                // Load entitlements to check for already purchased photos
+                // For freemium galleries, we need to load entitlements even without client email
+                // to properly show download buttons for unpurchased photos
+                await this.loadEntitlements();
 
                 // Load initial quota status
                 await this.loadQuotaStatus();
