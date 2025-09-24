@@ -311,8 +311,7 @@ class DownloadCommerceManager {
                         sessionId: sessionId,
                         clientKey: clientKey,
                         photoId: item.photoId,
-                        remaining: 1, // Explicitly set remaining value
-                        isActive: true // Explicitly set active status
+                        remaining: 1 // Explicitly set remaining value
                     });
                 entitlementIds.push(entitlementId);
             }
@@ -344,7 +343,7 @@ class DownloadCommerceManager {
                     eq(downloadEntitlements.sessionId, sessionId),
                     eq(downloadEntitlements.clientKey, clientKey),
                     eq(downloadEntitlements.photoId, photoId),
-                    eq(downloadEntitlements.isActive, true)
+                    gt(downloadEntitlements.remaining, 0)
                 ))
                 .limit(1);
             
@@ -984,7 +983,6 @@ class DownloadCommerceManager {
                 sessionId: sessionId,
                 expiresAt: expiresAt,
                 isUsed: false,
-                oneTime: true,
                 createdAt: new Date()
             });
             

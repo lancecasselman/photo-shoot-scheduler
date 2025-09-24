@@ -325,14 +325,20 @@ exports.businessExpenses = (0, pg_core_1.pgTable)("business_expenses", {
 exports.downloadTokens = (0, pg_core_1.pgTable)("download_tokens", {
     id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
     token: (0, pg_core_1.varchar)("token").notNull().unique(),
-    photoUrl: (0, pg_core_1.varchar)("photo_url").notNull(),
-    filename: (0, pg_core_1.varchar)("filename").notNull(),
+    photoUrl: (0, pg_core_1.varchar)("photo_url"),
+    filename: (0, pg_core_1.varchar)("filename"),
     sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
     expiresAt: (0, pg_core_1.timestamp)("expires_at").notNull(),
     isUsed: (0, pg_core_1.boolean)("is_used").default(false),
     usedAt: (0, pg_core_1.timestamp)("used_at"),
-    oneTime: (0, pg_core_1.boolean)("one_time").default(true), // Whether token is single-use
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
+    clientEmail: (0, pg_core_1.varchar)("client_email"),
+    clientKey: (0, pg_core_1.varchar)("client_key"),
+    photoId: (0, pg_core_1.varchar)("photo_id"),
+    tokenHash: (0, pg_core_1.varchar)("token_hash"),
+    ipAddress: (0, pg_core_1.varchar)("ip_address"),
+    maxUses: (0, pg_core_1.integer)("max_uses"),
+    usedByIp: (0, pg_core_1.varchar)("used_by_ip"),
 }, (table) => ({
     sessionIdx: (0, pg_core_1.index)("idx_download_tokens_session").on(table.sessionId),
     tokenIdx: (0, pg_core_1.index)("idx_download_tokens_token").on(table.token),
