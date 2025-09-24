@@ -62,6 +62,19 @@ const galleryDownloads = pgTable("gallery_downloads", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
+const sessionFiles = pgTable("session_files", {
+  id: integer("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  folderType: varchar("folder_type"),
+  filename: varchar("filename"),
+  fileSizeBytes: integer("file_size_bytes"),
+  fileSizeMb: decimal("file_size_mb"),
+  uploadedAt: timestamp("uploaded_at"),
+  originalName: varchar("original_name"),
+  r2Key: text("r2_key")
+});
+
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
@@ -1672,31 +1685,32 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       try {
         console.log(`🔍 Loading photos from session_files table for session ${sessionData.id}`);
         
-        // Query session_files table for all gallery photos
-        const client = await pool.connect();
-        const result = await client.query(`
-          SELECT 
-            filename,
-            original_name,
-            file_size,
-            uploaded_at,
-            r2_key
-          FROM session_files 
-          WHERE session_id = $1 
-            AND folder_type = 'gallery'
-            AND deleted = false
-          ORDER BY uploaded_at DESC
-        `, [sessionData.id]);
-        client.release();
+        // Query session_files table using Drizzle ORM
+        const sessionFileResults = await db
+          .select({
+            filename: sessionFiles.filename,
+            originalName: sessionFiles.originalName,
+            fileSize: sessionFiles.fileSizeBytes,
+            uploadedAt: sessionFiles.uploadedAt,
+            r2Key: sessionFiles.r2Key
+          })
+          .from(sessionFiles)
+          .where(
+            and(
+              eq(sessionFiles.sessionId, sessionData.id),
+              eq(sessionFiles.folderType, 'gallery')
+            )
+          )
+          .orderBy(desc(sessionFiles.uploadedAt));
         
         // Transform database results to match expected photo format
-        photos = result.rows.map(photo => ({
+        photos = sessionFileResults.map(photo => ({
           filename: photo.filename,
-          originalName: photo.original_name,
-          url: `/r2/file/${sessionData.userId}/${sessionData.id}/gallery/${photo.filename}`,
-          size: photo.file_size,
-          uploadedAt: photo.uploaded_at,
-          r2Key: photo.r2_key
+          originalName: photo.originalName,
+          url: `/r2/file/${sessionData.user_id}/${sessionData.id}/gallery/${photo.filename}`,
+          size: photo.fileSize,
+          uploadedAt: photo.uploadedAt,
+          r2Key: photo.r2Key
         }));
         
         console.log(`📸 Found ${photos.length} photos in session_files table for session ${sessionData.id}`);
