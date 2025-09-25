@@ -1771,8 +1771,10 @@
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
-                        // Count how many free downloads have already been used (purchased/entitled)
-                        const usedFreeDownloads = this.entitlements.filter(e => e.type === 'free' || e.price === 0).length;
+                        // FIXED: Count free downloads properly - free entitlements have orderId: null
+                        const usedFreeDownloads = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
+                        
+                        console.log(`💰 Photo ${photoIndex + 1} price calculation: freeCount=${freeCount}, usedFree=${usedFreeDownloads}`);
                         
                         // Calculate remaining free downloads
                         const remainingFreeDownloads = Math.max(0, freeCount - usedFreeDownloads);
