@@ -2240,16 +2240,20 @@
                     button.disabled = true;
                     button.textContent = 'Processing...';
                     
-                    // For free downloads, use the free entitlement endpoint
+                    // For free downloads, use the same mechanism as free galleries
                     if (price === 0) {
-                        const response = await fetch('/api/downloads/free-entitlement', {
+                        console.log('🆓 Processing free download in freemium mode...');
+                        
+                        // Create download token (same as free galleries)
+                        const response = await fetch('/api/downloads/tokens', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
                                 sessionId: this.sessionData.id,
-                                galleryAccessToken: this.galleryToken,
+                                clientKey: this.getClientKey(),
+                                photoId: photoId,
                                 photoUrl: photoUrl,
                                 filename: filename
                             })
@@ -2257,10 +2261,11 @@
                         
                         const data = await response.json();
                         
-                        if (data.success && data.downloadUrl) {
-                            // Start download immediately
+                        if (data.success && data.token) {
+                            // Start download immediately (same as free galleries)
+                            const downloadUrl = `/api/downloads/photo/${data.token}`;
                             const link = document.createElement('a');
-                            link.href = data.downloadUrl;
+                            link.href = downloadUrl;
                             link.download = filename || 'photo.jpg';
                             document.body.appendChild(link);
                             link.click();
@@ -2273,7 +2278,7 @@
                             this.displayPhotos();
                             
                         } else {
-                            throw new Error(data.error || 'Failed to process free download');
+                            throw new Error(data.error || 'Failed to generate download token');
                         }
                     } else {
                         // For paid downloads, add to cart instead
