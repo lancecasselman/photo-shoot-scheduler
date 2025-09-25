@@ -1577,8 +1577,11 @@
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
                         const afterPrice = parseFloat(this.policy.pricePerPhoto || 0);
-                        const usedFree = this.entitlements.filter(e => e.type === 'free').length;
+                        // Free entitlements have orderId: null (no payment required)
+                        const usedFree = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
                         const remaining = Math.max(0, freeCount - usedFree);
+                        
+                        console.log(`🔢 Counter calculation: freeCount=${freeCount}, usedFree=${usedFree}, remaining=${remaining}`);
                         
                         if (remaining > 0) {
                             message = `🆓 ${remaining} of ${freeCount} free downloads remaining • Then $${afterPrice.toFixed(2)} each`;
@@ -2370,6 +2373,7 @@
                             
                             // Refresh the gallery to update pricing and entitlements
                             await this.loadEntitlements();
+                            this.updatePricingBanner(); // Update the counter display
                             this.displayPhotos();
                             
                         } else {
