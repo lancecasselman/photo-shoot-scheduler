@@ -1179,8 +1179,8 @@
         <div id="downloadQueueItems"></div>
     </div>
     
-    <!-- Screenshot Protection Script temporarily disabled for debugging -->
-    <!-- <script src="/static/js/screenshot-protection.js"></script> -->
+    <!-- Include Screenshot Protection Script -->
+    <script src="/static/js/screenshot-protection.js"></script>
 
     <script>
         // Immediately show JavaScript is running
@@ -1473,6 +1473,16 @@
                         parsedPricePerPhoto: this.policy.pricePerPhoto,
                         parsedFreeCount: this.policy.freeCount
                     });
+                    
+                    // CRITICAL DEBUG: Make absolutely sure freemium is detected
+                    if (pricingModel === 'freemium') {
+                        console.log('✅✅✅ FREEMIUM MODE CONFIRMED - Should show immediate download buttons!');
+                        console.log('📥 First', this.policy.freeCount, 'photos should show FREE buttons');
+                        console.log('💵 Remaining photos should show $' + this.policy.pricePerPhoto.toFixed(2) + ' buttons');
+                    } else {
+                        console.log('❌❌❌ NOT IN FREEMIUM MODE - Will show Add to Cart buttons');
+                        console.log('❌ Current mode:', mode, 'from pricingModel:', pricingModel);
+                    }
                     
                     // Update screenshot protection settings
                     if (this.protection && this.policy.screenshotProtection !== undefined) {
