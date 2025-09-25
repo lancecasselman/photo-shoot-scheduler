@@ -1267,7 +1267,7 @@
                 
                 // CRITICAL FIX: Generate unique visitor ID for freemium quota tracking
                 // Must be done FIRST before any API calls that use getClientKey()
-                this.generateUniqueVisitorId();
+                await this.initializeUniqueVisitorId();
                 console.log('🆔 Visitor ID initialized:', this.uniqueVisitorId);
                 
                 // Initialize screenshot protection system
@@ -2698,16 +2698,22 @@
             
             /**
              * Get the unique client key for this visitor
-             * For freemium galleries, use gallery-session-based key that matches server logic
+             * For freemium galleries, ALWAYS use gallery-session-based key that matches server logic
              */
             getClientKey() {
-                // For freemium mode, use cached gallery client key or fall back to visitor ID
-                // Note: We can't make this async, so we'll cache the gallery key when available
-                if (this.policy && this.policy.mode === 'freemium' && this.cachedGalleryClientKey) {
-                    return this.cachedGalleryClientKey;
+                // CRITICAL: For freemium mode, ALWAYS use cached gallery client key
+                // This ensures consistency with server-side entitlement verification
+                if (this.policy && this.policy.mode === 'freemium') {
+                    if (this.cachedGalleryClientKey) {
+                        return this.cachedGalleryClientKey;
+                    } else {
+                        console.warn('⚠️ Gallery client key not cached! This will cause entitlement mismatches.');
+                        // Emergency fallback - this should not happen if initialization is correct
+                        return 'gallery-emergency-fallback';
+                    }
                 }
                 
-                // Use email if provided (for paid downloads), otherwise use unique visitor ID
+                // For non-freemium modes (paid downloads), use email if provided, otherwise visitor ID
                 return this.clientEmail || this.uniqueVisitorId || 'anonymous';
             }
             

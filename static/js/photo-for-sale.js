@@ -561,7 +561,7 @@
         // Get session information
         const sessionId = getSessionId();
         const galleryToken = getGalleryToken();
-        const clientKey = generateClientKey(galleryToken, sessionId);
+        const clientKey = await generateClientKey(galleryToken, sessionId);
         
         if (!sessionId || !galleryToken) {
             console.warn('⚠️ Missing session info, falling back to standard purchase modal');
@@ -801,27 +801,39 @@
         return null;
     }
     
-    function generateClientKey(galleryToken, sessionId) {
+    /**
+     * AUTHORITATIVE CLIENT KEY GENERATION
+     * Generate client key using IDENTICAL logic to server
+     * CRITICAL: Must match server's generateGalleryClientKey function exactly
+     */
+    async function generateClientKey(galleryToken, sessionId) {
         if (!galleryToken || !sessionId) {
-            return `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            throw new Error('Gallery token and session ID are required for client key generation');
         }
         
-        // Generate client key similar to server-side logic
-        const userAgent = navigator.userAgent || '';
-        const userAgentHash = btoa(userAgent).substring(0, 8);
+        // CRITICAL: Use ONLY gallery token + session ID (no IP, no user agent, no other identifiers)
+        // This ensures both server and client can generate the exact same key deterministically
         const baseString = `${galleryToken}-${sessionId}`;
-        const fullIdentifier = `${baseString}-${userAgentHash}`;
         
-        // Create a simple hash (since we don't have crypto in browser, use a simple approach)
-        let hash = 0;
-        for (let i = 0; i < fullIdentifier.length; i++) {
-            const char = fullIdentifier.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
-        }
+        // Create a SHA-256 hash for the final client key
+        const hashHex = await sha256(baseString);
+        const clientKey = `gallery-${hashHex.substring(0, 16)}`;
         
-        const clientKey = `gallery-${Math.abs(hash).toString(16).substring(0, 16)}`;
+        console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery token: ${galleryToken.substring(0, 8)}...`);
+        
         return clientKey;
+    }
+    
+    /**
+     * Simple SHA-256 implementation for client-side key generation
+     */
+    async function sha256(message) {
+        // Use Web Crypto API for SHA-256 hashing
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
     }
     
     function showFreeDownloadSuccess(entitlement, quotaInfo) {

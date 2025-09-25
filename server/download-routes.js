@@ -104,15 +104,8 @@ function generateGalleryClientKey(galleryAccessToken, sessionId) {
   return clientKey;
 }
 
-/**
- * LEGACY FUNCTION - DEPRECATED
- * Keep for backwards compatibility during migration
- * @deprecated Use generateGalleryClientKey instead
- */
-function generateUniqueClientKey(galleryAccessToken, sessionId, ipAddress = '') {
-  console.warn('⚠️ DEPRECATED: generateUniqueClientKey is deprecated, use generateGalleryClientKey instead');
-  return generateGalleryClientKey(galleryAccessToken, sessionId);
-}
+// REMOVED: Deprecated generateUniqueClientKey function
+// All client key generation now uses generateGalleryClientKey for consistency
 
 function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   const router = express.Router();
@@ -147,6 +140,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
   // Use the same authentication middleware as the main server
   const requireAuth = isAuthenticated;
+  
+  // REMOVED: Test endpoint for client key consistency verification (testing complete)
   
   // Rate limiting configurations
   const downloadRateLimit = rateLimit({
@@ -1366,11 +1361,12 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           });
         }
         
-        // CRITICAL FIX: Use client-provided UUID instead of server-generated key
-        // Client sends their uniqueVisitorId in the request body as clientKey
-        const clientKey = req.body.clientKey || `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // CRITICAL FIX: Use authoritative gallery client key generation
+        // For freemium mode, client key must be deterministic based on gallery token + session
+        const galleryToken = req.galleryToken; // Available from requireGalleryToken middleware
+        const clientKey = generateGalleryClientKey(galleryToken, sessionId);
         
-        console.log(`🔑 Using client-provided key: ${clientKey} (from client's uniqueVisitorId)`);
+        console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery access`);
         
         console.log(`🎯 Freemium check for client: ${clientKey}`);
         
@@ -1900,11 +1896,12 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // Session data is available from requireGalleryToken middleware
       const sessionData = req.sessionData;
 
-      // CRITICAL FIX: Use client-provided UUID instead of server-generated key
-      // Client sends their uniqueVisitorId as clientKey parameter or in query
-      const clientKey = req.query.clientKey || req.body.clientKey || `anonymous-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // CRITICAL FIX: Use authoritative gallery client key generation
+      // For gallery access, client key must be deterministic based on gallery token + session
+      const galleryToken = req.galleryToken; // Available from requireGalleryToken middleware
+      const clientKey = generateGalleryClientKey(galleryToken, sessionId);
       
-      console.log(`🔑 Using client-provided key: ${clientKey} (from client's uniqueVisitorId)`);
+      console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery access`);
       
       console.log(`🔍 Gallery access - Client key: ${clientKey} for session: ${sessionId}`);
       const usageResult = await db
@@ -2118,7 +2115,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       // Handle freemium model - check if free downloads are exhausted
       if (sessionData.pricingModel === 'freemium') {
-        const clientKey = tokenData.clientEmail || 'anonymous';
+        // For freemium mode, use authoritative gallery client key
+        // Extract gallery token from token data or session context
+        const session = await db.select().from(photographySessions).where(eq(photographySessions.id, sessionId)).limit(1);
+        if (session.length === 0) {
+          return res.status(404).json({ error: 'Session not found' });
+        }
+        const galleryToken = session[0].galleryAccessToken || session[0].gallery_access_token;
+        const clientKey = generateGalleryClientKey(galleryToken, sessionId);
         const usageResult = await db
           .select({ count: count() })
           .from(galleryDownloads)
@@ -2382,7 +2386,10 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       }
 
       const sessionData = session[0];
-      const clientKey = tokenData.clientEmail || 'anonymous';
+      // For download verification, use authoritative gallery client key for freemium sessions
+      // Extract gallery token from session data
+      const galleryToken = sessionData.galleryAccessToken || sessionData.gallery_access_token;
+      const clientKey = generateGalleryClientKey(galleryToken, tokenData.sessionId);
 
       // Check download limits and payment requirements based on pricing model
       const usageResult = await db
