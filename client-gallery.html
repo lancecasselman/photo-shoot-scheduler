@@ -2378,6 +2378,26 @@
                             this.updatePricingBanner(); // Update the counter display
                             this.displayPhotos();
                             
+                        } else if (data.quotaExceeded) {
+                            // Free quota exhausted - automatically add to cart instead of showing error
+                            console.log('🛒 Free quota exhausted, automatically adding to cart...');
+                            
+                            // Get the paid price for this photo (should be policy.pricePerDownload)
+                            const paidPrice = this.policy && this.policy.pricePerDownload ? 
+                                parseFloat(this.policy.pricePerDownload) : 4.66;
+                            
+                            // Add to cart automatically
+                            await this.addToCart(photoId, photoUrl, filename, paidPrice);
+                            
+                            // Show user-friendly message about automatic cart addition
+                            this.showSuccess(`Free downloads used up! Added ${filename} to cart for $${paidPrice.toFixed(2)}`);
+                            
+                            // Refresh the gallery to update buttons and pricing
+                            await this.loadEntitlements();
+                            this.updatePricingBanner();
+                            this.displayPhotos();
+                            
+                            return; // Exit successfully without error
                         } else {
                             throw new Error(data.error || 'Failed to generate download token');
                         }
