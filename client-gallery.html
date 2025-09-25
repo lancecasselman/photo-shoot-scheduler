@@ -1453,7 +1453,7 @@
                     
                     try {
                         // Make one more direct API call to get the data
-                        const emergencyResponse = await fetch(`/api/downloads/gallery/${this.galleryToken}/verify`);
+                        const emergencyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
                         const emergencyData = await emergencyResponse.json();
                         
                         console.log('🚨 EMERGENCY RESPONSE:', emergencyData);
