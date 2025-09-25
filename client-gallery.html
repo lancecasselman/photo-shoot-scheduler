@@ -1375,7 +1375,7 @@
                     console.log('📸 Loading gallery with token:', this.galleryToken);
                     
                     // Verify gallery access using correct endpoint
-                    const verifyResponse = await fetch(`/api/downloads/gallery/${this.galleryToken}/verify`);
+                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
                     const verifyData = await verifyResponse.json();
                     
                     console.log('🔍 API Response received:', verifyResponse.status, verifyResponse.ok);
