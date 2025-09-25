@@ -76,6 +76,13 @@ A comprehensive download-based delivery system with flexible pricing models (fre
 - Database properly tracks consumed downloads per client rather than shared limits
 - Entitlement system uses maxDownloads=1 per photo with accurate remaining quota calculation
 
+**September 2025 - Freemium Download Entitlement Fix:**
+- **Client Key Mismatch Resolution**: Fixed critical "No download entitlement found" error caused by server-client key generation mismatch
+- **Authoritative Key System**: Implemented consistent `generateGalleryClientKey()` on both server and client using gallery token + session ID
+- **Backwards Compatibility**: Enhanced verification system with comprehensive fallback lookup for legacy entitlements (visitor IDs, email keys)
+- **Consistent Verification**: Eliminated key switching fallback logic - server always uses same authoritative key for creation and verification
+- **Reliable Re-downloads**: Fixed repeat downloads to work with same entitlement and consistent key matching
+
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
 
