@@ -1408,6 +1408,10 @@
                     };
                     console.log('✅ Gallery verified:', this.sessionData);
                     
+                    // Load policy from session data to enable freemium mode
+                    await this.loadPolicy();
+                    console.log('🔧 Policy loaded:', this.policy);
+                    
                     // FIX: Photos are in verifyData.session.photos, not verifyData.photos
                     this.photos = sessionData.photos || [];
                     console.log(`📸 Photos array found:`, this.photos);
