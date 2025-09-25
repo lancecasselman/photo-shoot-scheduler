@@ -1436,12 +1436,19 @@
                     
                     this.policy = {
                         mode: mode,
-                        pricePerPhoto: this.sessionData.pricePerDownload || this.sessionData.price_per_download || 0,
-                        freeCount: this.sessionData.freeDownloads || this.sessionData.free_downloads || 0,
+                        pricePerPhoto: parseFloat(this.sessionData.pricePerDownload || this.sessionData.price_per_download || 0) || 0,
+                        freeCount: parseInt(this.sessionData.freeDownloads || this.sessionData.free_downloads || 0, 10) || 0,
                         screenshotProtection: true // Enable by default for previews
                     };
                     
                     console.log('📋 Built policy from session data:', this.policy);
+                    console.log('🐛 DEBUG: Raw session data for policy:', {
+                        pricingModel: pricingModel,
+                        pricePerDownload: this.sessionData.pricePerDownload,
+                        freeDownloads: this.sessionData.freeDownloads,
+                        parsedPricePerPhoto: this.policy.pricePerPhoto,
+                        parsedFreeCount: this.policy.freeCount
+                    });
                     
                     // Update screenshot protection settings
                     if (this.protection && this.policy.screenshotProtection !== undefined) {
@@ -1603,6 +1610,15 @@
                 console.log(`🃏 Photo ${index + 1} (photoId: ${photoIdToCheck}) entitled: ${isEntitled}`, {
                     availableEntitlements: this.entitlements.map(e => ({ photoId: e.photoId, photoUrl: e.photoUrl })),
                     checkingFor: { photoId: photo.id, index: index.toString(), filename: photo.filename, url: photo.url }
+                });
+                
+                // 🐛 DEBUG: Log policy and freemium button logic
+                console.log(`🐛 DEBUG Photo ${index + 1} Button Logic:`, {
+                    isEntitled: isEntitled,
+                    policy: this.policy,
+                    policyMode: this.policy?.mode,
+                    isFreemium: this.policy && this.policy.mode === 'freemium',
+                    willShowFreemiumButton: !isEntitled && this.policy && this.policy.mode === 'freemium'
                 });
                 
                 // Calculate price for this photo

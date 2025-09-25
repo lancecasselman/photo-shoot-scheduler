@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug Gallery Frontend</title></head>
+<body>
+<script>
+const galleryToken = 'dda7ad42-1613-4bac-9fe0-7b38d10dba80';
+
+async function testGalleryLoad() {
+  console.log('🧪 Testing gallery data loading...');
+  
+  try {
+    // Test the verification endpoint
+    const response = await fetch(`/api/gallery/${galleryToken}/verify`);
+    const verifyData = await response.json();
+    
+    console.log('📋 Full verify response:', verifyData);
+    
+    if (verifyData.success && verifyData.session) {
+      const sessionData = verifyData.session;
+      console.log('✅ Session data extracted:', sessionData);
+      
+      // Test pricing model detection
+      const pricingModel = sessionData.pricingModel || sessionData.pricing_model;
+      console.log('🔍 Pricing model from session data:', pricingModel);
+      
+      // Test policy building
+      let mode = 'free';
+      switch (pricingModel) {
+        case 'freemium':
+          mode = 'freemium';
+          break;
+        case 'paid':
+        case 'fixed':
+          mode = 'fixed';
+          break;
+      }
+      
+      const policy = {
+        mode: mode,
+        pricePerPhoto: sessionData.pricePerDownload || sessionData.price_per_download || 0,
+        freeCount: sessionData.freeDownloads || sessionData.free_downloads || 0,
+      };
+      
+      console.log('📋 Built policy:', policy);
+      
+      // Test price calculation for first few photos
+      for (let i = 0; i < Math.min(5, sessionData.photos?.length || 0); i++) {
+        let price = null;
+        if (policy.mode === 'freemium') {
+          const freeCount = parseInt(policy.freeCount || 0);
+          const usedFreeDownloads = 0; // Start with 0
+          const totalFreeUsedIncludingCart = usedFreeDownloads + 0;
+          price = totalFreeUsedIncludingCart + i < freeCount ? 0 : parseFloat(policy.pricePerPhoto || 0);
+        }
+        console.log(`💰 Photo ${i + 1} price: ${price}`);
+      }
+      
+    } else {
+      console.error('❌ Failed to load gallery data:', verifyData);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error testing gallery load:', error);
+  }
+}
+
+// Run test when page loads
+testGalleryLoad();
+</script>
+</body>
+</html>
