@@ -1745,15 +1745,15 @@
                                     📥 Download
                                 </button>
                             ` : `
-                                ${this.policy && this.policy.mode === 'freemium' ? `
-                                    <button class="photo-btn download-btn immediate ${price === 0 ? 'free' : 'paid'}" 
+                                ${this.policy && this.policy.mode === 'freemium' && price === 0 ? `
+                                    <button class="photo-btn download-btn immediate free" 
                                             onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})">
-                                        📥 ${price === 0 ? 'FREE' : `$${price.toFixed(2)}`}
+                                        📥 FREE
                                     </button>
                                 ` : `
                                     <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
                                             onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
-                                        ${inCart ? '✓ Added - Remove' : '🛒 Add to Cart'}
+                                        ${inCart ? '✓ Added - Remove' : `🛒 Add to Cart - $${price ? price.toFixed(2) : '4.75'}`}
                                     </button>
                                 `}
                             `}
