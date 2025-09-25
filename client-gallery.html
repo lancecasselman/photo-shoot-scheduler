@@ -1759,22 +1759,39 @@
             }
             
             calculatePhotoPrice(photoIndex) {
-                if (!this.policy) return null;
+                if (!this.policy) {
+                    console.log(`💰 Photo ${photoIndex + 1}: No policy, returning null`);
+                    return null;
+                }
+                
+                console.log(`💰 Photo ${photoIndex + 1}: Calculating price with policy:`, {
+                    mode: this.policy.mode,
+                    pricePerPhoto: this.policy.pricePerPhoto,
+                    freeCount: this.policy.freeCount
+                });
                 
                 switch (this.policy.mode) {
                     case 'free':
+                        console.log(`💰 Photo ${photoIndex + 1}: FREE mode, returning 0`);
                         return 0;
                         
                     case 'fixed':
                     case 'per_photo':
-                        return parseFloat(this.policy.pricePerPhoto || 0);
+                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || 0);
+                        console.log(`💰 Photo ${photoIndex + 1}: FIXED mode, returning ${fixedPrice}`);
+                        return fixedPrice;
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
                         // FIXED: Count free downloads properly - free entitlements have orderId: null
                         const usedFreeDownloads = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
                         
-                        console.log(`💰 Photo ${photoIndex + 1} price calculation: freeCount=${freeCount}, usedFree=${usedFreeDownloads}`);
+                        console.log(`💰 Photo ${photoIndex + 1} FREEMIUM calculation:`, {
+                            freeCount: freeCount,
+                            usedFreeDownloads: usedFreeDownloads,
+                            entitlements: this.entitlements,
+                            pricePerPhoto: this.policy.pricePerPhoto
+                        });
                         
                         // Calculate remaining free downloads
                         const remainingFreeDownloads = Math.max(0, freeCount - usedFreeDownloads);
@@ -1794,7 +1811,17 @@
                         // This photo is FREE if there are still free slots available
                         // considering both used entitlements and cart items before this photo
                         const totalFreeUsedIncludingCart = usedFreeDownloads + freeCartItemsBeforeThis;
-                        return totalFreeUsedIncludingCart < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        const calculatedPrice = totalFreeUsedIncludingCart < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        
+                        console.log(`💰 Photo ${photoIndex + 1} FREEMIUM result:`, {
+                            remainingFreeDownloads: remainingFreeDownloads,
+                            freeCartItemsBeforeThis: freeCartItemsBeforeThis,
+                            totalFreeUsedIncludingCart: totalFreeUsedIncludingCart,
+                            isFree: totalFreeUsedIncludingCart < freeCount,
+                            calculatedPrice: calculatedPrice
+                        });
+                        
+                        return calculatedPrice;
                         
                     case 'bulk':
                         // Calculate based on current cart size
