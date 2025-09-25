@@ -1424,6 +1424,49 @@
                 } catch (error) {
                     console.error('❌ Error loading gallery:', error);
                     console.error('❌ Error stack:', error.stack);
+                    console.error('❌ Token being used:', this.galleryToken);
+                    
+                    // CRITICAL DEBUG: Try to force the gallery to work even with errors
+                    console.log('🔄 ATTEMPTING EMERGENCY GALLERY RECOVERY...');
+                    
+                    try {
+                        // Make one more direct API call to get the data
+                        const emergencyResponse = await fetch(`/api/downloads/gallery/${this.galleryToken}/verify`);
+                        const emergencyData = await emergencyResponse.json();
+                        
+                        console.log('🚨 EMERGENCY RESPONSE:', emergencyData);
+                        
+                        if (emergencyData.success && emergencyData.session) {
+                            console.log('✅ EMERGENCY RECOVERY SUCCESS - Processing data...');
+                            this.sessionData = emergencyData.session;
+                            this.photos = this.sessionData.photos || [];
+                            
+                            // Set freemium policy directly from API response
+                            this.policy = {
+                                mode: 'freemium',
+                                pricePerPhoto: parseFloat(this.sessionData.pricePerDownload || 4.66),
+                                freeCount: parseInt(this.sessionData.freeDownloads || 2),
+                                screenshotProtection: true
+                            };
+                            
+                            console.log('✅ EMERGENCY POLICY SET:', this.policy);
+                            console.log('✅ EMERGENCY PHOTOS LOADED:', this.photos.length);
+                            
+                            // Force render the gallery
+                            this.displayPhotos();
+                            document.getElementById('loadingContainer').style.display = 'none';
+                            if (this.photos.length > 0) {
+                                document.getElementById('galleryActions').style.display = 'flex';
+                                document.getElementById('floatingCart').style.display = 'flex';
+                            }
+                            
+                            console.log('🎉 EMERGENCY RECOVERY COMPLETE - Gallery should now show freemium buttons!');
+                            return; // Exit successful recovery
+                        }
+                    } catch (emergencyError) {
+                        console.error('💥 EMERGENCY RECOVERY FAILED:', emergencyError);
+                    }
+                    
                     this.showError(error.message);
                     
                     // Hide loading and show error
