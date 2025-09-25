@@ -1179,10 +1179,34 @@
         <div id="downloadQueueItems"></div>
     </div>
     
-    <!-- Include Screenshot Protection Script -->
-    <script src="/static/js/screenshot-protection.js"></script>
+    <!-- Screenshot Protection Script temporarily disabled for debugging -->
+    <!-- <script src="/static/js/screenshot-protection.js"></script> -->
 
     <script>
+        // Immediately show JavaScript is running
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add visual indicator that JavaScript is running
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:green;color:white;padding:10px;z-index:9999;border-radius:5px;';
+            indicator.textContent = '✅ JavaScript is running!';
+            document.body.appendChild(indicator);
+        });
+        
+        // Add immediate debugging
+        console.log('🚀 Gallery JavaScript starting to load...');
+        
+        // Add error handler to catch any issues
+        window.addEventListener('error', function(event) {
+            console.error('❌ JavaScript Error:', event.error);
+            console.error('❌ Error at:', event.filename, 'Line:', event.lineno, 'Col:', event.colno);
+            // Also display error on page
+            const errorDiv = document.getElementById('errorContainer');
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'JavaScript Error: ' + event.error.message;
+            }
+        });
+        
         // ClientGalleryCart Class
         class ClientGalleryCart {
             constructor() {
@@ -2550,9 +2574,26 @@
         
         // Initialize cart when page loads
         let galleryCart;
+        console.log('🎯 Setting up DOMContentLoaded listener...');
+        
         document.addEventListener('DOMContentLoaded', () => {
-            galleryCart = new ClientGalleryCart();
+            console.log('📄 DOM Content Loaded - Initializing gallery...');
+            try {
+                galleryCart = new ClientGalleryCart();
+                console.log('✅ Gallery cart initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize gallery cart:', error);
+                console.error('❌ Stack trace:', error.stack);
+                // Display error on page
+                const errorDiv = document.getElementById('errorContainer');
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('errorMessage').textContent = 'Failed to initialize gallery: ' + error.message;
+                }
+            }
         });
+        
+        console.log('🎯 Gallery JavaScript fully loaded');
     </script>
 </body>
 </html>
