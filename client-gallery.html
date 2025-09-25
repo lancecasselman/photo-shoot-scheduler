@@ -1264,11 +1264,13 @@
             async init() {
                 console.log('🛒 Initializing ClientGalleryCart...');
                 
+                // CRITICAL FIX: Generate unique visitor ID for freemium quota tracking
+                // Must be done FIRST before any API calls that use getClientKey()
+                this.getOrCreateVisitorId();
+                console.log('🆔 Visitor ID initialized:', this.uniqueVisitorId);
+                
                 // Initialize screenshot protection system
                 this.initializeProtection();
-                
-                // Generate unique visitor ID first for proper quota tracking
-                this.generateUniqueVisitorId();
                 
                 // Load saved cart and client info
                 this.loadCart();
