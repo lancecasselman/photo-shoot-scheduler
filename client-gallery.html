@@ -1266,7 +1266,7 @@
                 
                 // CRITICAL FIX: Generate unique visitor ID for freemium quota tracking
                 // Must be done FIRST before any API calls that use getClientKey()
-                this.getOrCreateVisitorId();
+                this.generateUniqueVisitorId();
                 console.log('🆔 Visitor ID initialized:', this.uniqueVisitorId);
                 
                 // Initialize screenshot protection system
