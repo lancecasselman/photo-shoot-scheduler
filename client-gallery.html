@@ -328,6 +328,19 @@
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
 
+        .download-btn.immediate.free.quota-exhausted {
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            color: #f3f4f6;
+            box-shadow: 0 4px 15px rgba(156, 163, 175, 0.3);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .download-btn.immediate.free.quota-exhausted:hover {
+            transform: none;
+            box-shadow: 0 4px 15px rgba(156, 163, 175, 0.3);
+        }
+
         .download-btn.immediate.paid {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
@@ -1745,10 +1758,16 @@
                                     📥 Download
                                 </button>
                             ` : `
-                                ${this.policy && this.policy.mode === 'freemium' && price === 0 ? `
-                                    <button class="photo-btn download-btn immediate free" 
-                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})">
-                                        📥 FREE
+                                ${this.policy && this.policy.mode === 'freemium' ? `
+                                    <!-- Show both FREE and purchase buttons side by side in freemium mode -->
+                                    <button class="photo-btn download-btn immediate free ${price === 0 ? '' : 'quota-exhausted'}" 
+                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})"
+                                            ${price !== 0 ? 'disabled title="Free quota exhausted"' : ''}>
+                                        📥 FREE ${price === 0 ? '' : '(0 left)'}
+                                    </button>
+                                    <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
+                                            onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
+                                        ${inCart ? '✓ Added - Remove' : `🛒 $${price !== null && price > 0 ? price.toFixed(2) : '4.75'}`}
                                     </button>
                                 ` : `
                                     <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
