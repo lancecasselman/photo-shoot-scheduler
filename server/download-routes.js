@@ -2822,7 +2822,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         maxDownloads: 1,
         orderId: null,
         isActive: false, // Mark as inactive to indicate it's a cart reservation
-        type: 'cart_reservation', // Special type for cart items
+        // Note: Cart reservations are identified by orderId=null, remaining=0, isActive=false
         expiresAt: new Date(Date.now() + (2 * 60 * 60 * 1000)), // 2 hours expiry
         createdAt: new Date()
       });
@@ -2869,6 +2869,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       }
 
       // Find and remove the cart reservation for this photo
+      // Cart reservations are identified by: remaining=0 (can't download yet)
       const cartReservations = await db
         .select()
         .from(downloadEntitlements)
@@ -2876,8 +2877,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           eq(downloadEntitlements.sessionId, sessionId),
           eq(downloadEntitlements.clientKey, clientKey),
           eq(downloadEntitlements.photoId, photoId),
-          eq(downloadEntitlements.isActive, false), // Cart reservations are inactive
-          eq(downloadEntitlements.type, 'cart_reservation')
+          eq(downloadEntitlements.remaining, 0) // Cart reservations can't be downloaded yet
         ))
         .limit(1);
 
@@ -3048,13 +3048,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       console.log(`🛒 [CART] Clear cart request for client: ${clientKey}`);
 
       // Remove all cart reservations for this client
+      // Cart reservations are identified by: remaining=0 (can't download yet)
       const result = await db
         .delete(downloadEntitlements)
         .where(and(
           eq(downloadEntitlements.sessionId, sessionId),
           eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, false),
-          eq(downloadEntitlements.type, 'cart_reservation')
+          eq(downloadEntitlements.remaining, 0)
         ));
 
       console.log(`🛒 [CART] Cleared cart reservations for client ${clientKey}`);
@@ -3066,6 +3066,395 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
     } catch (error) {
       console.error('🛒 [CART] Error clearing cart:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to clear cart' 
+      });
+    }
+  });
+
+  // ==================== CART API ALIAS ROUTES ====================
+  // These routes provide aliases for the cart endpoints to match client expectations
+  // Client-side code calls /api/downloads/cart/* but server has /api/cart/*
+  
+  /**
+   * POST /api/downloads/cart/add-item
+   * Alias for /api/cart/add-item - redirects to existing cart functionality
+   */
+  router.post('/downloads/cart/add-item', downloadRateLimit, async (req, res) => {
+    console.log('🔄 [CART ALIAS] Redirecting /api/downloads/cart/add-item to /api/cart/add-item');
+    
+    // Call the existing add-item handler with the same request/response
+    try {
+      const { sessionId, clientKey, photoId, photoUrl, filename } = req.body;
+      
+      console.log(`🛒 [CART] Add item request (via alias):`, { sessionId, clientKey, photoId });
+      
+      if (!sessionId || !clientKey || !photoId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, clientKey, and photoId' 
+        });
+      }
+
+      // Get session and policy information
+      const session = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, sessionId))
+        .limit(1);
+
+      if (session.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
+        });
+      }
+
+      const sessionData = session[0];
+      const policy = await commerceManager.getPolicyForSession(sessionId);
+      
+      if (!policy.success) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to get session policy'
+        });
+      }
+
+      console.log(`🛒 [CART] Session policy mode: ${policy.policy.mode}`);
+
+      // Check if photo is already purchased (has valid entitlement)
+      const entitlementCheck = await commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
+      if (entitlementCheck.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Photo already purchased',
+          alreadyPurchased: true
+        });
+      }
+
+      // Count existing entitlements + cart reservations for quota validation
+      const existingEntitlements = await db
+        .select()
+        .from(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey)
+        ));
+
+      console.log(`🛒 [CART] Found ${existingEntitlements.length} existing entitlements for client`);
+
+      // Validate quota based on policy mode
+      let quotaValidation = { allowed: true, remainingQuota: null, message: null };
+
+      if (policy.policy.mode === 'freemium') {
+        const freeCount = parseInt(policy.policy.freeCount || 0);
+        const usedCount = existingEntitlements.length;
+        const remainingFree = Math.max(0, freeCount - usedCount);
+        
+        console.log(`🛒 [CART] Freemium mode: ${usedCount}/${freeCount} used, ${remainingFree} remaining`);
+        
+        quotaValidation = {
+          allowed: remainingFree > 0,
+          remainingQuota: remainingFree,
+          totalQuota: freeCount,
+          usedQuota: usedCount,
+          message: remainingFree > 0 ? 
+            `${remainingFree} free downloads remaining` : 
+            'Free download limit reached. Additional photos require payment.'
+        };
+      } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
+        const maxPerClient = parseInt(policy.policy.maxPerClient);
+        const usedCount = existingEntitlements.length;
+        const remaining = Math.max(0, maxPerClient - usedCount);
+        
+        console.log(`🛒 [CART] Max per client: ${usedCount}/${maxPerClient} used, ${remaining} remaining`);
+        
+        quotaValidation = {
+          allowed: remaining > 0,
+          remainingQuota: remaining,
+          totalQuota: maxPerClient,
+          usedQuota: usedCount,
+          message: remaining > 0 ? 
+            `${remaining} downloads remaining` : 
+            'Download limit reached for this client.'
+        };
+      }
+
+      if (!quotaValidation.allowed) {
+        return res.status(403).json({
+          success: false,
+          error: quotaValidation.message,
+          quotaExceeded: true,
+          quotaInfo: {
+            remaining: quotaValidation.remainingQuota || 0,
+            total: quotaValidation.totalQuota || 0,
+            used: quotaValidation.usedQuota || 0
+          }
+        });
+      }
+
+      // Create a temporary "cart reservation" entitlement
+      const reservationId = uuidv4();
+      await db.insert(downloadEntitlements).values({
+        id: reservationId,
+        sessionId: sessionId,
+        clientKey: clientKey,
+        photoId: photoId,
+        photoUrl: photoUrl || null,
+        filename: filename || null,
+        remaining: 0, // Cart reservations don't allow downloads yet
+        isActive: false, // Cart reservations are inactive
+        // Note: Cart reservations are identified by orderId=null, remaining=0, isActive=false
+        expiresAt: new Date(Date.now() + (2 * 60 * 60 * 1000)), // 2 hours expiry
+        createdAt: new Date()
+      });
+
+      console.log(`🛒 [CART] Created cart reservation ${reservationId} for photo ${photoId}`);
+
+      // Return success with updated quota information
+      res.json({
+        success: true,
+        message: 'Item added to cart',
+        reservationId: reservationId,
+        quotaInfo: {
+          remaining: Math.max(0, (quotaValidation.remainingQuota || 0) - 1),
+          total: quotaValidation.totalQuota || 0,
+          used: (quotaValidation.usedQuota || 0) + 1,
+          mode: policy.policy.mode
+        }
+      });
+
+    } catch (error) {
+      console.error('🛒 [CART] Error adding item to cart (via alias):', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to add item to cart' 
+      });
+    }
+  });
+
+  /**
+   * POST /api/downloads/cart/remove-item
+   * Alias for /api/cart/remove-item - redirects to existing cart functionality
+   */
+  router.post('/downloads/cart/remove-item', downloadRateLimit, async (req, res) => {
+    console.log('🔄 [CART ALIAS] Redirecting /api/downloads/cart/remove-item to /api/cart/remove-item');
+    
+    try {
+      const { sessionId, clientKey, photoId } = req.body;
+      
+      console.log(`🛒 [CART] Remove item request (via alias):`, { sessionId, clientKey, photoId });
+      
+      if (!sessionId || !clientKey || !photoId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId, clientKey, and photoId' 
+        });
+      }
+
+      // Find and remove the cart reservation for this photo
+      // Cart reservations are identified by: remaining=0 (can't download yet)
+      const cartReservations = await db
+        .select()
+        .from(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey),
+          eq(downloadEntitlements.photoId, photoId),
+          eq(downloadEntitlements.remaining, 0) // Cart reservations can't be downloaded yet
+        ))
+        .limit(1);
+
+      if (cartReservations.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Cart reservation not found'
+        });
+      }
+
+      // Remove the cart reservation
+      await db
+        .delete(downloadEntitlements)
+        .where(eq(downloadEntitlements.id, cartReservations[0].id));
+
+      console.log(`🛒 [CART] Removed cart reservation ${cartReservations[0].id} for photo ${photoId}`);
+
+      // Get updated quota information
+      const policy = await commerceManager.getPolicyForSession(sessionId);
+      const remainingEntitlements = await db
+        .select()
+        .from(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey)
+        ));
+
+      let quotaInfo = { remaining: null, total: null, used: remainingEntitlements.length };
+
+      if (policy.success && policy.policy.mode === 'freemium') {
+        const freeCount = parseInt(policy.policy.freeCount || 0);
+        quotaInfo = {
+          remaining: Math.max(0, freeCount - remainingEntitlements.length),
+          total: freeCount,
+          used: remainingEntitlements.length,
+          mode: policy.policy.mode
+        };
+      } else if (policy.success && policy.policy.maxPerClient) {
+        const maxPerClient = parseInt(policy.policy.maxPerClient);
+        quotaInfo = {
+          remaining: Math.max(0, maxPerClient - remainingEntitlements.length),
+          total: maxPerClient,
+          used: remainingEntitlements.length,
+          mode: policy.policy.mode
+        };
+      }
+
+      res.json({
+        success: true,
+        message: 'Item removed from cart',
+        quotaInfo: quotaInfo
+      });
+
+    } catch (error) {
+      console.error('🛒 [CART] Error removing item from cart (via alias):', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to remove item from cart' 
+      });
+    }
+  });
+
+  /**
+   * GET /api/downloads/cart/status
+   * Alias for /api/cart/status - redirects to existing cart functionality
+   */
+  router.get('/downloads/cart/status', downloadRateLimit, async (req, res) => {
+    console.log('🔄 [CART ALIAS] Redirecting /api/downloads/cart/status to /api/cart/status');
+    
+    try {
+      const { sessionId, clientKey } = req.query;
+      
+      if (!sessionId || !clientKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required parameters: sessionId and clientKey' 
+        });
+      }
+
+      console.log(`🛒 [CART] Status request for client (via alias): ${clientKey}`);
+
+      // Get session policy
+      const policy = await commerceManager.getPolicyForSession(sessionId);
+      if (!policy.success) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to get session policy'
+        });
+      }
+
+      // Get all entitlements for this client (both used and unused)
+      const allEntitlements = await db
+        .select()
+        .from(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey)
+        ));
+
+      // Separate into active (remaining > 0) and used (remaining = 0 or used)
+      const activeEntitlements = allEntitlements.filter(e => e.remaining > 0);
+      const usedEntitlements = allEntitlements.filter(e => e.remaining === 0 || e.usedAt);
+      
+      // For cart reservations, we'll use a simple approach
+      const cartReservations = []; // Cart reservations not implemented in this schema
+
+      const totalUsedSlots = allEntitlements.length; // Total entitlements (both active and used)
+
+      // Calculate quota information based on policy
+      let quotaInfo = {
+        mode: policy.policy.mode,
+        cartItems: 0, // No cart reservations in this schema
+        purchasedItems: activeEntitlements.length,
+        totalUsed: totalUsedSlots,
+        remaining: null,
+        total: null,
+        canAddMore: true
+      };
+
+      if (policy.policy.mode === 'freemium') {
+        const freeCount = parseInt(policy.policy.freeCount || 0);
+        quotaInfo.total = freeCount;
+        quotaInfo.remaining = Math.max(0, freeCount - totalUsedSlots);
+        quotaInfo.canAddMore = quotaInfo.remaining > 0;
+      } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
+        const maxPerClient = parseInt(policy.policy.maxPerClient);
+        quotaInfo.total = maxPerClient;
+        quotaInfo.remaining = Math.max(0, maxPerClient - totalUsedSlots);
+        quotaInfo.canAddMore = quotaInfo.remaining > 0;
+      } else if (policy.policy.mode === 'free') {
+        quotaInfo.canAddMore = true; // No limits for free mode
+      }
+
+      res.json({
+        success: true,
+        quotaInfo: quotaInfo,
+        cartReservations: [], // No cart reservations in current schema
+        entitlements: activeEntitlements.map(e => ({
+          photoId: e.photoId,
+          id: e.id,
+          remaining: e.remaining,
+          expiresAt: e.expiresAt
+        }))
+      });
+
+    } catch (error) {
+      console.error('🛒 [CART] Error getting cart status (via alias):', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to get cart status' 
+      });
+    }
+  });
+
+  /**
+   * POST /api/downloads/cart/clear
+   * Alias for /api/cart/clear - redirects to existing cart functionality
+   */
+  router.post('/downloads/cart/clear', downloadRateLimit, async (req, res) => {
+    console.log('🔄 [CART ALIAS] Redirecting /api/downloads/cart/clear to /api/cart/clear');
+    
+    try {
+      const { sessionId, clientKey } = req.body;
+      
+      if (!sessionId || !clientKey) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields: sessionId and clientKey' 
+        });
+      }
+
+      console.log(`🛒 [CART] Clear cart request for client (via alias): ${clientKey}`);
+
+      // Remove all cart reservations for this client
+      // Cart reservations are identified by: remaining=0 (can't download yet)
+      const result = await db
+        .delete(downloadEntitlements)
+        .where(and(
+          eq(downloadEntitlements.sessionId, sessionId),
+          eq(downloadEntitlements.clientKey, clientKey),
+          eq(downloadEntitlements.remaining, 0)
+        ));
+
+      console.log(`🛒 [CART] Cleared cart reservations for client ${clientKey}`);
+
+      res.json({
+        success: true,
+        message: 'Cart cleared successfully'
+      });
+
+    } catch (error) {
+      console.error('🛒 [CART] Error clearing cart (via alias):', error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to clear cart' 
