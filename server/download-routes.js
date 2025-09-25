@@ -1197,33 +1197,20 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
    * Handles null/0 = unlimited, finite limits properly with atomic check-and-reserve
    */
   async function enforceDownloadPolicy(sessionData, sessionId) {
-    const downloadMax = sessionData.downloadMax;
+    // Global download limits disabled - freemium and specific pricing models handle their own limits
+    console.log('Download policy enforcement: Global limits disabled, allowing download');
     
-    // If downloadMax is null or 0, downloads are unlimited
-    if (!downloadMax || downloadMax === 0) {
-      return { allowed: true, reason: 'unlimited' };
-    }
-    
-    // Count total downloads for this session (atomic check)
-    const existingDownloads = await db
-      .select({ count: count() })
-      .from(galleryDownloads)
-      .where(eq(galleryDownloads.sessionId, sessionId));
-    
-    const usedDownloads = existingDownloads[0]?.count || 0;
-    
-    if (usedDownloads >= downloadMax) {
+    // Only block if downloads are explicitly disabled for the session
+    if (!sessionData.downloadEnabled) {
       return { 
         allowed: false, 
-        reason: 'limit_exceeded',
-        code: 'limit_exceeded',
-        allowed: downloadMax,
-        used: usedDownloads,
-        message: `Download limit reached (${downloadMax} downloads maximum)`
+        reason: 'downloads_disabled',
+        code: 'downloads_disabled',
+        message: 'Downloads are disabled for this session'
       };
     }
     
-    return { allowed: true, reason: 'under_limit', remaining: downloadMax - usedDownloads };
+    return { allowed: true, reason: 'global_limits_disabled' };
   }
 
   /**
@@ -2405,10 +2392,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       // Handle different pricing models
       if (sessionData.pricingModel === 'free') {
-        // Free model - check download limits
-        if (sessionData.downloadMax && currentUsage >= sessionData.downloadMax) {
-          return res.status(403).json({ error: 'Download limit exceeded' });
-        }
+        // Free model - no global download limits (removed for better UX)
+        console.log('Free model: Global download limits disabled');
       } else if (sessionData.pricingModel === 'freemium') {
         // Freemium model - check if within free limit or payment required
         const freeLimit = sessionData.freeDownloads || 0;
@@ -3586,16 +3571,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       );
       const totalUsed = parseInt(totalCountResult.rows[0].count);
       
-      // Check download_max limit (0 means unlimited, null means unlimited)
-      if (session.download_max !== null && session.download_max > 0 && totalUsed >= session.download_max) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ 
-          error: 'Download limit exceeded',
-          message: `Maximum download limit (${session.download_max}) reached`,
-          downloadMax: session.download_max,
-          currentCount: totalUsed
-        });
-      }
+      // Global download limit check disabled for better freemium/commerce experience
+      // Specific limits (like freemium quotas) are enforced elsewhere
+      console.log(`Total downloads: ${totalUsed} (global limits disabled)`);
       
       // Determine download type
       let downloadType = 'free';
