@@ -1790,7 +1790,7 @@
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
-                        // FIXED: Count free downloads properly - free entitlements have orderId: null
+                        // Count free downloads properly - free entitlements have orderId: null
                         const usedFreeDownloads = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
                         
                         console.log(`💰 Photo ${photoIndex + 1} FREEMIUM calculation:`, {
@@ -1803,26 +1803,18 @@
                         // Calculate remaining free downloads
                         const remainingFreeDownloads = Math.max(0, freeCount - usedFreeDownloads);
                         
-                        // Count how many photos before this one are in cart as free
-                        let freeCartItemsBeforeThis = 0;
-                        for (let i = 0; i < photoIndex; i++) {
-                            const cartItem = this.cart.find(item => 
-                                item.photoId === this.photos[i]?.id || 
-                                item.photoId === i.toString()
-                            );
-                            if (cartItem && cartItem.price === 0) {
-                                freeCartItemsBeforeThis++;
-                            }
-                        }
+                        // CRITICAL FIX: Count ALL free items currently in cart, regardless of photo order
+                        // This allows ANY photos to be selected for free downloads, not just first 2 in sequence
+                        const freeCartItems = this.cart.filter(item => item.price === 0).length;
                         
                         // This photo is FREE if there are still free slots available
-                        // considering both used entitlements and cart items before this photo
-                        const totalFreeUsedIncludingCart = usedFreeDownloads + freeCartItemsBeforeThis;
+                        // considering both used entitlements and ALL cart items (not position-dependent)
+                        const totalFreeUsedIncludingCart = usedFreeDownloads + freeCartItems;
                         const calculatedPrice = totalFreeUsedIncludingCart < freeCount ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         
                         console.log(`💰 Photo ${photoIndex + 1} FREEMIUM result:`, {
                             remainingFreeDownloads: remainingFreeDownloads,
-                            freeCartItemsBeforeThis: freeCartItemsBeforeThis,
+                            freeCartItems: freeCartItems,
                             totalFreeUsedIncludingCart: totalFreeUsedIncludingCart,
                             isFree: totalFreeUsedIncludingCart < freeCount,
                             calculatedPrice: calculatedPrice
