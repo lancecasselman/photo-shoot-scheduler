@@ -388,43 +388,18 @@ class DownloadCommerceManager {
     
     /**
      * Verify if an entitlement exists for a client
+     * BACKWARDS COMPATIBILITY: Searches with authoritative key first, then fallback to legacy key formats
      */
     async verifyEntitlement(sessionId, clientKey, photoId) {
         try {
-            console.log(`🔍 [DEBUG] verifyEntitlement called with:`);
-            console.log(`  🗂️ sessionId: "${sessionId}" (type: ${typeof sessionId})`);
-            console.log(`  🔑 clientKey: "${clientKey}" (type: ${typeof clientKey})`);
-            console.log(`  📷 photoId: "${photoId}" (type: ${typeof photoId})`);
+            console.log(`🔍 [ENTITLEMENT CHECK] verifyEntitlement called with:`);
+            console.log(`  🗂️ sessionId: "${sessionId}"`);
+            console.log(`  🔑 clientKey: "${clientKey}"`);
+            console.log(`  📷 photoId: "${photoId}"`);
             
-            // First, let's get ALL entitlements for this client to see what exists
-            console.log(`🔍 [DEBUG] Fetching ALL entitlements for client "${clientKey}" in session "${sessionId}"`);
-            const allClientEntitlements = await this.db.select()
-                .from(downloadEntitlements)
-                .where(and(
-                    eq(downloadEntitlements.sessionId, sessionId),
-                    eq(downloadEntitlements.clientKey, clientKey)
-                ));
-            
-            console.log(`🔍 [DEBUG] Found ${allClientEntitlements.length} total entitlements for client:`);
-            allClientEntitlements.forEach((ent, index) => {
-                console.log(`  📋 Entitlement ${index + 1}:`);
-                console.log(`    • ID: ${ent.id}`);
-                console.log(`    • photoId: "${ent.photoId}" (type: ${typeof ent.photoId})`);
-                console.log(`    • remaining: ${ent.remaining} (type: ${typeof ent.remaining})`);
-                console.log(`    • isActive: ${ent.isActive}`);
-                console.log(`    • createdAt: ${ent.createdAt}`);
-                console.log(`    • photoId matches target: ${ent.photoId === photoId}`);
-                console.log(`    • remaining > 0: ${ent.remaining > 0}`);
-            });
-            
-            // Now perform the specific entitlement query with strict matching
-            console.log(`🔍 [DEBUG] Performing specific entitlement search with criteria:`);
-            console.log(`  - sessionId === "${sessionId}"`);
-            console.log(`  - clientKey === "${clientKey}"`);
-            console.log(`  - photoId === "${photoId}"`);
-            console.log(`  - remaining > 0`);
-            
-            const entitlement = await this.db.select()
+            // STEP 1: Primary lookup with the authoritative client key
+            console.log(`🔍 [PRIMARY LOOKUP] Searching with authoritative client key`);
+            let entitlement = await this.db.select()
                 .from(downloadEntitlements)
                 .where(and(
                     eq(downloadEntitlements.sessionId, sessionId),
@@ -434,39 +409,115 @@ class DownloadCommerceManager {
                 ))
                 .limit(1);
             
-            console.log(`🔍 [DEBUG] Specific entitlement query returned ${entitlement.length} results`);
             if (entitlement.length > 0) {
-                console.log(`✅ [DEBUG] Found matching entitlement:`, JSON.stringify(entitlement[0], null, 2));
+                console.log(`✅ [PRIMARY LOOKUP] Found entitlement with authoritative key`);
                 return {
                     success: true,
-                    entitlement: entitlement[0]
-                };
-            } else {
-                console.warn(`❌ [DEBUG] No matching entitlement found for the specific criteria`);
-                console.warn(`  📷 Looking for photoId: "${photoId}"`);
-                console.warn(`  📋 Available photoIds:`, allClientEntitlements.map(e => `"${e.photoId}"`));
-                
-                // Check for potential matches with different criteria
-                const activeEntitlements = allClientEntitlements.filter(e => e.remaining > 0);
-                const matchingPhotoId = allClientEntitlements.filter(e => e.photoId === photoId);
-                
-                console.warn(`  🔄 Active entitlements (remaining > 0): ${activeEntitlements.length}`);
-                console.warn(`  🎯 PhotoId matches (any remaining): ${matchingPhotoId.length}`);
-                
-                return {
-                    success: false,
-                    error: 'No entitlement found',
-                    debug: {
-                        totalEntitlements: allClientEntitlements.length,
-                        activeEntitlements: activeEntitlements.length,
-                        photoIdMatches: matchingPhotoId.length,
-                        searchedPhotoId: photoId,
-                        availablePhotoIds: allClientEntitlements.map(e => e.photoId)
-                    }
+                    entitlement: entitlement[0],
+                    keyType: 'authoritative'
                 };
             }
+            
+            // STEP 2: Backwards compatibility fallback lookups for legacy entitlements
+            console.log(`🔄 [BACKWARDS COMPATIBILITY] Primary lookup failed, trying legacy key formats`);
+            
+            // Get gallery access token for generating legacy keys
+            const session = await this.db.select()
+                .from(photographySessions)
+                .where(eq(photographySessions.id, sessionId))
+                .limit(1);
+            
+            const legacyKeys = [];
+            
+            if (session.length > 0 && session[0].galleryAccessToken) {
+                const galleryToken = session[0].galleryAccessToken;
+                
+                // Legacy format 1: Old IP-based server keys with different IP variations
+                const crypto = require('crypto');
+                const baseString = `${galleryToken}-${sessionId}`;
+                
+                // Try with 'direct' (old fallback)
+                const directKey = `gallery-${crypto.createHash('sha256').update(`${baseString}-direct`).digest('hex').substring(0, 16)}`;
+                legacyKeys.push({ key: directKey, type: 'old-server-direct' });
+                
+                // Try with common IP hash patterns (simulate old server behavior)
+                ['127.0.0.1', '0.0.0.0', 'localhost'].forEach(ip => {
+                    const ipHash = crypto.createHash('md5').update(ip).digest('hex').substring(0, 8);
+                    const legacyKey = `gallery-${crypto.createHash('sha256').update(`${baseString}-${ipHash}`).digest('hex').substring(0, 16)}`;
+                    legacyKeys.push({ key: legacyKey, type: `old-server-${ip}` });
+                });
+            }
+            
+            // Legacy format 2: Visitor ID patterns (client-provided)
+            // Check if there are any visitor-* keys in this session
+            const existingVisitorEntitlements = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.photoId, photoId),
+                    gt(downloadEntitlements.remaining, 0)
+                ))
+                .limit(10); // Get up to 10 to check for visitor patterns
+            
+            existingVisitorEntitlements.forEach(ent => {
+                if (ent.clientKey.startsWith('visitor-') || ent.clientKey.includes('@')) {
+                    legacyKeys.push({ key: ent.clientKey, type: 'existing-legacy' });
+                }
+            });
+            
+            // STEP 3: Try each legacy key format
+            for (const legacyKeyObj of legacyKeys) {
+                console.log(`🔄 [LEGACY SEARCH] Trying ${legacyKeyObj.type}: ${legacyKeyObj.key}`);
+                
+                entitlement = await this.db.select()
+                    .from(downloadEntitlements)
+                    .where(and(
+                        eq(downloadEntitlements.sessionId, sessionId),
+                        eq(downloadEntitlements.clientKey, legacyKeyObj.key),
+                        eq(downloadEntitlements.photoId, photoId),
+                        gt(downloadEntitlements.remaining, 0)
+                    ))
+                    .limit(1);
+                
+                if (entitlement.length > 0) {
+                    console.log(`✅ [LEGACY FOUND] Found entitlement with ${legacyKeyObj.type} key: ${legacyKeyObj.key}`);
+                    return {
+                        success: true,
+                        entitlement: entitlement[0],
+                        keyType: legacyKeyObj.type,
+                        legacyKey: legacyKeyObj.key
+                    };
+                }
+            }
+            
+            // STEP 4: No entitlement found with any key format
+            console.warn(`❌ [NO ENTITLEMENT] No valid entitlement found for photo ${photoId}`);
+            console.warn(`  🔑 Tried authoritative key: ${clientKey}`);
+            console.warn(`  🔄 Tried ${legacyKeys.length} legacy key formats`);
+            
+            // Debug: Show what entitlements exist for this session/photo
+            const debugEntitlements = await this.db.select()
+                .from(downloadEntitlements)
+                .where(and(
+                    eq(downloadEntitlements.sessionId, sessionId),
+                    eq(downloadEntitlements.photoId, photoId)
+                ))
+                .limit(5);
+            
+            console.warn(`  📋 Existing entitlements for this photo (any key, any status):`, 
+                debugEntitlements.map(e => ({ key: e.clientKey, remaining: e.remaining, active: e.isActive })));
+            
+            return {
+                success: false,
+                error: 'No valid entitlement found',
+                debug: {
+                    searchedKeys: [clientKey, ...legacyKeys.map(k => k.key)],
+                    existingEntitlements: debugEntitlements.length
+                }
+            };
+            
         } catch (error) {
-            console.error('❌ [DEBUG] Error verifying entitlement:', error);
+            console.error('❌ [ENTITLEMENT ERROR] Error verifying entitlement:', error);
             return {
                 success: false,
                 error: error.message

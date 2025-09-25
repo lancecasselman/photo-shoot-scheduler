@@ -80,31 +80,38 @@ const sessionFiles = pgTable("session_files", {
 const R2FileManager = require('./r2-file-manager');
 
 /**
- * Generate unique client key based on gallery access token and server-derived identifiers ONLY
- * SECURITY: Uses only server-controlled data to prevent client-side quota bypass
- * This ensures each gallery visitor gets their own download quotas that cannot be manipulated
+ * AUTHORITATIVE CLIENT KEY GENERATION
+ * Generate unique client key based on gallery token + session ID ONLY
+ * This function provides the single source of truth for client key generation
+ * Both server and client MUST use identical logic to ensure key consistency
  */
-function generateUniqueClientKey(galleryAccessToken, sessionId, ipAddress = '') {
+function generateGalleryClientKey(galleryAccessToken, sessionId) {
   const crypto = require('crypto');
   
-  // SECURITY FIX: Use only server-derived data that client cannot manipulate
-  // Base identity on gallery token + session + IP address (server-derived)
+  if (!galleryAccessToken || !sessionId) {
+    throw new Error('Gallery token and session ID are required for client key generation');
+  }
+  
+  // CRITICAL: Use ONLY gallery token + session ID (no IP, no user agent, no other identifiers)
+  // This ensures both server and client can generate the exact same key deterministically
   const baseString = `${galleryAccessToken}-${sessionId}`;
   
-  // Use IP address as secondary identifier (server-derived, not client-controllable)
-  // Normalize IP to handle IPv6/IPv4 mapping and potential proxy headers
-  const normalizedIP = ipAddress ? 
-    crypto.createHash('md5').update(ipAddress).digest('hex').substring(0, 8) : 
-    'direct';
-  
-  const fullIdentifier = `${baseString}-${normalizedIP}`;
-  
   // Create a SHA-256 hash for the final client key
-  const clientKey = `gallery-${crypto.createHash('sha256').update(fullIdentifier).digest('hex').substring(0, 16)}`;
+  const clientKey = `gallery-${crypto.createHash('sha256').update(baseString).digest('hex').substring(0, 16)}`;
   
-  console.log(`🔑 Generated secure client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}... (IP: ${normalizedIP})`);
+  console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}...`);
   
   return clientKey;
+}
+
+/**
+ * LEGACY FUNCTION - DEPRECATED
+ * Keep for backwards compatibility during migration
+ * @deprecated Use generateGalleryClientKey instead
+ */
+function generateUniqueClientKey(galleryAccessToken, sessionId, ipAddress = '') {
+  console.warn('⚠️ DEPRECATED: generateUniqueClientKey is deprecated, use generateGalleryClientKey instead');
+  return generateGalleryClientKey(galleryAccessToken, sessionId);
 }
 
 function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
@@ -328,7 +335,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       // CRITICAL SECURITY: Generate client key using ONLY server-derived data
       // Never trust client headers like User-Agent that can be manipulated for quota bypass
-      const clientKey = generateUniqueClientKey(galleryToken, sessionId, clientIP);
+      const clientKey = generateGalleryClientKey(galleryToken, sessionId);
       
       if (!sessionId || !photoId || !photoUrl || !filename || !galleryToken) {
         return res.status(400).json({ 
@@ -640,9 +647,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const policyResult = await commerceManager.getPolicyForSession(sessionId);
       
       if (policyResult.success && policyResult.policy.mode === 'freemium') {
-        console.log(`🆓 [FREEMIUM FIX] Session is in freemium mode - checking for free downloads`);
+        console.log(`🆓 [FREEMIUM FIX] Session is in freemium mode - using authoritative client key`);
         
-        // Try to create free entitlement first for this photo
+        // CRITICAL FIX: Always use the authoritative client key (already generated above)
+        // This ensures consistent key usage across creation and verification
+        console.log(`🔑 [FREEMIUM FIX] Using authoritative client key: ${clientKey}`);
+        
+        // Try to create free entitlement with the authoritative client key
         const freeEntitlementResult = await commerceManager.createFreeEntitlements(
           sessionId, 
           clientKey, 
@@ -650,10 +661,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         );
         
         if (freeEntitlementResult.success) {
-          console.log(`✅ [FREEMIUM FIX] Created free entitlement for photo ${photoId} (${freeEntitlementResult.count} entitlements created)`);
+          console.log(`✅ [FREEMIUM FIX] Created free entitlement for photo ${photoId} with authoritative key (${freeEntitlementResult.count} entitlements created)`);
         } else {
           console.log(`⚠️ [FREEMIUM FIX] Failed to create free entitlement: ${freeEntitlementResult.error}`);
-          // Continue to verification - might be paid entitlement or other issue
         }
       } else {
         console.log(`💰 [FREEMIUM FIX] Session not in freemium mode (mode: ${policyResult.policy?.mode || 'unknown'})`);

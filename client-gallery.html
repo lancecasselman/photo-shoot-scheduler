@@ -1220,6 +1220,7 @@
                 this.clientName = null;
                 this.downloadQueue = [];
                 this.uniqueVisitorId = null;
+                this.cachedGalleryClientKey = null;
                 
                 // Initialize from URL - support both path and query parameter patterns
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1281,6 +1282,12 @@
                 
                 // Load gallery data
                 await this.loadGallery();
+                
+                // FREEMIUM FIX: Generate and cache gallery-based client key for freemium mode
+                if (this.policy && this.policy.mode === 'freemium' && this.galleryToken && this.sessionData) {
+                    this.cachedGalleryClientKey = await this.generateGalleryClientKey(this.galleryToken, this.sessionData.id);
+                    console.log(`🔑 Cached gallery client key for freemium mode: ${this.cachedGalleryClientKey}`);
+                }
                 
                 // Recalculate cart prices based on correct freemium logic
                 // This fixes any cart items that were saved with incorrect prices
@@ -2673,10 +2680,52 @@
             
             /**
              * Get the unique client key for this visitor
+             * For freemium galleries, use gallery-session-based key that matches server logic
              */
             getClientKey() {
+                // For freemium mode, use cached gallery client key or fall back to visitor ID
+                // Note: We can't make this async, so we'll cache the gallery key when available
+                if (this.policy && this.policy.mode === 'freemium' && this.cachedGalleryClientKey) {
+                    return this.cachedGalleryClientKey;
+                }
+                
                 // Use email if provided (for paid downloads), otherwise use unique visitor ID
                 return this.clientEmail || this.uniqueVisitorId || 'anonymous';
+            }
+            
+            /**
+             * AUTHORITATIVE CLIENT KEY GENERATION
+             * Generate client key using IDENTICAL logic to server
+             * CRITICAL: Must match server's generateGalleryClientKey function exactly
+             */
+            async generateGalleryClientKey(galleryAccessToken, sessionId) {
+                if (!galleryAccessToken || !sessionId) {
+                    throw new Error('Gallery token and session ID are required for client key generation');
+                }
+                
+                // CRITICAL: Use ONLY gallery token + session ID (no IP, no user agent, no other identifiers)
+                // This ensures both server and client can generate the exact same key deterministically
+                const baseString = `${galleryAccessToken}-${sessionId}`;
+                
+                // Create a SHA-256 hash for the final client key
+                const hashHex = await this.sha256(baseString);
+                const clientKey = `gallery-${hashHex.substring(0, 16)}`;
+                
+                console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}...`);
+                
+                return clientKey;
+            }
+            
+            /**
+             * Simple SHA-256 implementation for client-side key generation
+             */
+            async sha256(message) {
+                // Use Web Crypto API for SHA-256 hashing
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                return hashHex;
             }
         }
         
