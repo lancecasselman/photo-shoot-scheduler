@@ -1791,14 +1791,15 @@
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
                         
-                        // Count how many free downloads have already been used
-                        // Free entitlements are those with no orderId (not purchased)
+                        // CRITICAL FIX: Count how many free downloads have ACTUALLY been completed
+                        // Only count ACTIVE entitlements (completed downloads), NOT cart reservations
                         let totalFreeDownloadsUsed = 0;
                         
-                        // Count the number of photos in free entitlements (already downloaded for free)
+                        // Count the number of photos in ACTIVE free entitlements (actually completed downloads)
                         for (const entitlement of this.entitlements) {
-                            if (!entitlement.orderId || entitlement.orderId === null) {
-                                // This is a free entitlement
+                            // Only count active entitlements (completed downloads) for quota calculation
+                            if ((!entitlement.orderId || entitlement.orderId === null) && entitlement.isActive === true) {
+                                // This is a completed free download (not a cart reservation)
                                 if (entitlement.photoIds && Array.isArray(entitlement.photoIds)) {
                                     totalFreeDownloadsUsed += entitlement.photoIds.length;
                                 } else {

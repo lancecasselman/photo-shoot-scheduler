@@ -417,13 +417,16 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       console.log(`📊 Session allows ${freeDownloads} free downloads per client`);
       
-      // Count existing entitlements for this client to check quota
+      // Count existing FREE entitlements for this client to check quota
+      // CRITICAL FIX: Only count free downloads (orderId is null), not paid downloads
       const existingEntitlements = await db
         .select()
         .from(downloadEntitlements)
         .where(and(
           eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey)
+          eq(downloadEntitlements.clientKey, clientKey),
+          eq(downloadEntitlements.isActive, true), // Only count active entitlements
+          eq(downloadEntitlements.orderId, null)  // Only count FREE downloads (no orderId)
         ));
 
       const usedDownloads = existingEntitlements.length;
@@ -2758,14 +2761,17 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           eq(downloadEntitlements.clientKey, clientKey)
         ));
 
-      console.log(`🛒 [CART] Found ${existingEntitlements.length} existing entitlements for client`);
+      console.log(`🛒 [CART] Found ${existingEntitlements.length} total entitlements for client`);
 
       // Validate quota based on policy mode
       let quotaValidation = { allowed: true, remainingQuota: null, message: null };
 
       if (policy.policy.mode === 'freemium') {
         const freeCount = parseInt(policy.policy.freeCount || 0);
-        const usedCount = existingEntitlements.length;
+        
+        // CRITICAL FIX: Count only ACTIVE FREE entitlements (completed free downloads), not paid downloads
+        const completedFreeDownloads = existingEntitlements.filter(e => e.isActive === true && e.orderId === null);
+        const usedCount = completedFreeDownloads.length;
         const remainingFree = Math.max(0, freeCount - usedCount);
         
         console.log(`🛒 [CART] Freemium mode: ${usedCount}/${freeCount} used, ${remainingFree} remaining`);
@@ -2781,7 +2787,10 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         };
       } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
         const maxPerClient = parseInt(policy.policy.maxPerClient);
-        const usedCount = existingEntitlements.length;
+        
+        // CRITICAL FIX: Count only ACTIVE FREE entitlements (completed free downloads), not paid downloads
+        const completedFreeDownloads = existingEntitlements.filter(e => e.isActive === true && e.orderId === null);
+        const usedCount = completedFreeDownloads.length;
         const remaining = Math.max(0, maxPerClient - usedCount);
         
         console.log(`🛒 [CART] Max per client: ${usedCount}/${maxPerClient} used, ${remaining} remaining`);
@@ -3142,14 +3151,17 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           eq(downloadEntitlements.clientKey, clientKey)
         ));
 
-      console.log(`🛒 [CART] Found ${existingEntitlements.length} existing entitlements for client`);
+      console.log(`🛒 [CART] Found ${existingEntitlements.length} total entitlements for client`);
 
       // Validate quota based on policy mode
       let quotaValidation = { allowed: true, remainingQuota: null, message: null };
 
       if (policy.policy.mode === 'freemium') {
         const freeCount = parseInt(policy.policy.freeCount || 0);
-        const usedCount = existingEntitlements.length;
+        
+        // CRITICAL FIX: Count only ACTIVE FREE entitlements (completed free downloads), not paid downloads
+        const completedFreeDownloads = existingEntitlements.filter(e => e.isActive === true && e.orderId === null);
+        const usedCount = completedFreeDownloads.length;
         const remainingFree = Math.max(0, freeCount - usedCount);
         
         console.log(`🛒 [CART] Freemium mode: ${usedCount}/${freeCount} used, ${remainingFree} remaining`);
@@ -3165,7 +3177,10 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         };
       } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
         const maxPerClient = parseInt(policy.policy.maxPerClient);
-        const usedCount = existingEntitlements.length;
+        
+        // CRITICAL FIX: Count only ACTIVE FREE entitlements (completed free downloads), not paid downloads
+        const completedFreeDownloads = existingEntitlements.filter(e => e.isActive === true && e.orderId === null);
+        const usedCount = completedFreeDownloads.length;
         const remaining = Math.max(0, maxPerClient - usedCount);
         
         console.log(`🛒 [CART] Max per client: ${usedCount}/${maxPerClient} used, ${remaining} remaining`);
@@ -4189,7 +4204,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       let quotaLimit = null;
       let remainingQuota = null;
       let currentCartSize = existingCartReservations.length;
-      let totalEntitled = existingEntitlements.length;
+      
+      // CRITICAL FIX: For freemium mode, only count FREE entitlements, not paid ones
+      let totalEntitled;
+      if (policy.mode === 'freemium') {
+        totalEntitled = existingEntitlements.filter(e => e.orderId === null).length;
+      } else {
+        totalEntitled = existingEntitlements.length;
+      }
 
       if (policy.mode === 'free') {
         // Free mode - check global limits
