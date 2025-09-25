@@ -352,6 +352,23 @@ class DownloadCommerceManager {
             
             for (const item of itemsToProcess) {
                 const entitlementId = uuidv4();
+                
+                // Check if entitlement already exists for this specific photo to avoid unique constraint violation
+                const existing = await this.db.select()
+                    .from(downloadEntitlements)
+                    .where(and(
+                        eq(downloadEntitlements.sessionId, sessionId),
+                        eq(downloadEntitlements.clientKey, clientKey),
+                        eq(downloadEntitlements.photoId, item.photoId)
+                    ))
+                    .limit(1);
+                
+                if (existing.length > 0) {
+                    console.log(`⚠️ Entitlement already exists for photo ${item.photoId}, using existing entitlement`);
+                    entitlementIds.push(existing[0].id);
+                    continue;
+                }
+                
                 await this.db.insert(downloadEntitlements)
                     .values({
                         id: entitlementId,
@@ -359,11 +376,11 @@ class DownloadCommerceManager {
                         clientKey: clientKey,
                         photoId: item.photoId,
                         remaining: 1, // Each photo gets 1 download
-                        maxDownloads: 1, // CRITICAL FIX: Each photo entitlement is for 1 download, not session total
                         orderId: null, // Free entitlements have no order
                         expiresAt: null, // Free entitlements don't expire
                         createdAt: new Date()
                     });
+                console.log(`✅ Created entitlement ${entitlementId} for photo ${item.photoId}`);
                 entitlementIds.push(entitlementId);
             }
             
