@@ -10295,12 +10295,31 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:filename', isAuthenticat
 // Delete session
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
+    const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
 
     try {
+        console.log(`🗑️ Deleting session ${sessionId} for user ${userId}`);
+        
         const session = await getSessionById(sessionId);
 
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Verify ownership or admin access
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com', 
+            'lance@thelegacyphotography.com',
+            'm_casselman@icloud.com'
+        ];
+
+        const userEmail = req.user?.email;
+        const isAdmin = adminEmails.includes(userEmail?.toLowerCase());
+        
+        if (!isAdmin && session.userId !== userId) {
+            console.log(`❌ Access denied: User ${userId} cannot delete session owned by ${session.userId}`);
+            return res.status(403).json({ error: 'Access denied: Cannot delete sessions owned by other users' });
         }
 
         // Delete associated photo files
@@ -10313,12 +10332,28 @@ app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
             });
         }
 
-        await deleteSession(sessionId);
-        console.log(`Deleted session: ${session.clientName} (${sessionId})`);
-        res.json({ message: 'Session deleted successfully' });
+        // Use comprehensive deletion with proper user verification
+        const deletionSuccess = await deleteSession(sessionId, userId);
+        
+        if (deletionSuccess) {
+            console.log(`✅ Successfully deleted session: ${session.clientName} (${sessionId})`);
+            res.json({ 
+                success: true,
+                message: 'Session deleted successfully',
+                sessionId: sessionId,
+                clientName: session.clientName
+            });
+        } else {
+            console.log(`❌ Failed to delete session: ${sessionId}`);
+            res.status(404).json({ error: 'Session not found or already deleted' });
+        }
+        
     } catch (error) {
-        console.error('Error deleting session:', error);
-        res.status(500).json({ error: 'Failed to delete session' });
+        console.error('❌ Error deleting session:', error);
+        res.status(500).json({ 
+            error: 'Failed to delete session',
+            details: error.message 
+        });
     }
 });
 
