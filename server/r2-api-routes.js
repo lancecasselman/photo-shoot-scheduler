@@ -62,7 +62,7 @@ const upload = multer({
  * All routes handle authentication and storage limit enforcement
  * Frontend never receives R2 credentials - all operations go through backend
  */
-function createR2Routes() {
+function createR2Routes(realTimeGalleryUpdates = null) {
   const router = express.Router();
   
   // Database connection for API routes
@@ -543,6 +543,22 @@ function createR2Routes() {
           console.error('Gallery upload failed:', result.reason?.message);
         }
       });
+
+      // Trigger real-time gallery updates if photos were successfully uploaded
+      if (successfulUploads > 0 && realTimeGalleryUpdates) {
+        try {
+          // Use the correct broadcastPhotoUpdate method with proper data structure
+          await realTimeGalleryUpdates.broadcastPhotoUpdate(sessionId, {
+            newPhotosCount: successfulUploads,
+            photos: [], // The client will refresh the gallery to get updated photos
+            timestamp: new Date().toISOString()
+          });
+          console.log(`🔔 Real-time notification sent: ${successfulUploads} photos added to session ${sessionId}`);
+        } catch (notificationError) {
+          console.error('Failed to send real-time notification:', notificationError);
+          // Don't block the response - notifications are non-critical
+        }
+      }
 
       res.json({
         success: true,

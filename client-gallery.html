@@ -1321,6 +1321,185 @@
 
                 // Load initial quota status
                 await this.loadQuotaStatus();
+                
+                // Initialize real-time gallery updates after everything is loaded
+                this.initializeRealTimeUpdates();
+            }
+            
+            initializeRealTimeUpdates() {
+                if (!this.galleryToken) {
+                    console.warn('⚠️ No gallery token available for real-time updates');
+                    return;
+                }
+                
+                try {
+                    console.log('🔄 Initializing real-time gallery updates...');
+                    
+                    // Create EventSource connection to SSE endpoint
+                    this.eventSource = new EventSource(`/api/gallery/events?token=${this.galleryToken}`);
+                    
+                    this.eventSource.onopen = (event) => {
+                        console.log('✅ Real-time gallery updates connected');
+                    };
+                    
+                    // Listen for connection confirmation
+                    this.eventSource.addEventListener('connected', (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log('📡 SSE connection confirmed:', data);
+                        } catch (error) {
+                            console.error('❌ Error parsing connection event:', error);
+                        }
+                    });
+                    
+                    // Listen for photo updates (server sends 'photos_updated' events)
+                    this.eventSource.addEventListener('photos_updated', (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log('📡 Photos updated event received:', data);
+                            this.handlePhotosAdded(data);
+                        } catch (error) {
+                            console.error('❌ Error parsing photos updated event:', error);
+                        }
+                    });
+                    
+                    // Listen for gallery refresh events
+                    this.eventSource.addEventListener('gallery_refresh', (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log('📡 Gallery refresh event received:', data);
+                            this.refreshGallery();
+                        } catch (error) {
+                            console.error('❌ Error parsing gallery refresh event:', error);
+                        }
+                    });
+                    
+                    // Listen for heartbeat events (keep-alive)
+                    this.eventSource.addEventListener('heartbeat', (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log('💓 SSE heartbeat received:', data.timestamp);
+                        } catch (error) {
+                            console.error('❌ Error parsing heartbeat event:', error);
+                        }
+                    });
+                    
+                    this.eventSource.onerror = (event) => {
+                        console.error('❌ Real-time gallery updates connection error:', event);
+                        
+                        // Attempt to reconnect after a delay
+                        setTimeout(() => {
+                            if (this.eventSource.readyState === EventSource.CLOSED) {
+                                console.log('🔄 Attempting to reconnect real-time updates...');
+                                this.initializeRealTimeUpdates();
+                            }
+                        }, 5000);
+                    };
+                } catch (error) {
+                    console.error('❌ Failed to initialize real-time updates:', error);
+                }
+            }
+            
+            async handlePhotosAdded(data) {
+                try {
+                    const newPhotosCount = data.newPhotosCount || 0;
+                    console.log(`🆕 ${newPhotosCount} new photos added to gallery!`, data);
+                    
+                    // Show a brief notification to the user
+                    if (newPhotosCount > 0) {
+                        this.showUpdateNotification(`${newPhotosCount} new photo${newPhotosCount > 1 ? 's' : ''} added!`);
+                    }
+                    
+                    // Refresh the gallery to show new photos
+                    await this.refreshGallery();
+                    
+                } catch (error) {
+                    console.error('❌ Error handling photos added:', error);
+                }
+            }
+            
+            async refreshGallery() {
+                try {
+                    console.log('🔄 Refreshing gallery with new photos...');
+                    
+                    // Re-verify gallery access to get updated photo list
+                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
+                    const verifyData = await verifyResponse.json();
+                    
+                    if (verifyResponse.ok && verifyData.success && verifyData.session) {
+                        // Update photos array with new data
+                        this.photos = verifyData.session.photos || [];
+                        console.log(`📸 Gallery refreshed: now showing ${this.photos.length} photos`);
+                        
+                        // Refresh the display
+                        this.displayPhotos();
+                        
+                        // Update UI elements that show photo count
+                        const photoCountElements = document.querySelectorAll('.photo-count');
+                        photoCountElements.forEach(element => {
+                            element.textContent = `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''}`;
+                        });
+                        
+                        // If gallery was empty before, show gallery actions
+                        if (this.photos.length > 0) {
+                            document.getElementById('galleryActions').style.display = 'flex';
+                            document.getElementById('floatingCart').style.display = 'flex';
+                            document.getElementById('emptyGallery').style.display = 'none';
+                        }
+                    } else {
+                        console.warn('⚠️ Failed to refresh gallery data');
+                    }
+                } catch (error) {
+                    console.error('❌ Error refreshing gallery:', error);
+                }
+            }
+            
+            showUpdateNotification(message) {
+                // Create or update notification element
+                let notification = document.getElementById('realtimeNotification');
+                if (!notification) {
+                    notification = document.createElement('div');
+                    notification.id = 'realtimeNotification';
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 10px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                        z-index: 10000;
+                        font-weight: 600;
+                        opacity: 0;
+                        transform: translateY(-20px);
+                        transition: all 0.3s ease;
+                    `;
+                    document.body.appendChild(notification);
+                }
+                
+                notification.textContent = message;
+                
+                // Show notification
+                requestAnimationFrame(() => {
+                    notification.style.opacity = '1';
+                    notification.style.transform = 'translateY(0)';
+                });
+                
+                // Hide notification after 3 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateY(-20px)';
+                }, 3000);
+            }
+            
+            // Clean up EventSource on page unload
+            disconnectRealTimeUpdates() {
+                if (this.eventSource) {
+                    console.log('🔌 Disconnecting real-time gallery updates');
+                    this.eventSource.close();
+                    this.eventSource = null;
+                }
             }
             
             initializeProtection() {
@@ -2794,6 +2973,13 @@
                     errorDiv.style.display = 'block';
                     document.getElementById('errorMessage').textContent = 'Failed to initialize gallery: ' + error.message;
                 }
+            }
+        });
+        
+        // Clean up real-time connections when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (galleryCart && typeof galleryCart.disconnectRealTimeUpdates === 'function') {
+                galleryCart.disconnectRealTimeUpdates();
             }
         });
         

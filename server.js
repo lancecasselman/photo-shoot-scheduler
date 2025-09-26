@@ -97,6 +97,9 @@ const { AIServices } = require('./server/ai-services');
 const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
 const BlogGenerator = require('./server/blog-generator');
 
+// Import real-time gallery updates system
+const RealTimeGalleryUpdates = require('./server/real-time-gallery-updates');
+
 // REMOVED: Old storage system - will be rebuilt from scratch
 const UnifiedFileDeletion = require('./server/unified-file-deletion');
 
@@ -330,6 +333,10 @@ const analyticsSystem = new AnalyticsSystem(pool);
         console.warn('Analytics system initialization skipped:', error.message);
     }
 })();
+
+// Initialize real-time gallery updates system
+const realTimeGalleryUpdates = new RealTimeGalleryUpdates(pool);
+console.log('✅ Real-time gallery updates system initialized');
 
 // Data export and backup systems will be initialized after r2FileManager is created
 
@@ -1717,6 +1724,9 @@ app.get('/api/auth/status', (req, res) => {
     }
 });
 
+// Real-time gallery updates SSE endpoint
+app.get('/api/gallery/events', realTimeGalleryUpdates.createSSEEndpoint());
+
 // Debug session endpoint for Android testing
 app.get('/api/debug/session', (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
@@ -2646,7 +2656,7 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 });
 
 // R2 Storage API Routes - Complete file management system
-app.use('/api/r2', createR2Routes());
+app.use('/api/r2', createR2Routes(realTimeGalleryUpdates));
 
 // Download Control API Routes - Photo delivery with pricing and watermarks
 app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
