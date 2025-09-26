@@ -33,7 +33,7 @@ const {
   digitalTransactions,
   downloadEntitlements
 } = schema;
-const { eq, and, desc, count, sum, gte, lte } = require('drizzle-orm');
+const { eq, and, desc, count, sum, gte, lte, sql } = require('drizzle-orm');
 
 // Define missing table schemas that aren't in compiled schema.js
 const downloadTokens = pgTable("download_tokens", {
@@ -414,16 +414,19 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       // Count existing FREE entitlements for this client to check quota
       // CRITICAL FIX: Only count free downloads (orderId is null), not paid downloads
+      console.log(`🔍 [DEBUG] Querying entitlements with: sessionId=${sessionId}, clientKey=${clientKey}`);
+      
       const existingEntitlements = await db
         .select()
         .from(downloadEntitlements)
         .where(and(
           eq(downloadEntitlements.sessionId, sessionId),
           eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, true), // Only count active entitlements
-          eq(downloadEntitlements.orderId, null)  // Only count FREE downloads (no orderId)
+          sql`${downloadEntitlements.orderId} IS NULL`  // Only count FREE downloads (explicit NULL check)
         ));
 
+      console.log(`🔍 [DEBUG] Query returned ${existingEntitlements.length} entitlements:`, existingEntitlements.map(e => ({ id: e.id, photoId: e.photoId, orderId: e.orderId })));
+      
       const usedDownloads = existingEntitlements.length;
       
       console.log(`📈 QUOTA CHECK: Client ${clientKey} has used ${usedDownloads} of ${freeDownloads} free downloads`);
