@@ -124,6 +124,9 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       let totalBytes = 0;
       let galleryBytes = 0;
       let galleryFiles = 0;
+      let rawStorageBytes = 0;
+      let rawStorageFiles = 0;
+      let totalFiles = 0;
       
       try {
         // Get all photography sessions for this user
@@ -154,11 +157,22 @@ function createR2Routes(realTimeGalleryUpdates = null) {
               totalSize: sessionFiles.totalSize || 0
             });
             
-            // Add to gallery storage
+            // Calculate storage for all file types
             if (sessionFiles.filesByType.gallery) {
               for (const file of sessionFiles.filesByType.gallery) {
                 galleryBytes += file.fileSizeBytes || 0;
                 galleryFiles++;
+              }
+            }
+            
+            // Calculate raw storage (video, document, other - all non-gallery files)
+            const rawFileTypes = ['video', 'document', 'other'];
+            for (const fileType of rawFileTypes) {
+              if (sessionFiles.filesByType[fileType]) {
+                for (const file of sessionFiles.filesByType[fileType]) {
+                  rawStorageBytes += file.fileSizeBytes || 0;
+                  rawStorageFiles++;
+                }
               }
             }
           } catch (sessionError) {
@@ -166,8 +180,14 @@ function createR2Routes(realTimeGalleryUpdates = null) {
           }
         }
         
-        totalBytes = galleryBytes;
-        console.log(` Storage calculated: Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB`);
+        // Calculate total storage (gallery + raw storage)
+        totalBytes = galleryBytes + rawStorageBytes;
+        totalFiles = galleryFiles + rawStorageFiles;
+        
+        console.log(` Storage calculated:`);
+        console.log(`   Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB (${galleryFiles} files)`);
+        console.log(`   Raw Storage: ${(rawStorageBytes / (1024**3)).toFixed(2)} GB (${rawStorageFiles} files)`);
+        console.log(`   Total: ${(totalBytes / (1024**3)).toFixed(2)} GB (${totalFiles} files)`);
         
       } catch (dbError) {
         console.error('Database error calculating storage:', dbError);
@@ -175,6 +195,7 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       
       const totalGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
       const galleryGB = (galleryBytes / (1024 * 1024 * 1024)).toFixed(2);
+      const rawStorageGB = (rawStorageBytes / (1024 * 1024 * 1024)).toFixed(2);
       const usagePercent = ((totalBytes / (1024 * 1024 * 1024 * 1024)) * 100).toFixed(1); // 1TB = 1024^4 bytes
       
       // Return frontend-compatible storage info
@@ -183,18 +204,26 @@ function createR2Routes(realTimeGalleryUpdates = null) {
         totalGB: parseFloat(totalGB),
         galleryBytes,
         galleryGB: parseFloat(galleryGB),
+        rawStorageBytes,
+        rawStorageGB: parseFloat(rawStorageGB),
         usedPercentage: parseFloat(usagePercent),
         percentUsed: parseFloat(usagePercent),
         remainingGB: 1024 - parseFloat(totalGB), // 1TB limit
-        fileCount: galleryFiles,
+        fileCount: totalFiles,
         galleryFiles,
-        totalFiles: galleryFiles,
+        rawStorageFiles,
+        totalFiles,
         displayText: `${totalGB} GB of 1024 GB used`,
         monthlyStorageCost: 0,
         additionalStorageTB: 0,
         storageStatus: "Base Plan Active",
         isNearLimit: parseFloat(usagePercent) > 85,
-        isOverLimit: parseFloat(usagePercent) > 100
+        isOverLimit: parseFloat(usagePercent) > 100,
+        // Breakdown object for frontend compatibility
+        breakdown: {
+          galleryGB: parseFloat(galleryGB),
+          rawStorageGB: parseFloat(rawStorageGB)
+        }
       };
       
       const billingInfo = {

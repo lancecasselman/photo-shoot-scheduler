@@ -3688,6 +3688,9 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
                 if (row.folder_type === 'gallery') {
                     totalGallerySize = bytes;
                     totalGalleryFiles = count;
+                } else if (row.folder_type === 'raw') {
+                    totalRawSize = bytes;
+                    totalRawFiles = count;
                 }
                 
                 console.log(`${row.folder_type}: ${count} files, ${formatBytes(bytes)}`);
@@ -3698,10 +3701,10 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
         }
         
         // Ensure proper number calculation for combined totals
-        const totalCombinedSize = (totalGallerySize || 0);
-        const totalCombinedFiles = (totalGalleryFiles || 0);
+        const totalCombinedSize = (totalGallerySize || 0) + (totalRawSize || 0);
+        const totalCombinedFiles = (totalGalleryFiles || 0) + (totalRawFiles || 0);
         
-        console.log(` Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}`);
+        console.log(` Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}, Raw: ${formatBytes(totalRawSize)}`);
         
         const result = {
             totalSessions,
@@ -3709,6 +3712,11 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
                 fileCount: totalGalleryFiles,
                 totalSize: totalGallerySize,
                 totalSizeFormatted: formatBytes(totalGallerySize)
+            },
+            raw: {
+                fileCount: totalRawFiles,
+                totalSize: totalRawSize,
+                totalSizeFormatted: formatBytes(totalRawSize)
             },
             combined: {
                 fileCount: totalCombinedFiles,

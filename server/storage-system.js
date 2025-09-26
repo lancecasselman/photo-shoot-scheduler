@@ -135,6 +135,7 @@ class StorageSystem {
             let totalBytes = 0;
             let totalFiles = 0;
             let galleryBytes = 0;
+            let rawBytes = 0;
 
             console.log(` Calculating storage for user ${userId} across ${sessionsResult.rows.length} sessions`);
 
@@ -143,11 +144,20 @@ class StorageSystem {
                 try {
                     // Use the R2 object storage service directly (same as session storage endpoint)
                     const galleryFiles = await this.r2Manager.listObjects(`photographer-${userId}/session-${session.id}/gallery/`);
+                    const rawFiles = await this.r2Manager.listObjects(`photographer-${userId}/session-${session.id}/raw/`);
 
                     // Calculate gallery storage
                     for (const file of galleryFiles) {
                         if (file.Size) {
                             galleryBytes += file.Size;
+                            totalFiles++;
+                        }
+                    }
+
+                    // Calculate raw storage
+                    for (const file of rawFiles) {
+                        if (file.Size) {
+                            rawBytes += file.Size;
                             totalFiles++;
                         }
                     }
@@ -157,10 +167,10 @@ class StorageSystem {
                 }
             }
 
-            totalBytes = galleryBytes;
+            totalBytes = galleryBytes + rawBytes;
             const totalGB = parseFloat((totalBytes / (1024 * 1024 * 1024)).toFixed(3));
 
-            console.log(` Storage calculation complete: ${totalGB}GB total (${(galleryBytes / 1024 / 1024).toFixed(2)}MB gallery)`);
+            console.log(` Storage calculation complete: ${totalGB}GB total (${(galleryBytes / 1024 / 1024).toFixed(2)}MB gallery, ${(rawBytes / 1024 / 1024).toFixed(2)}MB raw)`);
 
             // Update cached usage in user_storage_quotas
             await this.pool.query(`
@@ -173,7 +183,8 @@ class StorageSystem {
                 totalBytes: totalBytes,
                 totalGB: totalGB,
                 totalFiles: totalFiles,
-                galleryBytes: galleryBytes
+                galleryBytes: galleryBytes,
+                rawBytes: rawBytes
             };
         } catch (error) {
             console.error('Error calculating storage usage:', error);
@@ -359,7 +370,8 @@ class StorageSystem {
                 usagePercentage: usagePercentage,
                 isNearLimit,
                 breakdown: {
-                    galleryGB: parseFloat((usage.galleryBytes / (1024 * 1024 * 1024)).toFixed(3))
+                    galleryGB: parseFloat((usage.galleryBytes / (1024 * 1024 * 1024)).toFixed(3)),
+                    rawStorageGB: parseFloat(((usage.rawBytes || 0) / (1024 * 1024 * 1024)).toFixed(3))
                 },
                 activeSubscriptions: subscriptions,
                 monthlyCost: subscriptions.reduce((sum, sub) => sum + parseFloat(sub.monthly_price_usd), 0),

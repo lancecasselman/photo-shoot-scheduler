@@ -14343,11 +14343,11 @@ END:VCALENDAR`;
                 const stats = await response.json();
                 console.log('Global storage stats received:', stats);
                 
-                // Update the display
-                document.getElementById('totalSessions').textContent = stats.totalSessions.toString();
-                document.getElementById('totalGalleryStorage').textContent = stats.gallery.totalSizeFormatted;
-                document.getElementById('totalRawStorage').textContent = stats.raw.totalSizeFormatted;
-                document.getElementById('totalCombinedStorage').textContent = stats.combined.totalSizeFormatted;
+                // Update the display with safe data access
+                document.getElementById('totalSessions').textContent = (stats.totalSessions || 0).toString();
+                document.getElementById('totalGalleryStorage').textContent = stats.gallery?.totalSizeFormatted || '0 B';
+                document.getElementById('totalRawStorage').textContent = stats.raw?.totalSizeFormatted || '0 B';
+                document.getElementById('totalCombinedStorage').textContent = stats.combined?.totalSizeFormatted || '0 B';
                 
                 console.log('Global storage stats updated successfully');
                 

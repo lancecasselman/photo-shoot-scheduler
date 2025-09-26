@@ -460,28 +460,40 @@
                 progressFill.classList.add('warning');
             }
 
+            // Safely handle undefined values with fallbacks
+            const usedGB = parseFloat(storageData.usedStorageGB) || 0;
+            const totalQuotaGB = parseFloat(storageData.totalQuotaGB) || 100;
+            const remainingGB = parseFloat(storageData.remainingGB) || 0;
+            
             document.getElementById('usage-text').textContent = 
-                `${storageData.usedStorageGB} GB / ${storageData.totalQuotaGB} GB used`;
+                `${usedGB.toFixed(2)} GB / ${totalQuotaGB} GB used`;
             document.getElementById('usage-percentage').textContent = usagePercentage + '%';
 
             // Breakdown - use global stats if available for consistency with Platform Storage Overview
             if (storageData.globalStats) {
-                document.getElementById('gallery-size').textContent = storageData.globalStats.gallery.totalSizeFormatted;
-                document.getElementById('raw-size').textContent = storageData.globalStats.raw.totalSizeFormatted;
-                document.getElementById('total-files').textContent = storageData.globalStats.combined.fileCount.toString();
+                document.getElementById('gallery-size').textContent = storageData.globalStats.gallery?.totalSizeFormatted || '0 B';
+                document.getElementById('raw-size').textContent = storageData.globalStats.raw?.totalSizeFormatted || '0 B';
+                document.getElementById('total-files').textContent = (storageData.globalStats.combined?.fileCount || 0).toString();
                 console.log('Storage manager updated with Platform Storage Overview data:', storageData.globalStats);
             } else {
-                document.getElementById('gallery-size').textContent = storageData.breakdown.galleryGB + ' GB';
-                document.getElementById('raw-size').textContent = storageData.breakdown.rawStorageGB + ' GB';
-                document.getElementById('total-files').textContent = '0';
+                // Safely access breakdown data with fallbacks
+                const galleryGB = parseFloat(storageData.breakdown?.galleryGB) || 0;
+                const rawStorageGB = parseFloat(storageData.breakdown?.rawStorageGB) || 0;
+                
+                document.getElementById('gallery-size').textContent = galleryGB.toFixed(2) + ' GB';
+                document.getElementById('raw-size').textContent = rawStorageGB.toFixed(2) + ' GB';
+                document.getElementById('total-files').textContent = (storageData.totalFiles || 0).toString();
             }
-            document.getElementById('remaining-storage').textContent = storageData.remainingGB + ' GB';
+            document.getElementById('remaining-storage').textContent = remainingGB.toFixed(2) + ' GB';
 
-            // Current plan
+            // Current plan - safely handle undefined values
+            const purchasedTB = parseFloat(storageData.purchasedTB) || 0;
+            const monthlyCost = parseFloat(storageData.monthlyCost) || 0;
+            
             document.getElementById('purchased-storage').textContent = 
-                `Additional Storage: ${storageData.purchasedTB} TB`;
+                `Additional Storage: ${purchasedTB} TB`;
             document.getElementById('monthly-cost').textContent = 
-                `Monthly Cost: $${storageData.monthlyCost}`;
+                `Monthly Cost: $${monthlyCost.toFixed(2)}`;
 
             // Subscriptions
             updateSubscriptionsList();
