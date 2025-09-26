@@ -5,6 +5,7 @@ const R2FileManager = require('./r2-file-manager');
 const R2SyncService = require('./r2-sync-service');
 const UnifiedFileDeletionService = require('./unified-file-deletion');
 const StorageSystem = require('./storage-system');
+const GalleryPhotoSync = require('./sync-gallery-photos');
 const { Pool } = require('pg');
 
 // Configure multer for file uploads (memory storage for direct R2 upload)
@@ -76,6 +77,7 @@ function createR2Routes(realTimeGalleryUpdates = null) {
   // REMOVED: Old storage billing - using new storage system
   const syncService = new R2SyncService(r2Manager);
   const unifiedDeletion = new UnifiedFileDeletionService();
+  const gallerySync = new GalleryPhotoSync();
 
   // Authentication middleware for all routes - compatible with main server auth
   router.use((req, res, next) => {
@@ -400,6 +402,17 @@ function createR2Routes(realTimeGalleryUpdates = null) {
           console.error('Gallery upload failed:', result.reason?.message);
         }
       });
+
+      // Auto-sync photos to gallery after successful upload
+      if (successfulUploads > 0) {
+        try {
+          const syncResult = await gallerySync.autoSyncAfterUpload(sessionId, req.files);
+          console.log(`📸 Gallery auto-sync completed: ${syncResult.photoCount || 0} photos now available`);
+        } catch (syncError) {
+          console.error('❌ Gallery auto-sync failed:', syncError.message);
+          // Don't fail the upload if sync fails - this is a background task
+        }
+      }
 
       // Trigger real-time gallery updates if photos were successfully uploaded
       if (successfulUploads > 0 && realTimeGalleryUpdates) {
