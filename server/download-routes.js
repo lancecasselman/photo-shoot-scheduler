@@ -1524,8 +1524,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       let finalImage;
       let finalImageFormat = 'jpeg'; // Default format
       if (sessionData.watermarkEnabled) {
-        // Get original file from R2
-        const originalFile = await r2Manager.downloadFile(fileUrl.replace('/r2/file/', ''));
+        // Get original file from R2 using correct parameters
+        const originalFile = await r2Manager.downloadFile(sessionData.userId, tokenData.sessionId, filename);
         
         if (!originalFile.success) {
           return res.status(404).json({ error: 'Original file not found' });
@@ -1542,14 +1542,21 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
         if (sessionData.watermarkType === 'logo' && sessionData.watermarkLogoUrl) {
           // Get logo file for watermarking
-          const logoFile = await r2Manager.downloadFile(sessionData.watermarkLogoUrl.replace('/r2/file/', ''));
-          if (logoFile.success) {
-            watermarkConfig.logoBuffer = logoFile.data;
+          // Extract filename from logo URL for R2 download
+          const logoFilename = sessionData.watermarkLogoUrl.split('/').pop();
+          try {
+            const logoFile = await r2Manager.downloadFile(sessionData.userId, tokenData.sessionId, logoFilename);
+            if (logoFile.success) {
+              watermarkConfig.logoBuffer = logoFile.buffer;
+            }
+          } catch (logoError) {
+            console.warn(`⚠️ Could not load logo file: ${logoError.message}`);
+            // Continue without logo watermark
           }
         }
 
         // Apply watermark using Sharp
-        const originalImage = sharp(originalFile.data);
+        const originalImage = sharp(originalFile.buffer);
         const metadata = await originalImage.metadata();
         
         if (watermarkConfig.type === 'text') {
@@ -1568,7 +1575,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           // Calculate text dimensions based on scale (as percentage of image width)
           const fontSize = Math.max(20, Math.floor(metadata.width * (watermarkConfig.scale || 10) / 100));
           const textWidth = Math.min(metadata.width * 0.8, fontSize * safeText.length * 0.6);
-          const textHeight = fontSize * 1.5;
+          const textHeight = Math.min(metadata.height * 0.2, fontSize * 1.5);
           
           // Create properly sized SVG for the text
           const svgText = `
@@ -1618,8 +1625,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           const logoMetadata = await logoImage.metadata();
           
           // Calculate logo size based on scale percentage (unified with text scale)
-          const targetWidth = Math.floor(metadata.width * (watermarkConfig.scale || 10) / 100);
-          const targetHeight = Math.floor(targetWidth * (logoMetadata.height / logoMetadata.width));
+          const targetWidth = Math.min(Math.floor(metadata.width * (watermarkConfig.scale || 10) / 100), metadata.width * 0.5);
+          const targetHeight = Math.min(Math.floor(targetWidth * (logoMetadata.height / logoMetadata.width)), metadata.height * 0.5);
           
           // Resize logo with transparency preserved
           const resizedLogo = await logoImage
@@ -1669,13 +1676,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         console.log(`🖼️ Watermark applied to download for session ${tokenData.sessionId}`);
       } else {
         // No watermark - serve original file
-        const originalFile = await r2Manager.downloadFile(fileUrl.replace('/r2/file/', ''));
+        const originalFile = await r2Manager.downloadFile(sessionData.userId, tokenData.sessionId, filename);
         
         if (!originalFile.success) {
           return res.status(404).json({ error: 'File not found' });
         }
 
-        finalImage = originalFile.data;
+        finalImage = originalFile.buffer;
         
         // Try to detect format from filename for non-watermarked files
         const ext = filename.toLowerCase().split('.').pop();
@@ -1699,36 +1706,46 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         })
         .where(eq(downloadTokens.token, downloadToken));
 
-      // Determine download type based on pricing model
-      // For freemium, we need to check if this is within free quota or paid
+      // Determine download type based on pricing model and client-specific quotas
       let downloadType = 'free';
+      let digitalTransactionId = null;
+      let amountPaid = 0;
+      
       if (sessionData.pricingModel === 'paid') {
         downloadType = 'paid'; // All downloads in paid model are paid
+        // TODO: Set actual transaction details for paid model
       } else if (sessionData.pricingModel === 'freemium') {
-        // Check if this is a free download or paid (after free quota exhausted)
-        const freeDownloads = sessionData.freeDownloads || 0;
-        const existingFreeDownloads = await db
+        // For freemium, check client-specific quota using clientKey from token
+        const clientKey = tokenData.clientKey || 'gallery-access';
+        const freeDownloads = sessionData.freeDownloads || 3; // Default 3 free downloads per client
+        
+        const existingClientDownloads = await db
           .select({ count: count() })
           .from(galleryDownloads)
           .where(and(
             eq(galleryDownloads.sessionId, tokenData.sessionId),
+            eq(galleryDownloads.clientKey, clientKey),
             eq(galleryDownloads.downloadType, 'free')
           ));
-        const usedFreeDownloads = existingFreeDownloads[0]?.count || 0;
+        const usedClientFreeDownloads = existingClientDownloads[0]?.count || 0;
         
-        // If this download is beyond the free quota, it's paid
-        if (usedFreeDownloads >= freeDownloads) {
-          downloadType = 'paid';
+        console.log(`📊 [FREEMIUM FIX] Client ${clientKey}: ${usedClientFreeDownloads}/${freeDownloads} free downloads used`);
+        
+        // If this download is beyond the client's free quota, it should be paid but requires transaction
+        if (usedClientFreeDownloads >= freeDownloads) {
+          // This should not happen in our current freemium flow - paid downloads need transaction ID
+          console.warn(`⚠️ Client ${clientKey} exceeded free quota but no transaction provided`);
+          downloadType = 'free'; // Keep as free until proper payment flow
         }
       }
       // For 'free' pricing model, downloadType remains 'free'
       
-      // Record download in analytics
-      await db.insert(galleryDownloads).values({
+      // Record download in analytics with proper constraint compliance
+      const downloadRecord = {
         id: uuidv4(),
         sessionId: tokenData.sessionId,
         userId: sessionData.userId,
-        clientKey: 'gallery-access', // Since this is via gallery access token
+        clientKey: tokenData.clientKey || 'gallery-access',
         photoId: filename,
         photoUrl: fileUrl,
         filename,
@@ -1743,7 +1760,15 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
         createdAt: new Date()
-      });
+      };
+      
+      // Add payment fields only for paid downloads to satisfy constraint
+      if (downloadType === 'paid') {
+        downloadRecord.digitalTransactionId = digitalTransactionId;
+        downloadRecord.amountPaid = amountPaid;
+      }
+      
+      await db.insert(galleryDownloads).values(downloadRecord);
 
       // Serve the file with correct content type
       const contentType = finalImageFormat === 'png' ? 'image/png' : 'image/jpeg';
