@@ -10692,6 +10692,11 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
             token: galleryToken
         });
 
+        // 🚀 CACHE-BUSTING: Ensure real-time updates across all platforms
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
         res.json({
             success: true,
             session: {
@@ -10786,6 +10791,11 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
             photoCount: photos.length,
             token: galleryToken
         });
+
+        // 🚀 CACHE-BUSTING: Ensure real-time updates across all platforms
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
 
         res.json({
             success: true,
