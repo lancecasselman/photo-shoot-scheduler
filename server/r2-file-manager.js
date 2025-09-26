@@ -36,7 +36,6 @@ class R2FileManager {
     
     // File type categories for organization
     this.fileTypeCategories = {
-      'raw': ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.rw2', '.3fr', '.crw', '.dcr', '.erf', '.k25', '.kdc', '.mrw', '.pef', '.sr2', '.srf', '.x3f'],
       'gallery': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.tiff', '.tif'],  
       'video': ['.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.m4v'],
       'audio': ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a'],
@@ -121,7 +120,6 @@ class R2FileManager {
   isImageFile(filename) {
     const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
     const imageExtensions = [
-      ...this.fileTypeCategories.raw,
       ...this.fileTypeCategories.gallery,
       '.heic', '.heif', '.avif' // Additional formats Sharp can handle
     ];
@@ -136,17 +134,6 @@ class R2FileManager {
       // Create thumbnail filename
       const ext = originalFilename.split('.').pop().toLowerCase();
       const baseName = originalFilename.replace(`.${ext}`, '');
-      
-      // Skip thumbnail generation for NEF files as Sharp doesn't support them
-      const unsupportedRawFormats = ['.nef', '.cr2', '.arw', '.orf', '.rw2', '.3fr'];
-      if (unsupportedRawFormats.includes('.' + ext)) {
-        console.log(`⚠️ Skipping thumbnail generation for unsupported RAW format: ${ext}`);
-        return {
-          success: false,
-          error: `Thumbnails not supported for ${ext.toUpperCase()} files`,
-          skipped: true
-        };
-      }
       
       // Generate multiple thumbnail sizes for different use cases
       const thumbnailSizes = [
@@ -163,59 +150,20 @@ class R2FileManager {
           // Process image with Sharp - create single instance to avoid memory leaks
           let processedBuffer;
           
-          // Handle different file types
-          const isRawFile = this.fileTypeCategories.raw.includes('.' + ext);
+          // Standard image processing
+          sharpInstance = sharp(fileBuffer);
+          processedBuffer = await sharpInstance
+            .resize(size.width, size.height, { 
+              fit: 'inside', 
+              withoutEnlargement: true,
+              background: { r: 255, g: 255, b: 255, alpha: 1 }
+            })
+            .jpeg({ quality: size.quality, progressive: true })
+            .toBuffer();
           
-          if (isRawFile) {
-            // For RAW files, extract embedded JPEG if possible, otherwise convert
-            try {
-              sharpInstance = sharp(fileBuffer);
-              processedBuffer = await sharpInstance
-                .jpeg({ quality: size.quality, progressive: true, mozjpeg: true })
-                .resize(size.width, size.height, { 
-                  fit: 'inside', 
-                  withoutEnlargement: true,
-                  background: { r: 255, g: 255, b: 255, alpha: 1 }
-                })
-                .toBuffer();
-              
-              // Clean up Sharp instance
-              sharpInstance.destroy();
-              sharpInstance = null;
-            } catch (rawError) {
-              console.warn(` RAW processing failed for ${originalFilename}, trying basic conversion`);
-              // Clean up failed instance
-              if (sharpInstance) {
-                sharpInstance.destroy();
-              }
-              
-              // Fallback for difficult RAW formats
-              sharpInstance = sharp(fileBuffer);
-              processedBuffer = await sharpInstance
-                .resize(size.width, size.height, { fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: size.quality })
-                .toBuffer();
-              
-              // Clean up Sharp instance
-              sharpInstance.destroy();
-              sharpInstance = null;
-            }
-          } else {
-            // Standard image processing
-            sharpInstance = sharp(fileBuffer);
-            processedBuffer = await sharpInstance
-              .resize(size.width, size.height, { 
-                fit: 'inside', 
-                withoutEnlargement: true,
-                background: { r: 255, g: 255, b: 255, alpha: 1 }
-              })
-              .jpeg({ quality: size.quality, progressive: true })
-              .toBuffer();
-            
-            // Clean up Sharp instance
-            sharpInstance.destroy();
-            sharpInstance = null;
-          }
+          // Clean up Sharp instance
+          sharpInstance.destroy();
+          sharpInstance = null;
 
           // Upload thumbnail to R2
           const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size.suffix}.jpg`;
@@ -326,18 +274,6 @@ class R2FileManager {
   async generateThumbnailOnDemand(userId, sessionId, originalFilename, requestedSize = '_md') {
     try {
       console.log(` Generating thumbnail on-demand for: ${originalFilename}`);
-      
-      // Check if file type is supported for thumbnails
-      const ext = originalFilename.split('.').pop().toLowerCase();
-      const unsupportedRawFormats = ['.nef', '.cr2', '.arw', '.orf', '.rw2', '.3fr'];
-      if (unsupportedRawFormats.includes('.' + ext)) {
-        console.log(`⚠️ Thumbnails not supported for ${ext.toUpperCase()} files`);
-        return {
-          success: false,
-          error: `Thumbnails not supported for ${ext.toUpperCase()} files`,
-          skipped: true
-        };
-      }
       
       // First download the original file
       const originalFile = await this.downloadFile(userId, sessionId, originalFilename);
@@ -524,10 +460,7 @@ class R2FileManager {
       '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', 
       '.gif': 'image/gif', '.webp': 'image/webp', '.tiff': 'image/tiff', '.tif': 'image/tiff',
       '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.mov': 'video/quicktime',
-      '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.zip': 'application/zip',
-      // RAW formats
-      '.nef': 'image/x-nikon-nef', '.cr2': 'image/x-canon-cr2', '.arw': 'image/x-sony-arw',
-      '.dng': 'image/x-adobe-dng', '.raf': 'image/x-fuji-raf', '.orf': 'image/x-olympus-orf'
+      '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.zip': 'application/zip'
     };
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
 
@@ -899,7 +832,6 @@ class R2FileManager {
         return {
           success: true,
           filesByType: {
-            raw: [],
             gallery: [],
             video: [],
             document: [],
@@ -912,7 +844,6 @@ class R2FileManager {
 
       // Organize files by category
       const filesByType = {
-        raw: [],
         gallery: [],
         video: [],
         document: [],
@@ -925,9 +856,7 @@ class R2FileManager {
         // Determine file type based on R2 key path (more accurate than extension)
         let category = 'other';
         if (file.r2Key) {
-          if (file.r2Key.includes('/raw/')) {
-            category = 'raw';
-          } else if (file.r2Key.includes('/gallery/')) {
+          if (file.r2Key.includes('/gallery/')) {
             category = 'gallery';
           } else if (file.r2Key.includes('/video/')) {
             category = 'video';
@@ -1260,10 +1189,8 @@ class R2FileManager {
       
       let totalBytes = 0;
       let galleryBytes = 0;
-      let rawBytes = 0;
       let fileCount = 0;
       let galleryCount = 0;
-      let rawCount = 0;
       
       for (const prefix of pathPatterns) {
         console.log(` Checking path pattern: ${prefix}`);
@@ -1291,9 +1218,6 @@ class R2FileManager {
               if (object.Key.includes('/gallery/')) {
                 galleryBytes += fileSize;
                 galleryCount++;
-              } else if (object.Key.includes('/raw/')) {
-                rawBytes += fileSize;
-                rawCount++;
               }
             }
           }
@@ -1305,12 +1229,11 @@ class R2FileManager {
       
       const totalGB = totalBytes / (1024 * 1024 * 1024);
       const galleryGB = galleryBytes / (1024 * 1024 * 1024);
-      const rawGB = rawBytes / (1024 * 1024 * 1024);
       const maxStorageGB = 1024; // 1TB limit
       const usedPercentage = (totalGB / maxStorageGB) * 100;
       const remainingGB = maxStorageGB - totalGB;
       
-      console.log(` Storage usage: ${totalGB.toFixed(2)} GB total (Gallery: ${galleryGB.toFixed(2)} GB, RAW: ${rawGB.toFixed(2)} GB) of ${maxStorageGB} GB (${usedPercentage.toFixed(1)}%)`);
+      console.log(` Storage usage: ${totalGB.toFixed(2)} GB total (Gallery: ${galleryGB.toFixed(2)} GB) of ${maxStorageGB} GB (${usedPercentage.toFixed(1)}%)`);
       
       return {
         totalBytes: Math.round(totalBytes),
@@ -1318,14 +1241,11 @@ class R2FileManager {
         galleryBytes: Math.round(galleryBytes),
         galleryGB: Math.round(galleryGB * 100) / 100,
         galleryCount: galleryCount,
-        rawBytes: Math.round(rawBytes),
-        rawGB: Math.round(rawGB * 100) / 100,
-        rawCount: rawCount,
         usedPercentage: Math.round(usedPercentage * 10) / 10,
         percentUsed: Math.round(usedPercentage * 10) / 10,
         remainingGB: Math.round(remainingGB * 100) / 100,
         fileCount: fileCount,
-        displayText: `${totalGB.toFixed(2)} GB of ${maxStorageGB} GB used ( ${galleryGB.toFixed(2)} GB + 📷 ${rawGB.toFixed(2)} GB)`,
+        displayText: `${totalGB.toFixed(2)} GB of ${maxStorageGB} GB used (Gallery: ${galleryGB.toFixed(2)} GB)`,
         monthlyStorageCost: Math.round(totalGB * 0.015 * 100) / 100, // $0.015 per GB/month
         additionalStorageTB: 0,
         storageStatus: usedPercentage > 90 ? "Near Limit" : "Active",

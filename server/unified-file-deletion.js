@@ -41,8 +41,7 @@ class UnifiedFileDeletion {
             try {
                 const sessionFiles = await this.r2Manager.getSessionFiles(sessionId, userId);
                 const allR2Files = [
-                    ...sessionFiles.filesByType.gallery,
-                    ...sessionFiles.filesByType.raw
+                    ...sessionFiles.filesByType.gallery
                 ];
                 r2FilesToDelete = allR2Files.filter(f => f.filename === filename);
             } catch (r2Error) {
@@ -153,17 +152,6 @@ class UnifiedFileDeletion {
                 deletionLog.push(`✓ Updated gallery storage tracking (-${fileSizeMB}MB)`);
             }
 
-            // Update raw_storage_usage if it's a raw file
-            if (folderType === 'raw') {
-                await client.query(`
-                    UPDATE raw_storage_usage 
-                    SET total_size_bytes = total_size_bytes - $1,
-                        file_count = file_count - 1,
-                        last_updated = NOW()
-                    WHERE session_id = $2 AND user_id = $3
-                `, [fileSizeBytes, sessionId, userId]);
-                deletionLog.push(`✓ Updated raw storage tracking (-${fileSizeMB}MB)`);
-            }
 
             // Step 6: Clean up ALL download-related data (critical - must not fail silently)
             console.log(`🔄 Starting comprehensive download cleanup for: ${filename}`);
@@ -359,7 +347,7 @@ class UnifiedFileDeletion {
                     fileSizeBytes: fileSizeBytes,
                     uploadedAt: fileRecord.uploaded_at || new Date().toISOString(),
                     originalFormat: filename.substring(filename.lastIndexOf('.') + 1),
-                    contentType: folderType === 'raw' ? 'application/octet-stream' : 'image/jpeg'
+                    contentType: 'image/jpeg'
                 };
                 
                 // Update backup index to remove this file
@@ -688,8 +676,7 @@ class UnifiedFileDeletion {
             // Check cloud storage by trying to get session files
             try {
                 const sessionFiles = await this.r2Manager.getSessionFiles(sessionId, userId);
-                const stillExists = sessionFiles.filesByType.gallery.some(f => f.filename === filename) ||
-                                 sessionFiles.filesByType.raw.some(f => f.filename === filename);
+                const stillExists = sessionFiles.filesByType.gallery.some(f => f.filename === filename);
                 if (stillExists) {
                     issues.push('File still exists in cloud storage');
                 } else {

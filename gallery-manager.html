@@ -2129,10 +2129,8 @@
             console.log('URL Parameters:', { sessionId, folderType, clientName });
             
             // Update UI
-            document.getElementById('folderTitle').textContent = 
-                folderType === 'gallery' ? 'Gallery Manager' : 'Raw Storage Manager';
-            document.getElementById('folderType').textContent = 
-                folderType === 'gallery' ? 'Gallery' : 'Raw Storage';
+            document.getElementById('folderTitle').textContent = 'Gallery Manager';
+            document.getElementById('folderType').textContent = 'Gallery';
             
             // Show send to client button only for gallery
             if (folderType === 'gallery') {
@@ -2140,12 +2138,12 @@
             }
             
             // Validate folder type
-            if (!folderType || !['gallery', 'raw'].includes(folderType)) {
+            if (!folderType || folderType !== 'gallery') {
                 console.error('Invalid or missing folderType:', folderType);
                 document.getElementById('fileContainer').innerHTML = `
                     <div class="empty-state">
                         <h3>Invalid Folder Type</h3>
-                        <p>Folder type must be 'gallery' or 'raw'. Current: ${folderType || 'undefined'}</p>
+                        <p>Folder type must be 'gallery'. Current: ${folderType || 'undefined'}</p>
                         <p>Please check the URL parameters.</p>
                     </div>
                 `;
@@ -2799,10 +2797,6 @@
                     galleryMeasured = '<div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">(' + stats.gallery.validFiles + ' measured)</div>';
                 }
                 
-                var rawMeasured = '';
-                if (stats.raw.validFiles !== stats.raw.fileCount) {
-                    rawMeasured = '<div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">(' + stats.raw.validFiles + ' measured)</div>';
-                }
                 
                 var combinedMeasured = '';
                 if (stats.combined.validFiles !== stats.combined.fileCount) {
@@ -2811,18 +2805,12 @@
                 
                 storageDiv.innerHTML = 
                     '<h3 style="margin: 0 0 10px 0; font-size: 18px;"> Session Storage Overview</h3>' +
-                    '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">' +
+                    '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">' +
                         '<div style="text-align: center;">' +
                             '<div style="font-size: 20px; font-weight: bold;">' + stats.gallery.fileCount + '</div>' +
                             '<div style="font-size: 12px; opacity: 0.9;">Gallery Files</div>' +
                             '<div style="font-size: 14px; margin-top: 2px;">' + stats.gallery.totalSizeFormatted + '</div>' +
                             galleryMeasured +
-                        '</div>' +
-                        '<div style="text-align: center;">' +
-                            '<div style="font-size: 20px; font-weight: bold;">' + stats.raw.fileCount + '</div>' +
-                            '<div style="font-size: 12px; opacity: 0.9;">Raw Files</div>' +
-                            '<div style="font-size: 14px; margin-top: 2px;">' + stats.raw.totalSizeFormatted + '</div>' +
-                            rawMeasured +
                         '</div>' +
                         '<div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 15px;">' +
                             '<div style="font-size: 20px; font-weight: bold;">' + stats.combined.fileCount + '</div>' +

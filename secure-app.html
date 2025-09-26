@@ -2784,57 +2784,6 @@
             padding: 20px 100px;
         }
         
-        /* RAW Folder Modal Styles */
-        .gallery-modal-content {
-            max-width: 90%;
-            max-height: 90%;
-            width: 800px;
-        }
-
-        .gallery-container {
-            max-height: 600px;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .raw-file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background: #f9f9f9;
-        }
-
-        .file-info h4 {
-            margin: 0 0 5px 0;
-            color: #333;
-        }
-
-        .file-info p {
-            margin: 2px 0;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .file-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .empty-state, .error-state, .loading-spinner {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .error-state {
-            color: #d32f2f;
-        }
-
-        
         .status-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -7138,7 +7087,6 @@ ${contract.contract_content}
                             <h4>Files & Storage</h4>
                             <div class="file-action-buttons">
                                 <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
-                                <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">Open Raw Storage</button>
                             </div>
                         </div>
 
@@ -7539,17 +7487,6 @@ ${contract.contract_content}
             window.open(url, windowName, windowFeatures);
         };
 
-        // Open Raw Storage folder in new window
-        window.openRawStorageWindow = function(sessionId) {
-            const session = sessions.find(s => s.id === sessionId);
-            if (!session) return;
-            
-            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=raw&clientName=${encodeURIComponent(session.clientName)}`;
-            const windowName = `raw_${sessionId}`;
-            const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no';
-            
-            window.open(url, windowName, windowFeatures);
-        };
 
         window.sendGalleryToClient = async function(sessionId) {
             const session = sessions.find(s => s.id === sessionId);

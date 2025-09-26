@@ -121,9 +121,7 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       // Calculate actual storage usage from all sessions
       let totalBytes = 0;
       let galleryBytes = 0;
-      let rawBytes = 0;
       let galleryFiles = 0;
-      let rawFiles = 0;
       
       try {
         // Get all photography sessions for this user
@@ -151,7 +149,6 @@ function createR2Routes(realTimeGalleryUpdates = null) {
             const sessionFiles = await r2Manager.getSessionFiles(userId, session.id);
             console.log(`🗃️ Files for session ${session.id}:`, {
               galleryCount: sessionFiles.filesByType.gallery?.length || 0,
-              rawCount: sessionFiles.filesByType.raw?.length || 0,
               totalSize: sessionFiles.totalSize || 0
             });
             
@@ -162,21 +159,13 @@ function createR2Routes(realTimeGalleryUpdates = null) {
                 galleryFiles++;
               }
             }
-            
-            // Add to RAW storage
-            if (sessionFiles.filesByType.raw) {
-              for (const file of sessionFiles.filesByType.raw) {
-                rawBytes += file.fileSizeBytes || 0;
-                rawFiles++;
-              }
-            }
           } catch (sessionError) {
             console.error(`Error calculating storage for session ${session.id}:`, sessionError);
           }
         }
         
-        totalBytes = galleryBytes + rawBytes;
-        console.log(` Storage calculated: Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB, RAW: ${(rawBytes / (1024**3)).toFixed(2)} GB`);
+        totalBytes = galleryBytes;
+        console.log(` Storage calculated: Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB`);
         
       } catch (dbError) {
         console.error('Database error calculating storage:', dbError);
@@ -184,24 +173,20 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       
       const totalGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
       const galleryGB = (galleryBytes / (1024 * 1024 * 1024)).toFixed(2);
-      const rawGB = (rawBytes / (1024 * 1024 * 1024)).toFixed(2);
       const usagePercent = ((totalBytes / (1024 * 1024 * 1024 * 1024)) * 100).toFixed(1); // 1TB = 1024^4 bytes
       
-      // Return frontend-compatible storage info with separate tracking
+      // Return frontend-compatible storage info
       const usage = {
         totalBytes,
         totalGB: parseFloat(totalGB),
         galleryBytes,
         galleryGB: parseFloat(galleryGB),
-        rawBytes,
-        rawGB: parseFloat(rawGB),
         usedPercentage: parseFloat(usagePercent),
         percentUsed: parseFloat(usagePercent),
         remainingGB: 1024 - parseFloat(totalGB), // 1TB limit
-        fileCount: galleryFiles + rawFiles,
+        fileCount: galleryFiles,
         galleryFiles,
-        rawFiles,
-        totalFiles: galleryFiles + rawFiles,
+        totalFiles: galleryFiles,
         displayText: `${totalGB} GB of 1024 GB used`,
         monthlyStorageCost: 0,
         additionalStorageTB: 0,
@@ -341,134 +326,6 @@ function createR2Routes(realTimeGalleryUpdates = null) {
     }
   });
 
-  /**
-   * POST /api/r2/backup-upload
-   * Alternative upload endpoint for RAW backup dashboard
-   * Same functionality as /upload but with different response format
-   */
-  router.post('/backup-upload', upload.array('files', 50), async (req, res) => {
-    try {
-      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files provided' });
-      }
-
-      console.log(`📱 RAW BACKUP: Processing ${req.files.length} RAW files for user ${userId}, session ${sessionId}`);
-
-      // Check total upload size against storage limit with admin bypass
-      const userEmail = req.user?.email;
-      const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-      
-      // Admin bypass check
-      const adminEmails = [
-        'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com', 
-        'lance@thelegacyphotography.com'
-      ];
-      
-      if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
-        console.log(`✅ Admin bypass for RAW uploads: ${userEmail} has unlimited storage`);
-      } else {
-        // Use proper StorageSystem for quota checking
-        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, userEmail);
-        
-        if (!canUploadResult.canUpload) {
-          console.log(`❌ Storage quota exceeded for user ${userId}: Current: ${canUploadResult.currentUsageGB}GB, Quota: ${canUploadResult.quotaGB}GB`);
-          return res.status(413).json({ 
-            error: 'Storage limit exceeded',
-            message: `You have exceeded your storage quota. Current usage: ${canUploadResult.currentUsageGB}GB of ${canUploadResult.quotaGB}GB`,
-            usage: {
-              currentGB: canUploadResult.currentUsageGB,
-              quotaGB: canUploadResult.quotaGB,
-              remainingGB: canUploadResult.remainingGB,
-              requestedGB: (totalUploadSize / (1024 * 1024 * 1024)).toFixed(2)
-            },
-            upgradeRequired: true
-          });
-        }
-        
-        console.log(`✅ Storage check passed: ${canUploadResult.remainingGB}GB remaining of ${canUploadResult.quotaGB}GB quota`);
-      }
-
-      // Upload files as RAW backup files (NOT gallery files)
-      const uploadPromises = req.files.map(file => 
-        r2Manager.uploadFile(file.buffer, file.originalname, userId, sessionId, 'raw')
-      );
-      
-      const uploadResults = await Promise.allSettled(uploadPromises);
-      
-      // Count successful and failed uploads and queue thumbnail generation
-      let successfulUploads = 0;
-      let failedUploads = 0;
-      const thumbnailTasks = [];
-      
-      uploadResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          successfulUploads++;
-          
-          // Queue thumbnail generation for image files
-          const file = req.files[index];
-          if (r2Manager.isImageFile(file.originalname)) {
-            thumbnailTasks.push({
-              buffer: file.buffer,
-              filename: file.originalname,
-              userId,
-              sessionId,
-              fileType: 'raw'
-            });
-          }
-        } else {
-          failedUploads++;
-          console.error('Upload failed:', result.reason?.message);
-        }
-      });
-
-      // Generate thumbnails in background for RAW files too
-      if (thumbnailTasks.length > 0) {
-        console.log(`🖼️ Generating RAW thumbnails for ${thumbnailTasks.length} image files...`);
-        
-        Promise.allSettled(
-          thumbnailTasks.map(task => 
-            r2Manager.generateThumbnail(
-              task.buffer, 
-              task.filename, 
-              task.userId, 
-              task.sessionId, 
-              task.fileType
-            )
-          )
-        ).then(thumbResults => {
-          const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
-          console.log(` Generated RAW thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
-        }).catch(thumbError => {
-          console.warn(' Background RAW thumbnail generation error:', thumbError.message);
-        });
-      }
-
-      res.json({
-        success: true,
-        sessionId,
-        totalFiles: req.files.length,
-        successfulUploads,
-        failedUploads,
-        message: `Successfully uploaded ${successfulUploads} of ${req.files.length} files to R2 Cloud Storage`
-      });
-
-    } catch (error) {
-      console.error('R2 backup upload error:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Upload failed', 
-        message: error.message 
-      });
-    }
-  });
 
   /**
    * POST /api/r2/gallery-upload

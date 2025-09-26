@@ -50,6 +50,13 @@ function createMultipartRoutes(pool) {
         });
       }
 
+      // Validate folderType - raw files are no longer supported
+      if (folderType === 'raw') {
+        return res.status(400).json({ 
+          error: 'Raw file uploads are no longer supported. Please use gallery uploads instead.' 
+        });
+      }
+
       // Storage quota check
       const StorageSystem = require('./storage-system');
       const storageSystem = new StorageSystem(pool, r2Manager);

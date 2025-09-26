@@ -193,23 +193,17 @@ async function useAiCredits(userId, amount, operation, details) {
     }
 }
 
-// Update storage tracking for both Gallery and Raw Storage files
+// Update storage tracking for Gallery files
 async function updateStorageTracking(userId, sessionId, folderType, fileName, file) {
     try {
         const [metadata] = await file.getMetadata();
         const fileSizeBytes = metadata.size || 0;
         const fileSizeMB = fileSizeBytes / (1024 * 1024);
-        const fileSizeTB = fileSizeMB / (1024 * 1024);
         
         console.log(`Tracking storage for ${folderType} file: ${fileName}, Size: ${fileSizeMB.toFixed(2)}MB`);
         
-        if (folderType === 'raw') {
-            // Raw files already have their own tracking system - just ensure it's updated
-            await updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, 1);
-        } else {
-            // Gallery files need general storage tracking
-            await updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBytes, fileSizeMB);
-        }
+        // Gallery files storage tracking
+        await updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBytes, fileSizeMB);
         
         console.log(`Storage tracking updated for ${folderType} file: ${fileName}`);
     } catch (error) {
@@ -254,41 +248,6 @@ async function updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBy
     }
 }
 
-// Update raw storage usage (similar to existing system)
-async function updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, fileCount) {
-    try {
-        // Check if user has raw storage usage record
-        const existingResult = await pool.query(`
-            SELECT id FROM raw_storage_usage WHERE user_id = $1
-        `, [userId]);
-        
-        if (existingResult.rows.length === 0) {
-            // Create new record
-            await pool.query(`
-                INSERT INTO raw_storage_usage (
-                    id, user_id, total_files, total_bytes, total_size_tb, 
-                    current_monthly_charge, storage_tier_tb, max_allowed_tb, storage_status
-                )
-                VALUES ($1, $2, $3, $4, $5, 0, 1, 1.00, 'active')
-            `, [require('crypto').randomUUID(), userId, fileCount, Math.round(fileSizeMB * 1024 * 1024), fileSizeTB]);
-        } else {
-            // Update existing record
-            await pool.query(`
-                UPDATE raw_storage_usage 
-                SET total_files = total_files + $1,
-                    total_bytes = total_bytes + $2,
-                    total_size_tb = total_size_tb + $3,
-                    updated_at = NOW()
-                WHERE user_id = $4
-            `, [fileCount, Math.round(fileSizeMB * 1024 * 1024), fileSizeTB, userId]);
-        }
-        
-        console.log(`Raw storage updated: +${fileSizeMB.toFixed(2)}MB for user ${userId}`);
-    } catch (error) {
-        console.error('Raw storage tracking error:', error);
-        throw error;
-    }
-}
 
 // PostgreSQL database connection - Initialize first with improved stability
 const pool = new Pool({
@@ -657,60 +616,6 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
     }
 }
 
-// Legacy RAW backup process (kept for compatibility)
-async function processRAWBackups(sessionId, rawFiles, userId) {
-    for (const photo of rawFiles) {
-        try {
-            // Record backup request in database
-            const backupRecord = await pool.query(`
-                INSERT INTO raw_backups (
-                    user_id, session_id, filename, original_name, 
-                    file_size, mime_type, r2_object_key, r2_bucket, 
-                    backup_status, backup_started_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                RETURNING id
-            `, [
-                userId,
-                sessionId,
-                photo.filename,
-                photo.originalName,
-                photo.originalSize,
-                photo.mimeType,
-                `${userId}/${sessionId}/${photo.filename}`, // R2 object key
-                'photography-raw-backups',
-                'pending',
-                new Date()
-            ]);
-
-
-
-            // Queue for background R2 upload (async)
-            setImmediate(async () => {
-                try {
-                    await r2BackupService.uploadFile({
-                        filePath: photo.originalPath,
-                        fileName: photo.originalName,
-                        userId: userId,
-                        sessionId: sessionId,
-                        backupId: backupRecord.rows[0].id
-                    });
-                } catch (uploadError) {
-                    console.error(`❌ RAW backup failed for ${photo.originalName}:`, uploadError);
-
-                    // Update backup record with error
-                    await pool.query(`
-                        UPDATE raw_backups 
-                        SET backup_status = 'failed', backup_error = $1
-                        WHERE id = $2
-                    `, [uploadError.message, backupRecord.rows[0].id]);
-                }
-            });
-
-        } catch (error) {
-            console.error(`❌ Failed to process RAW backup for ${photo.originalName}:`, error);
-        }
-    }
-}
 
 // R2 backup processing is handled by processR2BackupsAsync() in background
 
@@ -3310,29 +3215,15 @@ app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) =>
                 WHERE session_id = $1 AND folder_type = 'gallery'
             `, [sessionId]);
             
-            // Get raw files
-            const rawResult = await client.query(`
-                SELECT 
-                    COUNT(*) as file_count,
-                    COALESCE(SUM(file_size_bytes), 0) as total_bytes,
-                    COUNT(CASE WHEN file_size_bytes IS NOT NULL THEN 1 END) as valid_files
-                FROM session_files 
-                WHERE session_id = $1 AND folder_type = 'raw'
-            `, [sessionId]);
-            
             const galleryStats = galleryResult.rows[0];
-            const rawStats = rawResult.rows[0];
             
             console.log('Gallery query result:', galleryStats);
-            console.log('Raw query result:', rawStats);
             
             const gallerySize = parseInt(galleryStats.total_bytes) || 0;
-            const rawSize = parseInt(rawStats.total_bytes) || 0;
-            const totalSize = gallerySize + rawSize;
+            const totalSize = gallerySize;
             
             console.log(`Storage stats for session ${sessionId}:`);
             console.log(`Gallery: ${galleryStats.file_count} total files, ${galleryStats.valid_files} with size data, ${gallerySize} bytes`);
-            console.log(`Raw: ${rawStats.file_count} total files, ${rawStats.valid_files} with size data, ${rawSize} bytes`);
             
             const result = {
                 sessionId,
@@ -3342,15 +3233,9 @@ app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) =>
                     totalSize: gallerySize,
                     totalSizeFormatted: formatBytes(gallerySize)
                 },
-                raw: {
-                    fileCount: parseInt(rawStats.file_count),
-                    validFiles: parseInt(rawStats.valid_files),
-                    totalSize: rawSize,
-                    totalSizeFormatted: formatBytes(rawSize)
-                },
                 combined: {
-                    fileCount: parseInt(galleryStats.file_count) + parseInt(rawStats.file_count),
-                    validFiles: parseInt(galleryStats.valid_files) + parseInt(rawStats.valid_files),
+                    fileCount: parseInt(galleryStats.file_count),
+                    validFiles: parseInt(galleryStats.valid_files),
                     totalSize: totalSize,
                     totalSizeFormatted: formatBytes(totalSize)
                 }
@@ -3803,9 +3688,6 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
                 if (row.folder_type === 'gallery') {
                     totalGallerySize = bytes;
                     totalGalleryFiles = count;
-                } else if (row.folder_type === 'raw') {
-                    totalRawSize = bytes;
-                    totalRawFiles = count;
                 }
                 
                 console.log(`${row.folder_type}: ${count} files, ${formatBytes(bytes)}`);
@@ -3816,10 +3698,10 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
         }
         
         // Ensure proper number calculation for combined totals
-        const totalCombinedSize = (totalGallerySize || 0) + (totalRawSize || 0);
-        const totalCombinedFiles = (totalGalleryFiles || 0) + (totalRawFiles || 0);
+        const totalCombinedSize = (totalGallerySize || 0);
+        const totalCombinedFiles = (totalGalleryFiles || 0);
         
-        console.log(` Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}, RAW: ${formatBytes(totalRawSize)}`);
+        console.log(` Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}`);
         
         const result = {
             totalSessions,
@@ -3827,11 +3709,6 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
                 fileCount: totalGalleryFiles,
                 totalSize: totalGallerySize,
                 totalSizeFormatted: formatBytes(totalGallerySize)
-            },
-            raw: {
-                fileCount: totalRawFiles,
-                totalSize: totalRawSize,
-                totalSizeFormatted: formatBytes(totalRawSize)
             },
             combined: {
                 fileCount: totalCombinedFiles,
@@ -4808,42 +4685,7 @@ async function initializeDatabase(retryCount = 0) {
             )
         `);
 
-        // Create raw_backups table for R2 RAW backup tracking
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS raw_backups (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL,
-                session_id VARCHAR(255) NOT NULL,
-                filename VARCHAR(255) NOT NULL,
-                original_name VARCHAR(255) NOT NULL,
-                file_size BIGINT NOT NULL,
-                mime_type VARCHAR(100) NOT NULL,
-                r2_object_key VARCHAR(500) NOT NULL,
-                r2_bucket VARCHAR(255) NOT NULL,
-                backup_status VARCHAR(50) DEFAULT 'pending',
-                backup_started_at TIMESTAMP,
-                backup_completed_at TIMESTAMP,
-                backup_error TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
 
-        // Create raw_storage_billing table for tracking R2 storage costs
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS raw_storage_billing (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(255) NOT NULL,
-                billing_month VARCHAR(7) NOT NULL, -- YYYY-MM format
-                total_storage_bytes BIGINT DEFAULT 0,
-                total_storage_tb DECIMAL(10,3) DEFAULT 0,
-                monthly_cost_usd DECIMAL(10,2) DEFAULT 0,
-                status VARCHAR(50) DEFAULT 'active',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, billing_month)
-            )
-        `);
 
         // Initialize published websites table
         await pool.query(`
@@ -9444,59 +9286,6 @@ app.post('/api/trigger-workflow', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get RAW backup status for user
-app.get('/api/raw-backups/status', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.user?.uid || req.user?.id || 'unknown';
-
-        // Get backup summary
-        const backupStats = await pool.query(`
-            SELECT 
-                backup_status,
-                COUNT(*) as count,
-                SUM(file_size) as total_size
-            FROM raw_backups 
-            WHERE user_id = $1 
-            GROUP BY backup_status
-        `, [userId]);
-
-        // Get recent backups
-        const recentBackups = await pool.query(`
-            SELECT 
-                original_name, file_size, backup_status,
-                backup_started_at, backup_completed_at, backup_error,
-                session_id
-            FROM raw_backups 
-            WHERE user_id = $1 
-            ORDER BY backup_started_at DESC 
-            LIMIT 20
-        `, [userId]);
-
-        // Calculate storage costs
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-        const storageQuery = await pool.query(`
-            SELECT total_storage_tb, monthly_cost_usd
-            FROM raw_storage_billing 
-            WHERE user_id = $1 AND billing_month = $2
-        `, [userId, currentMonth]);
-
-        const storage = storageQuery.rows[0] || { total_storage_tb: 0, monthly_cost_usd: 0 };
-
-        res.json({
-            stats: backupStats.rows,
-            recentBackups: recentBackups.rows,
-            storage: storage,
-            pricing: {
-                perTB: 20,
-                currentMonth: currentMonth
-            }
-        });
-
-    } catch (error) {
-        console.error('Error fetching RAW backup status:', error);
-        res.status(500).json({ error: 'Failed to fetch backup status' });
-    }
-});
 
 // OLD ENDPOINT REMOVED - Use unified deletion system instead at /api/sessions/:sessionId/files/:folderType/:filename
 
@@ -16214,437 +16003,13 @@ app.post('/api/export/zip', isAuthenticated, async (req, res) => {
     }
 });
 
-// RAW File Storage Endpoints
 
-// Test R2 connection
-app.get('/api/raw-storage/test', isAuthenticated, async (req, res) => {
-    try {
-        const isConnected = await r2StorageService.testConnection();
-        res.json({ connected: isConnected });
-    } catch (error) {
-        console.error('R2 connection test error:', error);
-        res.status(500).json({ error: 'Failed to test R2 connection' });
-    }
-});
 
-// Get user's current RAW storage usage and billing info
-app.get('/api/raw-storage/usage', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        
-        // Get storage usage from database
-        const usageResult = await pool.query(`
-            SELECT total_files, total_bytes, total_size_tb, current_monthly_charge,
-                   storage_tier_tb, max_allowed_tb, storage_status, next_billing_date
-            FROM raw_storage_usage 
-            WHERE user_id = $1
-        `, [userId]);
-        
-        let usage = null;
-        if (usageResult.rows.length === 0) {
-            // Create default usage record for new user
-            await pool.query(`
-                INSERT INTO raw_storage_usage (id, user_id, total_files, total_bytes, 
-                                             total_size_tb, current_monthly_charge, storage_tier_tb, 
-                                             max_allowed_tb, storage_status)
-                VALUES ($1, $2, 0, 0, 0, 0, 1, 1.00, 'active')
-            `, [uuidv4(), userId]);
-            
-            usage = {
-                totalFiles: 0,
-                totalSizeBytes: 0,
-                totalSizeTB: 0,
-                currentMonthlyCharge: 0,
-                storageTierTB: 1,
-                maxAllowedTB: 1.00,
-                storageStatus: 'active',
-                nextBillingDate: null,
-                usagePercentage: 0,
-                isOverLimit: false
-            };
-        } else {
-            const row = usageResult.rows[0];
-            usage = {
-                totalFiles: row.total_files || 0,
-                totalSizeBytes: row.total_bytes || 0,
-                totalSizeTB: parseFloat(row.total_size_tb) || 0,
-                currentMonthlyCharge: parseFloat(row.current_monthly_charge) || 0,
-                storageTierTB: row.storage_tier_tb || 1,
-                maxAllowedTB: parseFloat(row.max_allowed_tb) || 1.00,
-                storageStatus: row.storage_status || 'active',
-                nextBillingDate: row.next_billing_date
-            };
-        }
-        
-        // Calculate usage percentage
-        const usagePercentage = (usage.totalSizeTB / usage.maxAllowedTB) * 100;
-        
-        res.json({
-            ...usage,
-            usagePercentage: Math.min(usagePercentage, 100),
-            isOverLimit: usage.totalSizeTB > usage.maxAllowedTB,
-            supportedFormats: ['.NEF', '.CR2', '.ARW', '.DNG', '.RAF', '.ORF', '.PEF', '.SRW', '.X3F', '.RW2']
-        });
-        
-    } catch (error) {
-        console.error('Error getting RAW storage usage:', error);
-        res.status(500).json({ error: 'Failed to get storage usage' });
-    }
-});
 
-// Memory-based multer for RAW files
-const rawFileUpload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { 
-        fileSize: 500 * 1024 * 1024, // 500MB limit per RAW file
-    },
-    fileFilter: (req, file, cb) => {
-        console.log(`RAW file filter: ${file.originalname} (${file.mimetype})`);
-        
-        // Check file extension for RAW formats
-        const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
-        const supportedExtensions = ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'];
-        
-        if (supportedExtensions.includes(ext)) {
-            cb(null, true);
-        } else {
-            cb(new Error(`Unsupported RAW format. Supported: ${supportedExtensions.join(', ')}`), false);
-        }
-    }
-});
 
-// Upload RAW files to session
-app.post('/api/raw-storage/upload/:sessionId', isAuthenticated, rawFileUpload.array('rawFiles', 50), async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        const sessionId = req.params.sessionId;
-        const files = req.files;
-        
-        if (!files || files.length === 0) {
-            return res.status(400).json({ error: 'No RAW files provided' });
-        }
-        
-        console.log(`Starting RAW upload: ${files.length} files for session ${sessionId}`);
-        
-        // Check if user has reached storage limit
-        const usageResult = await pool.query(`
-            SELECT total_size_tb, max_allowed_tb, storage_status 
-            FROM raw_storage_usage 
-            WHERE user_id = $1
-        `, [userId]);
-        
-        if (usageResult.rows.length > 0) {
-            const { total_size_tb, max_allowed_tb, storage_status } = usageResult.rows[0];
-            if (storage_status === 'suspended' || parseFloat(total_size_tb) > parseFloat(max_allowed_tb)) {
-                return res.status(403).json({ 
-                    error: 'Storage limit exceeded. Please upgrade your storage plan.',
-                    storageStatus: storage_status
-                });
-            }
-        }
-        
-        const uploadResults = [];
-        let totalUploadSize = 0;
-        
-        // Process each file
-        for (const file of files) {
-            try {
-                // Upload to R2
-                const uploadResult = await r2StorageService.uploadRawFile(
-                    file.buffer, 
-                    file.originalname, 
-                    userId, 
-                    sessionId
-                );
-                
-                if (uploadResult.success) {
-                    // Save file record to database
-                    const fileId = uuidv4();
-                    const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'));
-                    
-                    await pool.query(`
-                        INSERT INTO raw_files (id, session_id, user_id, filename, original_filename, 
-                                             file_extension, file_size_bytes, file_size_mb, r2_key, 
-                                             upload_status, upload_started_at, upload_completed_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                    `, [
-                        fileId, sessionId, userId, uploadResult.r2Key.split('/').pop(),
-                        file.originalname, fileExtension, uploadResult.fileSizeBytes.toString(),
-                        uploadResult.fileSizeMB, uploadResult.r2Key, 'completed',
-                        uploadResult.uploadedAt, uploadResult.uploadedAt
-                    ]);
-                    
-                    totalUploadSize += uploadResult.fileSizeMB;
-                    
-                    uploadResults.push({
-                        filename: file.originalname,
-                        fileId: fileId,
-                        sizeMB: uploadResult.fileSizeMB,
-                        status: 'success'
-                    });
-                    
-                    console.log(`RAW file uploaded successfully: ${file.originalname} (${uploadResult.fileSizeMB}MB)`);
-                }
-                
-            } catch (fileError) {
-                console.error(`Failed to upload ${file.originalname}:`, fileError);
-                uploadResults.push({
-                    filename: file.originalname,
-                    status: 'failed',
-                    error: fileError.message
-                });
-            }
-        }
-        
-        // Update user's storage usage
-        if (totalUploadSize > 0) {
-            await pool.query(`
-                UPDATE raw_storage_usage 
-                SET total_files = total_files + $1,
-                    total_size_bytes = (total_size_bytes::bigint + $2)::text,
-                    total_size_tb = total_size_tb + $3,
-                    current_monthly_charge = $4 * 20,
-                    updated_at = NOW()
-                WHERE user_id = $5
-            `, [
-                uploadResults.filter(r => r.status === 'success').length,
-                Math.round(totalUploadSize * 1024 * 1024), // Convert MB to bytes
-                totalUploadSize / (1024 * 1024), // Convert MB to TB
-                Math.ceil((totalUploadSize / (1024 * 1024)) + (usageResult.rows[0]?.total_size_tb || 0)),
-                userId
-            ]);
-        }
-        
-        res.json({
-            success: true,
-            uploadResults,
-            totalFiles: uploadResults.filter(r => r.status === 'success').length,
-            totalSizeMB: totalUploadSize,
-            failedFiles: uploadResults.filter(r => r.status === 'failed').length
-        });
-        
-    } catch (error) {
-        console.error('RAW upload error:', error);
-        res.status(500).json({ error: 'Failed to upload RAW files' });
-    }
-});
 
-// Get RAW files for a session
-app.get('/api/raw-storage/files/:sessionId', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        const sessionId = req.params.sessionId;
-        
-        const result = await pool.query(`
-            SELECT id, filename, original_filename, file_extension, file_size_bytes, 
-                   file_size_mb, upload_status, upload_completed_at, download_count,
-                   last_accessed_at, file_type
-            FROM raw_files 
-            WHERE session_id = $1 AND user_id = $2 
-            ORDER BY upload_date DESC
-        `, [sessionId, userId]);
-        
-        const files = result.rows.map(row => ({
-            id: row.id,
-            filename: row.filename,
-            originalFilename: row.original_filename,
-            fileExtension: row.file_extension,
-            fileSizeBytes: row.file_size_bytes,
-            fileSizeMB: parseFloat(row.file_size_mb),
-            uploadStatus: row.upload_status,
-            uploadedAt: row.upload_completed_at,
-            downloadCount: row.download_count,
-            lastAccessedAt: row.last_accessed_at
-        }));
-        
-        res.json({
-            sessionId,
-            files,
-            totalFiles: files.length,
-            totalSizeMB: files.reduce((sum, file) => sum + file.fileSizeMB, 0)
-        });
-        
-    } catch (error) {
-        console.error('Error getting RAW files:', error);
-        res.status(500).json({ error: 'Failed to get RAW files' });
-    }
-});
 
-// Download RAW file
-app.get('/api/raw-storage/download/:fileId', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        const fileId = req.params.fileId;
-        
-        // Get file info from database
-        const result = await pool.query(`
-            SELECT r2_key, original_filename, file_size_bytes 
-            FROM raw_files 
-            WHERE id = $1 AND user_id = $2
-        `, [fileId, userId]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'RAW file not found' });
-        }
-        
-        const { r2_key, original_filename, file_size_bytes } = result.rows[0];
-        
-        // Download from R2
-        const downloadResult = await r2StorageService.downloadRawFile(r2_key);
-        
-        if (downloadResult.success) {
-            // Update download count and last accessed
-            await pool.query(`
-                UPDATE raw_files 
-                SET download_count = download_count + 1, 
-                    last_accessed_at = NOW(),
-                    updated_at = NOW()
-                WHERE id = $1
-            `, [fileId]);
-            
-            // Set download headers
-            res.setHeader('Content-Type', downloadResult.contentType);
-            res.setHeader('Content-Length', downloadResult.contentLength);
-            res.setHeader('Content-Disposition', `attachment; filename="${original_filename}"`);
-            
-            // Stream the file data
-            res.send(downloadResult.data);
-            
-            console.log(`RAW file downloaded: ${original_filename} by user ${userId}`);
-        } else {
-            res.status(500).json({ error: 'Failed to download RAW file from storage' });
-        }
-        
-    } catch (error) {
-        console.error('RAW download error:', error);
-        res.status(500).json({ error: 'Failed to download RAW file' });
-    }
-});
 
-// Delete RAW file
-app.delete('/api/raw-storage/delete/:fileId', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        const fileId = req.params.fileId;
-        
-        // Get file info from database
-        const result = await pool.query(`
-            SELECT r2_key, file_size_mb 
-            FROM raw_files 
-            WHERE id = $1 AND user_id = $2
-        `, [fileId, userId]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'RAW file not found' });
-        }
-        
-        const { r2_key, file_size_mb } = result.rows[0];
-        const fileSizeMB = parseFloat(file_size_mb);
-        
-        // Delete from R2
-        const deleteSuccess = await r2StorageService.deleteRawFile(r2_key);
-        
-        if (deleteSuccess) {
-            // Delete from database
-            await pool.query('DELETE FROM raw_files WHERE id = $1', [fileId]);
-            
-            // Update user's storage usage
-            await pool.query(`
-                UPDATE raw_storage_usage 
-                SET total_files = total_files - 1,
-                    total_size_bytes = (total_size_bytes::bigint - $1)::text,
-                    total_size_tb = total_size_tb - $2,
-                    updated_at = NOW()
-                WHERE user_id = $3
-            `, [
-                Math.round(fileSizeMB * 1024 * 1024), // Convert MB to bytes
-                fileSizeMB / (1024 * 1024), // Convert MB to TB
-                userId
-            ]);
-            
-            // Recalculate monthly charge
-            const usageResult = await pool.query(`
-                SELECT total_size_tb FROM raw_storage_usage WHERE user_id = $1
-            `, [userId]);
-            
-            if (usageResult.rows.length > 0) {
-                const totalSizeTB = parseFloat(usageResult.rows[0].total_size_tb);
-                const monthlyCharge = r2StorageService.calculateMonthlyCost(totalSizeTB);
-                
-                await pool.query(`
-                    UPDATE raw_storage_usage 
-                    SET current_monthly_charge = $1
-                    WHERE user_id = $2
-                `, [monthlyCharge, userId]);
-            }
-            
-            res.json({ success: true, fileSizeMB });
-            console.log(`RAW file deleted: ${r2_key} (${fileSizeMB}MB)`);
-        } else {
-            res.status(500).json({ error: 'Failed to delete RAW file from storage' });
-        }
-        
-    } catch (error) {
-        console.error('RAW delete error:', error);
-        res.status(500).json({ error: 'Failed to delete RAW file' });
-    }
-});
-
-// Upgrade storage plan
-app.post('/api/raw-storage/upgrade', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user.uid;
-        const { tierTB } = req.body; // New storage tier (1, 2, 3, etc.)
-        
-        if (!tierTB || tierTB < 1 || tierTB > 100) {
-            return res.status(400).json({ error: 'Invalid storage tier' });
-        }
-        
-        const monthlyPrice = tierTB * 20; // $20 per TB
-        
-        // Create Stripe checkout session for storage upgrade
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `RAW Storage - ${tierTB}TB Plan`,
-                        description: `${tierTB}TB of secure RAW file storage for photography sessions`
-                    },
-                    unit_amount: monthlyPrice * 100, // Stripe uses cents
-                    recurring: {
-                        interval: 'month'
-                    }
-                },
-                quantity: 1,
-            }],
-            mode: 'subscription',
-            success_url: `${req.get('origin')}/raw-backup-dashboard.html?upgrade=success&tier=${tierTB}`,
-            cancel_url: `${req.get('origin')}/raw-backup-dashboard.html?upgrade=cancelled`,
-            client_reference_id: userId,
-            metadata: {
-                userId: userId,
-                storageType: 'raw_backup',
-                storageTierTB: tierTB.toString(),
-                monthlyCharge: monthlyPrice.toString()
-            }
-        });
-        
-        res.json({ 
-            checkoutUrl: session.url,
-            sessionId: session.id,
-            tierTB,
-            monthlyPrice
-        });
-        
-        console.log(`Storage upgrade checkout created for user ${userId}: ${tierTB}TB at $${monthlyPrice}/month`);
-        
-    } catch (error) {
-        console.error('Storage upgrade error:', error);
-        res.status(500).json({ error: 'Failed to create storage upgrade checkout' });
-    }
-});
 
 function generateIndexHtml(layoutHtml, selectedFont, isDarkTheme) {
     const fontLinks = {

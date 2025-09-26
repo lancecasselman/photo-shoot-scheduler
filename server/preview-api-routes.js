@@ -269,7 +269,6 @@ async function fetchOriginalFile(s3Client, bucketName, userId, sessionId, filena
         // Try different possible R2 key formats
         const possibleKeys = [
             `photographer-${userId}/session-${sessionId}/gallery/${filename}`,
-            `photographer-${userId}/session-${sessionId}/raw/${filename}`,
             `photographer-${userId}/session-${sessionId}/${filename}`
         ];
         

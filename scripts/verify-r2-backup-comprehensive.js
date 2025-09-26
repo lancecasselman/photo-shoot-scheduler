@@ -78,18 +78,15 @@ async function verifyR2Backup() {
         
         // Analyze backup status
         let galleryR2Count = 0;
-        let rawR2Count = 0;
         let totalR2Size = 0;
         
         r2Objects.forEach(obj => {
             if (obj.Key.includes('/gallery/')) galleryR2Count++;
-            if (obj.Key.includes('/raw/')) rawR2Count++;
             totalR2Size += obj.Size;
         });
         
         console.log(`\n R2 Storage Analysis:`);
         console.log(`   Gallery files in R2: ${galleryR2Count}`);
-        console.log(`   Raw files in R2: ${rawR2Count}`);
         console.log(`   Total R2 size: ${Math.round(totalR2Size/1024/1024)}MB`);
         
         // Check for orphaned files in R2 (files in R2 but not in database)
@@ -113,15 +110,13 @@ async function verifyR2Backup() {
         if (missingR2Keys.length > 0) {
             console.log(`\n❌ Files missing R2 backup keys:`);
             
-            const rawMissing = missingR2Keys.filter(f => f.folder_type === 'raw');
             const galleryMissing = missingR2Keys.filter(f => f.folder_type === 'gallery');
             
-            console.log(`   Raw files missing backup: ${rawMissing.length}`);
             console.log(`   Gallery files missing backup: ${galleryMissing.length}`);
             
-            rawMissing.forEach(file => {
+            galleryMissing.forEach(file => {
                 const sizeMB = Math.round(file.file_size_bytes / 1024 / 1024);
-                console.log(`   📁 RAW: ${file.filename} (${sizeMB}MB) - ${file.client_name || 'Unknown'}`);
+                console.log(`   📁 GALLERY: ${file.filename} (${sizeMB}MB) - ${file.client_name || 'Unknown'}`);
             });
         }
         
