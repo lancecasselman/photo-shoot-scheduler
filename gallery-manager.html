@@ -1289,9 +1289,6 @@
                 <button class="quick-btn" onclick="downloadControls.quickPreset(25)" title="$25 per download">
                     $25
                 </button>
-                <button class="quick-btn preview" onclick="downloadControls.previewAsClient()">
-                    <span>👁️</span> Preview as Client
-                </button>
             </div>
         </div>
 
@@ -2072,11 +2069,6 @@
                     console.error('Error copying from session:', error);
                     showMessage('Failed to copy settings from other session', 'error');
                 }
-            }
-
-            previewAsClient() {
-                const galleryUrl = `/gallery.html?session=${this.sessionId}`;
-                window.open(galleryUrl, '_blank');
             }
 
             async loadAnalytics() {
