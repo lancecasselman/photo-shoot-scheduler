@@ -260,8 +260,8 @@ class UnifiedFileDeletion {
                 console.log(`📝 Community posts cleanup (table may not exist): ${communityError.message}`);
             }
 
-            // Step 8: Update session photos array to remove this photo (critical for consistency)
-            console.log(`📋 Updating session photos array to remove: ${filename}`);
+            // Step 8: Update session photos array using robust synchronization
+            console.log(`📋 Synchronizing session photos array with actual files for session: ${sessionId}`);
             
             // Get current photos array
             const sessionQuery = await client.query(`
@@ -270,36 +270,78 @@ class UnifiedFileDeletion {
             `, [sessionId, userId]);
             
             if (sessionQuery.rows.length > 0) {
+                // Get all CURRENT files in session_files to rebuild photos array
+                const currentFilesQuery = await client.query(`
+                    SELECT filename, r2_key, file_size_bytes, uploaded_at, original_name, folder_type
+                    FROM session_files 
+                    WHERE session_id = $1 AND folder_type = 'gallery'
+                    ORDER BY uploaded_at ASC
+                `, [sessionId]);
+                
+                const currentFiles = currentFilesQuery.rows;
                 let photosArray = sessionQuery.rows[0].photos || [];
                 const originalLength = photosArray.length;
                 
-                // Remove the photo from the array (match by filename, url, or r2Key)
-                photosArray = photosArray.filter(photo => {
+                console.log(`📊 Current photos array has ${originalLength} photos, session_files has ${currentFiles.length} gallery files`);
+                
+                // ROBUST APPROACH: Rebuild photos array from session_files (source of truth)
+                const validPhotosSet = new Set(currentFiles.map(f => f.filename));
+                const validR2KeysSet = new Set(currentFiles.map(f => f.r2_key));
+                
+                // Filter photos array to only include photos that exist in session_files
+                const syncedPhotosArray = photosArray.filter(photo => {
                     if (typeof photo === 'string') {
-                        return !photo.includes(filename);
+                        // Handle string format (legacy)
+                        const filenameFromString = photo.split('/').pop();
+                        return validPhotosSet.has(filenameFromString);
                     } else if (typeof photo === 'object' && photo !== null) {
-                        return !(photo.filename === filename || 
-                               photo.originalName === filename ||
-                               (photo.url && photo.url.includes(filename)) ||
-                               (photo.r2Key && photo.r2Key.includes(filename)));
+                        // Handle object format (current)
+                        return validPhotosSet.has(photo.filename) || 
+                               validR2KeysSet.has(photo.r2Key);
                     }
-                    return true;
+                    return false;
                 });
                 
-                // Update the session if photos were removed
-                if (photosArray.length !== originalLength) {
-                    await client.query(`
-                        UPDATE photography_sessions 
-                        SET photos = $1, updated_at = NOW()
-                        WHERE id = $2 AND user_id = $3
-                    `, [JSON.stringify(photosArray), sessionId, userId]);
-                    
-                    const removedCount = originalLength - photosArray.length;
-                    deletionLog.push(`✓ Removed ${removedCount} photo reference(s) from session photos array`);
-                    console.log(`📋 Updated session photos array: removed ${removedCount} reference(s)`);
-                } else {
-                    deletionLog.push(`📋 No photo references found in session photos array`);
-                }
+                // Add any gallery files from session_files that aren't in photos array
+                const existingFilenames = new Set();
+                syncedPhotosArray.forEach(photo => {
+                    if (typeof photo === 'object' && photo.filename) {
+                        existingFilenames.add(photo.filename);
+                    } else if (typeof photo === 'string') {
+                        const filename = photo.split('/').pop();
+                        existingFilenames.add(filename);
+                    }
+                });
+                
+                // Add missing files from session_files to photos array
+                currentFiles.forEach(file => {
+                    if (!existingFilenames.has(file.filename)) {
+                        console.log(`📝 Adding missing file to photos array: ${file.filename}`);
+                        syncedPhotosArray.push({
+                            filename: file.filename,
+                            originalName: file.original_name || file.filename,
+                            url: `/r2/file/${userId}/session-${sessionId}/gallery/${file.filename}`,
+                            r2Key: file.r2_key,
+                            size: file.file_size_bytes || 0,
+                            uploadedAt: file.uploaded_at || new Date().toISOString()
+                        });
+                    }
+                });
+                
+                // Update the session with synchronized photos array
+                await client.query(`
+                    UPDATE photography_sessions 
+                    SET photos = $1, updated_at = NOW()
+                    WHERE id = $2 AND user_id = $3
+                `, [JSON.stringify(syncedPhotosArray), sessionId, userId]);
+                
+                const removedCount = originalLength - syncedPhotosArray.length;
+                const addedCount = syncedPhotosArray.length - (originalLength - removedCount);
+                
+                deletionLog.push(`✓ Synchronized photos array: ${syncedPhotosArray.length} photos (removed ${removedCount}, added ${addedCount})`);
+                console.log(`📋 Photos array synchronized: ${originalLength} → ${syncedPhotosArray.length} photos`);
+                console.log(`📊 Sync details: removed ${removedCount} orphaned photos, added ${addedCount} missing photos`);
+                
             } else {
                 // Session not found is a critical error for data consistency
                 throw new Error(`Session not found for photos array update: ${sessionId}`);
@@ -424,6 +466,120 @@ class UnifiedFileDeletion {
             };
         } finally {
             // Always release the database connection
+            client.release();
+        }
+    }
+
+    /**
+     * Synchronize photos array with session_files (standalone method)
+     * This ensures the photos array only contains photos that actually exist
+     */
+    async synchronizePhotosArray(userId, sessionId) {
+        console.log(`🔄 Starting photos array synchronization for session: ${sessionId}`);
+        
+        const client = await this.pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+            
+            // Get current photos array
+            const sessionQuery = await client.query(`
+                SELECT photos FROM photography_sessions 
+                WHERE id = $1 AND user_id = $2
+            `, [sessionId, userId]);
+            
+            if (sessionQuery.rows.length === 0) {
+                throw new Error(`Session not found: ${sessionId}`);
+            }
+            
+            // Get all CURRENT gallery files in session_files
+            const currentFilesQuery = await client.query(`
+                SELECT filename, r2_key, file_size_bytes, uploaded_at, original_name, folder_type
+                FROM session_files 
+                WHERE session_id = $1 AND folder_type = 'gallery'
+                ORDER BY uploaded_at ASC
+            `, [sessionId]);
+            
+            const currentFiles = currentFilesQuery.rows;
+            let photosArray = sessionQuery.rows[0].photos || [];
+            const originalLength = photosArray.length;
+            
+            console.log(`📊 Photos array: ${originalLength} photos | Session files: ${currentFiles.length} gallery files`);
+            
+            // Create sets for efficient lookup
+            const validPhotosSet = new Set(currentFiles.map(f => f.filename));
+            const validR2KeysSet = new Set(currentFiles.map(f => f.r2_key));
+            
+            // Filter photos array to only include photos that exist in session_files
+            const syncedPhotosArray = photosArray.filter(photo => {
+                if (typeof photo === 'string') {
+                    const filenameFromString = photo.split('/').pop();
+                    return validPhotosSet.has(filenameFromString);
+                } else if (typeof photo === 'object' && photo !== null) {
+                    return validPhotosSet.has(photo.filename) || 
+                           validR2KeysSet.has(photo.r2Key);
+                }
+                return false;
+            });
+            
+            // Add any gallery files from session_files that aren't in photos array
+            const existingFilenames = new Set();
+            syncedPhotosArray.forEach(photo => {
+                if (typeof photo === 'object' && photo.filename) {
+                    existingFilenames.add(photo.filename);
+                } else if (typeof photo === 'string') {
+                    const filename = photo.split('/').pop();
+                    existingFilenames.add(filename);
+                }
+            });
+            
+            // Add missing files
+            currentFiles.forEach(file => {
+                if (!existingFilenames.has(file.filename)) {
+                    console.log(`➕ Adding missing file to photos array: ${file.filename}`);
+                    syncedPhotosArray.push({
+                        filename: file.filename,
+                        originalName: file.original_name || file.filename,
+                        url: `/r2/file/${userId}/session-${sessionId}/gallery/${file.filename}`,
+                        r2Key: file.r2_key,
+                        size: file.file_size_bytes || 0,
+                        uploadedAt: file.uploaded_at || new Date().toISOString()
+                    });
+                }
+            });
+            
+            // Update the session
+            await client.query(`
+                UPDATE photography_sessions 
+                SET photos = $1, updated_at = NOW()
+                WHERE id = $2 AND user_id = $3
+            `, [JSON.stringify(syncedPhotosArray), sessionId, userId]);
+            
+            await client.query('COMMIT');
+            
+            const removedCount = originalLength - syncedPhotosArray.length + (syncedPhotosArray.length - currentFiles.length);
+            const addedCount = currentFiles.length - (originalLength - removedCount);
+            
+            console.log(`✅ Photos array synchronized: ${originalLength} → ${syncedPhotosArray.length} photos`);
+            console.log(`📊 Removed ${Math.max(0, originalLength - syncedPhotosArray.length)} orphaned photos, added ${Math.max(0, syncedPhotosArray.length - (originalLength - Math.max(0, originalLength - syncedPhotosArray.length)))} missing photos`);
+            
+            return {
+                success: true,
+                originalCount: originalLength,
+                syncedCount: syncedPhotosArray.length,
+                filesInDatabase: currentFiles.length,
+                message: `Synchronized photos array: ${originalLength} → ${syncedPhotosArray.length} photos`
+            };
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error(`❌ Photos array synchronization failed: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                message: `Failed to synchronize photos array: ${error.message}`
+            };
+        } finally {
             client.release();
         }
     }
