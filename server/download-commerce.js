@@ -41,6 +41,13 @@ class DownloadCommerceManager {
         this.stripe = stripe;
         this.stripeEnabled = !!process.env.STRIPE_SECRET_KEY;
         
+        // Admin emails that use regular Stripe instead of Stripe Connect
+        this.adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com', 
+            'lance@thelegacyphotography.com'
+        ];
+        
         if (!this.stripeEnabled) {
             console.warn('⚠️ DOWNLOAD COMMERCE: Stripe not configured - payment features disabled');
         }
@@ -196,6 +203,61 @@ class DownloadCommerceManager {
     }
     
     // Validate pricing mode and data consistency
+    /**
+     * Check if a user email is an admin account
+     */
+    isAdminAccount(email) {
+        if (!email) return false;
+        return this.adminEmails.includes(email.toLowerCase());
+    }
+    
+    /**
+     * Get photographer details and determine if they are an admin
+     */
+    async getPhotographerInfo(sessionId) {
+        try {
+            const session = await this.db.select()
+                .from(photographySessions)
+                .where(eq(photographySessions.id, sessionId))
+                .limit(1);
+            
+            if (session.length === 0) {
+                return {
+                    success: false,
+                    error: 'Session not found'
+                };
+            }
+            
+            const photographer = await this.db.select()
+                .from(users)
+                .where(eq(users.id, session[0].userId))
+                .limit(1);
+            
+            if (photographer.length === 0) {
+                return {
+                    success: false,
+                    error: 'Photographer not found'
+                };
+            }
+            
+            const isAdmin = this.isAdminAccount(photographer[0].email);
+            
+            return {
+                success: true,
+                photographer: photographer[0],
+                isAdmin: isAdmin,
+                session: session[0]
+            };
+            
+        } catch (error) {
+            console.error('❌ Error getting photographer info:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
     validatePricingMode(mode, data) {
         const validModes = ['free', 'fixed', 'freemium', 'per_photo', 'bulk'];
         
@@ -635,6 +697,8 @@ class DownloadCommerceManager {
                 return connectValidation;
             }
             
+            const isAdminAccount = connectValidation.isAdmin || false;
+            
             // Get policy and calculate total for paid items only
             const policyResult = await this.getPolicyForSession(sessionId);
             if (!policyResult.success) {
@@ -707,14 +771,15 @@ class DownloadCommerceManager {
                 currency: policy.currency || 'USD',
                 mode: policy.mode,
                 items: paidItems, // Only paid items in the order
-                stripeConnectAccountId: photographer[0].stripeConnectAccountId,
-                platformFeeAmount: (platformFee / 100).toFixed(2),
+                stripeConnectAccountId: isAdminAccount ? null : photographer[0].stripeConnectAccountId,
+                platformFeeAmount: isAdminAccount ? 0 : (platformFee / 100).toFixed(2), // No platform fee for admin accounts
                 status: 'pending',
+                isAdminAccount: isAdminAccount,
                 createdAt: new Date()
             });
             
             // Create Stripe Checkout Session
-            const checkoutSession = await this.stripe.checkout.sessions.create({
+            let checkoutSessionConfig = {
                 payment_method_types: ['card'],
                 line_items: lineItems,
                 mode: mode,
@@ -728,10 +793,27 @@ class DownloadCommerceManager {
                     freeItemsGranted: freeItems.length, // Track free items granted
                     totalItemsRequested: items.length, // Total items in original request
                     photographerId: photographer[0].id,
-                    type: 'download_purchase'
+                    type: 'download_purchase',
+                    isAdminAccount: isAdminAccount
                 },
-                // Stripe Connect configuration
-                payment_intent_data: {
+                expires_at: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
+            };
+
+            if (isAdminAccount) {
+                // Regular Stripe checkout for admin accounts - payment goes to platform account
+                console.log(`💳 ADMIN ACCOUNT: Creating regular Stripe checkout for ${photographer[0].email}`);
+                checkoutSessionConfig.payment_intent_data = {
+                    metadata: {
+                        orderId: orderId,
+                        sessionId: sessionId,
+                        type: 'download_purchase',
+                        isAdminAccount: true
+                    }
+                };
+            } else {
+                // Stripe Connect configuration for regular photographers
+                console.log(`💳 PHOTOGRAPHER ACCOUNT: Creating Stripe Connect checkout for ${photographer[0].email}`);
+                checkoutSessionConfig.payment_intent_data = {
                     application_fee_amount: platformFee,
                     on_behalf_of: photographer[0].stripeConnectAccountId,
                     transfer_data: {
@@ -740,11 +822,13 @@ class DownloadCommerceManager {
                     metadata: {
                         orderId: orderId,
                         sessionId: sessionId,
-                        type: 'download_purchase'
+                        type: 'download_purchase',
+                        isAdminAccount: false
                     }
-                },
-                expires_at: Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
-            });
+                };
+            }
+
+            const checkoutSession = await this.stripe.checkout.sessions.create(checkoutSessionConfig);
             
             // Update order with Stripe session ID
             await this.db.update(downloadOrders)
@@ -1595,52 +1679,48 @@ class DownloadCommerceManager {
         }
     }
     
-    // Validate photographer's Connect account
+    // Validate photographer's Connect account (skip for admin accounts)
     async validatePhotographer(sessionId) {
         try {
-            const session = await this.db.select()
-                .from(photographySessions)
-                .where(eq(photographySessions.id, sessionId))
-                .limit(1);
+            // Get photographer info and check if admin
+            const photographerInfo = await this.getPhotographerInfo(sessionId);
+            if (!photographerInfo.success) {
+                return photographerInfo;
+            }
             
-            if (session.length === 0) {
+            const { photographer, isAdmin } = photographerInfo;
+            
+            // Skip Stripe Connect validation for admin accounts
+            if (isAdmin) {
+                console.log(`🔧 ADMIN ACCOUNT: Skipping Stripe Connect validation for ${photographer.email}`);
                 return {
-                    success: false,
-                    error: 'Session not found'
+                    success: true,
+                    photographerId: photographer.id,
+                    stripeAccountId: null, // Admin accounts use platform Stripe, not Connect
+                    isAdmin: true
                 };
             }
             
-            const photographer = await this.db.select()
-                .from(users)
-                .where(eq(users.id, session[0].userId))
-                .limit(1);
-            
-            if (photographer.length === 0) {
-                return {
-                    success: false,
-                    error: 'Photographer not found'
-                };
-            }
-            
-            if (!photographer[0].stripeConnectAccountId) {
+            // Regular Stripe Connect validation for non-admin photographers
+            if (!photographer.stripeConnectAccountId) {
                 return {
                     success: false,
                     error: 'Photographer has not set up payment processing'
                 };
             }
             
-            if (!photographer[0].stripeOnboardingComplete) {
+            if (!photographer.stripeOnboardingComplete) {
                 return {
                     success: false,
                     error: 'Photographer payment setup is incomplete'
                 };
             }
             
-            // Optionally check with Stripe API for current status
+            // Check with Stripe API for current status
             if (this.stripeEnabled) {
                 try {
                     const account = await this.stripe.accounts.retrieve(
-                        photographer[0].stripeConnectAccountId
+                        photographer.stripeConnectAccountId
                     );
                     
                     if (!account.charges_enabled || !account.payouts_enabled) {
@@ -1657,8 +1737,9 @@ class DownloadCommerceManager {
             
             return {
                 success: true,
-                photographerId: photographer[0].id,
-                stripeAccountId: photographer[0].stripeConnectAccountId
+                photographerId: photographer.id,
+                stripeAccountId: photographer.stripeConnectAccountId,
+                isAdmin: false
             };
             
         } catch (error) {

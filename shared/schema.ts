@@ -515,6 +515,7 @@ export const downloadOrders = pgTable("download_orders", {
   stripePaymentIntentId: varchar("stripe_payment_intent_id").unique(),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   platformFeeAmount: decimal("platform_fee_amount", { precision: 10, scale: 2 }),
+  isAdminAccount: boolean("is_admin_account").default(false), // Whether this order is from an admin account
   status: varchar("status").notNull().default("pending").$type<'pending' | 'processing' | 'completed' | 'failed' | 'refunded'>(),
   receiptUrl: varchar("receipt_url"),
   createdAt: timestamp("created_at").defaultNow(),
