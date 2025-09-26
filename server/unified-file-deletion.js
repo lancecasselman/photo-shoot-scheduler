@@ -24,9 +24,13 @@ class UnifiedFileDeletion {
         
         console.log(`🗑️ Starting COMPLETE deletion: ${filename} from session ${sessionId}`);
         
+        // Start transaction for data consistency
+        const client = await this.pool.connect();
+        
         try {
-            // Step 1: Verify user ownership and get file details
-            const fileQuery = await this.pool.query(`
+            await client.query('BEGIN');
+            // Step 1: Verify user ownership and get file details (within transaction)
+            const fileQuery = await client.query(`
                 SELECT sf.*, sf.file_size_bytes, sf.file_size_mb, sf.folder_type
                 FROM session_files sf
                 WHERE sf.session_id = $1 AND sf.filename = $2
@@ -57,31 +61,24 @@ class UnifiedFileDeletion {
             deletionLog.push(`✓ Verified ownership and access for ${filename} (${fileSizeMB}MB)`);
             console.log(` File details: ${filename} - ${fileSizeMB}MB - Type: ${folderType}`);
 
-            // Step 2: Delete from Cloud Storage (R2) - Use direct R2 key deletion
-            try {
-                console.log(`☁️ Attempting to delete from R2: ${filename} from session ${sessionId}`);
-                
-                // Use the R2 key from database record for direct deletion
-                const r2Key = fileRecord.r2_key;
-                if (r2Key) {
-                    console.log(`🔑 Deleting using stored R2 key: ${r2Key}`);
-                    const r2Result = await this.r2Manager.deleteFileByKey(r2Key);
-                    
-                    if (r2Result && r2Result.success) {
-                        deletionLog.push(`✓ Deleted from cloud storage using key: ${r2Key}`);
-                        console.log(`☁️ Successfully deleted from R2: ${filename}`);
-                    } else {
-                        throw new Error('R2 deletion by key failed');
-                    }
-                } else {
-                    throw new Error('No R2 key found in database record');
-                }
-                
-            } catch (cloudError) {
-                console.warn(` Cloud deletion failed (continuing with database cleanup): ${cloudError.message}`);
-                errors.push(`Cloud storage: ${cloudError.message}`);
-                deletionLog.push(` Cloud deletion failed: ${cloudError.message}`);
+            // Step 2: Delete from Cloud Storage (R2) - HARD GATE: Must succeed before proceeding
+            console.log(`☁️ Attempting to delete from R2: ${filename} from session ${sessionId}`);
+            
+            // Use the R2 key from database record for direct deletion
+            const r2Key = fileRecord.r2_key;
+            if (!r2Key) {
+                throw new Error(`No R2 key found in database record - cannot proceed with deletion`);
             }
+
+            console.log(`🔑 Deleting using stored R2 key: ${r2Key}`);
+            const r2Result = await this.r2Manager.deleteFileByKey(r2Key);
+            
+            if (!r2Result || !r2Result.success) {
+                throw new Error(`R2 deletion failed: ${r2Result?.error || 'Unknown R2 error'} - ABORTING to prevent orphaned metadata`);
+            }
+
+            deletionLog.push(`✓ Deleted from cloud storage using key: ${r2Key}`);
+            console.log(`☁️ Successfully deleted from R2: ${filename} - proceeding with cleanup`);
 
             // Step 3: Delete all thumbnails, previews, and cached versions
             console.log(`🖼️ Starting comprehensive thumbnail cleanup for: ${filename}`);
@@ -130,8 +127,8 @@ class UnifiedFileDeletion {
                 errors.push(`Thumbnail cleanup: ${thumbError.message}`);
             }
 
-            // Step 4: Remove from database - session_files table
-            const deleteDbResult = await this.pool.query(`
+            // Step 4: Remove from database - session_files table (within transaction)
+            const deleteDbResult = await client.query(`
                 DELETE FROM session_files 
                 WHERE session_id = $1 AND filename = $2
             `, [sessionId, filename]);
@@ -143,181 +140,169 @@ class UnifiedFileDeletion {
                 console.warn(` No database record found to delete for: ${filename}`);
             }
 
-            // Step 5: Update storage tracking tables
-            try {
-                // Update gallery_storage_tracking if it's a gallery file
-                if (folderType === 'gallery') {
-                    await this.pool.query(`
-                        UPDATE gallery_storage_tracking 
-                        SET total_size_bytes = total_size_bytes - $1,
-                            file_count = file_count - 1,
-                            last_updated = NOW()
-                        WHERE session_id = $2 AND user_id = $3
-                    `, [fileSizeBytes, sessionId, userId]);
-                    deletionLog.push(`✓ Updated gallery storage tracking (-${fileSizeMB}MB)`);
-                }
-
-                // Update raw_storage_usage if it's a raw file
-                if (folderType === 'raw') {
-                    await this.pool.query(`
-                        UPDATE raw_storage_usage 
-                        SET total_size_bytes = total_size_bytes - $1,
-                            file_count = file_count - 1,
-                            last_updated = NOW()
-                        WHERE session_id = $2 AND user_id = $3
-                    `, [fileSizeBytes, sessionId, userId]);
-                    deletionLog.push(`✓ Updated raw storage tracking (-${fileSizeMB}MB)`);
-                }
-            } catch (trackingError) {
-                console.warn(` Storage tracking update failed: ${trackingError.message}`);
-                errors.push(`Storage tracking: ${trackingError.message}`);
+            // Step 5: Update storage tracking tables (within transaction)
+            // Update gallery_storage_tracking if it's a gallery file
+            if (folderType === 'gallery') {
+                await client.query(`
+                    UPDATE gallery_storage_tracking 
+                    SET total_size_bytes = total_size_bytes - $1,
+                        file_count = file_count - 1,
+                        last_updated = NOW()
+                    WHERE session_id = $2 AND user_id = $3
+                `, [fileSizeBytes, sessionId, userId]);
+                deletionLog.push(`✓ Updated gallery storage tracking (-${fileSizeMB}MB)`);
             }
 
-            // Step 6: Clean up ALL download-related data
+            // Update raw_storage_usage if it's a raw file
+            if (folderType === 'raw') {
+                await client.query(`
+                    UPDATE raw_storage_usage 
+                    SET total_size_bytes = total_size_bytes - $1,
+                        file_count = file_count - 1,
+                        last_updated = NOW()
+                    WHERE session_id = $2 AND user_id = $3
+                `, [fileSizeBytes, sessionId, userId]);
+                deletionLog.push(`✓ Updated raw storage tracking (-${fileSizeMB}MB)`);
+            }
+
+            // Step 6: Clean up ALL download-related data (critical - must not fail silently)
             console.log(`🔄 Starting comprehensive download cleanup for: ${filename}`);
             
-            try {
-                // 6a. Clean up download_entitlements (client download allowances)
-                const entitlementsResult = await this.pool.query(`
-                    DELETE FROM download_entitlements 
-                    WHERE session_id = $1 AND (photo_id = $2 OR photo_id LIKE $3)
-                `, [sessionId, filename, `%${filename}%`]);
-                if (entitlementsResult.rowCount > 0) {
-                    deletionLog.push(`✓ Removed ${entitlementsResult.rowCount} download entitlement(s)`);
-                    console.log(`🗑️ Cleaned ${entitlementsResult.rowCount} download entitlements`);
-                }
-                
-                // 6b. Clean up download_history (all download attempt logs)
-                const historyResult = await this.pool.query(`
-                    DELETE FROM download_history 
-                    WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
-                `, [sessionId, filename]);
-                if (historyResult.rowCount > 0) {
-                    deletionLog.push(`✓ Removed ${historyResult.rowCount} download history record(s)`);
-                    console.log(`🗑️ Cleaned ${historyResult.rowCount} download history records`);
-                }
-                
-                // 6c. Clean up unused download_tokens for this photo
-                const tokensResult = await this.pool.query(`
-                    DELETE FROM download_tokens 
-                    WHERE session_id = $1 AND (filename = $2 OR photo_id = $2)
-                `, [sessionId, filename]);
-                if (tokensResult.rowCount > 0) {
-                    deletionLog.push(`✓ Removed ${tokensResult.rowCount} download token(s)`);
-                    console.log(`🗑️ Cleaned ${tokensResult.rowCount} download tokens`);
-                }
-                
-                // 6d. Clean up gallery_downloads (download usage records)
-                const galleryDownloadsResult = await this.pool.query(`
-                    DELETE FROM gallery_downloads 
-                    WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
-                `, [sessionId, filename]);
-                if (galleryDownloadsResult.rowCount > 0) {
-                    deletionLog.push(`✓ Removed ${galleryDownloadsResult.rowCount} gallery download record(s)`);
-                    console.log(`🗑️ Cleaned ${galleryDownloadsResult.rowCount} gallery download records`);
-                }
-                
-                // 6e. Clean up digital_transactions (payment records)
-                const transactionsResult = await this.pool.query(`
-                    DELETE FROM digital_transactions 
-                    WHERE session_id = $1 AND photo_id = $2
-                `, [sessionId, filename]);
-                if (transactionsResult.rowCount > 0) {
-                    deletionLog.push(`✓ Removed ${transactionsResult.rowCount} digital transaction(s)`);
-                    console.log(`🗑️ Cleaned ${transactionsResult.rowCount} digital transactions`);
-                }
-                
-                // 6f. Clean up r2_files table if it exists
-                try {
-                    const r2FilesResult = await this.pool.query(`
-                        DELETE FROM r2_files 
-                        WHERE session_id = $1 AND (filename = $2 OR original_filename = $2)
-                    `, [sessionId, filename]);
-                    if (r2FilesResult.rowCount > 0) {
-                        deletionLog.push(`✓ Removed ${r2FilesResult.rowCount} R2 file record(s)`);
-                        console.log(`🗑️ Cleaned ${r2FilesResult.rowCount} R2 file records`);
-                    }
-                } catch (r2Error) {
-                    console.log(`📝 R2 files table cleanup (may not exist): ${r2Error.message}`);
-                }
-                
-                deletionLog.push(`✓ Completed comprehensive download cleanup`);
-                
-            } catch (downloadCleanupError) {
-                console.warn(`⚠️ Download cleanup partially failed: ${downloadCleanupError.message}`);
-                errors.push(`Download cleanup: ${downloadCleanupError.message}`);
-                deletionLog.push(`⚠️ Download cleanup partially failed: ${downloadCleanupError.message}`);
+            // 6a. Clean up download_entitlements (client download allowances)
+            const entitlementsResult = await client.query(`
+                DELETE FROM download_entitlements 
+                WHERE session_id = $1 AND (photo_id = $2 OR photo_id LIKE $3)
+            `, [sessionId, filename, `%${filename}%`]);
+            if (entitlementsResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${entitlementsResult.rowCount} download entitlement(s)`);
+                console.log(`🗑️ Cleaned ${entitlementsResult.rowCount} download entitlements`);
             }
             
-            // Step 7: Clean up photo metadata and associations
+            // 6b. Clean up download_history (all download attempt logs)
+            const historyResult = await client.query(`
+                DELETE FROM download_history 
+                WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
+            `, [sessionId, filename]);
+            if (historyResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${historyResult.rowCount} download history record(s)`);
+                console.log(`🗑️ Cleaned ${historyResult.rowCount} download history records`);
+            }
+            
+            // 6c. Clean up unused download_tokens for this photo
+            const tokensResult = await client.query(`
+                DELETE FROM download_tokens 
+                WHERE session_id = $1 AND (filename = $2 OR photo_id = $2)
+            `, [sessionId, filename]);
+            if (tokensResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${tokensResult.rowCount} download token(s)`);
+                console.log(`🗑️ Cleaned ${tokensResult.rowCount} download tokens`);
+            }
+            
+            // 6d. Clean up gallery_downloads (download usage records)
+            const galleryDownloadsResult = await client.query(`
+                DELETE FROM gallery_downloads 
+                WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
+            `, [sessionId, filename]);
+            if (galleryDownloadsResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${galleryDownloadsResult.rowCount} gallery download record(s)`);
+                console.log(`🗑️ Cleaned ${galleryDownloadsResult.rowCount} gallery download records`);
+            }
+            
+            // 6e. Clean up digital_transactions (payment records)
+            const transactionsResult = await client.query(`
+                DELETE FROM digital_transactions 
+                WHERE session_id = $1 AND photo_id = $2
+            `, [sessionId, filename]);
+            if (transactionsResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${transactionsResult.rowCount} digital transaction(s)`);
+                console.log(`🗑️ Cleaned ${transactionsResult.rowCount} digital transactions`);
+            }
+            
+            // 6f. Clean up r2_files table if it exists (allow this one to fail silently)
+            try {
+                const r2FilesResult = await client.query(`
+                    DELETE FROM r2_files 
+                    WHERE session_id = $1 AND (filename = $2 OR original_filename = $2)
+                `, [sessionId, filename]);
+                if (r2FilesResult.rowCount > 0) {
+                    deletionLog.push(`✓ Removed ${r2FilesResult.rowCount} R2 file record(s)`);
+                    console.log(`🗑️ Cleaned ${r2FilesResult.rowCount} R2 file records`);
+                }
+            } catch (r2Error) {
+                // This table may not exist in all installations - log but don't fail
+                console.log(`📝 R2 files table cleanup (may not exist): ${r2Error.message}`);
+            }
+            
+            deletionLog.push(`✓ Completed comprehensive download cleanup`);
+            
+            // Step 7: Clean up photo metadata and associations (allow missing tables)
             try {
                 // Remove from any website builder galleries (if applicable)
-                await this.pool.query(`
+                await client.query(`
                     DELETE FROM website_gallery_photos 
                     WHERE session_id = $1 AND filename = $2
                 `, [sessionId, filename]);
                 deletionLog.push(`✓ Cleaned website gallery associations`);
+            } catch (websiteError) {
+                // Table may not exist - log but continue
+                console.log(`📝 Website gallery cleanup (table may not exist): ${websiteError.message}`);
+            }
 
+            try {
                 // Remove from community posts if shared (if applicable)
-                await this.pool.query(`
+                await client.query(`
                     DELETE FROM community_photos 
                     WHERE session_id = $1 AND filename = $2
                 `, [sessionId, filename]);
                 deletionLog.push(`✓ Cleaned community post associations`);
-
-            } catch (metadataError) {
-                // These tables may not exist, continue
-                console.log(` Metadata cleanup (tables may not exist): ${metadataError.message}`);
+            } catch (communityError) {
+                // Table may not exist - log but continue
+                console.log(`📝 Community posts cleanup (table may not exist): ${communityError.message}`);
             }
 
-            // Step 8: Update session photos array to remove this photo
-            try {
-                console.log(`📋 Updating session photos array to remove: ${filename}`);
+            // Step 8: Update session photos array to remove this photo (critical for consistency)
+            console.log(`📋 Updating session photos array to remove: ${filename}`);
+            
+            // Get current photos array
+            const sessionQuery = await client.query(`
+                SELECT photos FROM photography_sessions 
+                WHERE id = $1 AND user_id = $2
+            `, [sessionId, userId]);
+            
+            if (sessionQuery.rows.length > 0) {
+                let photosArray = sessionQuery.rows[0].photos || [];
+                const originalLength = photosArray.length;
                 
-                // Get current photos array
-                const sessionQuery = await this.pool.query(`
-                    SELECT photos FROM photography_sessions 
-                    WHERE id = $1 AND user_id = $2
-                `, [sessionId, userId]);
-                
-                if (sessionQuery.rows.length > 0) {
-                    let photosArray = sessionQuery.rows[0].photos || [];
-                    const originalLength = photosArray.length;
-                    
-                    // Remove the photo from the array (match by filename, url, or r2Key)
-                    photosArray = photosArray.filter(photo => {
-                        if (typeof photo === 'string') {
-                            return !photo.includes(filename);
-                        } else if (typeof photo === 'object' && photo !== null) {
-                            return !(photo.filename === filename || 
-                                   photo.originalName === filename ||
-                                   (photo.url && photo.url.includes(filename)) ||
-                                   (photo.r2Key && photo.r2Key.includes(filename)));
-                        }
-                        return true;
-                    });
-                    
-                    // Update the session if photos were removed
-                    if (photosArray.length !== originalLength) {
-                        await this.pool.query(`
-                            UPDATE photography_sessions 
-                            SET photos = $1, updated_at = NOW()
-                            WHERE id = $2 AND user_id = $3
-                        `, [JSON.stringify(photosArray), sessionId, userId]);
-                        
-                        const removedCount = originalLength - photosArray.length;
-                        deletionLog.push(`✓ Removed ${removedCount} photo reference(s) from session photos array`);
-                        console.log(`📋 Updated session photos array: removed ${removedCount} reference(s)`);
-                    } else {
-                        deletionLog.push(`📋 No photo references found in session photos array`);
+                // Remove the photo from the array (match by filename, url, or r2Key)
+                photosArray = photosArray.filter(photo => {
+                    if (typeof photo === 'string') {
+                        return !photo.includes(filename);
+                    } else if (typeof photo === 'object' && photo !== null) {
+                        return !(photo.filename === filename || 
+                               photo.originalName === filename ||
+                               (photo.url && photo.url.includes(filename)) ||
+                               (photo.r2Key && photo.r2Key.includes(filename)));
                     }
-                } else {
-                    console.warn(`⚠️ Session not found for photos array update: ${sessionId}`);
-                }
+                    return true;
+                });
                 
-            } catch (sessionError) {
-                console.warn(`⚠️ Session photos array update failed: ${sessionError.message}`);
-                errors.push(`Session photos update: ${sessionError.message}`);
+                // Update the session if photos were removed
+                if (photosArray.length !== originalLength) {
+                    await client.query(`
+                        UPDATE photography_sessions 
+                        SET photos = $1, updated_at = NOW()
+                        WHERE id = $2 AND user_id = $3
+                    `, [JSON.stringify(photosArray), sessionId, userId]);
+                    
+                    const removedCount = originalLength - photosArray.length;
+                    deletionLog.push(`✓ Removed ${removedCount} photo reference(s) from session photos array`);
+                    console.log(`📋 Updated session photos array: removed ${removedCount} reference(s)`);
+                } else {
+                    deletionLog.push(`📋 No photo references found in session photos array`);
+                }
+            } else {
+                // Session not found is a critical error for data consistency
+                throw new Error(`Session not found for photos array update: ${sessionId}`);
             }
             
             // Step 8.5: Update R2 backup-index.json to remove deleted file
@@ -347,18 +332,23 @@ class UnifiedFileDeletion {
                 deletionLog.push(`⚠️ Backup index update failed: ${backupIndexError.message}`);
             }
             
-            // Step 9: Log the deletion for audit trail
+            // Step 9: Log the deletion for audit trail (within transaction)
             try {
-                await this.pool.query(`
+                await client.query(`
                     INSERT INTO deletion_audit_log 
                     (user_id, session_id, filename, file_size_mb, folder_type, deleted_at, deletion_method)
                     VALUES ($1, $2, $3, $4, $5, NOW(), 'unified_deletion')
                 `, [userId, sessionId, filename, fileSizeMB, folderType]);
                 deletionLog.push(`✓ Logged deletion for audit trail`);
             } catch (auditError) {
-                // Audit logging failure shouldn't block deletion
-                console.warn(` Audit logging failed: ${auditError.message}`);
+                // Audit logging failure shouldn't block deletion but log it
+                console.warn(`⚠️ Audit logging failed: ${auditError.message}`);
             }
+
+            // Commit the transaction - all database changes are now permanent
+            await client.query('COMMIT');
+            console.log(`✅ Database transaction committed for ${filename}`);
+            deletionLog.push(`✓ Database transaction committed`);
 
             // Final comprehensive summary
             const successfulSteps = deletionLog.filter(step => step.startsWith('✓')).length;
@@ -396,6 +386,16 @@ class UnifiedFileDeletion {
             };
 
         } catch (error) {
+            // Rollback transaction on any error to maintain data consistency
+            try {
+                await client.query('ROLLBACK');
+                console.log(`🔄 Database transaction rolled back due to error`);
+                deletionLog.push(`⚠️ Database transaction rolled back`);
+            } catch (rollbackError) {
+                console.error(`❌ Failed to rollback transaction: ${rollbackError.message}`);
+                errors.push(`Transaction rollback failed: ${rollbackError.message}`);
+            }
+            
             console.error(`❌ DELETION FAILED: ${filename} - ${error.message}`);
             console.error(`🔍 Error details:`, error.stack);
             
@@ -422,6 +422,9 @@ class UnifiedFileDeletion {
                 errors: [...errors, error.message],
                 message: `Failed to delete ${filename}: ${error.message} (${successfulSteps} steps completed before failure)`
             };
+        } finally {
+            // Always release the database connection
+            client.release();
         }
     }
 

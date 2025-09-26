@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnifiedFileDeletion Test Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .section { background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .success { color: #28a745; font-weight: bold; }
+        .failure { color: #dc3545; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        .code { background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+        th { background: #f8f9fa; }
+        .passed { background: #d4edda; }
+        .failed { background: #f8d7da; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗑️ UnifiedFileDeletion Test Report</h1>
+            <p><strong>Test Started:</strong> 2025-09-26T00:27:04.857Z</p>
+            <p><strong>Test Completed:</strong> 2025-09-26T00:27:17.585Z</p>
+            <p><strong>Duration:</strong> 12728ms</p>
+        </div>
+
+        <div class="section">
+            <h2>📋 Test Configuration</h2>
+            <table>
+                <tr><td><strong>Session ID</strong></td><td>d0892278-1882-4466-955f-fba2425e53ef</td></tr>
+                <tr><td><strong>User ID</strong></td><td>44735007</td></tr>
+                <tr><td><strong>Target File</strong></td><td>20250911232926-DSC_0664.jpg</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Overall Result</h2>
+            <p class="success">
+                ✅ SUCCESS: Photo completely removed from all systems!
+            </p>
+            
+            <table>
+                <tr><td><strong>Deletion Successful</strong></td><td class="success">✅ YES</td></tr>
+                <tr><td><strong>Deletion Time</strong></td><td>8860ms</td></tr>
+                <tr><td><strong>Verifications Passed</strong></td><td>9/9</td></tr>
+                <tr><td><strong>Zero Traces Remaining</strong></td><td class="success">✅ YES</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Verification Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr class="passed">
+                            <td>Database: session_files</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>1 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Database: download_entitlements</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Database: download_history</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Database: download_tokens</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Database: gallery_downloads</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Database: digital_transactions</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 records</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>Session photos array</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>Contains target file: false → false</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>R2 original file</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>File exists: false → false</td>
+                        </tr>
+                    
+                        <tr class="passed">
+                            <td>R2 thumbnails</td>
+                            <td><span class="badge badge-success">PASSED</span></td>
+                            <td>0 → 0 thumbnail variants</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>📊 Deletion Process Details</h2>
+            <div class="code">
+                <pre>{
+  "success": true,
+  "filename": "20250911232926-DSC_0664.jpg",
+  "fileSizeMB": "16.990",
+  "folderType": "raw",
+  "steps": [
+    "✓ Verified ownership and access for 20250911232926-DSC_0664.jpg (16.990MB)",
+    "✓ Deleted from cloud storage using key: photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/raw/20250911232926-DSC_0664.jpg",
+    "✓ Deleted 36 thumbnail/preview variant(s)",
+    "✓ Removed from session_files database (1 record)",
+    "⚠️ Download cleanup partially failed: column \"filename\" does not exist",
+    "📋 No photo references found in session photos array",
+    "✓ Updated R2 backup index to remove file reference"
+  ],
+  "summary": {
+    "successfulSteps": 5,
+    "warningSteps": 1,
+    "totalSteps": 7,
+    "errorsCount": 2,
+    "sizeReclaimedMB": "16.990"
+  },
+  "errors": [
+    "Storage tracking: relation \"raw_storage_usage\" does not exist",
+    "Download cleanup: column \"filename\" does not exist"
+  ],
+  "message": "Successfully deleted 20250911232926-DSC_0664.jpg (16.990MB) with comprehensive cleanup (5/7 operations successful)",
+  "executionTimeMs": 8860
+}</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Before/After Comparison</h2>
+            <h3>Database State</h3>
+            <div class="code">
+                <strong>BEFORE:</strong>
+                <pre>{
+  "session_files": {
+    "found": true,
+    "count": 1,
+    "records": [
+      {
+        "id": 458,
+        "user_id": "44735007",
+        "session_id": "d0892278-1882-4466-955f-fba2425e53ef",
+        "folder_type": "raw",
+        "filename": "20250911232926-DSC_0664.jpg",
+        "file_size_bytes": "17811289",
+        "file_size_mb": "16.990",
+        "uploaded_at": "2025-09-11T23:29:26.195Z",
+        "original_name": "DSC_0664.jpg",
+        "r2_key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/raw/20250911232926-DSC_0664.jpg"
+      }
+    ]
+  },
+  "photography_sessions": {
+    "found": true,
+    "count": 1,
+    "records": [
+      {
+        "id": "d0892278-1882-4466-955f-fba2425e53ef",
+        "client_name": "John Casselman",
+        "photo_count": 11
+      }
+    ]
+  },
+  "download_entitlements": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "download_history": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "download_tokens": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "gallery_downloads": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "r2_storage_usage": {
+    "error": "column \"session_id\" does not exist"
+  },
+  "storage_usage_logs": {
+    "error": "column \"operation_details\" does not exist"
+  },
+  "session_photos_array": {
+    "totalPhotos": 11,
+    "containsTargetFile": false,
+    "photos": [
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250924033220-DSC_1738.jpg",
+        "size": 15739510,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250924033220-DSC_1738.jpg",
+        "filename": "20250924033220-DSC_1738.jpg",
+        "uploadedAt": "2025-09-24T03:32:20.235",
+        "originalName": "DSC_1738.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250921005825-DSC_4899.jpg",
+        "size": 32721224,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250921005825-DSC_4899.jpg",
+        "filename": "20250921005825-DSC_4899.jpg",
+        "uploadedAt": "2025-09-21T00:58:25.873",
+        "originalName": "DSC_4899.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232742-DSC_0580.jpg",
+        "size": 15099952,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232742-DSC_0580.jpg",
+        "filename": "20250911232742-DSC_0580.jpg",
+        "uploadedAt": "2025-09-11T23:27:42.469",
+        "originalName": "DSC_0580.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0578.jpg",
+        "size": 10653024,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0578.jpg",
+        "filename": "20250911232733-DSC_0578.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.583",
+        "originalName": "DSC_0578.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0579.jpg",
+        "size": 10293265,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0579.jpg",
+        "filename": "20250911232733-DSC_0579.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.376",
+        "originalName": "DSC_0579.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0577.jpg",
+        "size": 12901261,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0577.jpg",
+        "filename": "20250911232733-DSC_0577.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.279",
+        "originalName": "DSC_0577.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0576.jpg",
+        "size": 14800616,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0576.jpg",
+        "filename": "20250911232733-DSC_0576.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.243",
+        "originalName": "DSC_0576.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0574.jpg",
+        "size": 14180269,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0574.jpg",
+        "filename": "20250911232725-DSC_0574.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.623",
+        "originalName": "DSC_0574.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0575.jpg",
+        "size": 10323133,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0575.jpg",
+        "filename": "20250911232725-DSC_0575.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.497",
+        "originalName": "DSC_0575.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0573.jpg",
+        "size": 9671190,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0573.jpg",
+        "filename": "20250911232725-DSC_0573.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.372",
+        "originalName": "DSC_0573.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0572.jpg",
+        "size": 9381374,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0572.jpg",
+        "filename": "20250911232725-DSC_0572.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.277",
+        "originalName": "DSC_0572.jpg"
+      }
+    ]
+  }
+}</pre>
+                <strong>AFTER:</strong>
+                <pre>{
+  "session_files": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "photography_sessions": {
+    "found": true,
+    "count": 1,
+    "records": [
+      {
+        "id": "d0892278-1882-4466-955f-fba2425e53ef",
+        "client_name": "John Casselman",
+        "photo_count": 11
+      }
+    ]
+  },
+  "download_entitlements": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "download_history": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "download_tokens": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "gallery_downloads": {
+    "found": false,
+    "count": 0,
+    "records": []
+  },
+  "r2_storage_usage": {
+    "error": "column \"session_id\" does not exist"
+  },
+  "storage_usage_logs": {
+    "error": "column \"operation_details\" does not exist"
+  },
+  "session_photos_array": {
+    "totalPhotos": 11,
+    "containsTargetFile": false,
+    "photos": [
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250924033220-DSC_1738.jpg",
+        "size": 15739510,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250924033220-DSC_1738.jpg",
+        "filename": "20250924033220-DSC_1738.jpg",
+        "uploadedAt": "2025-09-24T03:32:20.235",
+        "originalName": "DSC_1738.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250921005825-DSC_4899.jpg",
+        "size": 32721224,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250921005825-DSC_4899.jpg",
+        "filename": "20250921005825-DSC_4899.jpg",
+        "uploadedAt": "2025-09-21T00:58:25.873",
+        "originalName": "DSC_4899.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232742-DSC_0580.jpg",
+        "size": 15099952,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232742-DSC_0580.jpg",
+        "filename": "20250911232742-DSC_0580.jpg",
+        "uploadedAt": "2025-09-11T23:27:42.469",
+        "originalName": "DSC_0580.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0578.jpg",
+        "size": 10653024,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0578.jpg",
+        "filename": "20250911232733-DSC_0578.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.583",
+        "originalName": "DSC_0578.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0579.jpg",
+        "size": 10293265,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0579.jpg",
+        "filename": "20250911232733-DSC_0579.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.376",
+        "originalName": "DSC_0579.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0577.jpg",
+        "size": 12901261,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0577.jpg",
+        "filename": "20250911232733-DSC_0577.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.279",
+        "originalName": "DSC_0577.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0576.jpg",
+        "size": 14800616,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232733-DSC_0576.jpg",
+        "filename": "20250911232733-DSC_0576.jpg",
+        "uploadedAt": "2025-09-11T23:27:33.243",
+        "originalName": "DSC_0576.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0574.jpg",
+        "size": 14180269,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0574.jpg",
+        "filename": "20250911232725-DSC_0574.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.623",
+        "originalName": "DSC_0574.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0575.jpg",
+        "size": 10323133,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0575.jpg",
+        "filename": "20250911232725-DSC_0575.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.497",
+        "originalName": "DSC_0575.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0573.jpg",
+        "size": 9671190,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0573.jpg",
+        "filename": "20250911232725-DSC_0573.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.372",
+        "originalName": "DSC_0573.jpg"
+      },
+      {
+        "url": "/r2/file/photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0572.jpg",
+        "size": 9381374,
+        "r2Key": "photographer-44735007/session-d0892278-1882-4466-955f-fba2425e53ef/gallery/20250911232725-DSC_0572.jpg",
+        "filename": "20250911232725-DSC_0572.jpg",
+        "uploadedAt": "2025-09-11T23:27:25.277",
+        "originalName": "DSC_0572.jpg"
+      }
+    ]
+  }
+}</pre>
+            </div>
+            
+            <h3>R2 Storage State</h3>
+            <div class="code">
+                <strong>BEFORE:</strong>
+                <pre>{
+  "originalFile": {
+    "exists": false
+  },
+  "thumbnails": {
+    "exists": false,
+    "variants": []
+  },
+  "backupIndex": {
+    "exists": false
+  }
+}</pre>
+                <strong>AFTER:</strong>
+                <pre>{
+  "originalFile": {
+    "exists": false
+  },
+  "thumbnails": {
+    "exists": false,
+    "variants": []
+  },
+  "backupIndex": {
+    "exists": false
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
