@@ -5069,6 +5069,16 @@ async function deleteSession(id, userId) {
         await client.query(deleteDepositPaymentsQuery, [id]);
         console.log(`Deleted deposit payments for session ${id}`);
         
+        // Delete any gallery downloads for this session
+        const deleteGalleryDownloadsQuery = 'DELETE FROM gallery_downloads WHERE session_id = $1';
+        await client.query(deleteGalleryDownloadsQuery, [id]);
+        console.log(`Deleted gallery downloads for session ${id}`);
+        
+        // Delete any download entitlements for this session
+        const deleteDownloadEntitlementsQuery = 'DELETE FROM download_entitlements WHERE session_id = $1';
+        await client.query(deleteDownloadEntitlementsQuery, [id]);
+        console.log(`Deleted download entitlements for session ${id}`);
+        
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
         if (userId) {
