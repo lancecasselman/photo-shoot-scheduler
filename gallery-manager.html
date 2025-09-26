@@ -1268,6 +1268,353 @@
         </button>
     </div>
 
+    <!-- Advanced Download Commerce Control Panel -->
+    <div id="downloadControlPanel" class="download-control-panel">
+        <!-- Header with Quick Actions -->
+        <div class="control-panel-header">
+            <h3 class="panel-title">
+                <span class="panel-icon">💰</span>
+                Download Commerce Controls
+            </h3>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="downloadControls.quickPreset('free')" title="Free Downloads">
+                    Free
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(5)" title="$5 per download">
+                    $5
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(10)" title="$10 per download">
+                    $10
+                </button>
+                <button class="quick-btn" onclick="downloadControls.quickPreset(25)" title="$25 per download">
+                    $25
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Status Toggle -->
+        <div class="control-section status-section">
+            <div class="status-toggle-container">
+                <label class="toggle-switch large">
+                    <input type="checkbox" id="downloadEnabled" onchange="downloadControls.updateStatus()">
+                    <span class="toggle-slider">
+                        <span class="toggle-icon locked">🔒</span>
+                        <span class="toggle-icon unlocked">🔓</span>
+                    </span>
+                </label>
+                <div class="status-info">
+                    <h4 id="statusText">Downloads Disabled</h4>
+                    <p id="statusDescription">Clients cannot download photos</p>
+                </div>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="indicator-dot"></span>
+                    <span class="indicator-text">INACTIVE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Mode Selection -->
+        <div class="control-section pricing-mode-section">
+            <h4 class="section-title">Pricing Model</h4>
+            <div class="pricing-modes">
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="free" id="mode-free" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">🎁</span>
+                        <span class="mode-name">Free</span>
+                        <span class="mode-desc">No charge</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="fixed" id="mode-fixed" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">💵</span>
+                        <span class="mode-name">Fixed Price</span>
+                        <span class="mode-desc">Per download</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="freemium" id="mode-freemium" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">⭐</span>
+                        <span class="mode-name">Freemium</span>
+                        <span class="mode-desc">Free + Paid</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="perPhoto" id="mode-perPhoto" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">📸</span>
+                        <span class="mode-name">Per Photo</span>
+                        <span class="mode-desc">Individual</span>
+                    </div>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="pricingMode" value="bulk" id="mode-bulk" onchange="downloadControls.updatePricingMode()">
+                    <div class="mode-card">
+                        <span class="mode-icon">📦</span>
+                        <span class="mode-name">Bulk Pricing</span>
+                        <span class="mode-desc">Volume tiers</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Dynamic Pricing Configuration -->
+        <div class="control-section pricing-config-section" id="pricingConfig">
+            <h4 class="section-title">Pricing Configuration</h4>
+            
+            <!-- Free Mode Config -->
+            <div class="pricing-config" id="config-free" style="display: none;">
+                <div class="config-message success">
+                    <span class="message-icon">✅</span>
+                    <p>All downloads are free for clients</p>
+                </div>
+                <div class="form-group">
+                    <label>Download Limit (optional)</label>
+                    <input type="number" id="free-limit" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Leave empty for unlimited downloads</small>
+                </div>
+            </div>
+
+            <!-- Fixed Price Config -->
+            <div class="pricing-config" id="config-fixed" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price per Download</label>
+                        <div class="input-group">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="fixed-price" class="form-control" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="fixed-currency" class="form-control">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="CAD">CAD (C$)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="fixed-tax-included">
+                        <span>Tax included in price</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Freemium Config -->
+            <div class="pricing-config" id="config-freemium" style="display: none;">
+                <div class="freemium-flow">
+                    <div class="flow-step">
+                        <span class="step-number">1</span>
+                        <div class="form-group">
+                            <label>Free Downloads</label>
+                            <input type="number" id="freemium-free-count" class="form-control" placeholder="5" min="1">
+                            <small>Number of free downloads</small>
+                        </div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <span class="step-number">2</span>
+                        <div class="form-group">
+                            <label>Then charge</label>
+                            <div class="input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" id="freemium-price" class="form-control" placeholder="5.00" step="0.01" min="0">
+                            </div>
+                            <small>Per additional download</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per Photo Config -->
+            <div class="pricing-config" id="config-perPhoto" style="display: none;">
+                <div class="form-group">
+                    <label>Base Price per Photo</label>
+                    <div class="input-group">
+                        <span class="input-prefix">$</span>
+                        <input type="number" id="perPhoto-base-price" class="form-control" placeholder="10.00" step="0.01" min="0">
+                    </div>
+                    <small>Default price for all photos</small>
+                </div>
+                <div class="config-message info">
+                    <span class="message-icon">ℹ️</span>
+                    <p>Individual photo pricing coming soon. For now, all photos use the base price.</p>
+                </div>
+            </div>
+
+            <!-- Bulk Pricing Config -->
+            <div class="pricing-config" id="config-bulk" style="display: none;">
+                <div class="bulk-tiers" id="bulkTiers">
+                    <div class="tier-item" data-tier="1">
+                        <span class="tier-number">Tier 1</span>
+                        <div class="tier-inputs">
+                            <input type="number" class="form-control tier-quantity" placeholder="Quantity (e.g., 5)" min="1">
+                            <span class="tier-separator">photos for</span>
+                            <div class="input-group">
+                                <span class="input-prefix">$</span>
+                                <input type="number" class="form-control tier-price" placeholder="25.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <button class="tier-remove" onclick="downloadControls.removeTier(1)" style="display: none;">×</button>
+                    </div>
+                </div>
+                <button class="btn-add-tier" onclick="downloadControls.addTier()">
+                    <span>+</span> Add Pricing Tier
+                </button>
+            </div>
+        </div>
+
+        <!-- Limits & Restrictions -->
+        <div class="control-section limits-section">
+            <h4 class="section-title">Download Limits</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Per Client Limit</label>
+                    <input type="number" id="limit-per-client" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Max downloads per client</small>
+                </div>
+                <div class="form-group">
+                    <label>Global Session Limit</label>
+                    <input type="number" id="limit-global" class="form-control" placeholder="Unlimited" min="0">
+                    <small>Total downloads allowed</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screenshot Prevention -->
+        <div class="control-section protection-section">
+            <h4 class="section-title">Protection Settings</h4>
+            <div class="protection-options">
+                <label class="toggle-option">
+                    <input type="checkbox" id="screenshot-prevention">
+                    <div class="toggle-info">
+                        <strong>Screenshot Prevention</strong>
+                        <small>Deter screenshots (web limitations apply)</small>
+                    </div>
+                </label>
+                <div class="protection-methods" id="protectionMethods" style="display: none;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="disable-right-click" checked>
+                        <span>Disable right-click</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="prevent-shortcuts" checked>
+                        <span>Block keyboard shortcuts</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="blur-unpurchased">
+                        <span>Blur unpurchased photos</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watermark Controls -->
+        <div class="control-section watermark-section">
+            <h4 class="section-title">Watermark Settings</h4>
+            <label class="toggle-option">
+                <input type="checkbox" id="watermark-enabled">
+                <div class="toggle-info">
+                    <strong>Enable Watermark</strong>
+                    <small>Add watermark to preview images</small>
+                </div>
+            </label>
+            <div class="watermark-config" id="watermarkConfig" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Watermark Type</label>
+                        <select id="watermark-type" class="form-control" onchange="downloadControls.toggleWatermarkType()">
+                            <option value="text">Text</option>
+                            <option value="logo">Logo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="watermark-text-group">
+                        <label>Watermark Text</label>
+                        <input type="text" id="watermark-text" class="form-control" placeholder="© Your Studio Name">
+                    </div>
+                    <div class="form-group" id="watermark-logo-group" style="display: none;">
+                        <label>Upload Logo</label>
+                        <input type="file" id="watermark-logo" class="form-control" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Position</label>
+                        <select id="watermark-position" class="form-control">
+                            <option value="center">Center</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="bottom-right">Bottom Right</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Opacity</label>
+                        <div class="range-group">
+                            <input type="range" id="watermark-opacity" min="10" max="100" value="60" oninput="downloadControls.updateOpacityValue()">
+                            <span class="range-value" id="opacity-value">60%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div class="control-section analytics-section">
+            <h4 class="section-title">Download Analytics</h4>
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📥</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-downloads">0</div>
+                        <div class="stat-label">Total Downloads</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-revenue">$0</div>
+                        <div class="stat-label">Revenue</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛍️</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-orders">0</div>
+                        <div class="stat-label">Active Orders</div>
+                    </div>
+                </div>
+                <div class="stat-card clickable" onclick="downloadControls.viewFullHistory()">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-value">→</div>
+                        <div class="stat-label">View History</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="control-section actions-section">
+            <button class="btn-action primary" onclick="downloadControls.savePolicy()">
+                <span class="btn-icon">💾</span>
+                Save Changes
+            </button>
+            <button class="btn-action secondary" onclick="downloadControls.resetForm()">
+                <span class="btn-icon">↺</span>
+                Reset
+            </button>
+            <button class="btn-action secondary" onclick="downloadControls.copyFromSession()">
+                <span class="btn-icon">📋</span>
+                Copy from Session
+            </button>
+        </div>
+    </div>
 
     <div id="file-stats" style="
         background: white; 
@@ -1338,8 +1685,7 @@
         let totalBytes = 0;
         let uploadedBytes = 0;
 
-        /*
-        // Advanced Download Controls Manager - REMOVED
+        // Advanced Download Controls Manager
         class DownloadControlsManager {
             constructor() {
                 this.sessionId = sessionId;
@@ -1756,9 +2102,9 @@
                 // TODO: Implement full history view
             }
         }
-        */
 
-        // Download controls manager removed
+        // Initialize the download controls manager
+        let downloadControls = null;
 
         // Load session data to get client contact info
         async function loadSessionData() {
@@ -1827,7 +2173,8 @@
                 // Load complete session data to get client contact info
                 await loadSessionData();
                 
-                // Download controls manager removed
+                // Initialize the download controls manager
+                downloadControls = new DownloadControlsManager();
                 
                 loadFiles();
                 setupDragAndDrop();
