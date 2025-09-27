@@ -1941,7 +1941,13 @@
                                     📥 Download
                                 </button>
                             ` : `
-                                ${this.policy && this.policy.mode === 'freemium' ? `
+                                ${this.policy && this.policy.mode === 'free' ? `
+                                    <!-- Free gallery - immediate download -->
+                                    <button class="photo-btn download-btn immediate free" 
+                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', 0)">
+                                        📥 FREE Download
+                                    </button>
+                                ` : this.policy && this.policy.mode === 'freemium' ? `
                                     <!-- Show both FREE and purchase buttons side by side in freemium mode -->
                                     <button class="photo-btn download-btn immediate free ${price === 0 ? '' : 'quota-exhausted'}" 
                                             onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})"
