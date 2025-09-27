@@ -350,6 +350,14 @@ export type R2StorageUsage = typeof r2StorageUsage.$inferSelect;
 export type InsertR2StorageBilling = typeof r2StorageBilling.$inferInsert;
 export type R2StorageBilling = typeof r2StorageBilling.$inferSelect;
 
+// New gallery delivery system types
+export type InsertSessionFile = typeof sessionFiles.$inferInsert;
+export type SessionFile = typeof sessionFiles.$inferSelect;
+export type InsertDownloadEvent = typeof downloadEvents.$inferInsert;
+export type DownloadEvent = typeof downloadEvents.$inferSelect;
+export type InsertClientQuota = typeof clientQuotas.$inferInsert;
+export type ClientQuota = typeof clientQuotas.$inferSelect;
+
 
 // AI Credits usage tracking
 export const aiCreditUsage = pgTable("ai_credit_usage", {
@@ -909,3 +917,75 @@ export type InsertAdminContentEdit = typeof adminContentEdits.$inferInsert;
 export type AdminContentEdit = typeof adminContentEdits.$inferSelect;
 export type InsertPhotoForSaleSetting = typeof photoForSaleSettings.$inferInsert;
 export type PhotoForSaleSetting = typeof photoForSaleSettings.$inferSelect;
+
+// ========================================================================================
+// ENHANCED GALLERY DELIVERY SYSTEM TABLES
+// ========================================================================================
+
+// Session files - proper tracking of gallery assets with metadata
+export const sessionFiles = pgTable("session_files", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id), // photographer
+  filename: varchar("filename").notNull(),
+  originalName: varchar("original_name").notNull(),
+  fileSize: varchar("file_size").notNull(), // bytes as string for large numbers
+  mimeType: varchar("mime_type").notNull(),
+  folderType: varchar("folder_type").notNull().default("gallery").$type<'raw' | 'gallery' | 'edited'>(),
+  r2Key: varchar("r2_key").notNull(), // Full R2 storage path
+  r2Url: varchar("r2_url"), // Public URL if available
+  thumbnailR2Key: varchar("thumbnail_r2_key"), // Thumbnail version
+  isPublic: boolean("is_public").default(true), // For gallery sharing
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  sessionIdx: index("idx_session_files_session").on(table.sessionId),
+  folderTypeIdx: index("idx_session_files_folder_type").on(table.folderType),
+  uploadedAtIdx: index("idx_session_files_uploaded_at").on(table.uploadedAt),
+}));
+
+// Download events - comprehensive audit trail for all downloads
+export const downloadEvents = pgTable("download_events", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id), // photographer
+  clientKey: varchar("client_key").notNull(),
+  photoId: varchar("photo_id").notNull(),
+  filename: varchar("filename").notNull(),
+  downloadStatus: varchar("download_status").notNull().default("initiated").$type<'initiated' | 'completed' | 'failed' | 'cancelled'>(),
+  fileSize: varchar("file_size"), // bytes downloaded
+  downloadDuration: integer("download_duration"), // milliseconds
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  errorMessage: text("error_message"), // if failed
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  sessionDateIdx: index("idx_download_events_session_date").on(table.sessionId, table.createdAt),
+  clientIdx: index("idx_download_events_client").on(table.clientKey),
+  statusIdx: index("idx_download_events_status").on(table.downloadStatus),
+  createdAtIdx: index("idx_download_events_created_at").on(table.createdAt),
+}));
+
+// Client quotas - per-client quota tracking for freemium galleries
+export const clientQuotas = pgTable("client_quotas", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id), // photographer
+  clientKey: varchar("client_key").notNull(), // unique client identifier
+  quotaType: varchar("quota_type").notNull().default("freemium").$type<'freemium' | 'paid' | 'unlimited'>(),
+  totalQuota: integer("total_quota").default(0), // total allowed downloads (0 = unlimited)
+  usedQuota: integer("used_quota").default(0), // downloads consumed
+  remainingQuota: integer("remaining_quota").default(0), // calculated field
+  resetDate: timestamp("reset_date"), // when quota resets (if applicable)
+  isActive: boolean("is_active").default(true),
+  lastActivity: timestamp("last_activity"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  sessionClientIdx: index("idx_client_quotas_session_client").on(table.sessionId, table.clientKey),
+  activeIdx: index("idx_client_quotas_active").on(table.isActive),
+  lastActivityIdx: index("idx_client_quotas_last_activity").on(table.lastActivity),
+  // Unique constraint for one quota per client per session
+  sessionClientUnique: unique("client_quotas_session_client_key").on(table.sessionId, table.clientKey),
+}));
