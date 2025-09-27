@@ -1,0 +1,229 @@
+{
+  "timestamp": "2025-09-27T20:37:01.672Z",
+  "summary": {
+    "totalTests": 28,
+    "passed": 25,
+    "failed": 3,
+    "warnings": 0,
+    "successRate": "89.29%"
+  },
+  "testCategories": {
+    "Analysis": 1,
+    "Free Model": 4,
+    "Freemium Model": 7,
+    "Paid Models": 4,
+    "UI Messaging": 8
+  },
+  "detailedResults": {
+    "passed": [
+      {
+        "category": "Analysis",
+        "test": "Sessions retrieved",
+        "details": "Found 3 sessions with galleries",
+        "timestamp": "2025-09-27T20:36:59.038Z"
+      },
+      {
+        "category": "Photo Setup",
+        "test": "free session photos added",
+        "details": "Added 5 photos to session feb166cd-23a9-4fb6-a48f-c3d8b901ef72",
+        "timestamp": "2025-09-27T20:36:59.079Z"
+      },
+      {
+        "category": "Photo Setup",
+        "test": "freemium session photos added",
+        "details": "Added 5 photos to session 7c45c201-548d-4507-ae88-d3c2e299e0b1",
+        "timestamp": "2025-09-27T20:36:59.102Z"
+      },
+      {
+        "category": "Session Creation",
+        "test": "fixed session created",
+        "details": "Session ID: 25173e42-13db-4aef-820c-4fc4f87cf32f",
+        "timestamp": "2025-09-27T20:36:59.176Z"
+      },
+      {
+        "category": "Session Creation",
+        "test": "per_photo session created",
+        "details": "Session ID: c386e21b-3ac7-481f-8b0c-5658e23f6c39",
+        "timestamp": "2025-09-27T20:36:59.223Z"
+      },
+      {
+        "category": "Free Model",
+        "test": "Gallery accessible",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:36:59.295Z"
+      },
+      {
+        "category": "Free Model",
+        "test": "Policy retrieved",
+        "details": "Mode: free",
+        "timestamp": "2025-09-27T20:37:01.535Z"
+      },
+      {
+        "category": "Free Model",
+        "test": "Free mode configured",
+        "details": "Expected: free, Got: free",
+        "timestamp": "2025-09-27T20:37:01.535Z"
+      },
+      {
+        "category": "Free Model",
+        "test": "Free download tested",
+        "details": "Error expected: 404",
+        "timestamp": "2025-09-27T20:37:01.553Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Policy retrieved",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.582Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Gallery accessible",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.592Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Download attempt 1",
+        "details": "Properly blocked after free limit",
+        "timestamp": "2025-09-27T20:37:01.599Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Download attempt 2",
+        "details": "Properly blocked after free limit",
+        "timestamp": "2025-09-27T20:37:01.605Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Download attempt 3",
+        "details": "Properly blocked after free limit",
+        "timestamp": "2025-09-27T20:37:01.611Z"
+      },
+      {
+        "category": "Freemium Model",
+        "test": "Download attempt 4",
+        "details": "Properly blocked after free limit",
+        "timestamp": "2025-09-27T20:37:01.615Z"
+      },
+      {
+        "category": "Paid Models",
+        "test": "fixed blocks free downloads",
+        "details": "Free downloads properly blocked",
+        "timestamp": "2025-09-27T20:37:01.621Z"
+      },
+      {
+        "category": "Paid Models",
+        "test": "per_photo blocks free downloads",
+        "details": "Free downloads properly blocked",
+        "timestamp": "2025-09-27T20:37:01.631Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "free gallery loads",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.647Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "free shows pricing info",
+        "details": "HTML contains pricing/download references",
+        "timestamp": "2025-09-27T20:37:01.647Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "freemium gallery loads",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.655Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "freemium shows pricing info",
+        "details": "HTML contains pricing/download references",
+        "timestamp": "2025-09-27T20:37:01.655Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "fixed gallery loads",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.664Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "fixed shows pricing info",
+        "details": "HTML contains pricing/download references",
+        "timestamp": "2025-09-27T20:37:01.664Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "per_photo gallery loads",
+        "details": "Status: 200",
+        "timestamp": "2025-09-27T20:37:01.671Z"
+      },
+      {
+        "category": "UI Messaging",
+        "test": "per_photo shows pricing info",
+        "details": "HTML contains pricing/download references",
+        "timestamp": "2025-09-27T20:37:01.671Z"
+      }
+    ],
+    "failed": [
+      {
+        "category": "Freemium Model",
+        "test": "Freemium mode configured",
+        "details": "Mode: freemium, Free count: undefined",
+        "timestamp": "2025-09-27T20:37:01.582Z"
+      },
+      {
+        "category": "Paid Models",
+        "test": "fixed cart creation",
+        "details": "Cart creation failed: Request failed with status code 404",
+        "timestamp": "2025-09-27T20:37:01.625Z"
+      },
+      {
+        "category": "Paid Models",
+        "test": "per_photo cart creation",
+        "details": "Cart creation failed: Request failed with status code 404",
+        "timestamp": "2025-09-27T20:37:01.638Z"
+      }
+    ],
+    "warnings": []
+  },
+  "sessionTests": {
+    "free": {
+      "id": "feb166cd-23a9-4fb6-a48f-c3d8b901ef72",
+      "client_name": "Free Test Client",
+      "session_type": "Portrait Test",
+      "gallery_access_token": "109dd24e-06fd-4c4c-add4-4c3337cb375e",
+      "pricing_model": "free",
+      "free_downloads": 0,
+      "price_per_download": "0.00",
+      "photos": [],
+      "download_enabled": true,
+      "policy_mode": null,
+      "price_per_photo": null,
+      "free_count": null,
+      "bulk_tiers": null
+    },
+    "freemium": {
+      "id": "7c45c201-548d-4507-ae88-d3c2e299e0b1",
+      "client_name": "lance",
+      "session_type": "engagement",
+      "gallery_access_token": "981715ac-29eb-473a-9e22-5825b16848d4",
+      "pricing_model": "free",
+      "free_downloads": 0,
+      "price_per_download": "0.00",
+      "photos": [],
+      "download_enabled": true,
+      "policy_mode": "freemium",
+      "price_per_photo": "4.50",
+      "free_count": 3,
+      "bulk_tiers": []
+    }
+  },
+  "testEnvironment": {
+    "baseUrl": "https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev",
+    "databaseConnected": true,
+    "timestamp": "2025-09-27T20:37:01.672Z"
+  }
+}
