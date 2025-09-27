@@ -968,16 +968,9 @@ window.deleteSession = async function(sessionId) {
     }
 
     try {
-        const authToken = await getAuthToken();
-        const headers = {};
-
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
-
         const response = await fetch(`/api/sessions/${sessionId}`, {
             method: 'DELETE',
-            headers
+            credentials: 'include'
         });
 
         if (!response.ok) {
