@@ -3869,7 +3869,7 @@ async function executeWorkflow(sessionId, workflowType) {
                                  Open Email Client
                             </button>
                             ${result.smsLink ? `
-                                <button onclick="window.open('${result.smsLink}')" class="btn btn-secondary" style="margin: 5px;">
+                                <button onclick="window.location.href='${result.smsLink}'" class="btn btn-secondary" style="margin: 5px;">
                                     📱 Send SMS
                                 </button>
                             ` : ''}

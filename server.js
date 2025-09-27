@@ -10894,8 +10894,9 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify-duplicate', async (req, 
             downloadEnabled: session.download_enabled !== false, // Default to true if null
             downloadMax: session.download_max,
             pricingModel: session.pricing_model || 'free',
-            freeDownloads: session.free_downloads || 0,
-            pricePerDownload: session.price_per_download || '0.00',
+            // 🔧 FIX: Pricing model logic - if truly 'free', don't limit downloads with freemium quotas
+            freeDownloads: (session.pricing_model === 'free') ? null : (session.free_downloads || 0),
+            pricePerDownload: (session.pricing_model === 'free') ? '0.00' : (session.price_per_download || '0.00'),
             watermarkEnabled: session.watermark_enabled === true,
             watermarkSettings: {
                 type: session.watermark_type || 'text',
@@ -11256,9 +11257,25 @@ Professional Photography Services`;
     // If SMS was prepared, add the SMS link to the response
     if (session.phoneNumber && smsSent) {
         const smsMessage = `📸 ${session.clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
-        const smsLink = `sms:${session.phoneNumber}?body=${encodeURIComponent(smsMessage)}`;
+        
+        // 🔧 FIX: Format phone number for SMS (remove spaces, parentheses, dashes)
+        const formatPhoneForSms = (phone) => {
+            // Remove all non-digits except leading +
+            const digitsOnly = phone.replace(/[^\d+]/g, '');
+            // If no country code, assume US (+1)
+            if (!digitsOnly.startsWith('+')) {
+                return `+1${digitsOnly}`;
+            }
+            return digitsOnly;
+        };
+        
+        const formattedPhone = formatPhoneForSms(session.phoneNumber);
+        console.log(`📱 Phone formatted for SMS: "${session.phoneNumber}" → "${formattedPhone}"`);
+        
+        const smsLink = `sms:${formattedPhone}?body=${encodeURIComponent(smsMessage)}`;
         response.smsLink = smsLink;
         response.phoneDebug.smsLink = smsLink;
+        response.phoneDebug.formattedPhone = formattedPhone;
         console.log(`📱 SMS LINK ADDED TO RESPONSE: ${smsLink}`);
     }
     
