@@ -559,26 +559,14 @@ class R2FileManager {
       const { GetObjectCommand } = require('@aws-sdk/client-s3');
       const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
       
-      // Set expiration based on content type and payment status
-      let adjustedExpiry = expiresIn;
-      if (options.isPaid) {
-        // Paid downloads get longer expiration (24 hours)
-        adjustedExpiry = 86400; // 24 hours
-      } else if (options.isPreview) {
-        // Previews get shorter expiration (30 minutes)
-        adjustedExpiry = 1800; // 30 minutes
-      } else {
-        // Default: 1 hour for free/freemium downloads
-        adjustedExpiry = 3600; // 1 hour
-      }
+      // Use standard expiration time for all downloads
+      let adjustedExpiry = expiresIn; // Keep the passed-in expiration time
       
       // Build GetObjectCommand with cache control headers
       const commandOptions = {
         Bucket: this.bucketName,
         Key: r2Key,
-        ResponseCacheControl: options.isPaid 
-          ? 'private, max-age=86400' // 24 hour cache for paid
-          : 'private, max-age=3600, must-revalidate', // 1 hour cache with revalidation
+        ResponseCacheControl: 'private, max-age=3600, must-revalidate', // Standard 1 hour cache for all
         ResponseContentDisposition: options.download 
           ? `attachment; filename="${options.filename || 'download'}"` 
           : 'inline'
@@ -602,11 +590,11 @@ class R2FileManager {
         const urlObj = new URL(url);
         urlObj.hostname = customDomain;
         const finalUrl = urlObj.toString();
-        console.log(`🔗 Generated signed URL for ${r2Key} with custom domain (expires in ${adjustedExpiry}s)`);
+        console.log(`🔗 Generated signed URL for ${r2Key} with custom domain`);
         return finalUrl;
       }
       
-      console.log(`🔗 Generated signed URL for ${r2Key} (expires in ${adjustedExpiry}s)`);
+      console.log(`🔗 Generated signed URL for ${r2Key}`);
       return url;
     } catch (error) {
       console.error('Error generating signed URL:', error);
