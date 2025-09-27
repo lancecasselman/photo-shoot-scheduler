@@ -11062,12 +11062,57 @@ app.get('/api/gallery/:id/photo/:filename', async (req, res) => {
     }
 });
 
+// SMS DEBUG ENDPOINT - for testing phone number retrieval
+app.get('/api/sessions/:id/debug-sms', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        const debug = {
+            sessionId: session.id,
+            clientName: session.clientName,
+            phoneNumber: session.phoneNumber,
+            phoneNumberType: typeof session.phoneNumber,
+            phoneNumberTruthy: !!session.phoneNumber,
+            phoneNumberLength: session.phoneNumber ? session.phoneNumber.length : 0,
+            hasPhoneNumber: !!session.phoneNumber,
+            smsWouldWork: !!session.phoneNumber
+        };
+        
+        console.log('🔍 SMS DEBUG ENDPOINT:', debug);
+        
+        if (session.phoneNumber) {
+            const testMessage = "Test SMS from Photography Management System";
+            const smsLink = `sms:${session.phoneNumber}?body=${encodeURIComponent(testMessage)}`;
+            debug.testSmsLink = smsLink;
+        }
+        
+        res.json(debug);
+        
+    } catch (error) {
+        console.error('SMS Debug error:', error);
+        res.status(500).json({ error: 'Debug failed' });
+    }
+});
+
 // Send gallery notification with email/SMS integration
 app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
 
     try {
+        console.log(`🔍 GALLERY NOTIFICATION DEBUG: Starting notification for session ${sessionId}`);
         const session = await getSessionById(sessionId);
+        console.log(`🔍 GALLERY NOTIFICATION DEBUG: Retrieved session:`, {
+            id: session?.id,
+            clientName: session?.clientName,
+            phoneNumber: session?.phoneNumber,
+            hasPhoneNumber: !!session?.phoneNumber
+        });
 
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
@@ -11189,7 +11234,8 @@ Professional Photography Services`;
     // Store notification in session for tracking
     await updateSession(sessionId, { lastGalleryNotification: notification, galleryReadyNotified: true });
 
-    res.json({
+    // Add phone number debugging to response
+    const response = {
         message: 'Gallery notification prepared - click to open your email client',
         notification,
         galleryUrl,
@@ -11197,8 +11243,33 @@ Professional Photography Services`;
         smsSent,
         emailMethod,
         mailtoUrl,
-        emailPreviewUrl
+        emailPreviewUrl,
+        // ADD PHONE DEBUG INFO
+        phoneDebug: {
+            clientName: session.clientName,
+            phoneNumber: session.phoneNumber,
+            hasPhoneNumber: !!session.phoneNumber,
+            smsReady: smsSent
+        }
+    };
+    
+    // If SMS was prepared, add the SMS link to the response
+    if (session.phoneNumber && smsSent) {
+        const smsMessage = `📸 ${session.clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
+        const smsLink = `sms:${session.phoneNumber}?body=${encodeURIComponent(smsMessage)}`;
+        response.smsLink = smsLink;
+        response.phoneDebug.smsLink = smsLink;
+        console.log(`📱 SMS LINK ADDED TO RESPONSE: ${smsLink}`);
+    }
+    
+    console.log(`📤 FINAL RESPONSE:`, {
+        smsSent: response.smsSent,
+        phoneNumber: response.phoneDebug.phoneNumber,
+        hasPhoneNumber: response.phoneDebug.hasPhoneNumber,
+        smsLinkIncluded: !!response.smsLink
     });
+    
+    res.json(response);
     } catch (error) {
         console.error('Error sending gallery notification:', error);
         res.status(500).json({ error: 'Failed to send gallery notification' });
