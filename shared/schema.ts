@@ -577,12 +577,39 @@ export const downloadEntitlements = pgTable("download_entitlements", {
   createdAt: timestamp("created_at").defaultNow(),
   usedAt: timestamp("used_at"), // When fully consumed
   isActive: boolean("is_active").default(true).notNull(), // Whether entitlement is active
+  // New fields for enhanced quota tracking
+  type: varchar("type").default("download").$type<'download' | 'cart_reservation' | 'bulk'>(),
+  lastAccessAt: timestamp("last_access_at"), // For tracking access patterns
+  ipAddress: varchar("ip_address"), // For abuse tracking
 }, (table) => ({
+  // Existing indexes
   sessionIdx: index("idx_download_entitlements_session").on(table.sessionId),
   clientKeyIdx: index("idx_download_entitlements_client").on(table.clientKey),
   sessionClientIdx: index("idx_download_entitlements_session_client").on(table.sessionId, table.clientKey),
+  
+  // New production-optimized indexes for quota operations
+  quotaCheckIdx: index("idx_download_entitlements_quota_check").on(table.sessionId, table.clientKey, table.remaining, table.isActive),
+  activeQuotaIdx: index("idx_download_entitlements_active_quota").on(table.sessionId, table.clientKey, table.isActive, table.expiresAt),
+  remainingIdx: index("idx_download_entitlements_remaining").on(table.remaining, table.isActive),
+  expiresIdx: index("idx_download_entitlements_expires").on(table.expiresAt, table.isActive),
+  typeIdx: index("idx_download_entitlements_type").on(table.type, table.isActive),
+  ipTrackingIdx: index("idx_download_entitlements_ip_tracking").on(table.ipAddress, table.createdAt),
+  accessPatternIdx: index("idx_download_entitlements_access_pattern").on(table.clientKey, table.lastAccessAt),
+  
   // Unique constraint to prevent duplicate entitlements for the same photo
   uniqueEntitlement: unique("download_entitlements_unique").on(table.clientKey, table.sessionId, table.photoId),
+  
+  // Data integrity constraints for quota enforcement
+  remainingNonNegativeCheck: check("download_entitlements_remaining_check", sql`remaining >= 0`),
+  expiresLogicCheck: check("download_entitlements_expires_logic_check", sql`
+    expires_at IS NULL OR expires_at > created_at
+  `),
+  usedAtLogicCheck: check("download_entitlements_used_logic_check", sql`
+    (remaining = 0 AND used_at IS NOT NULL) OR (remaining > 0 AND used_at IS NULL)
+  `),
+  typeValidationCheck: check("download_entitlements_type_check", sql`
+    type IN ('download', 'cart_reservation', 'bulk')
+  `),
 }));
 
 // Download History table - tracks all download attempts

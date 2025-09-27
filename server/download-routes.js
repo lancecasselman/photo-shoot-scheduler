@@ -83,6 +83,8 @@ const R2FileManager = require('./r2-file-manager');
 const DownloadService = require('./download-service');
 const EnhancedWebhookHandler = require('./enhanced-webhook-handler');
 const ProductionMonitoringSystem = require('./production-monitoring');
+const EnhancedCartManager = require('./enhanced-cart-manager');
+const QuotaMonitoringSystem = require('./quota-monitoring-system');
 
 /**
  * AUTHORITATIVE CLIENT KEY GENERATION
@@ -128,11 +130,17 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   // Use provided commerce manager or create a fallback instance
   const commerceManager = downloadCommerceManager || require('./download-commerce');
   
-  // Initialize the unified DownloadService and Enhanced Webhook Handler
+  // Initialize the unified DownloadService and Enhanced Systems
   const downloadService = new DownloadService(pool);
   const enhancedWebhookHandler = new EnhancedWebhookHandler(pool);
   const monitoringSystem = new ProductionMonitoringSystem(pool);
-  console.log('✅ Unified DownloadService and Enhanced Webhook Handler initialized for download routes');
+  const quotaMonitoringSystem = new QuotaMonitoringSystem(pool);
+  const enhancedCartManager = new EnhancedCartManager(pool, quotaMonitoringSystem);
+  
+  // Start real-time quota monitoring
+  quotaMonitoringSystem.startMonitoring();
+  
+  console.log('✅ Unified DownloadService, Enhanced Webhook Handler, Enhanced Cart Manager, and Quota Monitoring System initialized for download routes');
 
   // Configure multer for watermark logo uploads
   const storage = multer.memoryStorage();
@@ -4578,156 +4586,79 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
   /**
    * POST /api/cart/add-item
-   * Validate quota before allowing cart addition
+   * ENHANCED: Atomic cart addition with bulletproof quota enforcement
    */
-  router.post('/cart/add-item', async (req, res) => {
+  router.post('/cart/add-item', downloadRateLimit, async (req, res) => {
     try {
-      const { sessionId, clientKey, photoId, photoUrl, filename } = req.body;
+      const { sessionId, clientKey, photoId, photoIds } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'];
       
-      if (!sessionId || !clientKey || !photoId) {
+      // Support both single photo and batch operations
+      const photoIdArray = photoIds || (photoId ? [photoId] : []);
+      
+      if (!sessionId || !clientKey || photoIdArray.length === 0) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Missing required parameters: sessionId, clientKey, photoId' 
+          error: 'Missing required parameters: sessionId, clientKey, and photoId(s)' 
         });
       }
 
-      console.log(`🛒 Cart add-item request: ${clientKey} adding ${photoId} to session ${sessionId}`);
+      console.log(`🛒 [ENHANCED] Cart add-item request: ${clientKey.substring(0, 16)}... adding ${photoIdArray.length} item(s) to session ${sessionId}`);
 
-      // Get session data and policy
-      const session = await db.select()
-        .from(photographySessions)
-        .where(eq(photographySessions.id, sessionId))
-        .limit(1);
+      // Use Enhanced Cart Manager with atomic operations
+      const result = await enhancedCartManager.addItemToCart(
+        sessionId,
+        clientKey,
+        photoIdArray,
+        {
+          ipAddress,
+          userAgent,
+          operation: 'add_to_cart',
+          timestamp: new Date().toISOString()
+        }
+      );
 
-      if (session.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Session not found' 
+      if (result.success) {
+        console.log(`✅ [ENHANCED] Cart items added successfully: ${result.operationId}`);
+        
+        // Return detailed quota information
+        res.json({
+          success: true,
+          message: `Successfully added ${photoIdArray.length} item(s) to cart`,
+          cartInfo: result.cartInfo,
+          quotaInfo: result.cartInfo.quotaInfo,
+          operationId: result.operationId,
+          timestamp: new Date().toISOString()
         });
-      }
-
-      // Get or create policy for session
-      const policyResult = await commerceManager.getPolicyForSession(sessionId);
-      if (!policyResult.success) {
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Unable to load pricing policy' 
-        });
-      }
-
-      const policy = policyResult.policy;
-
-      // Check existing cart reservations for this client
-      const existingCartReservations = await db.select()
-        .from(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.type, 'cart_reservation'),
-          eq(downloadEntitlements.isActive, false),
-          gt(downloadEntitlements.remaining, 0),
-          or(
-            eq(downloadEntitlements.expiresAt, null),
-            gte(downloadEntitlements.expiresAt, new Date())
-          )
-        ));
-
-      // Check if this specific photo is already in cart
-      const photoInCart = existingCartReservations.find(r => r.photoId === photoId);
-      if (photoInCart) {
-        return res.status(409).json({ 
-          success: false, 
-          error: 'Photo is already in your cart' 
-        });
-      }
-
-      // Get existing entitlements for this client (completed purchases)
-      const existingEntitlements = await db.select()
-        .from(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, true),
-          gt(downloadEntitlements.remaining, 0)
-        ));
-
-      // Calculate quota limits based on policy
-      let quotaLimit = null;
-      let remainingQuota = null;
-      let currentCartSize = existingCartReservations.length;
-      
-      // CRITICAL FIX: For freemium mode, only count FREE entitlements, not paid ones
-      let totalEntitled;
-      if (policy.mode === 'freemium') {
-        totalEntitled = existingEntitlements.filter(e => e.orderId === null).length;
       } else {
-        totalEntitled = existingEntitlements.length;
-      }
+        // Handle different error types with appropriate status codes
+        const statusCode = result.code === 'QUOTA_EXCEEDED' ? 403 :
+                          result.code === 'RATE_LIMIT_EXCEEDED' ? 429 :
+                          result.code === 'SUSPICIOUS_ACTIVITY' ? 429 :
+                          result.code === 'CART_LOCKED' ? 423 :
+                          result.code === 'DUPLICATE_ITEMS' ? 409 :
+                          result.code === 'CART_SIZE_EXCEEDED' ? 413 :
+                          result.code === 'INVALID_REQUEST' ? 400 :
+                          result.code === 'SESSION_NOT_FOUND' ? 404 : 500;
 
-      if (policy.mode === 'free') {
-        // Free mode - check global limits
-        if (policy.maxPerClient) {
-          quotaLimit = policy.maxPerClient;
-          remainingQuota = Math.max(0, quotaLimit - totalEntitled - currentCartSize);
-        }
-      } else if (policy.mode === 'freemium') {
-        // Freemium - check free limit first
-        const freeCount = policy.freeCount || 0;
-        if (totalEntitled + currentCartSize < freeCount) {
-          quotaLimit = freeCount;
-          remainingQuota = Math.max(0, quotaLimit - totalEntitled - currentCartSize);
-        } else {
-          // Beyond free limit - no cart restrictions for paid items
-          remainingQuota = 999; // Effectively unlimited for paid items
-        }
-      } else if (policy.mode === 'per_photo' || policy.mode === 'bulk') {
-        // Paid modes - no cart restrictions, handled at checkout
-        remainingQuota = 999; // Effectively unlimited
-      }
-
-      // Enforce quota limits
-      if (remainingQuota !== null && remainingQuota <= 0) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Download quota exceeded. Remove items from cart or complete purchase to add more.',
-          quotaExceeded: true,
-          currentQuota: quotaLimit,
-          used: totalEntitled + currentCartSize
+        console.warn(`⚠️ [ENHANCED] Cart add-item blocked: ${result.error} (${result.code})`);
+        
+        res.status(statusCode).json({
+          success: false,
+          error: result.error,
+          code: result.code,
+          operationId: result.operationId,
+          retryAfter: result.retryAfter
         });
       }
-
-      // Create cart reservation entry
-      const reservationId = uuidv4();
-      const expirationTime = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours from now
-
-      await db.insert(downloadEntitlements).values({
-        id: reservationId,
-        orderId: null, // No order yet, this is just a reservation
-        sessionId: sessionId,
-        clientKey: clientKey,
-        photoId: photoId,
-        remaining: 1,
-        expiresAt: expirationTime,
-        isActive: false, // Inactive until purchase completed
-        type: 'cart_reservation',
-        createdAt: new Date()
-      });
-
-      console.log(`✅ Cart reservation created: ${reservationId} for photo ${photoId}`);
-
-      res.json({
-        success: true,
-        message: 'Photo successfully reserved in cart',
-        reservationId: reservationId,
-        expiresAt: expirationTime,
-        remainingQuota: remainingQuota !== null ? Math.max(0, remainingQuota - 1) : null
-      });
 
     } catch (error) {
-      console.error('❌ Cart add-item error:', error);
+      console.error('❌ [ENHANCED] Cart add-item system error:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to add item to cart' 
+        error: 'Cart operation failed due to system error',
+        code: 'SYSTEM_ERROR'
       });
     }
   });
@@ -4790,11 +4721,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
   /**
    * GET /api/cart/status
-   * Return current quota status for client
+   * ENHANCED: Return current quota status with real-time validation
    */
-  router.get('/cart/status', async (req, res) => {
+  router.get('/cart/status', downloadRateLimit, async (req, res) => {
     try {
       const { sessionId, clientKey } = req.query;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'];
       
       if (!sessionId || !clientKey) {
         return res.status(400).json({ 
@@ -4803,126 +4736,62 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         });
       }
 
-      console.log(`🛒 Cart status request: ${clientKey} in session ${sessionId}`);
+      console.log(`🛒 [ENHANCED] Cart status request: ${clientKey.substring(0, 16)}... in session ${sessionId}`);
 
-      // Get session and policy
-      const session = await db.select()
-        .from(photographySessions)
-        .where(eq(photographySessions.id, sessionId))
-        .limit(1);
-
-      if (session.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Session not found' 
-        });
-      }
-
-      const policyResult = await commerceManager.getPolicyForSession(sessionId);
-      if (!policyResult.success) {
-        return res.status(500).json({ 
-          success: false, 
-          error: 'Unable to load pricing policy' 
-        });
-      }
-
-      const policy = policyResult.policy;
-
-      // Get current cart reservations
-      const cartReservations = await db.select()
-        .from(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.type, 'cart_reservation'),
-          eq(downloadEntitlements.isActive, false),
-          gt(downloadEntitlements.remaining, 0),
-          or(
-            eq(downloadEntitlements.expiresAt, null),
-            gte(downloadEntitlements.expiresAt, new Date())
-          )
-        ));
-
-      // Get completed entitlements
-      const completedEntitlements = await db.select()
-        .from(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.isActive, true),
-          gt(downloadEntitlements.remaining, 0)
-        ));
-
-      // Calculate quota information
-      let quotaLimit = null;
-      let remainingQuota = null;
-      let quotaUnlimited = false;
-      const currentCartSize = cartReservations.length;
-      const completedCount = completedEntitlements.length;
-
-      if (policy.mode === 'free') {
-        if (policy.maxPerClient) {
-          quotaLimit = policy.maxPerClient;
-          remainingQuota = Math.max(0, quotaLimit - completedCount - currentCartSize);
-        } else {
-          quotaUnlimited = true;
+      // Use Enhanced Cart Manager for real-time status with validation
+      const result = await enhancedCartManager.getCartStatus(
+        sessionId,
+        clientKey,
+        {
+          ipAddress,
+          userAgent,
+          operation: 'get_cart_status',
+          timestamp: new Date().toISOString()
         }
-      } else if (policy.mode === 'freemium') {
-        const freeCount = policy.freeCount || 0;
-        if (completedCount + currentCartSize < freeCount) {
-          quotaLimit = freeCount;
-          remainingQuota = Math.max(0, quotaLimit - completedCount - currentCartSize);
-        } else {
-          quotaUnlimited = true; // Beyond free limit, no restrictions
-        }
+      );
+
+      if (result.success) {
+        console.log(`✅ [ENHANCED] Cart status retrieved successfully for ${clientKey.substring(0, 16)}...`);
+        
+        res.json({
+          success: true,
+          cart: result.cart,
+          quota: result.quota,
+          policy: result.policy,
+          timestamp: result.timestamp
+        });
       } else {
-        quotaUnlimited = true; // Paid modes have no cart restrictions
+        const statusCode = result.code === 'SESSION_NOT_FOUND' ? 404 :
+                          result.code === 'INVALID_REQUEST' ? 400 : 500;
+
+        console.warn(`⚠️ [ENHANCED] Cart status failed: ${result.error} (${result.code})`);
+        
+        res.status(statusCode).json({
+          success: false,
+          error: result.error,
+          code: result.code
+        });
       }
-
-      const cartItems = cartReservations.map(reservation => ({
-        photoId: reservation.photoId,
-        reservationId: reservation.id,
-        expiresAt: reservation.expiresAt,
-        createdAt: reservation.createdAt
-      }));
-
-      res.json({
-        success: true,
-        quota: {
-          limit: quotaLimit,
-          remaining: remainingQuota,
-          unlimited: quotaUnlimited,
-          used: completedCount,
-          reserved: currentCartSize
-        },
-        policy: {
-          mode: policy.mode,
-          pricePerPhoto: policy.pricePerPhoto,
-          freeCount: policy.freeCount,
-          currency: policy.currency
-        },
-        cart: {
-          items: cartItems,
-          count: currentCartSize
-        }
-      });
 
     } catch (error) {
-      console.error('❌ Cart status error:', error);
+      console.error('❌ [ENHANCED] Cart status system error:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to get cart status' 
+        error: 'Cart status operation failed',
+        code: 'SYSTEM_ERROR'
       });
     }
   });
 
   /**
    * POST /api/cart/clear
-   * Clear all cart reservations for client
+   * ENHANCED: Atomic cart clearing with quota release
    */
-  router.post('/cart/clear', async (req, res) => {
+  router.post('/cart/clear', downloadRateLimit, async (req, res) => {
     try {
       const { sessionId, clientKey } = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'];
       
       if (!sessionId || !clientKey) {
         return res.status(400).json({ 
@@ -4931,30 +4800,51 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         });
       }
 
-      console.log(`🛒 Cart clear request: ${clientKey} in session ${sessionId}`);
+      console.log(`🛒 [ENHANCED] Cart clear request: ${clientKey.substring(0, 16)}... in session ${sessionId}`);
 
-      // Remove all cart reservations for this client
-      const deletedCount = await db.delete(downloadEntitlements)
-        .where(and(
-          eq(downloadEntitlements.sessionId, sessionId),
-          eq(downloadEntitlements.clientKey, clientKey),
-          eq(downloadEntitlements.type, 'cart_reservation'),
-          eq(downloadEntitlements.isActive, false)
-        ));
+      // Use Enhanced Cart Manager with atomic operations
+      const result = await enhancedCartManager.clearCart(
+        sessionId,
+        clientKey,
+        {
+          ipAddress,
+          userAgent,
+          operation: 'clear_cart',
+          timestamp: new Date().toISOString()
+        }
+      );
 
-      console.log(`✅ Cleared cart reservations for ${clientKey}`);
+      if (result.success) {
+        console.log(`✅ [ENHANCED] Cart cleared successfully: ${result.operationId}, items cleared: ${result.itemsCleared}`);
+        
+        res.json({
+          success: true,
+          message: 'Cart successfully cleared',
+          itemsCleared: result.itemsCleared,
+          operationId: result.operationId,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        const statusCode = result.code === 'CART_LOCKED' ? 423 :
+                          result.code === 'INVALID_REQUEST' ? 400 :
+                          result.code === 'SESSION_NOT_FOUND' ? 404 : 500;
 
-      res.json({
-        success: true,
-        message: 'Cart successfully cleared',
-        removedCount: deletedCount || 0
-      });
+        console.warn(`⚠️ [ENHANCED] Cart clear failed: ${result.error} (${result.code})`);
+        
+        res.status(statusCode).json({
+          success: false,
+          error: result.error,
+          code: result.code,
+          operationId: result.operationId
+        });
+      }
 
     } catch (error) {
-      console.error('❌ Cart clear error:', error);
+      console.error('❌ [ENHANCED] Cart clear system error:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to clear cart' 
+        error: 'Cart clear operation failed',
+        code: 'SYSTEM_ERROR'
       });
     }
   });
