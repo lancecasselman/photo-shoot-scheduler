@@ -68,7 +68,7 @@ class GalleryPhotoSync {
       
       // Find all sessions that have gallery files
       const sessionsWithFiles = await client.query(`
-        SELECT DISTINCT ps.id, ps.client_name, ps.gallery_access_token
+        SELECT DISTINCT ps.id, ps.client_name, ps.gallery_access_token, ps.created_at
         FROM photography_sessions ps
         INNER JOIN session_files sf ON ps.id = sf.session_id 
         WHERE sf.folder_type = 'gallery'
