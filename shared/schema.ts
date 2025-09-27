@@ -432,6 +432,31 @@ export const digitalTransactions = pgTable("digital_transactions", {
   }).onDelete("restrict"),
 }));
 
+// Webhook events tracking for idempotency and monitoring
+export const webhookEvents = pgTable("webhook_events", {
+  id: varchar("id").primaryKey().notNull(),
+  stripeEventId: varchar("stripe_event_id").notNull().unique(),
+  eventType: varchar("event_type").notNull(),
+  processedAt: timestamp("processed_at").defaultNow(),
+  processingAttempts: integer("processing_attempts").notNull().default(0),
+  maxRetries: integer("max_retries").notNull().default(3),
+  lastRetryAt: timestamp("last_retry_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  status: varchar("status").notNull().default("pending").$type<'pending' | 'processing' | 'completed' | 'failed' | 'retrying'>(),
+  errorMessage: text("error_message"),
+  eventData: jsonb("event_data"),
+  orderId: varchar("order_id").references(() => downloadOrders.id, { onDelete: "set null" }),
+  sessionId: varchar("session_id").references(() => photographySessions.id, { onDelete: "set null" }),
+  processingDurationMs: integer("processing_duration_ms"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  eventTypeIdx: index("idx_webhook_events_type").on(table.eventType),
+  statusIdx: index("idx_webhook_events_status").on(table.status),
+  retryIdx: index("idx_webhook_events_retry").on(table.nextRetryAt, table.status),
+  createdAtIdx: index("idx_webhook_events_created").on(table.createdAt),
+}));
+
 // Gallery download usage tracking per session/client
 export const galleryDownloads = pgTable("gallery_downloads", {
   id: varchar("id").primaryKey().notNull(),
@@ -482,6 +507,8 @@ export type InsertDigitalTransaction = typeof digitalTransactions.$inferInsert;
 export type DigitalTransaction = typeof digitalTransactions.$inferSelect;
 export type InsertGalleryDownload = typeof galleryDownloads.$inferInsert;
 export type GalleryDownload = typeof galleryDownloads.$inferSelect;
+export type InsertWebhookEvent = typeof webhookEvents.$inferInsert;
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
 
 // Enhanced Download Commerce Tables
 

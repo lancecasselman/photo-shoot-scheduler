@@ -79,8 +79,10 @@ const sessionFiles = pgTable("session_files", {
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
-// Import the new unified DownloadService
+// Import the new unified DownloadService and Enhanced Webhook Handler
 const DownloadService = require('./download-service');
+const EnhancedWebhookHandler = require('./enhanced-webhook-handler');
+const ProductionMonitoringSystem = require('./production-monitoring');
 
 /**
  * AUTHORITATIVE CLIENT KEY GENERATION
@@ -126,9 +128,11 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   // Use provided commerce manager or create a fallback instance
   const commerceManager = downloadCommerceManager || require('./download-commerce');
   
-  // Initialize the unified DownloadService
+  // Initialize the unified DownloadService and Enhanced Webhook Handler
   const downloadService = new DownloadService(pool);
-  console.log('✅ Unified DownloadService initialized for download routes');
+  const enhancedWebhookHandler = new EnhancedWebhookHandler(pool);
+  const monitoringSystem = new ProductionMonitoringSystem(pool);
+  console.log('✅ Unified DownloadService and Enhanced Webhook Handler initialized for download routes');
 
   // Configure multer for watermark logo uploads
   const storage = multer.memoryStorage();
@@ -970,43 +974,98 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   
   /**
    * POST /api/downloads/webhook
-   * Handle Stripe webhooks for payment confirmation
+   * Enhanced Stripe webhook handler with comprehensive error handling,
+   * idempotency protection, and retry logic
    */
   router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const webhookId = req.headers['stripe-webhook-id'] || `webhook_${Date.now()}`;
+    const startTime = Date.now();
+    
     try {
       const sig = req.headers['stripe-signature'];
-      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_CONNECT || process.env.STRIPE_WEBHOOK_SECRET;
       
       if (!sig || !endpointSecret) {
-        console.error('⚠️ Missing webhook signature or secret');
+        console.error(`⚠️ [${webhookId}] Missing webhook signature or secret`);
+        await monitoringSystem.sendAlert(
+          'webhook_configuration_error',
+          'critical',
+          'Webhook signature or secret missing',
+          { webhookId, hasSignature: !!sig, hasSecret: !!endpointSecret }
+        );
         return res.status(400).json({ error: 'Webhook configuration error' });
       }
       
-      // Verify webhook signature
-      let event;
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-      } catch (err) {
-        console.error(`❌ Webhook signature verification failed: ${err.message}`);
-        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
-      }
+      // Use enhanced webhook handler with comprehensive error handling
+      const result = await enhancedWebhookHandler.processWebhook(
+        req.body,
+        sig,
+        endpointSecret
+      );
       
-      console.log(`📨 Webhook received: ${event.type}`);
-      
-      // Handle the event with commerce manager
-      const result = await commerceManager.handleStripeWebhook(event);
+      const processingTime = Date.now() - startTime;
       
       if (result.success) {
-        console.log(`✅ Webhook processed successfully`);
-        res.json({ received: true });
+        console.log(`✅ [${webhookId}] Webhook processed successfully in ${processingTime}ms`);
+        
+        // Log success metrics
+        if (result.duplicate) {
+          console.log(`ℹ️ [${webhookId}] Duplicate webhook event - already processed`);
+        }
+        
+        res.json({ 
+          received: true, 
+          processingTime,
+          duplicate: result.duplicate || false,
+          status: result.status || 'completed'
+        });
       } else {
-        console.error(`❌ Webhook processing failed: ${result.error}`);
-        res.status(400).json({ error: result.error });
+        const statusCode = result.httpStatus || 400;
+        console.error(`❌ [${webhookId}] Webhook processing failed: ${result.error}`);
+        
+        // Send alert for processing failures
+        if (statusCode >= 500) {
+          await monitoringSystem.sendAlert(
+            'webhook_processing_error',
+            'high',
+            `Webhook processing failed: ${result.error}`,
+            { 
+              webhookId, 
+              processingTime,
+              error: result.error,
+              retryAt: result.retryAt
+            }
+          );
+        }
+        
+        res.status(statusCode).json({ 
+          error: result.error,
+          retryAt: result.retryAt,
+          processingTime
+        });
       }
       
     } catch (error) {
-      console.error('❌ Webhook error:', error);
-      res.status(500).json({ error: 'Webhook processing failed' });
+      const processingTime = Date.now() - startTime;
+      console.error(`❌ [${webhookId}] Unexpected webhook error:`, error);
+      
+      // Send critical alert for unexpected errors
+      await monitoringSystem.sendAlert(
+        'webhook_system_error',
+        'critical',
+        `Unexpected webhook processing error: ${error.message}`,
+        { 
+          webhookId, 
+          processingTime,
+          error: error.message,
+          stack: error.stack
+        }
+      );
+      
+      res.status(500).json({ 
+        error: 'Internal webhook processing error',
+        processingTime
+      });
     }
   });
   
@@ -4510,44 +4569,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
 
-  /**
-   * POST /api/downloads/webhook
-   * Handle Stripe webhook events for download purchases
-   */
-  router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    try {
-      const sig = req.headers['stripe-signature'];
-      
-      if (!sig) {
-        return res.status(400).json({ error: 'Missing signature' });
-      }
-      
-      if (!commerceManager) {
-        return res.status(503).json({ error: 'Commerce service unavailable' });
-      }
-      
-      // Process webhook using commerce manager with raw body and signature
-      const result = await commerceManager.handleStripeWebhook(
-        req.body,  // Raw body buffer
-        sig        // Stripe signature header
-      );
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-      
-      // Return success (handle idempotent duplicates gracefully)
-      if (result.duplicate) {
-        res.status(200).json({ received: true, duplicate: true });
-      } else {
-        res.json({ received: true });
-      }
-      
-    } catch (error) {
-      console.error('Webhook error:', error);
-      res.status(400).json({ error: 'Webhook processing failed' });
-    }
-  });
+  // REMOVED: Duplicate webhook endpoint - consolidated into enhanced version above
+  // Original endpoint functionality moved to enhanced handler above
 
   /**
    * Cart Quota Reservation System API Endpoints

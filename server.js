@@ -1439,15 +1439,55 @@ app.post('/api/downloads/webhook/stripe', express.raw({ type: 'application/json'
             event = JSON.parse(req.body);
         }
         
-        // Handle checkout.session.completed events for photo downloads
+        // Handle checkout.session.completed events for photo downloads (legacy system)
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             
-            // Check if this is a photo download payment
+            // Check if this is a photo download payment (legacy individual downloads)
             if (session.metadata?.type === 'photo_download') {
                 // Import here to avoid circular dependencies
                 const { handleDownloadWebhook } = require('./server/download-webhook-handler');
                 await handleDownloadWebhook(session);
+            }
+            // Check if this is a download order (enhanced system)
+            else if (session.metadata?.type === 'download_order') {
+                const EnhancedWebhookHandler = require('./server/enhanced-webhook-handler');
+                const webhookHandler = new EnhancedWebhookHandler();
+                const result = await webhookHandler.processWebhook(
+                    req.body, 
+                    sig, 
+                    webhookSecret
+                );
+                
+                if (!result.success) {
+                    console.error('❌ Enhanced webhook processing failed:', result.error);
+                    return res.status(result.httpStatus || 500).json({ error: result.error });
+                }
+            }
+        }
+        
+        // Handle payment_intent.succeeded events for download orders (enhanced system)
+        if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object;
+            
+            // Check if this payment intent is for a download order
+            if (paymentIntent.metadata?.type === 'download_order') {
+                console.log(`💳 Processing payment intent for download order: ${paymentIntent.id}`);
+                
+                const EnhancedWebhookHandler = require('./server/enhanced-webhook-handler');
+                const webhookHandler = new EnhancedWebhookHandler();
+                const result = await webhookHandler.processWebhook(
+                    req.body, 
+                    sig, 
+                    webhookSecret
+                );
+                
+                if (!result.success) {
+                    console.error('❌ Enhanced webhook processing failed:', result.error);
+                    return res.status(result.httpStatus || 500).json({ error: result.error });
+                }
+                
+                console.log('✅ Payment intent processed successfully for download order');
             }
         }
         
