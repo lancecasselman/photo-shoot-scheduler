@@ -2087,6 +2087,261 @@ class DownloadCommerceManager {
             };
         }
     }
+
+    /**
+     * VERIFY PAYMENT
+     * Verifies a Stripe payment intent for download service
+     */
+    async verifyPayment(paymentIntentId, options = {}) {
+        try {
+            if (!this.stripeEnabled) {
+                return {
+                    success: false,
+                    error: 'Payment processing not configured'
+                };
+            }
+
+            // Retrieve payment intent from Stripe
+            const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+
+            if (!paymentIntent) {
+                return {
+                    success: false,
+                    error: 'Payment intent not found'
+                };
+            }
+
+            // Check payment status
+            if (paymentIntent.status !== 'succeeded') {
+                return {
+                    success: false,
+                    error: `Payment not completed. Status: ${paymentIntent.status}`
+                };
+            }
+
+            // Verify amount if expected amount provided
+            if (options.expectedAmount) {
+                const expectedAmountCents = Math.round(options.expectedAmount * 100);
+                if (paymentIntent.amount !== expectedAmountCents) {
+                    return {
+                        success: false,
+                        error: 'Payment amount mismatch'
+                    };
+                }
+            }
+
+            // Verify currency if provided
+            if (options.currency && paymentIntent.currency !== options.currency.toLowerCase()) {
+                return {
+                    success: false,
+                    error: 'Payment currency mismatch'
+                };
+            }
+
+            // Find or create order record
+            let orderId = null;
+            const existingOrder = await this.db.select()
+                .from(downloadOrders)
+                .where(eq(downloadOrders.paymentIntentId, paymentIntentId))
+                .limit(1);
+
+            if (existingOrder.length > 0) {
+                orderId = existingOrder[0].id;
+                
+                // Update order status if necessary
+                if (existingOrder[0].status !== 'completed') {
+                    await this.db.update(downloadOrders)
+                        .set({ 
+                            status: 'completed',
+                            completedAt: new Date()
+                        })
+                        .where(eq(downloadOrders.id, orderId));
+                }
+            } else {
+                // Create new order record for this payment
+                orderId = uuidv4();
+                await this.db.insert(downloadOrders).values({
+                    id: orderId,
+                    sessionId: options.sessionId,
+                    clientKey: this.generateClientKeyFromSession(options.sessionId),
+                    amount: (paymentIntent.amount / 100).toFixed(2),
+                    currency: paymentIntent.currency.toUpperCase(),
+                    mode: 'per_photo',
+                    items: options.photoId ? [{ photoId: options.photoId }] : [],
+                    paymentIntentId: paymentIntentId,
+                    status: 'completed',
+                    completedAt: new Date(),
+                    createdAt: new Date()
+                });
+            }
+
+            console.log(`✅ Payment verified: ${paymentIntentId} - $${paymentIntent.amount / 100}`);
+
+            return {
+                success: true,
+                paymentIntent: paymentIntent,
+                orderId: orderId,
+                amount: paymentIntent.amount / 100,
+                currency: paymentIntent.currency.toUpperCase()
+            };
+
+        } catch (error) {
+            console.error('❌ Error verifying payment:', error);
+            return {
+                success: false,
+                error: this.mapStripeError(error) || 'Payment verification failed'
+            };
+        }
+    }
+
+    /**
+     * CREATE PAID ENTITLEMENT
+     * Creates a paid entitlement after successful payment verification
+     */
+    async createPaidEntitlement(entitlementData) {
+        try {
+            const { 
+                sessionId, 
+                clientKey, 
+                photoId, 
+                amount, 
+                currency = 'USD', 
+                paymentIntentId, 
+                orderId 
+            } = entitlementData;
+
+            if (!sessionId || !clientKey || !photoId || !amount || !paymentIntentId) {
+                return {
+                    success: false,
+                    error: 'Missing required entitlement data'
+                };
+            }
+
+            // Create entitlement record
+            const entitlementId = uuidv4();
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiration for paid downloads
+
+            await this.db.insert(downloadEntitlements).values({
+                id: entitlementId,
+                orderId: orderId,
+                sessionId: sessionId,
+                clientKey: clientKey,
+                photoId: photoId,
+                amount: amount.toFixed(2),
+                currency: currency,
+                paymentIntentId: paymentIntentId,
+                remaining: 1, // Single download for paid entitlement
+                isActive: true,
+                expiresAt: expiresAt,
+                createdAt: new Date()
+            });
+
+            console.log(`💰 Created paid entitlement: ${entitlementId} for photo ${photoId} ($${amount})`);
+
+            return {
+                success: true,
+                entitlementId: entitlementId,
+                photoId: photoId,
+                amount: amount,
+                currency: currency,
+                expiresAt: expiresAt
+            };
+
+        } catch (error) {
+            console.error('❌ Error creating paid entitlement:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * LOG DOWNLOAD HISTORY
+     * Logs download activity with comprehensive details for audit trail
+     */
+    async logDownloadHistory(logEntry) {
+        try {
+            const {
+                sessionId,
+                clientKey,
+                photoId,
+                pricing,
+                amount = 0,
+                currency = 'USD',
+                paymentIntentId = null,
+                clientIp = null,
+                userAgent = null,
+                status,
+                error = null,
+                timestamp = new Date(),
+                metadata = {}
+            } = logEntry;
+
+            // Create history record
+            const historyId = uuidv4();
+            
+            await this.db.insert(downloadHistory).values({
+                id: historyId,
+                sessionId: sessionId,
+                clientKey: clientKey,
+                photoId: photoId,
+                tokenId: null, // Will be set by token system if applicable
+                orderId: paymentIntentId ? await this.getOrderIdByPaymentIntent(paymentIntentId) : null,
+                amount: amount.toString(),
+                currency: currency,
+                pricing: pricing,
+                paymentIntentId: paymentIntentId,
+                ipAddress: clientIp,
+                userAgent: userAgent,
+                status: status,
+                failureReason: error,
+                metadata: metadata,
+                createdAt: timestamp
+            });
+
+            console.log(`📊 Logged download history: ${status} - ${pricing} - ${photoId} - $${amount}`);
+
+            return {
+                success: true,
+                historyId: historyId
+            };
+
+        } catch (error) {
+            console.error('❌ Error logging download history:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * HELPER METHOD: Get order ID by payment intent
+     */
+    async getOrderIdByPaymentIntent(paymentIntentId) {
+        try {
+            const order = await this.db.select()
+                .from(downloadOrders)
+                .where(eq(downloadOrders.paymentIntentId, paymentIntentId))
+                .limit(1);
+
+            return order.length > 0 ? order[0].id : null;
+        } catch (error) {
+            console.warn('Could not find order for payment intent:', paymentIntentId);
+            return null;
+        }
+    }
+
+    /**
+     * HELPER METHOD: Generate client key from session (for legacy compatibility)
+     */
+    generateClientKeyFromSession(sessionId) {
+        // This is a fallback method for cases where clientKey isn't provided
+        // In practice, the DownloadService should always provide the proper clientKey
+        return `legacy-${crypto.createHash('sha256').update(sessionId).digest('hex').substring(0, 12)}`;
+    }
 }
 
 // Export the manager class

@@ -79,6 +79,9 @@ const sessionFiles = pgTable("session_files", {
 // Import R2 file manager for download delivery
 const R2FileManager = require('./r2-file-manager');
 
+// Import the new unified DownloadService
+const DownloadService = require('./download-service');
+
 /**
  * AUTHORITATIVE CLIENT KEY GENERATION
  * Generate unique client key based on gallery token + session ID ONLY
@@ -122,6 +125,10 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   
   // Use provided commerce manager or create a fallback instance
   const commerceManager = downloadCommerceManager || require('./download-commerce');
+  
+  // Initialize the unified DownloadService
+  const downloadService = new DownloadService(pool);
+  console.log('✅ Unified DownloadService initialized for download routes');
 
   // Configure multer for watermark logo uploads
   const storage = multer.memoryStorage();
@@ -262,6 +269,246 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       return null;
     }
   }
+
+  // ==================== UNIFIED DOWNLOAD SERVICE API ROUTES ====================
+  
+  /**
+   * POST /api/downloads/unified/process
+   * Unified download processing endpoint - routes to appropriate pricing model handler
+   */
+  router.post('/unified/process', downloadRateLimit, async (req, res) => {
+    try {
+      const { 
+        galleryAccessToken, 
+        sessionId, 
+        photoId, 
+        photoUrl, 
+        filename,
+        paymentIntentId = null 
+      } = req.body;
+
+      // Get client information for security and logging
+      const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+
+      // Validate required fields
+      if (!galleryAccessToken || !sessionId || !photoId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: galleryAccessToken, sessionId, photoId',
+          code: 'MISSING_REQUIRED_FIELDS'
+        });
+      }
+
+      console.log(`🎯 [UNIFIED] Processing download request for photo ${photoId} in session ${sessionId}`);
+
+      // Perform security validation
+      const securityCheck = await downloadService.validateSessionSecurity(sessionId, clientIp, userAgent);
+      if (!securityCheck.allowed) {
+        return res.status(429).json({
+          success: false,
+          error: securityCheck.error,
+          code: securityCheck.code,
+          retryAfter: securityCheck.retryAfter
+        });
+      }
+
+      // Process download through unified service
+      const result = await downloadService.processDownload({
+        galleryAccessToken,
+        sessionId,
+        photoId,
+        photoUrl,
+        filename,
+        paymentIntentId,
+        clientIp,
+        userAgent
+      });
+
+      if (result.success) {
+        console.log(`✅ [UNIFIED] Download processed successfully: ${photoId} (${result.pricing.model})`);
+        res.json(result);
+      } else {
+        const statusCode = result.code === 'PAYMENT_REQUIRED' ? 402 : 
+                          result.code === 'INVALID_TOKEN' ? 401 :
+                          result.code === 'EXPIRED_ACCESS' ? 410 :
+                          result.code === 'SESSION_NOT_FOUND' ? 404 : 400;
+
+        console.warn(`⚠️ [UNIFIED] Download processing failed: ${result.error}`);
+        res.status(statusCode).json(result);
+      }
+
+    } catch (error) {
+      console.error('❌ [UNIFIED] Error in unified download processing:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error during download processing',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  });
+
+  /**
+   * GET /api/downloads/unified/status/:sessionId
+   * Get download status, quota information, and session statistics
+   */
+  router.get('/unified/status/:sessionId', downloadRateLimit, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { galleryAccessToken, clientKey } = req.query;
+
+      if (!galleryAccessToken) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required parameter: galleryAccessToken',
+          code: 'MISSING_ACCESS_TOKEN'
+        });
+      }
+
+      console.log(`📊 [UNIFIED] Getting status for session ${sessionId}`);
+
+      // Validate gallery access
+      const authResult = await downloadService.validateGalleryAccess(galleryAccessToken, sessionId);
+      if (!authResult.success) {
+        const statusCode = authResult.code === 'INVALID_TOKEN' ? 401 :
+                          authResult.code === 'EXPIRED_ACCESS' ? 410 :
+                          authResult.code === 'SESSION_NOT_FOUND' ? 404 : 400;
+        return res.status(statusCode).json(authResult);
+      }
+
+      // Use provided clientKey or generate from auth result
+      const effectiveClientKey = clientKey || authResult.clientKey;
+
+      // Get session statistics
+      const statsResult = await downloadService.getSessionStats(sessionId, effectiveClientKey);
+
+      if (statsResult.success) {
+        console.log(`✅ [UNIFIED] Status retrieved for session ${sessionId}`);
+        res.json({
+          success: true,
+          sessionId: sessionId,
+          clientKey: effectiveClientKey,
+          ...statsResult.stats
+        });
+      } else {
+        console.error(`❌ [UNIFIED] Failed to get status: ${statsResult.error}`);
+        res.status(400).json({
+          success: false,
+          error: statsResult.error,
+          code: 'STATUS_ERROR'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ [UNIFIED] Error getting session status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve session status',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  });
+
+  /**
+   * GET /api/downloads/unified/health
+   * Health check endpoint for the unified download service
+   */
+  router.get('/unified/health', async (req, res) => {
+    try {
+      console.log(`🔍 [UNIFIED] Health check requested`);
+
+      // Perform comprehensive health check
+      const healthResult = await downloadService.healthCheck();
+
+      if (healthResult.success) {
+        console.log(`✅ [UNIFIED] Service healthy`);
+        res.json({
+          success: true,
+          status: healthResult.status,
+          timestamp: new Date(),
+          checks: healthResult.checks,
+          version: '1.0.0'
+        });
+      } else {
+        console.warn(`⚠️ [UNIFIED] Service degraded: ${healthResult.error}`);
+        res.status(503).json({
+          success: false,
+          status: healthResult.status,
+          error: healthResult.error,
+          timestamp: new Date(),
+          checks: healthResult.checks,
+          version: '1.0.0'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ [UNIFIED] Health check failed:', error);
+      res.status(500).json({
+        success: false,
+        status: 'unhealthy',
+        error: 'Health check failed',
+        timestamp: new Date(),
+        version: '1.0.0'
+      });
+    }
+  });
+
+  /**
+   * POST /api/downloads/unified/validate-access
+   * Validate gallery access and return client key for client-side use
+   */
+  router.post('/unified/validate-access', downloadRateLimit, async (req, res) => {
+    try {
+      const { galleryAccessToken, sessionId } = req.body;
+
+      if (!galleryAccessToken || !sessionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: galleryAccessToken, sessionId',
+          code: 'MISSING_REQUIRED_FIELDS'
+        });
+      }
+
+      console.log(`🔐 [UNIFIED] Validating access for session ${sessionId}`);
+
+      // Validate gallery access
+      const authResult = await downloadService.validateGalleryAccess(galleryAccessToken, sessionId);
+
+      if (authResult.success) {
+        console.log(`✅ [UNIFIED] Access validated for session ${sessionId}`);
+        
+        // Get session policy for client information
+        const policyResult = await downloadService.getSessionPolicy(sessionId);
+        
+        res.json({
+          success: true,
+          clientKey: authResult.clientKey,
+          session: {
+            id: authResult.session.id,
+            clientName: authResult.session.clientName,
+            downloadEnabled: authResult.session.downloadEnabled,
+            galleryExpiresAt: authResult.session.galleryExpiresAt
+          },
+          policy: policyResult.success ? policyResult.policy : null
+        });
+      } else {
+        const statusCode = authResult.code === 'INVALID_TOKEN' ? 401 :
+                          authResult.code === 'EXPIRED_ACCESS' ? 410 :
+                          authResult.code === 'SESSION_NOT_FOUND' ? 404 : 400;
+
+        console.warn(`⚠️ [UNIFIED] Access validation failed: ${authResult.error}`);
+        res.status(statusCode).json(authResult);
+      }
+
+    } catch (error) {
+      console.error('❌ [UNIFIED] Error validating access:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error during access validation',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  });
 
   // ==================== COMMERCE API ROUTES ====================
   
