@@ -1567,14 +1567,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
             createdAt: new Date()
           });
 
-          console.log(`🆓 Freemium free download token generated for asset ${assetId}, client ${clientKey} (${usedFreeDownloads + 1}/${freeDownloads})`);
+          console.log(`🆓 Freemium free download token generated for asset ${assetId}, client ${clientKey} (${policyCheck.used + 1}/${policyCheck.limit})`);
           return res.json({ 
             status: 'granted', 
             downloadToken,
             expiresAt,
             downloadUrl: `/api/downloads/${downloadToken}`,
             clientKey: clientKey,
-            freeDownloadsRemaining: freeDownloads - usedFreeDownloads - 1
+            freeDownloadsRemaining: policyCheck.limit - policyCheck.used - 1
           });
         } else {
           // No free downloads left - require payment
