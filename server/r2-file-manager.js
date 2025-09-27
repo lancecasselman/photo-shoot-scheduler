@@ -554,17 +554,59 @@ class R2FileManager {
   /**
    * Get a signed URL for accessing a file in R2
    */
-  async getSignedUrl(r2Key, expiresIn = 3600) {
+  async getSignedUrl(r2Key, expiresIn = 3600, options = {}) {
     try {
       const { GetObjectCommand } = require('@aws-sdk/client-s3');
       const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
       
-      const command = new GetObjectCommand({
+      // Set expiration based on content type and payment status
+      let adjustedExpiry = expiresIn;
+      if (options.isPaid) {
+        // Paid downloads get longer expiration (24 hours)
+        adjustedExpiry = 86400; // 24 hours
+      } else if (options.isPreview) {
+        // Previews get shorter expiration (30 minutes)
+        adjustedExpiry = 1800; // 30 minutes
+      } else {
+        // Default: 1 hour for free/freemium downloads
+        adjustedExpiry = 3600; // 1 hour
+      }
+      
+      // Build GetObjectCommand with cache control headers
+      const commandOptions = {
         Bucket: this.bucketName,
-        Key: r2Key
+        Key: r2Key,
+        ResponseCacheControl: options.isPaid 
+          ? 'private, max-age=86400' // 24 hour cache for paid
+          : 'private, max-age=3600, must-revalidate', // 1 hour cache with revalidation
+        ResponseContentDisposition: options.download 
+          ? `attachment; filename="${options.filename || 'download'}"` 
+          : 'inline'
+      };
+      
+      // Add CloudFlare custom domain if configured
+      if (process.env.CLOUDFLARE_R2_CUSTOM_DOMAIN) {
+        commandOptions.ResponseContentType = options.contentType || 'image/jpeg';
+      }
+      
+      const command = new GetObjectCommand(commandOptions);
+      
+      const url = await getSignedUrl(this.s3Client, command, { 
+        expiresIn: adjustedExpiry,
+        signableHeaders: new Set(['host']) // Include host header for CloudFlare
       });
       
-      const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+      // Replace with custom domain if configured
+      if (process.env.CLOUDFLARE_R2_CUSTOM_DOMAIN) {
+        const customDomain = process.env.CLOUDFLARE_R2_CUSTOM_DOMAIN;
+        const urlObj = new URL(url);
+        urlObj.hostname = customDomain;
+        const finalUrl = urlObj.toString();
+        console.log(`🔗 Generated signed URL for ${r2Key} with custom domain (expires in ${adjustedExpiry}s)`);
+        return finalUrl;
+      }
+      
+      console.log(`🔗 Generated signed URL for ${r2Key} (expires in ${adjustedExpiry}s)`);
       return url;
     } catch (error) {
       console.error('Error generating signed URL:', error);

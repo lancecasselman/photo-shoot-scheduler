@@ -1197,23 +1197,200 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
   /**
    * Centralized download policy enforcement function
-   * Handles null/0 = unlimited, finite limits properly with atomic check-and-reserve
+   * Handles pricing models: FREE, PAID, FREEMIUM with proper quota enforcement
    */
-  async function enforceDownloadPolicy(sessionData, sessionId) {
-    // Global download limits disabled - freemium and specific pricing models handle their own limits
-    console.log('Download policy enforcement: Global limits disabled, allowing download');
+  async function enforceDownloadPolicy(sessionData, sessionId, clientKey = null) {
+    console.log('📋 Enforcing download policy:', {
+      sessionId,
+      pricingModel: sessionData.pricingModel,
+      freeDownloads: sessionData.freeDownloads,
+      downloadEnabled: sessionData.downloadEnabled,
+      clientKey
+    });
     
-    // Only block if downloads are explicitly disabled for the session
+    // Check if downloads are explicitly disabled
     if (!sessionData.downloadEnabled) {
       return { 
         allowed: false, 
         reason: 'downloads_disabled',
         code: 'downloads_disabled',
-        message: 'Downloads are disabled for this session'
+        message: 'Downloads are disabled for this session',
+        httpStatus: 403
       };
     }
     
-    return { allowed: true, reason: 'global_limits_disabled' };
+    const pricingModel = sessionData.pricingModel || 'free';
+    
+    // Handle FREE pricing model - unlimited downloads
+    if (pricingModel === 'free') {
+      console.log('✅ FREE model: Allowing unlimited downloads');
+      return { 
+        allowed: true, 
+        reason: 'free_model',
+        model: 'free',
+        message: 'Unlimited downloads allowed'
+      };
+    }
+    
+    // Handle PAID pricing model - require payment for all downloads
+    if (pricingModel === 'paid') {
+      console.log('💰 PAID model: Payment required for all downloads');
+      
+      // Check if client has any valid entitlements
+      if (clientKey) {
+        const entitlements = await db
+          .select()
+          .from(downloadEntitlements)
+          .where(and(
+            eq(downloadEntitlements.sessionId, sessionId),
+            eq(downloadEntitlements.clientKey, clientKey),
+            gt(downloadEntitlements.remaining, 0),
+            or(
+              isNull(downloadEntitlements.expiresAt),
+              gte(downloadEntitlements.expiresAt, new Date())
+            )
+          ))
+          .limit(1);
+        
+        if (entitlements.length > 0) {
+          return {
+            allowed: true,
+            reason: 'has_entitlement',
+            model: 'paid',
+            entitlement: entitlements[0]
+          };
+        }
+      }
+      
+      return {
+        allowed: false,
+        reason: 'payment_required',
+        code: 'payment_required',
+        message: 'Payment is required to download photos from this gallery',
+        httpStatus: 402 // Payment Required
+      };
+    }
+    
+    // Handle FREEMIUM pricing model - X free downloads then payment
+    if (pricingModel === 'freemium') {
+      const freeLimit = parseInt(sessionData.freeDownloads) || 0;
+      
+      if (!clientKey) {
+        console.warn('⚠️ FREEMIUM model requires clientKey for tracking');
+        return {
+          allowed: false,
+          reason: 'client_key_required',
+          code: 'client_key_required',
+          message: 'Client identification required for freemium downloads',
+          httpStatus: 400
+        };
+      }
+      
+      console.log(`🎯 FREEMIUM model: Checking quota for client ${clientKey}`);
+      
+      // Count downloads for this specific client
+      const downloads = await db
+        .select({ count: count() })
+        .from(galleryDownloads)
+        .where(and(
+          eq(galleryDownloads.sessionId, sessionId),
+          eq(galleryDownloads.clientKey, clientKey),
+          eq(galleryDownloads.status, 'completed')
+        ));
+      
+      const usedDownloads = downloads[0]?.count || 0;
+      const remaining = Math.max(0, freeLimit - usedDownloads);
+      
+      console.log(`📊 Client ${clientKey}: ${usedDownloads}/${freeLimit} free downloads used`);
+      
+      if (usedDownloads < freeLimit) {
+        return {
+          allowed: true,
+          reason: 'within_free_quota',
+          model: 'freemium',
+          used: usedDownloads,
+          limit: freeLimit,
+          remaining: remaining,
+          message: `You have ${remaining} free download${remaining === 1 ? '' : 's'} remaining`
+        };
+      } else {
+        // Check for paid entitlements
+        const entitlements = await db
+          .select()
+          .from(downloadEntitlements)
+          .where(and(
+            eq(downloadEntitlements.sessionId, sessionId),
+            eq(downloadEntitlements.clientKey, clientKey),
+            gt(downloadEntitlements.remaining, 0),
+            or(
+              isNull(downloadEntitlements.expiresAt),
+              gte(downloadEntitlements.expiresAt, new Date())
+            )
+          ))
+          .limit(1);
+        
+        if (entitlements.length > 0) {
+          return {
+            allowed: true,
+            reason: 'has_paid_entitlement',
+            model: 'freemium',
+            entitlement: entitlements[0]
+          };
+        }
+        
+        return {
+          allowed: false,
+          reason: 'free_quota_exceeded',
+          code: 'quota_exceeded',
+          message: `You've used all ${freeLimit} free downloads. Purchase required for additional photos.`,
+          used: usedDownloads,
+          limit: freeLimit,
+          httpStatus: 429 // Too Many Requests
+        };
+      }
+    }
+    
+    // Handle per_photo and other pricing models
+    if (pricingModel === 'per_photo' || pricingModel === 'fixed' || pricingModel === 'bulk') {
+      console.log(`💳 ${pricingModel.toUpperCase()} model: Checking for entitlements`);
+      
+      if (clientKey) {
+        const entitlements = await db
+          .select()
+          .from(downloadEntitlements)
+          .where(and(
+            eq(downloadEntitlements.sessionId, sessionId),
+            eq(downloadEntitlements.clientKey, clientKey),
+            gt(downloadEntitlements.remaining, 0)
+          ))
+          .limit(1);
+        
+        if (entitlements.length > 0) {
+          return {
+            allowed: true,
+            reason: 'has_entitlement',
+            model: pricingModel,
+            entitlement: entitlements[0]
+          };
+        }
+      }
+      
+      return {
+        allowed: false,
+        reason: 'payment_required',
+        code: 'payment_required',
+        message: `Payment is required for downloads (${pricingModel} pricing)`,
+        httpStatus: 402
+      };
+    }
+    
+    // Default: Allow download if no specific model matches
+    console.warn(`⚠️ Unknown pricing model: ${pricingModel}, defaulting to allow`);
+    return { 
+      allowed: true, 
+      reason: 'unknown_model_default',
+      model: pricingModel
+    };
   }
 
   /**
@@ -1301,16 +1478,18 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // pricingModel already normalized above
 
       if (pricingModel === 'free') {
-        // CRITICAL FIX: Use centralized enforcement logic
-        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId);
+        // Generate client key for tracking even in free mode
+        const clientKey = generateGalleryClientKey(galleryToken, sessionId);
+        
+        // Use centralized enforcement logic
+        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId, clientKey);
         
         if (!policyCheck.allowed) {
-          console.log(`❌ Download limit exceeded for session ${sessionId}:`, policyCheck);
-          return res.status(403).json({
+          console.log(`❌ Download blocked for session ${sessionId}:`, policyCheck);
+          return res.status(policyCheck.httpStatus || 403).json({
             code: policyCheck.code,
             message: policyCheck.message,
-            allowed: policyCheck.allowed,
-            used: policyCheck.used
+            allowed: policyCheck.allowed
           });
         }
         
@@ -1338,48 +1517,25 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         });
 
       } else if (pricingModel === 'freemium') {
-        // CRITICAL FIX: Check overall download limit first using centralized enforcement
-        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId);
+        // Generate deterministic client key for freemium tracking
+        const clientKey = generateGalleryClientKey(galleryToken, sessionId);
+        console.log(`🔑 Generated authoritative client key: ${clientKey} for freemium access`);
+        
+        // Use centralized enforcement logic with client key
+        const policyCheck = await enforceDownloadPolicy(sessionData, sessionId, clientKey);
         
         if (!policyCheck.allowed) {
-          console.log(`❌ Total download limit exceeded for session ${sessionId}:`, policyCheck);
-          return res.status(403).json({
+          console.log(`❌ Download blocked for client ${clientKey}:`, policyCheck);
+          return res.status(policyCheck.httpStatus || 403).json({
             code: policyCheck.code,
             message: policyCheck.message,
             allowed: policyCheck.allowed,
-            used: policyCheck.used
+            used: policyCheck.used,
+            limit: policyCheck.limit
           });
         }
         
-        // CRITICAL FIX: Use authoritative gallery client key generation
-        // For freemium mode, client key must be deterministic based on gallery token + session
-        const galleryToken = req.galleryToken; // Available from requireGalleryToken middleware
-        const clientKey = generateGalleryClientKey(galleryToken, sessionId);
-        
-        console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery access`);
-        
-        console.log(`🎯 Freemium check for client: ${clientKey}`);
-        
-        // Check if user has free downloads remaining (PER CLIENT)
-        const freeDownloads = sessionData.freeDownloads || 0;
-        
-        console.log(`📊 Session allows ${freeDownloads} free downloads per client`);
-        
-        // Count previous downloads for THIS SPECIFIC CLIENT (not all clients)
-        const existingDownloads = await db
-          .select({ count: count() })
-          .from(galleryDownloads)
-          .where(and(
-            eq(galleryDownloads.sessionId, sessionId),
-            eq(galleryDownloads.clientKey, clientKey), // CRITICAL: Filter by specific client
-            eq(galleryDownloads.status, 'completed')
-          ));
-
-        const usedFreeDownloads = existingDownloads[0]?.count || 0;
-        
-        console.log(`📈 Client ${clientKey} has used ${usedFreeDownloads} of ${freeDownloads} free downloads`);
-
-        if (usedFreeDownloads < freeDownloads) {
+        if (policyCheck.reason === 'within_free_quota') {
           // Free download available - generate immediate download token
           const downloadToken = crypto.randomBytes(32).toString('hex');
           const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
