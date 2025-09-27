@@ -648,6 +648,22 @@ function createSessionCard(session) {
     galleryBtn.textContent = ' Copy Gallery URL';
     galleryBtn.onclick = () => copyGalleryUrl(session.id);
 
+    // Gallery Notification button - send gallery links via Email/SMS
+    const galleryNotifyBtn = document.createElement('button');
+    galleryNotifyBtn.className = 'btn btn-success';
+    galleryNotifyBtn.textContent = '📧📱 Send Gallery Notification';
+    galleryNotifyBtn.onclick = () => sendGalleryNotification(session.id);
+    galleryNotifyBtn.style.backgroundColor = '#28a745';
+    galleryNotifyBtn.style.color = 'white';
+    galleryNotifyBtn.style.margin = '2px';
+    
+    // Only enable if gallery access token exists (pulls phone from session card)
+    if (!session.galleryAccessToken) {
+        galleryNotifyBtn.textContent = '⚠️ Generate Gallery First';
+        galleryNotifyBtn.style.backgroundColor = '#6c757d';
+        galleryNotifyBtn.disabled = true;
+        galleryNotifyBtn.title = 'Generate gallery access first, then you can send notifications';
+    }
 
     // Email preview button (shows after gallery notification is generated)
     const emailPreviewBtn = document.createElement('button');
@@ -728,6 +744,7 @@ function createSessionCard(session) {
     actions.appendChild(calendarBtn);
     actions.appendChild(emailClientBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(galleryNotifyBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(depositBtn);
@@ -1273,10 +1290,27 @@ async function sendGalleryNotification(sessionId) {
             showMessage('WARNING: Email notification prepared. Check console for details.', 'warning');
         }
 
-        // Always show SMS option
-        if (result.smsSent) {
+        // Handle SMS option - use the SMS link returned from server
+        if (result.smsSent && result.smsLink) {
             setTimeout(() => {
-                showMessage('💬 SMS link prepared for manual sending if needed.', 'info');
+                showMessage('💬 SMS ready! Click to open messaging app.', 'success');
+                
+                // Create SMS button that user can click
+                const smsButton = document.createElement('button');
+                smsButton.textContent = '📱 Send SMS';
+                smsButton.style.cssText = 'background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px;';
+                smsButton.onclick = () => {
+                    console.log(`📱 Opening SMS app with formatted phone number from session card`);
+                    window.location.href = result.smsLink;
+                };
+                
+                // Find the messages container and add the button
+                const messagesContainer = document.querySelector('.messages') || document.body;
+                messagesContainer.appendChild(smsButton);
+            }, 3000);
+        } else if (result.smsSent) {
+            setTimeout(() => {
+                showMessage('💬 SMS prepared but no phone number available.', 'warning');
             }, 2000);
         }
 
