@@ -2191,6 +2191,18 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       }
 
       // Convert database fields from snake_case to camelCase for client consumption
+      // CRITICAL FIX: Handle FREE pricing model properly
+      let finalPricePerDownload = sessionData.pricePerDownload;
+      let finalFreeDownloads = sessionData.freeDownloads;
+      let finalWatermarkEnabled = sessionData.watermarkEnabled;
+      
+      if (sessionData.pricingModel === 'free') {
+        console.log('🆓 FREE MODE: Cleaning pricing data for frontend');
+        finalPricePerDownload = '0.00';  // Always $0.00 for free galleries
+        finalFreeDownloads = 0;          // 0 means unlimited for free galleries  
+        finalWatermarkEnabled = false;   // Disable watermarks for free galleries
+      }
+      
       const clientSessionData = {
         id: sessionData.id,
         clientName: sessionData.clientName,
@@ -2199,9 +2211,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         downloadEnabled: sessionData.downloadEnabled,
         pricingModel: sessionData.pricingModel,
         downloadMax: sessionData.downloadMax,
-        pricePerDownload: sessionData.pricePerDownload,
-        freeDownloads: sessionData.freeDownloads,
-        watermarkEnabled: sessionData.watermarkEnabled,
+        pricePerDownload: finalPricePerDownload,
+        freeDownloads: finalFreeDownloads,
+        watermarkEnabled: finalWatermarkEnabled,
         watermarkType: sessionData.watermarkType,
         watermarkText: sessionData.watermarkText,
         watermarkLogoUrl: sessionData.watermarkLogoUrl,
