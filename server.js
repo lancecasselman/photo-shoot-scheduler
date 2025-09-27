@@ -5079,6 +5079,46 @@ async function deleteSession(id, userId) {
         await client.query(deleteDownloadEntitlementsQuery, [id]);
         console.log(`Deleted download entitlements for session ${id}`);
         
+        // Delete any digital transactions for this session
+        const deleteDigitalTransactionsQuery = 'DELETE FROM digital_transactions WHERE session_id = $1';
+        await client.query(deleteDigitalTransactionsQuery, [id]);
+        console.log(`Deleted digital transactions for session ${id}`);
+        
+        // Delete any download history for this session
+        const deleteDownloadHistoryQuery = 'DELETE FROM download_history WHERE session_id = $1';
+        await client.query(deleteDownloadHistoryQuery, [id]);
+        console.log(`Deleted download history for session ${id}`);
+        
+        // Delete any download orders for this session
+        const deleteDownloadOrdersQuery = 'DELETE FROM download_orders WHERE session_id = $1';
+        await client.query(deleteDownloadOrdersQuery, [id]);
+        console.log(`Deleted download orders for session ${id}`);
+        
+        // Delete any download policies for this session
+        const deleteDownloadPoliciesQuery = 'DELETE FROM download_policies WHERE session_id = $1';
+        await client.query(deleteDownloadPoliciesQuery, [id]);
+        console.log(`Deleted download policies for session ${id}`);
+        
+        // Delete any download tokens for this session
+        const deleteDownloadTokensQuery = 'DELETE FROM download_tokens WHERE session_id = $1';
+        await client.query(deleteDownloadTokensQuery, [id]);
+        console.log(`Deleted download tokens for session ${id}`);
+        
+        // Delete any payment records for this session (in addition to payment plan cleanup)
+        const deletePaymentRecordsQuery = 'DELETE FROM payment_records WHERE session_id = $1';
+        await client.query(deletePaymentRecordsQuery, [id]);
+        console.log(`Deleted payment records for session ${id}`);
+        
+        // Delete any print orders for this session
+        const deletePrintOrdersQuery = 'DELETE FROM print_orders WHERE session_id = $1';
+        await client.query(deletePrintOrdersQuery, [id]);
+        console.log(`Deleted print orders for session ${id}`);
+        
+        // Delete any r2_files for this session
+        const deleteR2FilesQuery = 'DELETE FROM r2_files WHERE session_id = $1';
+        await client.query(deleteR2FilesQuery, [id]);
+        console.log(`Deleted r2_files for session ${id}`);
+        
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
         if (userId) {
