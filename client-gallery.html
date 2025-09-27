@@ -103,6 +103,36 @@
             animation: slideDown 0.5s ease;
         }
         
+        /* Enhanced pricing mode visual indicators */
+        .pricing-banner.free-mode {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(101, 163, 13, 0.95) 100%);
+        }
+        
+        .pricing-banner.paid-mode {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(185, 28, 28, 0.95) 100%);
+        }
+        
+        .pricing-banner.freemium-mode.freemium-free {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(34, 197, 94, 0.95) 100%);
+        }
+        
+        .pricing-banner.freemium-mode.freemium-paid {
+            background: linear-gradient(135deg, rgba(245, 101, 101, 0.95) 0%, rgba(251, 146, 60, 0.95) 100%);
+        }
+        
+        .pricing-banner.bulk-mode {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
+        }
+        
+        .pricing-banner.rate-limited {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -961,12 +991,206 @@
             background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
         }
 
+        .quota-bar.quota-medium {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+        }
+
         .quota-bar.quota-warning {
             background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
         }
 
         .quota-bar.quota-critical {
             background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+        }
+
+        .quota-bar.quota-exhausted {
+            background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+            animation: flash 1s infinite;
+        }
+
+        .quota-bar.quota-unlimited {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+
+        .quota-bar.quota-freemium {
+            background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+        }
+
+        @keyframes flash {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        /* Progress Indicator Styles */
+        .progress-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            min-width: 300px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .progress-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-message {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: toastSlideIn 0.3s ease;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toast-success {
+            border-left-color: #22c55e;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.9) 0%, rgba(21, 128, 61, 0.9) 100%);
+        }
+
+        .toast-error {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%);
+        }
+
+        .toast-warning {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.9) 0%, rgba(217, 119, 6, 0.9) 100%);
+        }
+
+        .toast-rate-limit {
+            border-left-color: #8b5cf6;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.9) 0%, rgba(109, 40, 217, 0.9) 100%);
+        }
+
+        .toast-network-error {
+            border-left-color: #06b6d4;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.9) 0%, rgba(8, 145, 178, 0.9) 100%);
+        }
+
+        .toast-quota-exceeded {
+            border-left-color: #f97316;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.9) 0%, rgba(234, 88, 12, 0.9) 100%);
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .toast-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-fade-out {
+            animation: toastFadeOut 0.3s ease forwards;
+        }
+
+        @keyframes toastFadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
         }
 
         /* Quota Modal Styles */
@@ -1422,11 +1646,11 @@
                 try {
                     console.log('🔄 Refreshing gallery with new photos...');
                     
-                    // Re-verify gallery access to get updated photo list
-                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
-                    const verifyData = await verifyResponse.json();
+                    // Re-verify gallery access using unified API
+                    const validateResponse = await this.validateUnifiedAccess();
                     
-                    if (verifyResponse.ok && verifyData.success && verifyData.session) {
+                    if (validateResponse.success && validateResponse.data.session) {
+                        const verifyData = validateResponse.data;
                         // Update photos array with new data
                         this.photos = verifyData.session.photos || [];
                         console.log(`📸 Gallery refreshed: now showing ${this.photos.length} photos`);
@@ -1553,11 +1777,17 @@
                 try {
                     console.log('📸 Loading gallery with token:', this.galleryToken);
                     
-                    // Verify gallery access using correct endpoint
-                    const verifyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
-                    const verifyData = await verifyResponse.json();
+                    // Use new unified API for gallery access validation
+                    const validateResponse = await this.validateUnifiedAccess();
                     
-                    console.log('🔍 API Response received:', verifyResponse.status, verifyResponse.ok);
+                    if (!validateResponse.success) {
+                        console.error('❌ Gallery access validation failed:', validateResponse.error);
+                        this.showError(validateResponse.error || 'Unable to access gallery');
+                        return;
+                    }
+                    
+                    const verifyData = validateResponse.data;
+                    console.log('🔍 Unified API Response received:', verifyData);
                     console.log('🔍 API Response data structure:', JSON.stringify(verifyData, null, 2));
                     
                     if (!verifyResponse.ok || !verifyData) {
@@ -1612,7 +1842,7 @@
                     
                     // Update UI
                     this.updateGalleryUI();
-                    this.updatePricingBanner();
+                    await this.updatePricingBanner();
                     this.displayPhotos();
                     
                     // Hide loading, show gallery
@@ -1635,11 +1865,11 @@
                     console.log('🔄 ATTEMPTING EMERGENCY GALLERY RECOVERY...');
                     
                     try {
-                        // Make one more direct API call to get the data
-                        const emergencyResponse = await fetch(`/api/gallery/${this.galleryToken}/verify`);
-                        const emergencyData = await emergencyResponse.json();
+                        // Make one more direct API call using unified endpoint
+                        const emergencyResponse = await this.validateUnifiedAccess();
                         
-                        console.log('🚨 EMERGENCY RESPONSE:', emergencyData);
+                        console.log('🚨 EMERGENCY RESPONSE:', emergencyResponse);
+                        const emergencyData = emergencyResponse.data;
                         
                         if (emergencyData.success && emergencyData.session) {
                             console.log('✅ EMERGENCY RECOVERY SUCCESS - Processing data...');
@@ -1756,7 +1986,7 @@
                     `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''}`;
             }
             
-            updatePricingBanner() {
+            async updatePricingBanner() {
                 const banner = document.getElementById('pricingBanner');
                 const info = document.getElementById('pricingInfo');
                 
@@ -1765,36 +1995,65 @@
                     return;
                 }
                 
+                // Get real-time status from unified API for accurate quota info
+                let quotaInfo = this.currentQuota;
+                try {
+                    const statusResult = await this.getUnifiedSessionStatus();
+                    if (statusResult.success && statusResult.quota) {
+                        quotaInfo = statusResult.quota;
+                        // Also update policy if it has changed
+                        if (statusResult.policy) {
+                            this.policy = statusResult.policy;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not fetch real-time status for banner:', error);
+                }
+                
                 let message = '';
+                let bannerClass = 'pricing-banner';
                 
                 switch (this.policy.mode) {
                     case 'free':
-                        message = '✨ All photos are FREE to download!';
+                        message = '✨ ALL PHOTOS ARE FREE TO DOWNLOAD!';
+                        bannerClass += ' free-mode';
                         break;
                         
                     case 'fixed':
-                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || 0);
-                        message = `💳 Fixed price: $${fixedPrice.toFixed(2)} per photo`;
+                    case 'paid':
+                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || this.policy.pricePerDownload || 0);
+                        message = `💳 PAID GALLERY - $${fixedPrice.toFixed(2)} per photo`;
+                        bannerClass += ' paid-mode';
                         break;
                         
                     case 'freemium':
                         const freeCount = parseInt(this.policy.freeCount || 0);
-                        const afterPrice = parseFloat(this.policy.pricePerPhoto || 0);
-                        // Free entitlements have orderId: null (no payment required)
-                        const usedFree = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
-                        const remaining = Math.max(0, freeCount - usedFree);
+                        const afterPrice = parseFloat(this.policy.pricePerPhoto || this.policy.pricePerDownload || 0);
                         
-                        console.log(`🔢 Counter calculation: freeCount=${freeCount}, usedFree=${usedFree}, remaining=${remaining}`);
+                        // Use quota info from unified API for accurate remaining count
+                        let remaining = 0;
+                        if (quotaInfo && quotaInfo.freeRemaining !== undefined) {
+                            remaining = quotaInfo.freeRemaining;
+                        } else {
+                            // Fallback to entitlements calculation
+                            const usedFree = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
+                            remaining = Math.max(0, freeCount - usedFree);
+                        }
+                        
+                        console.log(`🔢 FREEMIUM Banner: freeCount=${freeCount}, remaining=${remaining}, afterPrice=${afterPrice}`);
                         
                         if (remaining > 0) {
-                            message = `🆓 ${remaining} of ${freeCount} free downloads remaining • Then $${afterPrice.toFixed(2)} each`;
+                            message = `🆓 FREEMIUM - ${remaining} FREE downloads left, then $${afterPrice.toFixed(2)} each`;
+                            bannerClass += ' freemium-mode freemium-free';
                         } else {
-                            message = `💳 Free downloads used • Additional photos: $${afterPrice.toFixed(2)} each`;
+                            message = `💳 FREE QUOTA USED - Additional photos: $${afterPrice.toFixed(2)} each`;
+                            bannerClass += ' freemium-mode freemium-paid';
                         }
                         break;
                         
                     case 'per_photo':
-                        message = '💳 Individual pricing per photo';
+                        message = '💳 PAID GALLERY - Individual pricing per photo';
+                        bannerClass += ' paid-mode';
                         break;
                         
                     case 'bulk':
@@ -1802,17 +2061,26 @@
                             const firstTier = this.policy.bulkTiers[0];
                             const price = parseFloat(firstTier.price) || 0;
                             const qty = parseInt(firstTier.qty) || 1;
-                            message = `📦 Bulk pricing: ${qty}+ photos at $${price.toFixed(2)} each`;
+                            message = `📦 BULK PRICING - ${qty}+ photos at $${price.toFixed(2)} each`;
                         } else {
-                            message = '📦 Bulk pricing available';
+                            message = '📦 BULK PRICING AVAILABLE';
                         }
+                        bannerClass += ' bulk-mode';
                         break;
                         
                     default:
-                        message = '📥 Downloads available';
+                        message = '📥 DOWNLOADS AVAILABLE';
+                        bannerClass += ' default-mode';
+                }
+                
+                // Add rate limit warning if applicable
+                if (quotaInfo && quotaInfo.rateLimited) {
+                    message += ' ⚠️ Rate limit active';
+                    bannerClass += ' rate-limited';
                 }
                 
                 info.textContent = message;
+                banner.className = bannerClass;
                 banner.classList.add('show');
             }
             
@@ -2535,7 +2803,7 @@
                         console.log(`✅ Loaded ${this.entitlements.length} entitlements for ${clientKey}`);
                         
                         // Update pricing banner for freemium mode
-                        this.updatePricingBanner();
+                        await this.updatePricingBanner();
                     } else {
                         console.error('Failed to load entitlements:', data.error);
                         this.entitlements = [];
@@ -2549,28 +2817,14 @@
             
             async downloadPhoto(photoId, photoUrl, filename) {
                 try {
-                    // Create download token
-                    const response = await fetch('/api/downloads/tokens', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            sessionId: this.sessionData.id,
-                            clientKey: this.getClientKey(),
-                            photoId: photoId,
-                            photoUrl: photoUrl,
-                            filename: filename
-                        })
-                    });
+                    console.log(`📥 Processing entitled download for ${filename}`);
                     
-                    const data = await response.json();
+                    // Use unified API for processing the download
+                    const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, false, null);
                     
-                    if (data.success && data.token) {
-                        // Start download
-                        const downloadUrl = `/api/downloads/photo/${data.token}`;
-                        
-                        // Create temporary link and click it
+                    if (downloadResult.success && downloadResult.downloadToken) {
+                        // Trigger download using the token
+                        const downloadUrl = `/api/downloads/token/${downloadResult.downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename || 'photo.jpg';
@@ -2578,15 +2832,27 @@
                         link.click();
                         document.body.removeChild(link);
                         
-                        this.showSuccess(`Downloading ${filename}...`);
+                        this.showSuccess(`Downloaded ${filename}!`);
+                        
+                        // Update quota display after successful download
+                        await this.updateQuotaFromUnifiedAPI();
                         
                     } else {
-                        throw new Error(data.error || 'Failed to generate download token');
+                        const errorMessage = downloadResult.error || 'Download processing failed';
+                        console.error('❌ Download failed:', errorMessage);
+                        
+                        // Handle specific error scenarios
+                        if (downloadResult.code === 'PAYMENT_REQUIRED' && downloadResult.paymentInfo) {
+                            this.handlePaymentRequired(downloadResult.paymentInfo, photoId, photoUrl, filename);
+                        } else if (downloadResult.code === 'RATE_LIMIT_EXCEEDED') {
+                            this.showError(`Rate limit exceeded. Please wait ${downloadResult.retryAfter || 60} seconds before trying again.`);
+                        } else {
+                            this.showError(`Download failed: ${errorMessage}`);
+                        }
                     }
-                    
                 } catch (error) {
-                    console.error('Error downloading photo:', error);
-                    alert(`Download failed: ${error.message}`);
+                    console.error('❌ Error downloading photo:', error);
+                    this.showError(`Network error during download: ${error.message}`);
                 }
             }
             
@@ -2600,81 +2866,67 @@
                     button.disabled = true;
                     button.textContent = 'Processing...';
                     
-                    // For free downloads, use the same mechanism as free galleries
-                    if (price === 0) {
-                        console.log('🆓 Processing free download in freemium mode...');
+                    // Use unified API for immediate download processing
+                    const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, price > 0, null);
+                    
+                    if (downloadResult.success && downloadResult.downloadToken) {
+                        // Trigger download using the token
+                        const downloadUrl = `/api/downloads/token/${downloadResult.downloadToken}`;
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = filename || 'photo.jpg';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                         
-                        // Create download token (same as free galleries)
-                        const response = await fetch('/api/downloads/tokens', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                sessionId: this.sessionData.id,
-                                clientKey: this.getClientKey(),
-                                photoId: photoId,
-                                photoUrl: photoUrl,
-                                filename: filename
-                            })
-                        });
+                        // Update UI to reflect the download
+                        await this.loadEntitlements();
+                        this.displayPhotos(); // Refresh UI to show updated state
                         
-                        const data = await response.json();
+                        // Update quota display
+                        await this.updateQuotaFromUnifiedAPI();
                         
-                        if (data.success && data.token) {
-                            // Start download immediately (same as free galleries)
-                            const downloadUrl = `/api/downloads/photo/${data.token}`;
-                            const link = document.createElement('a');
-                            link.href = downloadUrl;
-                            link.download = filename || 'photo.jpg';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            
-                            this.showSuccess(`Downloading ${filename} for FREE!`);
-                            
-                            // Refresh the gallery to update pricing and entitlements
-                            await this.loadEntitlements();
-                            this.updatePricingBanner(); // Update the counter display
-                            this.displayPhotos();
-                            
-                        } else if (data.quotaExceeded) {
-                            // Free quota exhausted - automatically add to cart instead of showing error
-                            console.log('🛒 Free quota exhausted, automatically adding to cart...');
-                            
-                            // Get the paid price for this photo (should be policy.pricePerDownload)
-                            const paidPrice = this.policy && this.policy.pricePerDownload ? 
-                                parseFloat(this.policy.pricePerDownload) : 4.66;
-                            
-                            // Add to cart automatically
-                            await this.addToCart(photoId, photoUrl, filename, paidPrice);
-                            
-                            // Show user-friendly message about automatic cart addition
-                            this.showSuccess(`Free downloads used up! Added ${filename} to cart for $${paidPrice.toFixed(2)}`);
-                            
-                            // Refresh the gallery to update buttons and pricing
-                            await this.loadEntitlements();
-                            this.updatePricingBanner();
-                            this.displayPhotos();
-                            
-                            return; // Exit successfully without error
-                        } else {
-                            throw new Error(data.error || 'Failed to generate download token');
+                        const successMessage = price === 0 ? 
+                            `Downloaded ${filename} for FREE!` : 
+                            `Downloaded ${filename} for $${price.toFixed(2)}!`;
+                        this.showSuccess(successMessage);
+                        
+                        // Show pricing info if applicable
+                        if (downloadResult.pricing) {
+                            console.log('💰 Download pricing info:', downloadResult.pricing);
+                            await this.updatePricingBanner();
                         }
+                        
                     } else {
-                        // For paid downloads, add to cart instead
-                        this.showSuccess(`Adding ${filename} to cart - $${price.toFixed(2)}`);
-                        await this.addToCart(photoId, photoUrl, filename, price);
+                        const errorMessage = downloadResult.error || 'Download processing failed';
+                        console.error('❌ Immediate download failed:', errorMessage);
+                        
+                        // Handle specific error scenarios with better UX
+                        if (downloadResult.code === 'PAYMENT_REQUIRED' && downloadResult.paymentInfo) {
+                            this.handlePaymentRequired(downloadResult.paymentInfo, photoId, photoUrl, filename);
+                        } else if (downloadResult.code === 'RATE_LIMIT_EXCEEDED') {
+                            this.showError(`Too many requests. Please wait ${downloadResult.retryAfter || 60} seconds before trying again.`);
+                        } else if (downloadResult.code === 'QUOTA_EXCEEDED') {
+                            // Auto-add to cart when quota exceeded
+                            console.log('🛒 Free quota exceeded, automatically adding to cart...');
+                            const paidPrice = this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75;
+                            await this.addToCart(photoId, photoUrl, filename, paidPrice);
+                            this.showSuccess(`Free quota exhausted! Added ${filename} to cart for $${paidPrice.toFixed(2)}`);
+                            await this.updatePricingBanner();
+                            this.displayPhotos();
+                            return; // Exit successfully
+                        } else {
+                            this.showError(`Download failed: ${errorMessage}`);
+                        }
                     }
-                    
                 } catch (error) {
-                    console.error('Error with immediate download:', error);
-                    alert(`Download failed: ${error.message}`);
-                    
+                    console.error('❌ Error in immediate download:', error);
+                    this.showError(`Network error during download: ${error.message}`);
+                } finally {
                     // Reset button state
-                    if (button) {
-                        button.disabled = false;
-                        button.textContent = originalText;
+                    if (event && event.target) {
+                        event.target.disabled = false;
+                        event.target.textContent = originalText || (price === 0 ? '📥 FREE Download' : '📥 Download');
                     }
                 }
             }
@@ -2734,10 +2986,73 @@
                 }, 3000);
             }
             
-            showError(message) {
+            showError(message, errorType = 'general') {
+                console.error(`🚨 Error [${errorType}]:`, message);
+                
+                // Show error in the error container
                 document.getElementById('loadingContainer').style.display = 'none';
                 document.getElementById('errorContainer').style.display = 'block';
                 document.getElementById('errorMessage').textContent = message;
+                
+                // Also show as a temporary toast notification
+                this.showToast(message, 'error', errorType);
+            }
+
+            /**
+             * Enhanced toast notification system
+             */
+            showToast(message, type = 'info', category = '') {
+                const toastId = 'toast-' + Date.now();
+                const iconMap = {
+                    'success': '✅',
+                    'error': '❌',
+                    'warning': '⚠️',
+                    'info': 'ℹ️',
+                    'rate-limit': '🕐',
+                    'network-error': '🌐',
+                    'quota-exceeded': '📊'
+                };
+                
+                const icon = iconMap[type] || iconMap[category] || iconMap['info'];
+                
+                const toast = document.createElement('div');
+                toast.id = toastId;
+                toast.className = `toast toast-${type} ${category ? `toast-${category}` : ''}`;
+                toast.innerHTML = `
+                    <span class="toast-icon">${icon}</span>
+                    <span class="toast-message">${message}</span>
+                    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+                `;
+                
+                // Add to toast container or create one
+                let toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.id = 'toastContainer';
+                    toastContainer.className = 'toast-container';
+                    document.body.appendChild(toastContainer);
+                }
+                
+                toastContainer.appendChild(toast);
+                
+                // Auto-remove after delay based on message type
+                const delays = {
+                    'success': 3000,
+                    'info': 4000,
+                    'warning': 6000,
+                    'error': 8000,
+                    'rate-limit': 10000
+                };
+                
+                const delay = delays[type] || delays[category] || 5000;
+                
+                setTimeout(() => {
+                    const toastEl = document.getElementById(toastId);
+                    if (toastEl) {
+                        toastEl.classList.add('toast-fade-out');
+                        setTimeout(() => toastEl.remove(), 300);
+                    }
+                }, delay);
             }
 
             // ========================================
@@ -2746,9 +3061,12 @@
 
             updateQuotaDisplay(quotaInfo) {
                 const quotaContainer = document.getElementById('quotaInfo');
-                if (!quotaInfo) return;
+                if (!quotaInfo) {
+                    quotaContainer.style.display = 'none';
+                    return;
+                }
 
-                // Show/hide quota info based on quota limits
+                // Show/hide quota info based on quota limits and pricing mode
                 if (quotaInfo.unlimited || (!quotaInfo.limit && quotaInfo.limit !== 0)) {
                     quotaContainer.style.display = 'none';
                     return;
@@ -2760,29 +3078,65 @@
                 const quotaProgress = document.getElementById('quotaProgress');
                 const quotaBar = document.getElementById('quotaBar');
 
-                const remaining = quotaInfo.remaining || 0;
-                const total = quotaInfo.limit || 0;
+                // Enhanced quota info with unified API support
+                const remaining = quotaInfo.remaining || quotaInfo.freeRemaining || 0;
+                const total = quotaInfo.limit || quotaInfo.freeTotal || 0;
                 const used = quotaInfo.used || 0;
-                const reserved = quotaInfo.reserved || 0;
+                const reserved = quotaInfo.reserved || quotaInfo.cartReserved || 0;
+                
+                // Handle freemium mode differently
+                let quotaMessage = '';
+                if (this.policy?.mode === 'freemium') {
+                    const freeRemaining = quotaInfo.freeRemaining || 0;
+                    const freeTotal = quotaInfo.freeTotal || this.policy.freeCount || 0;
+                    const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
+                    
+                    if (freeRemaining > 0) {
+                        quotaMessage = `🆓 ${freeRemaining} of ${freeTotal} FREE downloads remaining${reservedText}`;
+                    } else {
+                        quotaMessage = `💳 Free quota used - paid downloads only${reservedText}`;
+                    }
+                } else {
+                    // Standard quota display for other modes
+                    const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
+                    quotaMessage = `${remaining} of ${total} downloads remaining${reservedText}`;
+                }
+                
+                // Add rate limiting info if applicable
+                if (quotaInfo.rateLimited) {
+                    const retryAfter = quotaInfo.retryAfter || 60;
+                    quotaMessage += ` ⚠️ Rate limited (${retryAfter}s)`;
+                }
+                
+                quotaText.textContent = quotaMessage;
 
-                // Update text with reserved count info
-                const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
-                quotaText.textContent = `${remaining} of ${total} downloads remaining${reservedText}`;
-
-                // Update progress bar
+                // Update progress bar with enhanced visual feedback
                 if (total > 0) {
                     const percentage = Math.max(0, (remaining / total) * 100);
                     quotaBar.style.width = `${percentage}%`;
                     
-                    // Color coding based on remaining quota
+                    // Enhanced color coding based on remaining quota and mode
                     quotaBar.className = 'quota-bar';
-                    if (percentage <= 10) {
+                    if (percentage <= 0) {
+                        quotaBar.classList.add('quota-exhausted');
+                    } else if (percentage <= 10) {
                         quotaBar.classList.add('quota-critical');
                     } else if (percentage <= 25) {
                         quotaBar.classList.add('quota-warning');
+                    } else if (percentage <= 50) {
+                        quotaBar.classList.add('quota-medium');
                     } else {
                         quotaBar.classList.add('quota-good');
                     }
+                    
+                    // Add special styling for freemium mode
+                    if (this.policy?.mode === 'freemium') {
+                        quotaBar.classList.add('quota-freemium');
+                    }
+                } else {
+                    // Handle unlimited or no-limit scenarios
+                    quotaBar.style.width = '100%';
+                    quotaBar.className = 'quota-bar quota-unlimited';
                 }
 
                 // Store quota info for use in other methods
@@ -2832,16 +3186,270 @@
 
             async loadQuotaStatus() {
                 try {
-                    if (!this.sessionData) return;
+                    if (!this.sessionData?.id || !this.galleryToken) {
+                        console.warn('⚠️ Cannot load quota status: missing session data or gallery token');
+                        return;
+                    }
 
-                    const response = await fetch(`/api/downloads/cart/status?sessionId=${this.sessionData.id}&clientKey=${this.getClientKey()}`);
-                    const data = await response.json();
+                    // Use unified API for quota status
+                    const statusResult = await this.getUnifiedSessionStatus();
 
-                    if (data.success && data.quota) {
-                        this.updateQuotaDisplay(data.quota);
+                    if (statusResult.success && statusResult.quota) {
+                        this.updateQuotaDisplay(statusResult.quota);
+                        
+                        // Also update policy if provided
+                        if (statusResult.policy) {
+                            this.policy = statusResult.policy;
+                        }
+                        
+                        // Update entitlements if provided
+                        if (statusResult.entitlements) {
+                            this.entitlements = statusResult.entitlements;
+                        }
+                    } else {
+                        console.warn('⚠️ Failed to load quota status:', statusResult.error);
                     }
                 } catch (error) {
-                    console.error('Error loading quota status:', error);
+                    console.error('❌ Error loading quota status:', error);
+                }
+            }
+
+            /**
+             * Helper method to update quota display from unified API
+             */
+            async updateQuotaFromUnifiedAPI() {
+                try {
+                    const statusResult = await this.getUnifiedSessionStatus();
+                    if (statusResult.success && statusResult.quota) {
+                        this.updateQuotaDisplay(statusResult.quota);
+                        await this.updatePricingBanner();
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating quota from unified API:', error);
+                }
+            }
+
+            /**
+             * Enhanced error handling with retry mechanisms
+             */
+            async makeUnifiedApiCall(apiCall, retries = 3, delay = 1000) {
+                for (let attempt = 1; attempt <= retries; attempt++) {
+                    try {
+                        const result = await apiCall();
+                        if (result.success) {
+                            return result;
+                        }
+                        
+                        // Handle specific error codes
+                        if (result.code === 'RATE_LIMIT_EXCEEDED' && attempt < retries) {
+                            const retryAfter = result.retryAfter || delay;
+                            console.log(`🔄 Rate limited, retrying after ${retryAfter}ms (attempt ${attempt}/${retries})`);
+                            await this.sleep(retryAfter);
+                            continue;
+                        }
+                        
+                        return result; // Return the error result if not retryable
+                        
+                    } catch (error) {
+                        console.error(`❌ API call failed (attempt ${attempt}/${retries}):`, error);
+                        
+                        // Network errors - retry with exponential backoff
+                        if (attempt < retries && (error.name === 'NetworkError' || error.message.includes('fetch'))) {
+                            const retryDelay = delay * Math.pow(2, attempt - 1);
+                            console.log(`🔄 Network error, retrying after ${retryDelay}ms`);
+                            await this.sleep(retryDelay);
+                            continue;
+                        }
+                        
+                        return {
+                            success: false,
+                            error: `Network error: ${error.message}`,
+                            code: 'NETWORK_ERROR'
+                        };
+                    }
+                }
+                
+                return {
+                    success: false,
+                    error: 'Maximum retries exceeded',
+                    code: 'MAX_RETRIES_EXCEEDED'
+                };
+            }
+
+            /**
+             * Utility method for delays
+             */
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            /**
+             * Enhanced download with progress tracking
+             */
+            async downloadWithProgress(photoId, photoUrl, filename, isPaid = false, paymentIntentId = null) {
+                const progressIndicator = this.showProgressIndicator(`Processing ${filename}...`);
+                
+                try {
+                    // Use retry mechanism for download processing
+                    const result = await this.makeUnifiedApiCall(() => 
+                        this.processUnifiedDownload(photoId, photoUrl, filename, isPaid, paymentIntentId)
+                    );
+                    
+                    if (result.success && result.downloadToken) {
+                        this.updateProgress(progressIndicator, 'Downloading file...', 80);
+                        
+                        // Trigger download
+                        const downloadUrl = `/api/downloads/token/${result.downloadToken}`;
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        this.updateProgress(progressIndicator, 'Download complete!', 100);
+                        setTimeout(() => this.hideProgressIndicator(progressIndicator), 1000);
+                        
+                        // Update quota display
+                        await this.updateQuotaFromUnifiedAPI();
+                        
+                        return { success: true };
+                        
+                    } else {
+                        this.hideProgressIndicator(progressIndicator);
+                        this.handleDownloadError(result, photoId, photoUrl, filename);
+                        return result;
+                    }
+                } catch (error) {
+                    this.hideProgressIndicator(progressIndicator);
+                    console.error('❌ Download with progress failed:', error);
+                    this.showError(`Download failed: ${error.message}`);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            /**
+             * Show progress indicator
+             */
+            showProgressIndicator(message) {
+                const progressId = 'progress-' + Date.now();
+                const progressHtml = `
+                    <div id="${progressId}" class="progress-indicator">
+                        <div class="progress-content">
+                            <div class="progress-spinner"></div>
+                            <div class="progress-message">${message}</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', progressHtml);
+                return progressId;
+            }
+
+            /**
+             * Update progress indicator
+             */
+            updateProgress(progressId, message, percentage) {
+                const indicator = document.getElementById(progressId);
+                if (indicator) {
+                    const messageEl = indicator.querySelector('.progress-message');
+                    const fillEl = indicator.querySelector('.progress-fill');
+                    if (messageEl) messageEl.textContent = message;
+                    if (fillEl) fillEl.style.width = `${percentage}%`;
+                }
+            }
+
+            /**
+             * Hide progress indicator
+             */
+            hideProgressIndicator(progressId) {
+                const indicator = document.getElementById(progressId);
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+
+            /**
+             * Enhanced error handling for downloads
+             */
+            handleDownloadError(result, photoId, photoUrl, filename) {
+                const errorCode = result.code;
+                const errorMessage = result.error || 'Download failed';
+                
+                switch (errorCode) {
+                    case 'PAYMENT_REQUIRED':
+                        if (result.paymentInfo) {
+                            this.handlePaymentRequired(result.paymentInfo, photoId, photoUrl, filename);
+                        } else {
+                            this.showError('Payment required for this download. Please add to cart.');
+                        }
+                        break;
+                        
+                    case 'RATE_LIMIT_EXCEEDED':
+                        const retryAfter = result.retryAfter || 60;
+                        this.showError(`Too many requests. Please wait ${retryAfter} seconds before trying again.`, 'rate-limit');
+                        break;
+                        
+                    case 'QUOTA_EXCEEDED':
+                        this.handleQuotaExceeded(photoId, photoUrl, filename);
+                        break;
+                        
+                    case 'NETWORK_ERROR':
+                        this.showError('Network connection error. Please check your connection and try again.', 'network-error');
+                        break;
+                        
+                    case 'GALLERY_EXPIRED':
+                        this.showError('This gallery has expired and downloads are no longer available.', 'gallery-expired');
+                        break;
+                        
+                    case 'INVALID_SESSION':
+                        this.showError('Your session has expired. Please refresh the page.', 'session-expired');
+                        break;
+                        
+                    default:
+                        this.showError(`Download failed: ${errorMessage}`, 'general-error');
+                }
+            }
+
+            /**
+             * Handle quota exceeded scenarios
+             */
+            handleQuotaExceeded(photoId, photoUrl, filename) {
+                if (this.policy?.mode === 'freemium') {
+                    // Auto-add to cart in freemium mode
+                    const paidPrice = this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75;
+                    this.addToCart(photoId, photoUrl, filename, paidPrice);
+                    this.showError(`Free quota exhausted! Added ${filename} to cart for $${paidPrice.toFixed(2)}`, 'quota-exceeded');
+                    this.updatePricingBanner();
+                    this.displayPhotos();
+                } else {
+                    this.showError('Download quota exceeded. Please upgrade or wait for quota reset.', 'quota-exceeded');
+                }
+            }
+
+            /**
+             * Handle payment required scenarios from unified API
+             */
+            handlePaymentRequired(paymentInfo, photoId, photoUrl, filename) {
+                try {
+                    console.log('💳 Payment required for download:', paymentInfo);
+                    
+                    // Auto-add to cart for payment processing
+                    const price = paymentInfo.amount || (this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75);
+                    this.addToCart(photoId, photoUrl, filename, price);
+                    
+                    // Show user-friendly message
+                    this.showError(`This download requires payment ($${price.toFixed(2)}). Added to cart for checkout.`);
+                    
+                    // Update UI to show cart
+                    this.openCart();
+                    
+                } catch (error) {
+                    console.error('❌ Error handling payment required:', error);
+                    this.showError('Payment required - please add photo to cart');
                 }
             }
             
@@ -2925,6 +3533,166 @@
                 return this.clientEmail || this.uniqueVisitorId || 'anonymous';
             }
             
+            /**
+             * UNIFIED API: Validate gallery access and get session data
+             * Uses the new /api/downloads/unified/validate-access endpoint
+             */
+            async validateUnifiedAccess() {
+                try {
+                    if (!this.galleryToken) {
+                        return {
+                            success: false,
+                            error: 'No gallery token provided'
+                        };
+                    }
+
+                    console.log('🔐 Validating access using unified API...');
+                    
+                    const response = await fetch('/api/downloads/unified/validate-access', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            galleryAccessToken: this.galleryToken,
+                            sessionId: this.sessionData?.id || 'unknown' // Will be updated after validation
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        console.log('✅ Unified access validation successful');
+                        
+                        // Store the session data and policy from the unified response
+                        this.sessionData = {
+                            id: data.session.id,
+                            clientName: data.session.clientName,
+                            downloadEnabled: data.session.downloadEnabled,
+                            galleryExpiresAt: data.session.galleryExpiresAt
+                        };
+                        
+                        this.policy = data.policy;
+                        this.cachedGalleryClientKey = data.clientKey;
+
+                        return {
+                            success: true,
+                            data: {
+                                success: true,
+                                session: this.sessionData,
+                                policy: this.policy,
+                                clientKey: data.clientKey,
+                                photos: data.session.photos || [] // If photos are included
+                            }
+                        };
+                    } else {
+                        console.error('❌ Unified access validation failed:', data.error);
+                        return {
+                            success: false,
+                            error: data.error || 'Access validation failed',
+                            code: data.code
+                        };
+                    }
+                } catch (error) {
+                    console.error('❌ Error during unified access validation:', error);
+                    return {
+                        success: false,
+                        error: 'Network error during access validation'
+                    };
+                }
+            }
+
+            /**
+             * UNIFIED API: Process download using the new unified endpoint
+             */
+            async processUnifiedDownload(photoId, photoUrl, filename, isPaid = false, paymentIntentId = null) {
+                try {
+                    console.log(`🎯 Processing unified download for photo ${photoId}`);
+                    
+                    const response = await fetch('/api/downloads/unified/process', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            galleryAccessToken: this.galleryToken,
+                            sessionId: this.sessionData.id,
+                            photoId: photoId,
+                            photoUrl: photoUrl,
+                            filename: filename,
+                            paymentIntentId: paymentIntentId
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        console.log('✅ Unified download processed successfully');
+                        return {
+                            success: true,
+                            downloadToken: data.downloadToken,
+                            expiresIn: data.expiresIn,
+                            pricing: data.pricing,
+                            watermark: data.watermark
+                        };
+                    } else {
+                        console.error('❌ Unified download processing failed:', data.error);
+                        return {
+                            success: false,
+                            error: data.error || 'Download processing failed',
+                            code: data.code,
+                            paymentInfo: data.paymentInfo // For payment required scenarios
+                        };
+                    }
+                } catch (error) {
+                    console.error('❌ Error during unified download processing:', error);
+                    return {
+                        success: false,
+                        error: 'Network error during download processing'
+                    };
+                }
+            }
+
+            /**
+             * UNIFIED API: Get session status and quota information
+             */
+            async getUnifiedSessionStatus() {
+                try {
+                    if (!this.sessionData?.id || !this.galleryToken) {
+                        throw new Error('Missing session ID or gallery token');
+                    }
+
+                    const response = await fetch(`/api/downloads/unified/status/${this.sessionData.id}?galleryAccessToken=${encodeURIComponent(this.galleryToken)}&clientKey=${encodeURIComponent(this.cachedGalleryClientKey || '')}`, {
+                        method: 'GET'
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        console.log('✅ Session status retrieved successfully');
+                        return {
+                            success: true,
+                            quota: data.quota,
+                            policy: data.policy,
+                            entitlements: data.entitlements,
+                            downloads: data.downloads
+                        };
+                    } else {
+                        console.error('❌ Failed to get session status:', data.error);
+                        return {
+                            success: false,
+                            error: data.error || 'Failed to retrieve session status'
+                        };
+                    }
+                } catch (error) {
+                    console.error('❌ Error getting session status:', error);
+                    return {
+                        success: false,
+                        error: 'Network error while checking session status'
+                    };
+                }
+            }
+
             /**
              * AUTHORITATIVE CLIENT KEY GENERATION
              * Generate client key using IDENTICAL logic to server
