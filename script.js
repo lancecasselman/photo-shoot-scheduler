@@ -540,14 +540,10 @@ async function updateStorageUsage() {
         
         // Update global storage stats if available
         const totalGalleryStorage = document.getElementById('totalGalleryStorage');
-        const totalRawStorage = document.getElementById('totalRawStorage');
         const totalCombinedStorage = document.getElementById('totalCombinedStorage');
         
         if (totalGalleryStorage) {
             totalGalleryStorage.textContent = `${data.usage.galleryMB} MB`;
-        }
-        if (totalRawStorage) {
-            totalRawStorage.textContent = `${data.usage.rawMB} MB`;
         }
         if (totalCombinedStorage) {
             totalCombinedStorage.textContent = `${data.usage.totalGB} GB`;

@@ -5822,10 +5822,6 @@
                     <div class="storage-stat-number" id="totalGalleryStorage">-</div>
                     <div class="storage-stat-label">Gallery Storage</div>
                 </div>
-                <div class="storage-stat-card">
-                    <div class="storage-stat-number" id="totalRawStorage">-</div>
-                    <div class="storage-stat-label">Raw Storage</div>
-                </div>
                 <div class="storage-stat-card highlight">
                     <div class="storage-stat-number" id="totalCombinedStorage">-</div>
                     <div class="storage-stat-label">Total Storage Used</div>
@@ -13964,7 +13960,6 @@ END:VCALENDAR`;
                 // Show loading state
                 document.getElementById('totalSessions').textContent = '...';
                 document.getElementById('totalGalleryStorage').textContent = '...';
-                document.getElementById('totalRawStorage').textContent = '...';
                 document.getElementById('totalCombinedStorage').textContent = '...';
                 
                 const response = await fetch('/api/global-storage-stats');
@@ -13978,7 +13973,6 @@ END:VCALENDAR`;
                 // Update the display
                 document.getElementById('totalSessions').textContent = stats.totalSessions.toString();
                 document.getElementById('totalGalleryStorage').textContent = stats.gallery.totalSizeFormatted;
-                document.getElementById('totalRawStorage').textContent = stats.raw.totalSizeFormatted;
                 document.getElementById('totalCombinedStorage').textContent = stats.combined.totalSizeFormatted;
                 
                 console.log('Global storage stats updated successfully');
@@ -13989,7 +13983,6 @@ END:VCALENDAR`;
                 // Show error state
                 document.getElementById('totalSessions').textContent = 'Error';
                 document.getElementById('totalGalleryStorage').textContent = 'Error';
-                document.getElementById('totalRawStorage').textContent = 'Error';
                 document.getElementById('totalCombinedStorage').textContent = 'Error';
                 
                 showMessage('Failed to load storage statistics', 'error');

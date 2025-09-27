@@ -301,10 +301,6 @@
                         <div class="breakdown-label">Gallery Photos</div>
                     </div>
                     <div class="breakdown-item">
-                        <div id="raw-size" class="breakdown-number">0 GB</div>
-                        <div class="breakdown-label">RAW Files</div>
-                    </div>
-                    <div class="breakdown-item">
                         <div id="total-files" class="breakdown-number">0</div>
                         <div class="breakdown-label">Total Files</div>
                     </div>
@@ -472,16 +468,13 @@
             // Breakdown - use global stats if available for consistency with Platform Storage Overview
             if (storageData.globalStats) {
                 document.getElementById('gallery-size').textContent = storageData.globalStats.gallery?.totalSizeFormatted || '0 B';
-                document.getElementById('raw-size').textContent = storageData.globalStats.raw?.totalSizeFormatted || '0 B';
                 document.getElementById('total-files').textContent = (storageData.globalStats.combined?.fileCount || 0).toString();
                 console.log('Storage manager updated with Platform Storage Overview data:', storageData.globalStats);
             } else {
                 // Safely access breakdown data with fallbacks
                 const galleryGB = parseFloat(storageData.breakdown?.galleryGB) || 0;
-                const rawStorageGB = parseFloat(storageData.breakdown?.rawStorageGB) || 0;
                 
                 document.getElementById('gallery-size').textContent = galleryGB.toFixed(2) + ' GB';
-                document.getElementById('raw-size').textContent = rawStorageGB.toFixed(2) + ' GB';
                 document.getElementById('total-files').textContent = (storageData.totalFiles || 0).toString();
             }
             document.getElementById('remaining-storage').textContent = remainingGB.toFixed(2) + ' GB';
