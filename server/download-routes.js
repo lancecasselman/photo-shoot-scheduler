@@ -85,6 +85,7 @@ const EnhancedWebhookHandler = require('./enhanced-webhook-handler');
 const ProductionMonitoringSystem = require('./production-monitoring');
 const EnhancedCartManager = require('./enhanced-cart-manager');
 const QuotaMonitoringSystem = require('./quota-monitoring-system');
+const { errorHandler } = require('./standardized-error-handler');
 
 /**
  * AUTHORITATIVE CLIENT KEY GENERATION
@@ -140,7 +141,11 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   // Start real-time quota monitoring
   quotaMonitoringSystem.startMonitoring();
   
+  // Apply correlation ID middleware to all routes
+  router.use(errorHandler.createCorrelationMiddleware());
+  
   console.log('✅ Unified DownloadService, Enhanced Webhook Handler, Enhanced Cart Manager, and Quota Monitoring System initialized for download routes');
+  console.log('✅ Standardized error handling and correlation tracking enabled');
 
   // Configure multer for watermark logo uploads
   const storage = multer.memoryStorage();
@@ -289,6 +294,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
    * Unified download processing endpoint - routes to appropriate pricing model handler
    */
   router.post('/unified/process', downloadRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId;
+    
     try {
       const { 
         galleryAccessToken, 
@@ -302,27 +310,46 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // Get client information for security and logging
       const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
       const userAgent = req.headers['user-agent'] || 'unknown';
+      
+      const context = {
+        endpoint: '/api/downloads/unified/process',
+        method: 'POST',
+        sessionId,
+        photoId,
+        clientIp,
+        userAgent,
+        correlationId,
+        additional: { hasPaymentIntent: !!paymentIntentId }
+      };
 
-      // Validate required fields
+      console.log(`🎯 [${correlationId}] Processing download request for photo ${photoId} in session ${sessionId}`);
+
+      // Validate required fields with detailed error context
       if (!galleryAccessToken || !sessionId || !photoId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required fields: galleryAccessToken, sessionId, photoId',
-          code: 'MISSING_REQUIRED_FIELDS'
-        });
+        const missingFields = [];
+        if (!galleryAccessToken) missingFields.push('galleryAccessToken');
+        if (!sessionId) missingFields.push('sessionId');
+        if (!photoId) missingFields.push('photoId');
+        
+        return res.handleError('MISSING_REQUIRED_FIELDS', 
+          `Missing required fields: ${missingFields.join(', ')}`, context);
       }
 
-      console.log(`🎯 [UNIFIED] Processing download request for photo ${photoId} in session ${sessionId}`);
-
-      // Perform security validation
+      // Perform security validation with enhanced error handling
       const securityCheck = await downloadService.validateSessionSecurity(sessionId, clientIp, userAgent);
       if (!securityCheck.allowed) {
-        return res.status(429).json({
-          success: false,
-          error: securityCheck.error,
-          code: securityCheck.code,
-          retryAfter: securityCheck.retryAfter
-        });
+        const errorCode = securityCheck.code || 'RATE_LIMIT_EXCEEDED';
+        const customMessage = securityCheck.error;
+        const securityContext = {
+          ...context,
+          additional: {
+            ...context.additional,
+            securityViolation: securityCheck.code,
+            retryAfter: securityCheck.retryAfter
+          }
+        };
+        
+        return res.handleError(errorCode, customMessage, securityContext);
       }
 
       // Process download through unified service
@@ -334,29 +361,61 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         filename,
         paymentIntentId,
         clientIp,
-        userAgent
+        userAgent,
+        correlationId
       });
 
       if (result.success) {
-        console.log(`✅ [UNIFIED] Download processed successfully: ${photoId} (${result.pricing.model})`);
-        res.json(result);
+        const processingTime = Date.now() - startTime;
+        console.log(`✅ [${correlationId}] Download processed successfully: ${photoId} (${result.pricing.model}) in ${processingTime}ms`);
+        
+        // Add correlation ID and processing metadata to success response
+        res.json({
+          ...result,
+          meta: {
+            correlationId,
+            processingTime,
+            timestamp: new Date().toISOString()
+          }
+        });
       } else {
-        const statusCode = result.code === 'PAYMENT_REQUIRED' ? 402 : 
-                          result.code === 'INVALID_TOKEN' ? 401 :
-                          result.code === 'EXPIRED_ACCESS' ? 410 :
-                          result.code === 'SESSION_NOT_FOUND' ? 404 : 400;
-
-        console.warn(`⚠️ [UNIFIED] Download processing failed: ${result.error}`);
-        res.status(statusCode).json(result);
+        // Use standardized error handling for download service errors
+        const errorCode = result.code || 'PROCESSING_ERROR';
+        const downloadContext = {
+          ...context,
+          additional: {
+            ...context.additional,
+            downloadServiceError: result.error,
+            pricingModel: result.pricing?.model
+          }
+        };
+        
+        return res.handleError(errorCode, result.error, downloadContext);
       }
 
     } catch (error) {
-      console.error('❌ [UNIFIED] Error in unified download processing:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error during download processing',
-        code: 'INTERNAL_ERROR'
-      });
+      const processingTime = Date.now() - startTime;
+      console.error(`❌ [${correlationId}] Unexpected error in unified download processing:`, error);
+      
+      const errorContext = {
+        endpoint: '/api/downloads/unified/process',
+        method: 'POST',
+        sessionId: req.body?.sessionId,
+        photoId: req.body?.photoId,
+        correlationId,
+        additional: {
+          processingTime,
+          errorStack: error.stack
+        },
+        debug: {
+          stack: error.stack,
+          details: error.message,
+          originalError: error.toString()
+        }
+      };
+      
+      return res.handleError('INTERNAL_ERROR', 
+        'Unexpected error during download processing', errorContext);
     }
   });
 
@@ -365,59 +424,101 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
    * Get download status, quota information, and session statistics
    */
   router.get('/unified/status/:sessionId', downloadRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId;
+    
     try {
       const { sessionId } = req.params;
       const { galleryAccessToken, clientKey } = req.query;
+      
+      const context = {
+        endpoint: '/api/downloads/unified/status',
+        method: 'GET',
+        sessionId,
+        clientKey,
+        correlationId
+      };
 
+      console.log(`📊 [${correlationId}] Getting status for session ${sessionId}`);
+
+      // Validate required parameters
       if (!galleryAccessToken) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required parameter: galleryAccessToken',
-          code: 'MISSING_ACCESS_TOKEN'
-        });
+        return res.handleError('MISSING_REQUIRED_FIELDS', 
+          'Missing required parameter: galleryAccessToken', context);
       }
 
-      console.log(`📊 [UNIFIED] Getting status for session ${sessionId}`);
-
-      // Validate gallery access
+      // Validate gallery access with enhanced error context
       const authResult = await downloadService.validateGalleryAccess(galleryAccessToken, sessionId);
       if (!authResult.success) {
-        const statusCode = authResult.code === 'INVALID_TOKEN' ? 401 :
-                          authResult.code === 'EXPIRED_ACCESS' ? 410 :
-                          authResult.code === 'SESSION_NOT_FOUND' ? 404 : 400;
-        return res.status(statusCode).json(authResult);
+        const errorCode = authResult.code || 'VALIDATION_ERROR';
+        const authContext = {
+          ...context,
+          additional: {
+            authenticationError: authResult.error,
+            tokenProvided: !!galleryAccessToken
+          }
+        };
+        
+        return res.handleError(errorCode, authResult.error, authContext);
       }
 
       // Use provided clientKey or generate from auth result
       const effectiveClientKey = clientKey || authResult.clientKey;
 
-      // Get session statistics
+      // Get session statistics with error handling
       const statsResult = await downloadService.getSessionStats(sessionId, effectiveClientKey);
 
       if (statsResult.success) {
-        console.log(`✅ [UNIFIED] Status retrieved for session ${sessionId}`);
+        const processingTime = Date.now() - startTime;
+        console.log(`✅ [${correlationId}] Status retrieved for session ${sessionId} in ${processingTime}ms`);
+        
         res.json({
           success: true,
           sessionId: sessionId,
           clientKey: effectiveClientKey,
-          ...statsResult.stats
+          ...statsResult.stats,
+          meta: {
+            correlationId,
+            processingTime,
+            timestamp: new Date().toISOString()
+          }
         });
       } else {
-        console.error(`❌ [UNIFIED] Failed to get status: ${statsResult.error}`);
-        res.status(400).json({
-          success: false,
-          error: statsResult.error,
-          code: 'STATUS_ERROR'
-        });
+        console.error(`❌ [${correlationId}] Failed to get status: ${statsResult.error}`);
+        
+        const statsContext = {
+          ...context,
+          additional: {
+            statsError: statsResult.error,
+            effectiveClientKey
+          }
+        };
+        
+        return res.handleError('STATUS_ERROR', statsResult.error, statsContext);
       }
 
     } catch (error) {
-      console.error('❌ [UNIFIED] Error getting session status:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to retrieve session status',
-        code: 'INTERNAL_ERROR'
-      });
+      const processingTime = Date.now() - startTime;
+      console.error(`❌ [${correlationId}] Unexpected error getting session status:`, error);
+      
+      const errorContext = {
+        endpoint: '/api/downloads/unified/status',
+        method: 'GET',
+        sessionId: req.params?.sessionId,
+        correlationId,
+        additional: {
+          processingTime,
+          errorStack: error.stack
+        },
+        debug: {
+          stack: error.stack,
+          details: error.message,
+          originalError: error.toString()
+        }
+      };
+      
+      return res.handleError('INTERNAL_ERROR', 
+        'Unexpected error retrieving session status', errorContext);
     }
   });
 
@@ -426,42 +527,84 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
    * Health check endpoint for the unified download service
    */
   router.get('/unified/health', async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId;
+    
     try {
-      console.log(`🔍 [UNIFIED] Health check requested`);
+      console.log(`🔍 [${correlationId}] Health check requested`);
+      
+      const context = {
+        endpoint: '/api/downloads/unified/health',
+        method: 'GET',
+        correlationId
+      };
 
-      // Perform comprehensive health check
-      const healthResult = await downloadService.healthCheck();
+      // Perform comprehensive health check with timeout protection
+      const healthCheckTimeout = 10000; // 10 seconds
+      const healthCheckPromise = downloadService.healthCheck();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Health check timeout')), healthCheckTimeout)
+      );
+      
+      const healthResult = await Promise.race([healthCheckPromise, timeoutPromise]);
+      const processingTime = Date.now() - startTime;
 
       if (healthResult.success) {
-        console.log(`✅ [UNIFIED] Service healthy`);
+        console.log(`✅ [${correlationId}] Service healthy in ${processingTime}ms`);
         res.json({
           success: true,
           status: healthResult.status,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           checks: healthResult.checks,
-          version: '1.0.0'
+          version: '1.0.0',
+          meta: {
+            correlationId,
+            processingTime,
+            healthCheckDuration: processingTime
+          }
         });
       } else {
-        console.warn(`⚠️ [UNIFIED] Service degraded: ${healthResult.error}`);
-        res.status(503).json({
-          success: false,
-          status: healthResult.status,
-          error: healthResult.error,
-          timestamp: new Date(),
-          checks: healthResult.checks,
-          version: '1.0.0'
-        });
+        console.warn(`⚠️ [${correlationId}] Service degraded: ${healthResult.error}`);
+        
+        const degradedContext = {
+          ...context,
+          additional: {
+            healthStatus: healthResult.status,
+            failedChecks: healthResult.checks,
+            processingTime
+          }
+        };
+        
+        return res.handleError('SERVICE_UNAVAILABLE', 
+          `Service degraded: ${healthResult.error}`, degradedContext);
       }
 
     } catch (error) {
-      console.error('❌ [UNIFIED] Health check failed:', error);
-      res.status(500).json({
-        success: false,
-        status: 'unhealthy',
-        error: 'Health check failed',
-        timestamp: new Date(),
-        version: '1.0.0'
-      });
+      const processingTime = Date.now() - startTime;
+      const isTimeout = error.message === 'Health check timeout';
+      
+      console.error(`❌ [${correlationId}] Health check ${isTimeout ? 'timed out' : 'failed'}:`, error);
+      
+      const errorContext = {
+        endpoint: '/api/downloads/unified/health',
+        method: 'GET',
+        correlationId,
+        additional: {
+          processingTime,
+          isTimeout,
+          healthCheckFailed: true
+        },
+        debug: {
+          stack: error.stack,
+          details: error.message,
+          originalError: error.toString()
+        }
+      };
+      
+      const errorCode = isTimeout ? 'TIMEOUT_ERROR' : 'INTERNAL_ERROR';
+      const errorMessage = isTimeout ? 'Health check timed out' : 'Health check failed';
+      
+      return res.handleError(errorCode, errorMessage, errorContext);
     }
   });
 
@@ -470,27 +613,44 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
    * Validate gallery access and return client key for client-side use
    */
   router.post('/unified/validate-access', downloadRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId;
+    
     try {
       const { galleryAccessToken, sessionId } = req.body;
+      
+      const context = {
+        endpoint: '/api/downloads/unified/validate-access',
+        method: 'POST',
+        sessionId,
+        correlationId
+      };
 
+      console.log(`🔐 [${correlationId}] Validating access for session ${sessionId}`);
+
+      // Validate required fields with detailed feedback
       if (!galleryAccessToken || !sessionId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required fields: galleryAccessToken, sessionId',
-          code: 'MISSING_REQUIRED_FIELDS'
-        });
+        const missingFields = [];
+        if (!galleryAccessToken) missingFields.push('galleryAccessToken');
+        if (!sessionId) missingFields.push('sessionId');
+        
+        return res.handleError('MISSING_REQUIRED_FIELDS', 
+          `Missing required fields: ${missingFields.join(', ')}`, context);
       }
 
-      console.log(`🔐 [UNIFIED] Validating access for session ${sessionId}`);
-
-      // Validate gallery access
+      // Validate gallery access with comprehensive error handling
       const authResult = await downloadService.validateGalleryAccess(galleryAccessToken, sessionId);
 
       if (authResult.success) {
-        console.log(`✅ [UNIFIED] Access validated for session ${sessionId}`);
+        const processingTime = Date.now() - startTime;
+        console.log(`✅ [${correlationId}] Access validated for session ${sessionId} in ${processingTime}ms`);
         
         // Get session policy for client information
         const policyResult = await downloadService.getSessionPolicy(sessionId);
+        
+        if (!policyResult.success) {
+          console.warn(`⚠️ [${correlationId}] Policy retrieval failed but access granted: ${policyResult.error}`);
+        }
         
         res.json({
           success: true,
@@ -501,24 +661,50 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
             downloadEnabled: authResult.session.downloadEnabled,
             galleryExpiresAt: authResult.session.galleryExpiresAt
           },
-          policy: policyResult.success ? policyResult.policy : null
+          policy: policyResult.success ? policyResult.policy : null,
+          meta: {
+            correlationId,
+            processingTime,
+            timestamp: new Date().toISOString(),
+            policyRetrieved: policyResult.success
+          }
         });
       } else {
-        const statusCode = authResult.code === 'INVALID_TOKEN' ? 401 :
-                          authResult.code === 'EXPIRED_ACCESS' ? 410 :
-                          authResult.code === 'SESSION_NOT_FOUND' ? 404 : 400;
-
-        console.warn(`⚠️ [UNIFIED] Access validation failed: ${authResult.error}`);
-        res.status(statusCode).json(authResult);
+        const errorCode = authResult.code || 'VALIDATION_ERROR';
+        const authContext = {
+          ...context,
+          additional: {
+            authenticationError: authResult.error,
+            tokenLength: galleryAccessToken?.length || 0
+          }
+        };
+        
+        console.warn(`⚠️ [${correlationId}] Access validation failed: ${authResult.error}`);
+        return res.handleError(errorCode, authResult.error, authContext);
       }
 
     } catch (error) {
-      console.error('❌ [UNIFIED] Error validating access:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error during access validation',
-        code: 'INTERNAL_ERROR'
-      });
+      const processingTime = Date.now() - startTime;
+      console.error(`❌ [${correlationId}] Unexpected error validating access:`, error);
+      
+      const errorContext = {
+        endpoint: '/api/downloads/unified/validate-access',
+        method: 'POST',
+        sessionId: req.body?.sessionId,
+        correlationId,
+        additional: {
+          processingTime,
+          errorStack: error.stack
+        },
+        debug: {
+          stack: error.stack,
+          details: error.message,
+          originalError: error.toString()
+        }
+      };
+      
+      return res.handleError('INTERNAL_ERROR', 
+        'Unexpected error during access validation', errorContext);
     }
   });
 

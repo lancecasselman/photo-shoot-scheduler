@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const sgMail = require('@sendgrid/mail');
 const { drizzle } = require('drizzle-orm/node-postgres');
+const { dbTransactionManager } = require('./database-transaction-manager');
 const { 
     downloadPolicies, 
     downloadOrders, 
@@ -114,90 +115,126 @@ class DownloadCommerceManager {
         }
     }
     
-    // Update pricing policy with validation
+    // Update pricing policy with validation using transaction manager
     async updatePolicy(sessionId, userId, policyData) {
         try {
-            // Validate ownership
-            const session = await this.db.select()
-                .from(photographySessions)
-                .where(and(
-                    eq(photographySessions.id, sessionId),
-                    eq(photographySessions.userId, userId)
-                ))
-                .limit(1);
+            const result = await dbTransactionManager.executeTransaction(
+                async (client, db, transactionId) => {
+                    console.log(`📋 [${transactionId}] Updating policy for session ${sessionId}`);
+                    
+                    // Validate ownership with row-level locking
+                    const session = await db.select()
+                        .from(photographySessions)
+                        .where(and(
+                            eq(photographySessions.id, sessionId),
+                            eq(photographySessions.userId, userId)
+                        ))
+                        .limit(1)
+                        .for('update'); // Row-level lock to prevent concurrent modifications
+                    
+                    if (session.length === 0) {
+                        throw new Error('Session not found or unauthorized');
+                    }
+                    
+                    // Validate pricing mode and data
+                    const validation = this.validatePricingMode(policyData.mode, policyData);
+                    if (!validation.valid) {
+                        throw new Error(validation.error);
+                    }
+                    
+                    // Check for existing policy with lock
+                    const existing = await db.select()
+                        .from(downloadPolicies)
+                        .where(eq(downloadPolicies.sessionId, sessionId))
+                        .limit(1)
+                        .for('update');
+                    
+                    const policyId = existing.length > 0 ? existing[0].id : uuidv4();
+                    
+                    const policyValues = {
+                        id: policyId,
+                        sessionId: sessionId,
+                        mode: policyData.mode,
+                        pricePerPhoto: policyData.pricePerPhoto || null,
+                        freeCount: policyData.freeCount || null,
+                        bulkTiers: policyData.bulkTiers || [],
+                        maxPerClient: policyData.maxPerClient || null,
+                        maxGlobal: policyData.maxGlobal || null,
+                        screenshotProtection: policyData.screenshotProtection || false,
+                        currency: policyData.currency || 'USD',
+                        taxIncluded: policyData.taxIncluded || false,
+                        watermarkPreset: policyData.watermarkPreset || null,
+                        updatedBy: userId,
+                        updatedAt: new Date()
+                    };
+                    
+                    let policy;
+                    if (existing.length > 0) {
+                        // Update existing
+                        const updated = await db.update(downloadPolicies)
+                            .set(policyValues)
+                            .where(eq(downloadPolicies.id, policyId))
+                            .returning();
+                        policy = updated[0];
+                        console.log(`📋 [${transactionId}] Updated existing policy for session ${sessionId}`);
+                    } else {
+                        // Create new
+                        policyValues.createdAt = new Date();
+                        const created = await db.insert(downloadPolicies)
+                            .values(policyValues)
+                            .returning();
+                        policy = created[0];
+                        console.log(`📋 [${transactionId}] Created new policy for session ${sessionId}`);
+                    }
+                    
+                    return policy;
+                },
+                {
+                    isolationLevel: 'SERIALIZABLE', // Highest isolation level for policy updates
+                    timeout: 15000, // 15 seconds timeout
+                    context: {
+                        operation: 'updatePolicy',
+                        sessionId,
+                        userId,
+                        policyMode: policyData.mode
+                    }
+                }
+            );
             
-            if (session.length === 0) {
-                return {
-                    success: false,
-                    error: 'Session not found or unauthorized'
-                };
-            }
-            
-            // Validate pricing mode and data
-            const validation = this.validatePricingMode(policyData.mode, policyData);
-            if (!validation.valid) {
-                return {
-                    success: false,
-                    error: validation.error
-                };
-            }
-            
-            // Update or create policy
-            const existing = await this.db.select()
-                .from(downloadPolicies)
-                .where(eq(downloadPolicies.sessionId, sessionId))
-                .limit(1);
-            
-            const policyId = existing.length > 0 ? existing[0].id : uuidv4();
-            
-            const policyValues = {
-                id: policyId,
-                sessionId: sessionId,
-                mode: policyData.mode,
-                pricePerPhoto: policyData.pricePerPhoto || null,
-                freeCount: policyData.freeCount || null,
-                bulkTiers: policyData.bulkTiers || [],
-                maxPerClient: policyData.maxPerClient || null,
-                maxGlobal: policyData.maxGlobal || null,
-                screenshotProtection: policyData.screenshotProtection || false,
-                currency: policyData.currency || 'USD',
-                taxIncluded: policyData.taxIncluded || false,
-                watermarkPreset: policyData.watermarkPreset || null,
-                updatedBy: userId,
-                updatedAt: new Date()
+            return {
+                success: true,
+                policy: result.result
             };
-            
-            if (existing.length > 0) {
-                // Update existing
-                const updated = await this.db.update(downloadPolicies)
-                    .set(policyValues)
-                    .where(eq(downloadPolicies.id, policyId))
-                    .returning();
-                
-                console.log(`📋 Updated policy for session ${sessionId}`);
-                return {
-                    success: true,
-                    policy: updated[0]
-                };
-            } else {
-                // Create new
-                policyValues.createdAt = new Date();
-                const created = await this.db.insert(downloadPolicies)
-                    .values(policyValues)
-                    .returning();
-                
-                console.log(`📋 Created policy for session ${sessionId}`);
-                return {
-                    success: true,
-                    policy: created[0]
-                };
-            }
             
         } catch (error) {
             console.error('❌ Error updating policy:', error);
+            
+            // Handle specific database errors
+            const errorType = error.errorType || 'UNKNOWN_ERROR';
+            let userMessage = 'Failed to update pricing policy';
+            
+            switch (errorType) {
+                case 'DEADLOCK_DETECTED':
+                    userMessage = 'Policy update conflict detected. Please try again.';
+                    break;
+                case 'TIMEOUT_ERROR':
+                    userMessage = 'Policy update took too long. Please try again.';
+                    break;
+                case 'FOREIGN_KEY_VIOLATION':
+                    userMessage = 'Invalid session or user reference.';
+                    break;
+                case 'UNIQUE_CONSTRAINT_VIOLATION':
+                    userMessage = 'Policy configuration conflict.';
+                    break;
+                default:
+                    userMessage = error.message || 'Failed to update pricing policy';
+            }
+            
             return {
                 success: false,
-                error: error.message
+                error: userMessage,
+                errorType: errorType,
+                retryable: error.retryable || false
             };
         }
     }
