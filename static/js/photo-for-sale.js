@@ -569,42 +569,59 @@
             return;
         }
         
-        // Try freemium mode first - check for immediate free download
+        // Try freemium mode first - check for immediate free download using orchestrator
         try {
             console.log('🎯 Checking for freemium mode free download...');
             
-            const photoId = img.src.split('/').pop().split('?')[0]; // Extract filename as photoId
-            const filename = img.alt || `photo-${photoIndex + 1}.jpg`;
+            const photoId = img.src.split('/').pop().split('?')[0]; // Extract actual filename from src
+            const filename = img.alt || `photo-${photoIndex + 1}.jpg`; // For download filename only
             
-            const response = await fetch('/api/downloads/free-entitlement', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: sessionId,
-                    clientKey: clientKey,
-                    photoId: photoId,
-                    photoUrl: img.src,
-                    filename: filename,
-                    galleryToken: galleryToken
-                })
+            // Use orchestrator endpoint with real photo identifier (properly URL-encoded)
+            const orchestratorUrl = `/api/downloads/orchestrator/session/${sessionId}/file/${encodeURIComponent(photoId)}?token=${galleryToken}`;
+            
+            const response = await fetch(orchestratorUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/octet-stream, application/json'
+                }
             });
             
-            const result = await response.json();
+            // Check if response is JSON (error) or binary (success)
+            const contentType = response.headers.get('content-type');
             
-            if (response.ok && result.success) {
-                // Free download available! Trigger immediate download
-                console.log('🆓 Free download granted:', result);
+            if (response.ok && contentType && !contentType.includes('application/json')) {
+                // Successful download - trigger immediate download
+                console.log('🆓 Free download granted via orchestrator');
+                
+                // Create blob URL and trigger download
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
                 
                 // Show success message
-                showFreeDownloadSuccess(result.entitlement, result.quotaInfo);
+                showFreeDownloadSuccess({ downloadUrl: orchestratorUrl }, { quotaUsed: 1 });
                 
                 // Trigger download immediately
-                window.location.href = result.entitlement.downloadUrl;
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Clean up blob URL
+                setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 100);
                 
                 return;
             } else {
-                // Free downloads exhausted or not freemium mode
-                console.log('💰 Free downloads not available:', result.error);
+                // Parse error response or handle failed download
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    result = { error: `HTTP ${response.status}: ${response.statusText}` };
+                }
+                
+                console.log('💰 Free downloads not available:', result.error || result);
                 
                 // Check if it's specifically because free limit exceeded
                 if (result.error && result.error.includes('Free download limit exceeded')) {
@@ -612,7 +629,7 @@
                 }
             }
         } catch (error) {
-            console.error('❌ Error checking free download:', error);
+            console.error('❌ Error checking free download via orchestrator:', error);
         }
         
         // Fall back to standard purchase modal

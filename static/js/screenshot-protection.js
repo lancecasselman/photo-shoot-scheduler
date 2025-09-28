@@ -60,22 +60,53 @@ class ScreenshotProtection {
                 return;
             }
             
-            // Fetch session policy
-            const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`);
-            if (response.ok) {
-                const data = await response.json();
-                this.sessionPolicy = data.policy;
+            // Fetch session policy from orchestrator health endpoint
+            const healthResponse = await fetch('/api/downloads/orchestrator/health');
+            if (healthResponse.ok) {
+                const healthData = await healthResponse.json();
+                this.log('Orchestrator health check:', healthData);
                 
-                // Enable protection based on policy settings
-                this.protectionEnabled = data.policy.screenshotProtection !== false;
-                this.settings.useWatermarks = data.policy.watermarkEnabled === true;
+                // Try to get session-specific policy via debug endpoint (if debug mode enabled)
+                if (window.location.search.includes('debug')) {
+                    try {
+                        const debugResponse = await fetch(`/api/downloads/orchestrator/debug/session/${sessionId}`);
+                        if (debugResponse.ok) {
+                            const debugData = await debugResponse.json();
+                            this.sessionPolicy = debugData.debug.policy;
+                            
+                            // Enable protection based on policy settings
+                            this.protectionEnabled = this.sessionPolicy.mode !== 'DISABLED';
+                            this.settings.useWatermarks = !!debugData.debug.policy.watermarkSettings;
+                            
+                            this.log('Session policy loaded from orchestrator debug:', debugData.debug.policy);
+                            return;
+                        }
+                    } catch (debugError) {
+                        this.log('Debug endpoint not available, using default policy');
+                    }
+                }
                 
-                this.log('Session policy loaded:', data.policy);
+                // Fallback to default protection settings when orchestrator is healthy
+                this.sessionPolicy = {
+                    mode: 'ENABLED',
+                    screenshotProtection: true,
+                    watermarkEnabled: true
+                };
+                this.protectionEnabled = true;
+                this.settings.useWatermarks = true;
+                
+                this.log('Using default protection policy (orchestrator healthy)');
             }
         } catch (error) {
-            this.log('Error loading session policy:', error);
+            this.log('Error loading session policy from orchestrator:', error);
             // Default to enabled protection on error
             this.protectionEnabled = true;
+            this.sessionPolicy = {
+                mode: 'ENABLED',
+                screenshotProtection: true,
+                watermarkEnabled: true
+            };
+            this.settings.useWatermarks = true;
         }
     }
     
