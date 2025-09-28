@@ -952,7 +952,6 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       // Count existing FREE entitlements for this client to check quota
       // CRITICAL FIX: Only count free downloads (orderId is null), not paid downloads
-      console.log(`🔍 [DEBUG] Querying entitlements with: sessionId=${sessionId}, clientKey=${clientKey}`);
       
       const existingEntitlements = await db
         .select()
@@ -963,7 +962,6 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           sql`${downloadEntitlements.orderId} IS NULL`  // Only count FREE downloads (explicit NULL check)
         ));
 
-      console.log(`🔍 [DEBUG] Query returned ${existingEntitlements.length} entitlements:`, existingEntitlements.map(e => ({ id: e.id, photoId: e.photoId, orderId: e.orderId })));
       
       const usedDownloads = existingEntitlements.length;
       
@@ -1182,7 +1180,6 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       console.log(`🎟️ Issuing download token for photo ${photoId} to client: ${clientKey}`);
       
       // FREEMIUM MODE FIX: Check if this is freemium mode and create free entitlements if needed
-      console.log(`🔍 [FREEMIUM FIX] Getting policy for session to check if freemium mode`);
       const policyResult = await commerceManager.getPolicyForSession(sessionId);
       
       if (policyResult.success && policyResult.policy.mode === 'freemium') {
@@ -2892,7 +2889,6 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const sessionData = session[0];
 
       // Verify photo exists in this session using session_files table
-      console.log(`🔍 DEBUG: Looking for photo - sessionId: "${sessionId}", photoId: "${photoId}"`);
       
       const photoQuery = await pool.query(`
         SELECT filename FROM session_files 
@@ -2900,17 +2896,13 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         LIMIT 1
       `, [sessionId, photoId]);
       
-      console.log(`🔍 DEBUG: Photo query result - found ${photoQuery.rows.length} rows`);
       if (photoQuery.rows.length > 0) {
-        console.log(`🔍 DEBUG: Found photo filename: "${photoQuery.rows[0].filename}"`);
       } else {
-        console.log(`🔍 DEBUG: Photo NOT found. Let me check what photos DO exist...`);
         const allPhotosQuery = await pool.query(`
           SELECT filename FROM session_files 
           WHERE session_id = $1 AND folder_type = 'gallery'
           LIMIT 5
         `, [sessionId]);
-        console.log(`🔍 DEBUG: Available photos in session:`, allPhotosQuery.rows.map(r => r.filename));
       }
 
       if (photoQuery.rows.length === 0) {

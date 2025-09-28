@@ -2237,14 +2237,6 @@ router.get('/whcc-deep-dive', (req, res) => {
         message: 'WHCC deep dive endpoint is no longer available'
     });
     return;
-    // Original endpoint disabled below
-    /*
-    console.log('\n🚀 DEEP DIVE INTO WHCC CAPABILITIES');
-    console.log('='.repeat(60));
-    
-    // BYPASS AUTH FOR TESTING - Remove this in production
-    req.session = req.session || {};
-    req.session.user = req.session.user || { uid: 'test-deep-dive' };
     
     try {
         const results = {

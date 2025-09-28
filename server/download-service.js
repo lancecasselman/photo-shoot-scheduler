@@ -1025,24 +1025,20 @@ class DownloadService {
     try {
       const { galleryAccessToken, sessionId, photoId } = params;
       
-      console.log(`🚀 DEBUG: processDownload called with sessionId: "${sessionId}", photoId: "${photoId}"`);
 
       // Get session policy to determine pricing model
       const authResult = await this.validateGalleryAccess(galleryAccessToken, sessionId);
-      console.log(`🔐 DEBUG: validateGalleryAccess result:`, authResult.success ? 'SUCCESS' : `FAILED: ${authResult.error}`);
       if (!authResult.success) {
         return authResult;
       }
 
       const policyResult = await this.getSessionPolicy(sessionId);
-      console.log(`📋 DEBUG: getSessionPolicy result:`, policyResult.success ? `SUCCESS - mode: ${policyResult.policy?.mode}` : `FAILED: ${policyResult.error}`);
       if (!policyResult.success) {
         return policyResult;
       }
 
       const policy = policyResult.policy;
 
-      console.log(`🎯 Routing download to ${policy.mode.toUpperCase()} handler`);
 
       // Route to appropriate handler
       switch (policy.mode) {
