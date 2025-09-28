@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.photoForSaleSettings = exports.adminContentEdits = exports.printCarts = exports.printProducts = exports.printOrders = exports.photographerClients = exports.communityChallenges = exports.communityMessages = exports.communityFollows = exports.communitySaves = exports.communityComments = exports.communityLikes = exports.communityPosts = exports.communityProfiles = exports.photographySessionsRelations = exports.downloadHistoryRelations = exports.downloadEntitlementsRelations = exports.downloadOrdersRelations = exports.downloadPoliciesRelations = exports.downloadHistory = exports.downloadEntitlements = exports.downloadOrders = exports.downloadPolicies = exports.galleryDownloads = exports.digitalTransactions = exports.downloadTokens = exports.businessExpenses = exports.aiCreditUsage = exports.r2StorageBilling = exports.r2StorageUsage = exports.storageBillingHistory = exports.storageSubscriptions = exports.userStorageQuotas = exports.r2Files = exports.subscribers = exports.paymentRecords = exports.paymentPlans = exports.photographySessions = exports.publishedWebsites = exports.users = exports.sessions = void 0;
+exports.photoForSaleSettings = exports.adminContentEdits = exports.printCarts = exports.printProducts = exports.printOrders = exports.photographerClients = exports.communityChallenges = exports.communityMessages = exports.communityFollows = exports.communitySaves = exports.communityComments = exports.communityLikes = exports.communityPosts = exports.communityProfiles = exports.photographySessionsRelations = exports.downloadHistoryRelations = exports.downloadEntitlementsRelations = exports.downloadOrdersRelations = exports.downloadPoliciesRelations = exports.downloadHistory = exports.downloadEntitlements = exports.downloadOrders = exports.downloadPolicies = exports.galleryDownloads = exports.digitalTransactions = exports.downloadTokens = exports.businessExpenses = exports.aiCreditUsage = exports.r2StorageBilling = exports.r2StorageUsage = exports.storageBillingHistory = exports.storageSubscriptions = exports.userStorageQuotas = exports.sessionFiles = exports.r2Files = exports.subscribers = exports.paymentRecords = exports.paymentPlans = exports.photographySessions = exports.publishedWebsites = exports.users = exports.sessions = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 const drizzle_orm_1 = require("drizzle-orm");
 const drizzle_orm_2 = require("drizzle-orm");
@@ -207,6 +207,19 @@ exports.r2Files = (0, pg_core_1.pgTable)("r2_files", {
     isPublic: (0, pg_core_1.boolean)("is_public").default(false), // For gallery sharing
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
+});
+// Session files uploaded per session (photos, documents, etc.)
+exports.sessionFiles = (0, pg_core_1.pgTable)("session_files", {
+    id: (0, pg_core_1.serial)("id").primaryKey(),
+    userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id),
+    sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id),
+    folderType: (0, pg_core_1.varchar)("folder_type").notNull(),
+    filename: (0, pg_core_1.varchar)("filename").notNull(),
+    fileSizeBytes: (0, pg_core_1.bigint)("file_size_bytes", { mode: "number" }).notNull(),
+    fileSizeMb: (0, pg_core_1.decimal)("file_size_mb", { precision: 12, scale: 2 }).notNull(),
+    uploadedAt: (0, pg_core_1.timestamp)("uploaded_at").defaultNow(),
+    originalName: (0, pg_core_1.varchar)("original_name"),
+    r2Key: (0, pg_core_1.text)("r2_key"),
 });
 // Storage quota tracking per user (100GB free + 1TB packages at $25/month each)
 exports.userStorageQuotas = (0, pg_core_1.pgTable)("user_storage_quotas", {

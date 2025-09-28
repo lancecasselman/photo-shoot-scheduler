@@ -53,6 +53,7 @@ const createR2Routes = require('./server/r2-api-routes');
 
 // Import download control services
 const createDownloadRoutes = require('./server/download-routes');
+const createDownloadOrchestratorRoutes = require('./server/controllers/download-orchestrator-routes');
 const DownloadCommerceManager = require('./server/download-commerce');
 // const createMultipartRoutes = require('./server/multipart-endpoints'); // Removed - was only for Uppy/ObjectUploader
 
@@ -2607,7 +2608,15 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes(realTimeGalleryUpdates));
 
-// Download Control API Routes - Photo delivery with pricing and watermarks
+// Unified Download Orchestrator Routes - Modern download handling (takes priority)
+app.use('/api/downloads/orchestrator', createDownloadOrchestratorRoutes({
+  pool: pool,
+  r2Manager: r2FileManager,
+  commerceManager: downloadCommerceManager,
+  isAuthenticated: isAuthenticated
+}));
+
+// Download Control API Routes - Photo delivery with pricing and watermarks (legacy)
 app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
 
 // Preview Generation API Routes - Watermarked previews for gallery viewing
