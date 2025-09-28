@@ -10503,26 +10503,24 @@ app.get('/g/:token([A-Za-z0-9_-]{20,})', async (req, res) => {
     });
 
     try {
-        // Verify gallery token exists and has photos
+        // Verify gallery token exists and check for photos in session_files table
         const client = await pool.connect();
-        const galleryQuery = await client.query(`
+        
+        // First, verify the session exists and get session info
+        const sessionQuery = await client.query(`
             SELECT 
                 id, 
                 client_name, 
                 session_type,
                 date_time,
-                photos,
-                gallery_access_token,
-                jsonb_array_length(photos) as photo_count
+                gallery_access_token
             FROM photography_sessions 
-            WHERE gallery_access_token = $1 
-            AND photos IS NOT NULL 
-            AND jsonb_array_length(photos) > 0
+            WHERE gallery_access_token = $1
         `, [galleryToken]);
-        client.release();
 
-        if (galleryQuery.rows.length === 0) {
-            console.log('❌ GALLERY BLOCKED: No session found or no photos available for token:', galleryToken);
+        if (sessionQuery.rows.length === 0) {
+            client.release();
+            console.log('❌ GALLERY BLOCKED: No session found for token:', galleryToken);
             return res.status(404).send(`
                 <h1>Gallery Not Available</h1>
                 <p>This gallery link is either invalid or the photos are not ready yet.</p>
@@ -10530,14 +10528,27 @@ app.get('/g/:token([A-Za-z0-9_-]{20,})', async (req, res) => {
             `);
         }
 
-        const session = galleryQuery.rows[0];
-        const photos = session.photos || [];
+        const session = sessionQuery.rows[0];
+        
+        // Check for actual photos in session_files table
+        const photoCountQuery = await client.query(`
+            SELECT COUNT(*) as photo_count, 
+                   array_agg(filename) as filenames
+            FROM session_files 
+            WHERE session_id = $1 AND folder_type = 'gallery'
+        `, [session.id]);
+        
+        client.release();
+        
+        const photoCount = parseInt(photoCountQuery.rows[0].photo_count) || 0;
+        const filenames = photoCountQuery.rows[0].filenames || [];
 
-        if (!photos || photos.length === 0) {
-            console.log('❌ GALLERY BLOCKED: Session found but NO PHOTOS available:', {
+        if (photoCount === 0) {
+            console.log('❌ GALLERY BLOCKED: Session found but NO PHOTOS available in session_files:', {
                 sessionId: session.id,
                 clientName: session.client_name,
-                token: galleryToken
+                token: galleryToken,
+                photoCount: photoCount
             });
             return res.status(404).send(`
                 <h1>Photos Not Ready</h1>
@@ -10550,11 +10561,10 @@ app.get('/g/:token([A-Za-z0-9_-]{20,})', async (req, res) => {
             sessionId: session.id,
             clientName: session.client_name,
             sessionType: session.session_type,
-            photoCount: photos.length,
-            photosBeingServed: photos.map((photo, index) => ({
+            photoCount: photoCount,
+            photosBeingServed: filenames.filter(f => f).map((filename, index) => ({
                 index: index + 1,
-                url: photo.url || 'unknown',
-                filename: photo.filename || 'unknown'
+                filename: filename
             })),
             token: galleryToken,
             timestamp: new Date().toISOString()
@@ -10583,17 +10593,17 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
     try {
         console.log('🔍 API: Verifying gallery access for token:', galleryToken);
         
-        // Verify gallery token exists and get photos with download policies
+        // Verify gallery token exists and get photos from session_files table
         const client = await pool.connect();
-        const galleryQuery = await client.query(`
+        
+        // Get session details
+        const sessionQuery = await client.query(`
             SELECT 
                 id, 
                 client_name, 
                 session_type,
                 date_time,
-                photos,
                 gallery_access_token,
-                jsonb_array_length(photos) as photo_count,
                 download_enabled,
                 pricing_model,
                 download_max,
@@ -10608,9 +10618,9 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
             FROM photography_sessions 
             WHERE gallery_access_token = $1
         `, [galleryToken]);
-        client.release();
 
-        if (galleryQuery.rows.length === 0) {
+        if (sessionQuery.rows.length === 0) {
+            client.release();
             console.log('❌ API: Gallery token not found:', galleryToken);
             return res.status(404).json({ 
                 success: false, 
@@ -10618,14 +10628,31 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
             });
         }
 
-        const session = galleryQuery.rows[0];
-        const photos = session.photos || [];
+        const session = sessionQuery.rows[0];
+        
+        // Get actual photos from session_files table
+        const photosQuery = await client.query(`
+            SELECT filename, file_size_bytes, uploaded_at
+            FROM session_files 
+            WHERE session_id = $1 AND folder_type = 'gallery'
+            ORDER BY uploaded_at ASC
+        `, [session.id]);
+        
+        client.release();
+        
+        const photos = photosQuery.rows.map(row => ({
+            filename: row.filename,
+            url: `/g/${galleryToken}/photo/${row.filename}`,
+            size: row.file_size_bytes,
+            uploadedAt: row.uploaded_at
+        }));
 
         console.log('✅ API: Gallery verification successful:', {
             sessionId: session.id,
             clientName: session.client_name,
             photoCount: photos.length,
-            token: galleryToken
+            token: galleryToken,
+            photosFromSessionFiles: true
         });
 
         // 🚀 CACHE-BUSTING: Ensure real-time updates across all platforms
@@ -10673,14 +10700,15 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
     try {
         console.log('📸 API: Getting photos for gallery token:', galleryToken);
         
-        // Get photos from database with download policies
+        // Get photos from session_files table with download policies
         const client = await pool.connect();
-        const galleryQuery = await client.query(`
+        
+        // Get session details
+        const sessionQuery = await client.query(`
             SELECT 
                 id, 
                 client_name, 
                 session_type,
-                photos,
                 gallery_access_token,
                 download_enabled,
                 pricing_model,
@@ -10696,9 +10724,9 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
             FROM photography_sessions 
             WHERE gallery_access_token = $1
         `, [galleryToken]);
-        client.release();
 
-        if (galleryQuery.rows.length === 0) {
+        if (sessionQuery.rows.length === 0) {
+            client.release();
             console.log('❌ API: Gallery token not found:', galleryToken);
             return res.status(404).json({ 
                 success: false, 
@@ -10706,11 +10734,27 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
             });
         }
 
-        const session = galleryQuery.rows[0];
-        const photos = session.photos || [];
+        const session = sessionQuery.rows[0];
+        
+        // Get actual photos from session_files table
+        const photosQuery = await client.query(`
+            SELECT filename, file_size_bytes, uploaded_at
+            FROM session_files 
+            WHERE session_id = $1 AND folder_type = 'gallery'
+            ORDER BY uploaded_at ASC
+        `, [session.id]);
+        
+        client.release();
+        
+        const photos = photosQuery.rows.map(row => ({
+            filename: row.filename,
+            url: `/g/${galleryToken}/photo/${row.filename}`,
+            size: row.file_size_bytes,
+            uploadedAt: row.uploaded_at
+        }));
 
         if (photos.length === 0) {
-            console.log('❌ API: No photos available for session:', {
+            console.log('❌ API: No photos available in session_files for session:', {
                 sessionId: session.id,
                 clientName: session.client_name,
                 token: galleryToken
@@ -10721,7 +10765,7 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
             });
         }
 
-        console.log('✅ API: Serving photos:', {
+        console.log('✅ API: Serving photos from session_files:', {
             sessionId: session.id,
             clientName: session.client_name,
             photoCount: photos.length,
@@ -10772,9 +10816,7 @@ app.get('/g/:token([A-Za-z0-9_-]{20,})/photo/:filename', async (req, res) => {
         const client = await pool.connect();
         const galleryQuery = await client.query(`
             SELECT id, user_id FROM photography_sessions 
-            WHERE gallery_access_token = $1 
-            AND photos IS NOT NULL 
-            AND jsonb_array_length(photos) > 0
+            WHERE gallery_access_token = $1
         `, [token]);
         client.release();
 
