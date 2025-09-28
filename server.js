@@ -624,6 +624,9 @@ const getCurrentUser = (req) => {
     return req.user || null;
 };
 
+// Import shared admin configuration for consistent admin handling
+const { isAdminEmail } = require('./shared/admin-config');
+
 // Helper function to normalize Lance's emails to a single user ID
 const normalizeUserForLance = (user) => {
     // Return early if no user or no email
@@ -631,6 +634,7 @@ const normalizeUserForLance = (user) => {
         return user;
     }
     
+    // ONLY normalize Lance's specific email addresses to his unified account
     const lanceEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com',
