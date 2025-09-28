@@ -1035,6 +1035,7 @@ class DownloadService {
       }
 
       const policyResult = await this.getSessionPolicy(sessionId);
+      console.log(`📋 DEBUG: getSessionPolicy result:`, policyResult.success ? `SUCCESS - mode: ${policyResult.policy?.mode}` : `FAILED: ${policyResult.error}`);
       if (!policyResult.success) {
         return policyResult;
       }

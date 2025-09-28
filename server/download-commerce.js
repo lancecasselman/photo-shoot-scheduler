@@ -1382,23 +1382,16 @@ class DownloadCommerceManager {
                 };
             }
             
-            // CRITICAL FIX: Query session_files table directly for current photos
-            const sessionFileResults = await this.db
-                .select({
-                    filename: sessionFiles.filename,
-                    originalName: sessionFiles.originalName,
-                    r2Key: sessionFiles.r2Key
-                })
-                .from(sessionFiles)
-                .where(
-                    and(
-                        eq(sessionFiles.sessionId, sessionId),
-                        eq(sessionFiles.folderType, 'gallery')
-                    )
-                );
+            // CRITICAL FIX: Query session_files table directly using raw SQL (Drizzle schema issue)
+            const sessionFileResults = await this.pool.query(`
+                SELECT filename, original_name as "originalName", r2_key as "r2Key"
+                FROM session_files 
+                WHERE session_id = $1 AND folder_type = 'gallery'
+                ORDER BY uploaded_at ASC
+            `, [sessionId]);
                 
             // Format photos to match expected structure
-            const photos = sessionFileResults.map(row => ({
+            const photos = sessionFileResults.rows.map(row => ({
                 id: row.filename, // Use filename as ID for consistency
                 filename: row.filename,
                 name: row.originalName,
