@@ -5,6 +5,7 @@
 
 const { Pool } = require('pg');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { isAdminEmail } = require('../shared/admin-config');
 
 class StorageSystem {
     constructor(pool, r2FileManager) {
@@ -197,14 +198,8 @@ class StorageSystem {
      */
     async canUpload(userId, fileSizeBytes, userEmail = null) {
         try {
-            // Admin bypass for specific email addresses
-            const adminEmails = [
-                'lancecasselman@icloud.com',
-                'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com'
-            ];
-
-            if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+            // Admin bypass using shared admin configuration
+            if (userEmail && isAdminEmail(userEmail)) {
                 console.log(`✅ Admin bypass: ${userEmail} has unlimited storage`);
                 return {
                     canUpload: true,

@@ -6,6 +6,7 @@
 
 const UnifiedSubscriptionManager = require('./unified-subscription-manager');
 const { Pool } = require('pg');
+const { isAdminEmail, getAdminEmails } = require('../shared/admin-config');
 
 class SubscriptionAuthMiddleware {
     constructor(pool) {
@@ -165,15 +166,8 @@ class SubscriptionAuthMiddleware {
                 });
             }
 
-            // ADMIN BYPASS: Skip all checks for admin emails
-            const adminEmails = [
-                'lancecasselman@icloud.com',
-                'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com',
-                'm_casselman@icloud.com'
-            ];
-
-            if (adminEmails.includes(userEmail?.toLowerCase())) {
+            // ADMIN BYPASS: Skip all checks for admin emails using shared config
+            if (isAdminEmail(userEmail)) {
                 console.log(`✅ Admin bypass: ${userEmail} granted access without trial/subscription check`);
                 req.subscriptionStatus = { 
                     hasProfessionalPlan: true, 
@@ -312,13 +306,7 @@ class SubscriptionAuthMiddleware {
                 return res.status(401).json({ error: 'Authentication required' });
             }
 
-            const adminEmails = [
-                'lancecasselman2011@gmail.com',
-                'lancecasselman@icloud.com', 
-                'lance@thelegacyphotography.com'
-            ];
-
-            if (!adminEmails.includes(req.session.user.email?.toLowerCase())) {
+            if (!isAdminEmail(req.session.user.email)) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 

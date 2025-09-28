@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const { isAdminEmail } = require('../shared/admin-config');
 
 function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSystem) {
     
@@ -39,15 +40,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
             const userId = normalizedUser.uid;
             const userEmail = req.user.email;
             
-            // Admin bypass for specific email addresses
-            const adminEmails = [
-                'lancecasselman@icloud.com',
-                'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com',
-                'm_casselman@icloud.com'
-            ];
-
-            if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+            // Admin bypass using shared admin configuration
+            if (userEmail && isAdminEmail(userEmail)) {
                 return res.json({
                     quota_gb: Number.MAX_SAFE_INTEGER,
                     used_gb: 0,
@@ -78,6 +72,22 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
         try {
             const normalizedUser = normalizeUser(req.user);
             const userId = normalizedUser.uid;
+            const userEmail = req.user.email;
+            
+            // Admin bypass for storage summary using shared config
+            if (userEmail && isAdminEmail(userEmail)) {
+                console.log(`✅ Admin bypass for storage summary: ${userEmail} has unlimited storage`);
+                return res.json({
+                    quota_gb: Number.MAX_SAFE_INTEGER,
+                    used_gb: 0,
+                    remaining_gb: Number.MAX_SAFE_INTEGER,
+                    is_admin: true,
+                    canUpload: true,
+                    isNearLimit: false,
+                    usagePercentage: 0
+                });
+            }
+            
             const summary = await storageSystem.getStorageSummary(userId);
             res.json(summary);
         } catch (error) {
@@ -91,13 +101,16 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
         try {
             const normalizedUser = normalizeUser(req.user);
             const userId = normalizedUser.uid;
+            const userEmail = req.user.email;
             const { fileSizeBytes } = req.body;
 
             if (!fileSizeBytes || fileSizeBytes <= 0) {
                 return res.status(400).json({ error: 'Valid file size required' });
             }
 
-            const result = await storageSystem.canUpload(userId, fileSizeBytes);
+            // CRITICAL FIX: Pass user email to enable admin bypass
+            const result = await storageSystem.canUpload(userId, fileSizeBytes, userEmail);
+            console.log(`📊 Quota check completed for user ${userId} (${userEmail}): ${result.canUpload ? 'ALLOWED' : 'BLOCKED'}`);
             res.json(result);
         } catch (error) {
             console.error('Error checking upload permission:', error);
