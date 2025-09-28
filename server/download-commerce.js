@@ -414,9 +414,65 @@ class DownloadCommerceManager {
             }
 
             const sessionData = session[0];
+            const pricingModel = sessionData.pricing_model || sessionData.pricingModel || 'free';
             const freeDownloads = sessionData.freeDownloads || sessionData.free_downloads || 1;
             
-            console.log(`📊 Creating free entitlements: session allows ${freeDownloads} free downloads per client`);
+            console.log(`📊 Creating free entitlements: session pricing model is '${pricingModel}'`);
+
+            // For FREE pricing model, skip all quota checks and allow unlimited downloads
+            if (pricingModel === 'free') {
+                console.log(`🆓 FREE pricing model detected - unlimited downloads allowed, skipping quota checks`);
+                
+                const entitlementIds = [];
+                
+                for (const item of items) {
+                    const entitlementId = uuidv4();
+                    
+                    // Check if entitlement already exists for this specific photo to avoid unique constraint violation
+                    const existing = await this.db.select()
+                        .from(downloadEntitlements)
+                        .where(and(
+                            eq(downloadEntitlements.sessionId, sessionId),
+                            eq(downloadEntitlements.clientKey, clientKey),
+                            eq(downloadEntitlements.photoId, item.photoId)
+                        ))
+                        .limit(1);
+                    
+                    if (existing.length > 0) {
+                        console.log(`⚠️ Entitlement already exists for photo ${item.photoId}, using existing entitlement`);
+                        entitlementIds.push(existing[0].id);
+                        continue;
+                    }
+                    
+                    await this.db.insert(downloadEntitlements)
+                        .values({
+                            id: entitlementId,
+                            sessionId: sessionId,
+                            clientKey: clientKey,
+                            photoId: item.photoId,
+                            remaining: 1, // Each photo gets 1 download
+                            orderId: null, // Free entitlements have no order
+                            expiresAt: null, // Free entitlements don't expire
+                            createdAt: new Date()
+                        });
+                    console.log(`✅ Created FREE unlimited entitlement ${entitlementId} for photo ${item.photoId}`);
+                    entitlementIds.push(entitlementId);
+                }
+                
+                console.log(`✅ Created ${entitlementIds.length} FREE unlimited entitlements for ${clientKey}`);
+                
+                return {
+                    success: true,
+                    count: entitlementIds.length,
+                    entitlementIds: entitlementIds,
+                    freeDownloads: 999999, // Unlimited for FREE mode
+                    usedDownloads: 0, // Not applicable for FREE mode
+                    remainingFree: 999999 // Unlimited for FREE mode
+                };
+            }
+
+            // For FREEMIUM pricing model, enforce quota limits
+            console.log(`📊 FREEMIUM pricing model detected: session allows ${freeDownloads} free downloads per client`);
 
             // Check existing entitlements for this client and count actual downloads consumed
             const existingEntitlements = await this.db.select()
