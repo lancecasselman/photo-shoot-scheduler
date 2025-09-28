@@ -2892,11 +2892,26 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const sessionData = session[0];
 
       // Verify photo exists in this session using session_files table
+      console.log(`🔍 DEBUG: Looking for photo - sessionId: "${sessionId}", photoId: "${photoId}"`);
+      
       const photoQuery = await pool.query(`
         SELECT filename FROM session_files 
         WHERE session_id = $1 AND folder_type = 'gallery' AND filename = $2
         LIMIT 1
       `, [sessionId, photoId]);
+      
+      console.log(`🔍 DEBUG: Photo query result - found ${photoQuery.rows.length} rows`);
+      if (photoQuery.rows.length > 0) {
+        console.log(`🔍 DEBUG: Found photo filename: "${photoQuery.rows[0].filename}"`);
+      } else {
+        console.log(`🔍 DEBUG: Photo NOT found. Let me check what photos DO exist...`);
+        const allPhotosQuery = await pool.query(`
+          SELECT filename FROM session_files 
+          WHERE session_id = $1 AND folder_type = 'gallery'
+          LIMIT 5
+        `, [sessionId]);
+        console.log(`🔍 DEBUG: Available photos in session:`, allPhotosQuery.rows.map(r => r.filename));
+      }
 
       if (photoQuery.rows.length === 0) {
         return res.status(404).json({ error: 'Photo not found in this session' });

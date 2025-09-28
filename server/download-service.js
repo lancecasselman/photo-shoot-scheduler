@@ -1023,10 +1023,13 @@ class DownloadService {
    */
   async processDownload(params) {
     try {
-      const { galleryAccessToken, sessionId } = params;
+      const { galleryAccessToken, sessionId, photoId } = params;
+      
+      console.log(`🚀 DEBUG: processDownload called with sessionId: "${sessionId}", photoId: "${photoId}"`);
 
       // Get session policy to determine pricing model
       const authResult = await this.validateGalleryAccess(galleryAccessToken, sessionId);
+      console.log(`🔐 DEBUG: validateGalleryAccess result:`, authResult.success ? 'SUCCESS' : `FAILED: ${authResult.error}`);
       if (!authResult.success) {
         return authResult;
       }
