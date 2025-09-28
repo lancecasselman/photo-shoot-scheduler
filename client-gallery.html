@@ -2877,14 +2877,18 @@
             }
             
             async downloadPhotoImmediately(event, photoId, photoUrl, filename, price) {
+                // Capture original text before try block to ensure it's accessible in finally
+                const button = event?.target;
+                const originalText = button?.textContent || (price === 0 ? '📥 FREE Download' : '📥 Download');
+                
                 try {
                     console.log(`🚀 Starting immediate download for photo: ${filename} (price: ${price})`);
                     
                     // Show loading state on button
-                    const button = event.target;
-                    const originalText = button.textContent;
-                    button.disabled = true;
-                    button.textContent = 'Processing...';
+                    if (button) {
+                        button.disabled = true;
+                        button.textContent = 'Processing...';
+                    }
                     
                     // Use unified API for immediate download processing
                     const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, price > 0, null);

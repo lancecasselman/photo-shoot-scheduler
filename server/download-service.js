@@ -608,18 +608,97 @@ class DownloadService {
 
       const { session, clientKey } = authResult;
 
-      // Step 2: Verify this is a freemium session
+      // Step 2: Verify this is a freemium or free session
       const policyResult = await this.getSessionPolicy(sessionId);
       if (!policyResult.success) {
         return policyResult;
       }
 
       const policy = policyResult.policy;
-      if (policy.mode !== 'freemium') {
+      if (policy.mode !== 'freemium' && policy.mode !== 'free') {
         return {
           success: false,
-          error: 'Session is not configured for freemium downloads',
+          error: 'Session is not configured for freemium or free downloads',
           code: 'INVALID_PRICING_MODEL'
+        };
+      }
+
+      // For FREE mode, skip quota checks and create unlimited free entitlements
+      if (policy.mode === 'free') {
+        console.log(`🆓 Processing FREE mode download - unlimited downloads allowed`);
+        
+        // Create free entitlement immediately without quota checks
+        const entitlementResult = await this.commerceManager.createFreeEntitlements(
+          sessionId, 
+          clientKey, 
+          [{ photoId }]
+        );
+
+        if (!entitlementResult.success) {
+          return {
+            success: false,
+            error: entitlementResult.error,
+            code: 'ENTITLEMENT_ERROR'
+          };
+        }
+
+        // Issue download token
+        const tokenResult = await this.commerceManager.issueDownloadToken(
+          sessionId,
+          clientKey,
+          photoId,
+          photoUrl,
+          filename
+        );
+
+        if (!tokenResult.success) {
+          return {
+            success: false,
+            error: tokenResult.error,
+            code: 'TOKEN_ERROR'
+          };
+        }
+
+        // Log the free download
+        await this.logDownloadActivity({
+          sessionId,
+          clientKey,
+          photoId,
+          pricing: 'free_unlimited',
+          amount: 0,
+          clientIp,
+          userAgent,
+          status: 'completed'
+        });
+
+        console.log(`✅ FREE unlimited download processed: ${photoId}`);
+
+        return {
+          success: true,
+          downloadToken: tokenResult.token,
+          expiresIn: tokenResult.expiresIn,
+          pricing: {
+            model: 'free',
+            tier: 'unlimited',
+            cost: 0,
+            currency: 'USD',
+            quota: {
+              used: 0,
+              limit: 999999,
+              remaining: 999999
+            }
+          },
+          watermark: session.watermarkEnabled ? {
+            enabled: true,
+            type: session.watermarkType,
+            settings: {
+              opacity: session.watermarkOpacity,
+              position: session.watermarkPosition,
+              scale: session.watermarkScale,
+              text: session.watermarkText,
+              logoUrl: session.watermarkLogoUrl
+            }
+          } : { enabled: false }
         };
       }
 

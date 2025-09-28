@@ -869,11 +869,70 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         });
       }
       
-      // Validate this is freemium mode
-      if (policy.policy.mode !== 'freemium') {
+      // Validate this is freemium or free mode
+      if (policy.policy.mode !== 'freemium' && policy.policy.mode !== 'free') {
         return res.status(400).json({
           success: false,
-          error: `Free entitlement endpoint only supports freemium mode. Current mode: ${policy.policy.mode}`
+          error: `Free entitlement endpoint only supports freemium and free modes. Current mode: ${policy.policy.mode}`
+        });
+      }
+      
+      // For FREE mode, skip quota checks completely
+      if (policy.policy.mode === 'free') {
+        console.log(`🆓 FREE mode detected - allowing unlimited downloads for session: ${sessionId}`);
+        
+        // Create free entitlement immediately without quota checks
+        const entitlementId = uuidv4();
+        const downloadToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+
+        // Create entitlement record
+        await db.insert(downloadEntitlements).values({
+          id: entitlementId,
+          sessionId: sessionId,
+          clientKey: clientKey,
+          photoId: photoId,
+          photoUrl: photoUrl,
+          filename: filename,
+          type: 'free',
+          status: 'active',
+          maxDownloads: 1,
+          remaining: 1,
+          isActive: true,
+          createdAt: new Date(),
+          expiresAt: expiresAt
+        });
+
+        // Create download token
+        await db.insert(downloadTokens).values({
+          id: uuidv4(),
+          token: downloadToken,
+          photoUrl: photoUrl,
+          filename: filename,
+          sessionId: sessionId,
+          clientEmail: clientKey,
+          expiresAt: expiresAt,
+          isUsed: false,
+          createdAt: new Date()
+        });
+
+        console.log(`🆓 FREE entitlement created: ${entitlementId} with download token for photo ${photoId}`);
+        
+        return res.json({
+          success: true,
+          entitlement: {
+            id: entitlementId,
+            photoId: photoId,
+            type: 'free',
+            downloadToken: downloadToken,
+            expiresAt: expiresAt,
+            downloadUrl: `/api/downloads/${downloadToken}`
+          },
+          quotaInfo: {
+            remaining: 999999, // Unlimited for FREE mode
+            total: 999999,
+            used: 0
+          }
         });
       }
       
