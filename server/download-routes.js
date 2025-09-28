@@ -622,31 +622,28 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const context = {
         endpoint: '/api/downloads/unified/validate-access',
         method: 'POST',
-        sessionId,
+        sessionId: sessionId || 'resolving-from-token',
         correlationId
       };
 
-      console.log(`🔐 [${correlationId}] Validating access for session ${sessionId}`);
+      console.log(`🔐 [${correlationId}] Validating access using gallery token (sessionId: ${sessionId || 'unknown - will resolve'})`);
 
-      // Validate required fields with detailed feedback
-      if (!galleryAccessToken || !sessionId) {
-        const missingFields = [];
-        if (!galleryAccessToken) missingFields.push('galleryAccessToken');
-        if (!sessionId) missingFields.push('sessionId');
-        
+      // Validate required fields - only galleryAccessToken is required now
+      if (!galleryAccessToken) {
         return res.handleError('MISSING_REQUIRED_FIELDS', 
-          `Missing required fields: ${missingFields.join(', ')}`, context);
+          'Missing required field: galleryAccessToken', context);
       }
 
-      // Validate gallery access with comprehensive error handling
-      const authResult = await downloadService.validateGalleryAccess(galleryAccessToken, sessionId);
+      // Resolve session from gallery token (fixes circular dependency)
+      const authResult = await downloadService.resolveSessionFromGalleryToken(galleryAccessToken);
 
       if (authResult.success) {
         const processingTime = Date.now() - startTime;
-        console.log(`✅ [${correlationId}] Access validated for session ${sessionId} in ${processingTime}ms`);
+        const resolvedSessionId = authResult.session.id;
+        console.log(`✅ [${correlationId}] Access validated for session ${resolvedSessionId} in ${processingTime}ms`);
         
         // Get session policy for client information
-        const policyResult = await downloadService.getSessionPolicy(sessionId);
+        const policyResult = await downloadService.getSessionPolicy(resolvedSessionId);
         
         if (!policyResult.success) {
           console.warn(`⚠️ [${correlationId}] Policy retrieval failed but access granted: ${policyResult.error}`);

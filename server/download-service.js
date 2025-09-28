@@ -362,6 +362,65 @@ class DownloadService {
   }
 
   /**
+   * RESOLVE SESSION FROM GALLERY TOKEN ONLY
+   * This method resolves the session ID and data from just the galleryAccessToken
+   * Solves circular dependency where client needs session ID to validate access
+   */
+  async resolveSessionFromGalleryToken(galleryAccessToken) {
+    try {
+      if (!galleryAccessToken) {
+        return {
+          success: false,
+          error: 'Missing gallery access token',
+          code: 'MISSING_CREDENTIALS'
+        };
+      }
+
+      // Find session by gallery access token
+      const session = await this.db.select()
+        .from(photographySessions)
+        .where(eq(photographySessions.galleryAccessToken, galleryAccessToken))
+        .limit(1);
+
+      if (session.length === 0) {
+        return {
+          success: false,
+          error: 'Gallery access token not found',
+          code: 'INVALID_TOKEN'
+        };
+      }
+
+      const sessionData = session[0];
+
+      // Check if gallery access has expired
+      if (sessionData.galleryExpiresAt && new Date() > sessionData.galleryExpiresAt) {
+        return {
+          success: false,
+          error: 'Gallery access has expired',
+          code: 'EXPIRED_ACCESS'
+        };
+      }
+
+      // Generate client key for this session
+      const clientKey = this.generateGalleryClientKey(galleryAccessToken, sessionData.id);
+
+      return {
+        success: true,
+        session: sessionData,
+        clientKey: clientKey
+      };
+
+    } catch (error) {
+      console.error('❌ Error resolving session from gallery token:', error);
+      return {
+        success: false,
+        error: 'Session resolution failed',
+        code: 'VALIDATION_ERROR'
+      };
+    }
+  }
+
+  /**
    * GET DOWNLOAD POLICY FOR SESSION
    */
   async getSessionPolicy(sessionId) {

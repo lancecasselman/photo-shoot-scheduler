@@ -3571,8 +3571,8 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            galleryAccessToken: this.galleryToken,
-                            sessionId: this.sessionData?.id || 'unknown' // Will be updated after validation
+                            galleryAccessToken: this.galleryToken
+                            // sessionId removed - server will resolve it from the gallery token
                         })
                     });
 
