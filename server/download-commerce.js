@@ -17,6 +17,7 @@ const {
     downloadHistory, 
     downloadTokens,
     photographySessions,
+    sessionFiles,
     users 
 } = require('../shared/schema');
 const { eq, and, gte, gt, lte, or, sql } = require('drizzle-orm');
@@ -1368,7 +1369,7 @@ class DownloadCommerceManager {
             const expiresAt = new Date();
             expiresAt.setMinutes(expiresAt.getMinutes() + 5);
             
-            // Get photo details from session
+            // Get photo details from session_files table (authoritative source)
             const session = await this.db.select()
                 .from(photographySessions)
                 .where(eq(photographySessions.id, sessionId))
@@ -1381,7 +1382,33 @@ class DownloadCommerceManager {
                 };
             }
             
-            const photos = session[0].photos || [];
+            // CRITICAL FIX: Query session_files table directly for current photos
+            const sessionFileResults = await this.db
+                .select({
+                    filename: sessionFiles.filename,
+                    originalName: sessionFiles.originalName,
+                    r2Key: sessionFiles.r2Key
+                })
+                .from(sessionFiles)
+                .where(
+                    and(
+                        eq(sessionFiles.sessionId, sessionId),
+                        eq(sessionFiles.folderType, 'gallery')
+                    )
+                );
+                
+            // Format photos to match expected structure
+            const photos = sessionFileResults.map(row => ({
+                id: row.filename, // Use filename as ID for consistency
+                filename: row.filename,
+                name: row.originalName,
+                url: row.r2Key ? `https://pub-fc48b3b29b574ea18a4ede9b6a3b1c0e.r2.dev/${row.r2Key}` : null,
+                original: row.r2Key ? `https://pub-fc48b3b29b574ea18a4ede9b6a3b1c0e.r2.dev/${row.r2Key}` : null
+            }));
+            
+            console.log(`📷 Found ${photos.length} photos in session_files for session ${sessionId}`);
+            console.log(`📷 Looking for photoId: "${photoId}"`);
+            console.log(`📷 Available photos:`, photos.map(p => ({ id: p.id, filename: p.filename })));
             
             // Try multiple strategies to find the photo
             let photo = null;

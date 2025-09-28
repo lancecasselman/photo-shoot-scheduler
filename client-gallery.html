@@ -2164,21 +2164,20 @@
                 card.id = `photo-${index}`;
                 
                 // Check if photo is in cart
-                const inCart = this.cart.some(item => item.photoId === photo.id || item.photoId === index.toString());
+                const inCart = this.cart.some(item => item.photoId === photo.filename);
                 if (inCart) {
                     card.classList.add('in-cart');
                 }
                 console.log(`🃏 Photo ${index + 1} in cart: ${inCart}`);
                 
                 // Check if photo is already purchased (entitled)
-                // Check multiple possible photoId formats to handle mismatches
-                const photoIdToCheck = photo.id || index.toString();
+                // Check if photo is already entitled using filename as primary identifier
+                const photoIdToCheck = photo.filename;
                 const isEntitled = this.entitlements.some(e => 
-                    e.photoId === photo.id ||           // Direct photo.id match
-                    e.photoId === index.toString() ||   // Index-based match (0, 1, 2...)
-                    e.photoId === photoIdToCheck ||     // Fallback match
-                    e.photoUrl === photo.url ||         // URL-based match
-                    e.photoId === photo.filename        // Filename-based match
+                    e.photoId === photo.filename ||     // Primary: filename match
+                    e.photoId === photo.id ||           // Legacy: photo.id match
+                    e.photoId === index.toString() ||   // Legacy: index match for compatibility
+                    e.photoUrl === photo.url            // Fallback: URL-based match
                 );
                 console.log(`🃏 Photo ${index + 1} (photoId: ${photoIdToCheck}) entitled: ${isEntitled}`, {
                     availableEntitlements: this.entitlements.map(e => ({ photoId: e.photoId, photoUrl: e.photoUrl })),
@@ -2208,7 +2207,7 @@
                         <img src="${previewUrl}" 
                              alt="${photo.filename}" 
                              loading="lazy"
-                             data-photo-id="${photo.id || index}"
+                             data-photo-id="${photo.filename}"
                              data-entitled="${isEntitled}"
                              data-price="${price}"
                              data-original-url="${photo.url}"
@@ -2225,30 +2224,30 @@
                         <p class="photo-filename">${photo.filename || `Photo ${index + 1}`}</p>
                         <div class="photo-actions">
                             ${isEntitled ? `
-                                <button class="photo-btn download-btn" onclick="galleryCart.downloadPhoto('${photo.id || index}', '${photo.url}', '${photo.filename}')">
+                                <button class="photo-btn download-btn" onclick="galleryCart.downloadPhoto('${photo.filename}', '${photo.url}', '${photo.filename}')">
                                     📥 Download
                                 </button>
                             ` : `
                                 ${this.policy && this.policy.mode === 'free' ? `
                                     <!-- Free gallery - immediate download -->
                                     <button class="photo-btn download-btn immediate free" 
-                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', 0)">
+                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.filename}', '${photo.url}', '${photo.filename}', 0)">
                                         📥 FREE Download
                                     </button>
                                 ` : this.policy && this.policy.mode === 'freemium' ? `
                                     <!-- Show both FREE and purchase buttons side by side in freemium mode -->
                                     <button class="photo-btn download-btn immediate free ${price === 0 ? '' : 'quota-exhausted'}" 
-                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.id || index}', '${photo.url}', '${photo.filename}', ${price})"
+                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.filename}', '${photo.url}', '${photo.filename}', ${price})"
                                             ${price !== 0 ? 'disabled title="Free quota exhausted"' : ''}>
                                         📥 FREE ${price === 0 ? '' : '(0 left)'}
                                     </button>
                                     <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
-                                            onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
+                                            onclick="galleryCart.toggleCartItem('${photo.filename}', '${photo.url}', '${photo.filename}', ${index})">
                                         ${inCart ? '✓ Added - Remove' : `🛒 $${price !== null && price > 0 ? price.toFixed(2) : '4.75'}`}
                                     </button>
                                 ` : `
                                     <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
-                                            onclick="galleryCart.toggleCartItem('${photo.id || index}', '${photo.url}', '${photo.filename}', ${index})">
+                                            onclick="galleryCart.toggleCartItem('${photo.filename}', '${photo.url}', '${photo.filename}', ${index})">
                                         ${inCart ? '✓ Added - Remove' : `🛒 Add to Cart - $${price ? price.toFixed(2) : '4.75'}`}
                                     </button>
                                 `}
