@@ -1499,6 +1499,23 @@
                 this.init();
             }
             
+            /**
+             * Get the correct API base URL for both localhost development and production
+             * For localhost development: use current origin (e.g., http://localhost:5000)
+             * For production published galleries: use main domain (https://photomanagementsystem.com)
+             */
+            getApiBaseUrl() {
+                const hostname = window.location.hostname;
+                
+                // For localhost development, use current origin
+                if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('replit')) {
+                    return window.location.origin;
+                }
+                
+                // For production published galleries on subdomains, use main domain
+                return 'https://photomanagementsystem.com';
+            }
+            
             async init() {
                 console.log('🛒 Initializing ClientGalleryCart...');
                 
@@ -1560,7 +1577,7 @@
                     console.log('🔄 Initializing real-time gallery updates...');
                     
                     // Create EventSource connection to SSE endpoint
-                    this.eventSource = new EventSource(`/api/gallery/events?token=${this.galleryToken}`);
+                    this.eventSource = new EventSource(`${this.getApiBaseUrl()}/api/gallery/events?token=${this.galleryToken}`);
                     
                     this.eventSource.onopen = (event) => {
                         console.log('✅ Real-time gallery updates connected');
@@ -2382,7 +2399,7 @@
                     }
 
                     // Call server API to validate quota and reserve slot
-                    const response = await fetch('/api/downloads/cart/add-item', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/add-item`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -2467,7 +2484,7 @@
 
                 try {
                     // Call server API to release quota reservation
-                    const response = await fetch('/api/downloads/cart/remove-item', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/remove-item`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -2629,7 +2646,7 @@
                 if (silent || confirm('Are you sure you want to clear your cart?')) {
                     try {
                         // Call server API to clear all reservations
-                        await fetch('/api/downloads/cart/clear', {
+                        await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/clear`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -2683,7 +2700,7 @@
                         filename: item.filename
                     }));
                     
-                    const response = await fetch('/api/downloads/entitlements', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/entitlements`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -2725,7 +2742,7 @@
                     // Prepare items for checkout
                     const items = this.cart.map(item => item.photoId);
                     
-                    const response = await fetch('/api/downloads/checkout', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/checkout`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -2795,7 +2812,7 @@
                     
                     console.log(`🔍 Loading entitlements for clientKey: ${clientKey}`);
                     
-                    const response = await fetch(`/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${clientKey}`);
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${clientKey}`);
                     const data = await response.json();
                     
                     if (data.success) {
@@ -3548,7 +3565,7 @@
 
                     console.log('🔐 Validating access using unified API...');
                     
-                    const response = await fetch('/api/downloads/unified/validate-access', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/validate-access`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -3609,7 +3626,7 @@
                 try {
                     console.log(`🎯 Processing unified download for photo ${photoId}`);
                     
-                    const response = await fetch('/api/downloads/unified/process', {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/process`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -3662,7 +3679,7 @@
                         throw new Error('Missing session ID or gallery token');
                     }
 
-                    const response = await fetch(`/api/downloads/unified/status/${this.sessionData.id}?galleryAccessToken=${encodeURIComponent(this.galleryToken)}&clientKey=${encodeURIComponent(this.cachedGalleryClientKey || '')}`, {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/status/${this.sessionData.id}?galleryAccessToken=${encodeURIComponent(this.galleryToken)}&clientKey=${encodeURIComponent(this.cachedGalleryClientKey || '')}`, {
                         method: 'GET'
                     });
 
