@@ -3602,7 +3602,7 @@
                                 session: this.sessionData,
                                 policy: this.policy,
                                 clientKey: data.clientKey,
-                                photos: data.session.photos || [] // If photos are included
+                                photos: data.photos || [] // Fixed: photos are at root level of API response
                             }
                         };
                     } else {
