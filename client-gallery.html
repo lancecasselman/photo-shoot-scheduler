@@ -1810,7 +1810,7 @@
                     console.log('🔍 Unified API Response received:', verifyData);
                     console.log('🔍 API Response data structure:', JSON.stringify(verifyData, null, 2));
                     
-                    if (!verifyResponse.ok || !verifyData) {
+                    if (!verifyData.success || !verifyData) {
                         throw new Error(verifyData?.error || 'Gallery access denied');
                     }
                     
