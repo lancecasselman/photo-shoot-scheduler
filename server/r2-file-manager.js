@@ -66,34 +66,162 @@ class R2FileManager {
     this.testConnection();
   }
 
+  /**
+   * Manual bucket creation method with comprehensive error handling
+   * Can be called from admin endpoints or when automatic creation fails
+   */
+  async createBucketManually() {
+    try {
+      if (!this.s3Client) {
+        throw new Error('R2 client not initialized - check credentials');
+      }
+
+      console.log(`📦 Manually creating R2 bucket: ${this.bucketName}`);
+      console.log(`   Account ID: ${this.accountId}`);
+      console.log(`   Endpoint: https://${this.accountId}.r2.cloudflarestorage.com`);
+      
+      const createCommand = new CreateBucketCommand({ 
+        Bucket: this.bucketName,
+        CreateBucketConfiguration: {
+          // R2 automatically handles region configuration
+        }
+      });
+      
+      await this.s3Client.send(createCommand);
+      console.log(`✅ Bucket '${this.bucketName}' created successfully`);
+      
+      // Wait for bucket to propagate and verify
+      console.log('   Waiting for bucket propagation...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const verifyCommand = new HeadBucketCommand({ Bucket: this.bucketName });
+      await this.s3Client.send(verifyCommand);
+      
+      console.log('✅ Bucket verification successful');
+      this.r2Available = true;
+      
+      return {
+        success: true,
+        bucketName: this.bucketName,
+        accountId: this.accountId,
+        endpoint: `https://${this.accountId}.r2.cloudflarestorage.com`,
+        message: 'Bucket created and verified successfully'
+      };
+      
+    } catch (error) {
+      console.error(`❌ Manual bucket creation failed:`, error.message);
+      
+      const errorDetails = {
+        success: false,
+        error: error.message,
+        bucketName: this.bucketName,
+        accountId: this.accountId,
+        endpoint: `https://${this.accountId}.r2.cloudflarestorage.com`
+      };
+      
+      // Provide specific guidance based on error type
+      if (error.message?.includes('BucketAlreadyExists')) {
+        errorDetails.message = 'Bucket already exists but may not be accessible with current credentials';
+        errorDetails.solution = 'Check R2 API token permissions and bucket ownership';
+      } else if (error.message?.includes('InvalidAccessKeyId')) {
+        errorDetails.message = 'Invalid R2 Access Key ID';
+        errorDetails.solution = 'Verify CLOUDFLARE_R2_ACCESS_KEY_ID in environment variables';
+      } else if (error.message?.includes('SignatureDoesNotMatch')) {
+        errorDetails.message = 'Invalid R2 Secret Access Key';
+        errorDetails.solution = 'Verify CLOUDFLARE_R2_SECRET_ACCESS_KEY in environment variables';
+      } else if (error.message?.includes('Access Denied')) {
+        errorDetails.message = 'Insufficient permissions to create buckets';
+        errorDetails.solution = 'Ensure R2 API token has Object Read & Write + Bucket Read & Write permissions';
+      } else {
+        errorDetails.message = 'Unknown bucket creation error';
+        errorDetails.solution = 'Check Cloudflare dashboard for account limits and permissions';
+      }
+      
+      return errorDetails;
+    }
+  }
+
   async testConnection() {
     try {
+      // Check if we have credentials first
+      if (!this.s3Client) {
+        console.log('❌ R2 client not initialized - missing credentials');
+        this.r2Available = false;
+        return false;
+      }
+
       const headCommand = new HeadBucketCommand({ Bucket: this.bucketName });
       await this.s3Client.send(headCommand);
       console.log(' R2 connection successful - cloud backup active');
       this.r2Available = true;
       return true;
     } catch (error) {
-      console.log(' R2 unavailable - using local backup fallback');
-      console.log(`   Error: ${error.code} - ${error.message?.substring(0, 50)}`);
+      console.log(' R2 unavailable - attempting bucket creation');
+      console.log(`   Error: ${error.code} - ${error.message?.substring(0, 100)}`);
       this.r2Available = false;
       
-      // Try to create bucket if it doesn't exist
-      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
-        console.log(' Bucket not found, attempting to create...');
+      // Enhanced bucket creation logic - handle multiple error types
+      const bucketCreationErrors = [
+        'NotFound', 'NoSuchBucket', 'BucketNotFound',
+        error.name === 'NotFound',
+        error.$metadata?.httpStatusCode === 404,
+        error.code === 'NoSuchBucket',
+        error.message?.includes('does not exist'),
+        error.message?.includes('bucket does not exist')
+      ];
+      
+      const shouldCreateBucket = bucketCreationErrors.some(condition => condition === true);
+      
+      if (shouldCreateBucket) {
+        console.log(` Bucket '${this.bucketName}' not found, attempting to create...`);
         try {
-          const createCommand = new CreateBucketCommand({ Bucket: this.bucketName });
+          const createCommand = new CreateBucketCommand({ 
+            Bucket: this.bucketName,
+            CreateBucketConfiguration: {
+              // R2 uses 'auto' region for global accessibility
+            }
+          });
           await this.s3Client.send(createCommand);
-          console.log(' Bucket created successfully');
+          console.log(`✅ Bucket '${this.bucketName}' created successfully`);
+          
+          // Verify the bucket was created by testing connection again
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds for propagation
+          const verifyCommand = new HeadBucketCommand({ Bucket: this.bucketName });
+          await this.s3Client.send(verifyCommand);
+          
+          console.log(`✅ Bucket verification successful - R2 fully operational`);
           this.r2Available = true;
           return true;
         } catch (createError) {
-          console.error('❌ Failed to create bucket:', createError.message);
+          console.error(`❌ Failed to create bucket '${this.bucketName}':`, createError.message);
+          console.error('   Common issues:');
+          console.error('   • Invalid R2 credentials (Access Key/Secret)');
+          console.error('   • Insufficient permissions for bucket creation');
+          console.error('   • Bucket name conflicts or invalid characters');
+          console.error(`   • Account ID mismatch: ${this.accountId}`);
           this.r2Available = false;
           return false;
         }
+      } else {
+        // Handle other types of errors (credentials, permissions, etc.)
+        console.error(`❌ R2 connection failed with non-bucket error:`);
+        console.error(`   Error Type: ${error.name || error.code}`);
+        console.error(`   Message: ${error.message}`);
+        console.error(`   Account ID: ${this.accountId}`);
+        console.error(`   Bucket: ${this.bucketName}`);
+        console.error(`   Endpoint: https://${this.accountId}.r2.cloudflarestorage.com`);
+        
+        if (error.message?.includes('credentials') || error.message?.includes('Access Denied')) {
+          console.error('   Likely issue: Invalid R2 credentials');
+        } else if (error.message?.includes('SignatureDoesNotMatch')) {
+          console.error('   Likely issue: Incorrect secret access key');
+        } else if (error.message?.includes('InvalidAccessKeyId')) {
+          console.error('   Likely issue: Incorrect access key ID');
+        }
+        
+        this.r2Available = false;
+        return false;
       }
-      return false;
     }
   }
 
@@ -439,7 +567,11 @@ class R2FileManager {
           note: 'Stored locally - will sync to cloud when R2 connection is restored'
         };
       } else {
-        throw new Error('Neither R2 cloud storage nor local backup is available');
+        // If R2 is unavailable and no local backup, provide clear guidance
+        const errorMessage = `Cloud storage unavailable: R2 bucket '${this.bucketName}' is not accessible. ` +
+          `This could be due to missing bucket, invalid credentials, or network issues. ` +
+          `Please check your R2 configuration.`;
+        throw new Error(errorMessage);
       }
 
     } catch (error) {

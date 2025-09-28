@@ -10,96 +10,34 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 ## System Architecture
 
 ### Frontend Architecture
-The system utilizes a static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, employing a responsive, mobile-first design using CSS Grid and Flexbox. It incorporates PWA capabilities via a service worker for offline functionality and a component-based UI with tabbed navigation. The CapCut-style Website Builder features full-screen preview, drag-and-drop functionality, editable components (formatting, alignment, fonts, colors, spacing), and includes 21 professional fonts categorized into Serif, Sans-Serif, Display, and Script. The bottom toolbar is resizable with saved preferences.
+The system utilizes a static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, employing a responsive, mobile-first design. It incorporates PWA capabilities via a service worker for offline functionality and a component-based UI with tabbed navigation. The CapCut-style Website Builder features full-screen preview, drag-and-drop functionality, editable components, and includes 21 professional fonts. The platform focuses on a web-app only strategy for all devices.
 
 ### Backend Architecture
-The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level through secure routes.
+The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level.
 
 ### Authentication & Authorization
-Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. 
-
-**Known Mobile Limitation**: Google OAuth does not work on mobile browsers in Replit's development environment due to Firebase/Replit security restrictions. Mobile users must use email/password authentication during development. This is automatically resolved in production deployment with proper domain configuration.
-
-**Firebase Project Configuration:**
-- Project ID: `photoshcheduleapp`
-- Auth Domain: `photoshcheduleapp.firebaseapp.com`
-- Storage Bucket: `photoshcheduleapp.appspot.com`
-- App ID: `1:1080892259604:web:8198de9d7da81c684c1601`
-- Messaging Sender ID: `1080892259604`
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication.
 
 ### Database Architecture
-The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy. Published websites data, metadata, and themes are stored in PostgreSQL.
+The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
 
 ### File Storage Strategy
-Cloudflare R2 serves as the primary cloud storage with session-aware file paths and RAW file backup. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads, on-the-fly thumbnail generation with smart caching, and preserves original filenames.
-
-### Mobile & Responsive Features
-**Strategic Decision (August 2025): Web-App Only Approach**
-Transitioned from native mobile app development to a web-app only strategy for simplified maintenance and faster development cycles. The platform now focuses entirely on delivering an exceptional mobile-responsive web experience that works seamlessly across all devices and browsers.
-
-**Mobile Website Builder Enhancements (August 2025):**
-- Added comprehensive touch event support for toolbar resizing
-- Enhanced mobile responsiveness with larger touch targets (20px vs 10px)
-- Fixed component drag functionality for mobile devices with touchstart/touchmove/touchend events
-- Improved visual feedback for touch interactions with active states
-- Added mobile-specific CSS optimizations for better usability
-
-**Benefits of Web-App Only:**
-- Single codebase for all platforms (web, mobile, tablet)
-- Instant deployment of updates without app store approval processes
-- No app store fees or complex mobile build processes
-- Progressive Web App (PWA) capabilities for app-like experience
-- Superior visual control and immediate feedback for UI adjustments
-- Streamlined authentication flow without mobile-specific complexities
-- Camera access and file uploads work natively in modern mobile browsers
-- Users can install web app to home screen for native app feel
+Cloudflare R2 serves as the primary cloud storage with session-aware file paths and RAW file backup. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
 
 ### Photography Delivery System
-A comprehensive download-based delivery system with flexible pricing models (free, paid, freemium), customizable watermarking, and Stripe Connect integration for payment processing. Features include:
-- Download policies configurable per session (enable/disable, pricing model, limits)
-- Watermark system supporting text and logo overlays with positioning and opacity controls
-- Download tracking with enforcement of quotas and maximum limits
-- Direct gallery links via secure gallery_access_tokens (industry standard approach)
-- Proper HTTP status codes (403/429) for limit enforcement
-- Downloadable originals with optional watermarking based on pricing model
-
-**September 2025 - Enhanced Quota Enforcement System:**
-- **Per-Client Quota Tracking**: Each gallery visitor gets unique quota limits using persistent UUID system stored in localStorage
-- **Freemium Model Implementation**: Correctly enforces exactly 2 free downloads per unique visitor before requiring $5.00 payment
-- **Synchronized Tracking Systems**: Gallery downloads, entitlements, and tokens use consistent client identification
-- **Production-Ready Business Logic**: Proper quota accounting with per-photo usage tracking and accurate consumption calculation
-- **Multi-Visitor Support**: Different browser tabs/visitors get separate quota allowances (e.g., 4 total downloads from same session by 2 different clients)
-
-**System Architecture:**
-- Client-side generates persistent uniqueVisitorId using UUID stored in localStorage
-- Server respects client-provided visitor identifiers throughout download routes
-- Database properly tracks consumed downloads per client rather than shared limits
-- Entitlement system uses maxDownloads=1 per photo with accurate remaining quota calculation
-
-**September 2025 - Freemium Download Entitlement Fix:**
-- **Client Key Mismatch Resolution**: Fixed critical "No download entitlement found" error caused by server-client key generation mismatch
-- **Authoritative Key System**: Implemented consistent `generateGalleryClientKey()` on both server and client using gallery token + session ID
-- **Backwards Compatibility**: Enhanced verification system with comprehensive fallback lookup for legacy entitlements (visitor IDs, email keys)
-- **Consistent Verification**: Eliminated key switching fallback logic - server always uses same authoritative key for creation and verification
-- **Reliable Re-downloads**: Fixed repeat downloads to work with same entitlement and consistent key matching
+A comprehensive download-based delivery system with flexible pricing models (free, paid, freemium), customizable watermarking, and Stripe Connect integration for payment processing. It includes per-client quota tracking and robust entitlement management.
 
 ### Photography Community Platform
-A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
-
-### Watermark System
-A professional watermarking feature allows photographers to add customizable text watermarks to their images automatically, with adjustable positioning, opacity, font size, and color selection, applied during image processing.
-
-### Golden Hour Times Calculator
-A professional photography planning tool that calculates optimal lighting times for any location and date, featuring location search, current location detection, accurate calculations, responsive design, and photography tips.
+A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features, user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction.
 
 ### Core Features & System Design
-The system supports chronological session sorting, an integrated deposit system, a comprehensive storage quota and billing system with real-time tracking, and a robust unified file deletion system. It includes prebuilt customizable pages (Portfolio, About, Contact) and advanced subpage functionality for nested structures. A full booking agreement system with e-signature capabilities and Stripe Connect Express for multi-photographer payment routing are integrated.
+The system supports chronological session sorting, an integrated deposit system, a comprehensive storage quota and billing system, and a robust unified file deletion system. It includes prebuilt customizable pages, advanced subpage functionality, a full booking agreement system with e-signature capabilities, and Stripe Connect Express for multi-photographer payment routing.
 
 ### AI-Powered Blog Generator
-Integrated OpenAI-powered blog post generation directly into the website builder, featuring customizable blog creation with topic, style, tone, and length options, SEO keyword optimization, automatic metadata generation, and blog idea suggestions.
+Integrated OpenAI-powered blog post generation into the website builder, featuring customizable blog creation with topic, style, tone, and length options, SEO keyword optimization, and automatic metadata generation.
 
 ### Website Publishing System
-Allows photographers to publish their created websites to subdomains (photographer.photomanagementsystem.com) with real-time availability checking, one-click publishing, a cost-efficient architecture, published websites database, live preview, and update capability. This is a professional plan feature.
+Allows photographers to publish their created websites to subdomains with real-time availability checking, one-click publishing, a cost-efficient architecture, published websites database, live preview, and update capability. This is a professional plan feature.
 
 ### Onboarding System
 A 5-step wizard guides new users through setup, including username selection, business information, photography specialty, and subscription integration.
@@ -111,7 +49,7 @@ A comprehensive system supporting multiple platforms and billing models, includi
 Provides complete cancellation functionality with platform-specific handling and enforces subscription requirements through subscription-aware authentication middleware, frontend guards, automatic redirection to checkout, and grace period access.
 
 ### Production Deployment Infrastructure
-Includes production-ready configuration with security hardening (Helmet.js, CORS, rate limiting, secure session management), comprehensive health monitoring, structured JSON logging, database optimization (SSL, connection pooling, retry logic), performance enhancements (gzip, caching, memory management), and robust error handling.
+Includes production-ready configuration with security hardening (Helmet.js, CORS, rate limiting, secure session management), comprehensive health monitoring, structured JSON logging, database optimization, performance enhancements, and robust error handling.
 
 ### Platform Analytics & Business Intelligence
 A comprehensive analytics dashboard for monitoring SaaS platform performance, covering revenue analytics, user engagement, platform health, support analytics, and business metrics.
@@ -123,49 +61,31 @@ Enterprise-grade data portability and privacy compliance with complete data expo
 A production-grade backup system with automated daily database backups, weekly full system backups, integrity checking, encrypted cloud storage in Cloudflare R2, point-in-time recovery, and monitoring.
 
 ### Advanced User Management System
-Comprehensive photographer account management for platform administrators, offering a dashboard with filtering, search, bulk operations, account controls (suspend, reactivate, plan modifications, billing management), usage analytics, and export tools.
+Comprehensive photographer account management for platform administrators, offering a dashboard with filtering, search, bulk operations, account controls, usage analytics, and export tools.
 
 ### Enterprise Support System
 Professional-grade client support infrastructure with automatic issue resolution, multi-channel support, a help center, ticket management, support analytics, and client communication.
 
-## Contact Form Configuration
-
-The home page features a contact form that forwards submissions to the administrator's email. To configure the recipient email:
-
-1. Set the `CONTACT_FORM_EMAIL` environment variable to your email address
-2. Alternatively, it will use the `SENDGRID_FROM_EMAIL` if configured
-3. As a fallback, it sends to `admin@photomanagementsystem.com`
-
-The contact form uses the existing SendGrid integration to send formatted emails containing:
-- Contact name and email
-- Phone number (if provided)
-- Interest area (Demo, Pricing, Features, Support, Other)
-- Full message text
-
 ## External Dependencies
 
 ### Core Services
-- **Firebase**: Authentication, Firestore, Storage, Hosting, Functions.
+- **Firebase**: Authentication, Firestore, Storage, Hosting.
 - **PostgreSQL**: Primary relational database (via Neon serverless).
 - **Stripe**: Payment processing, subscription management, Stripe Connect.
 - **SendGrid**: Email delivery service.
 - **Cloudflare R2**: Primary cloud storage.
-- **WHCC**: Print fulfillment service (Customer #443225) - provides complete product catalog including albums, books, metal prints, canvas prints, and cards.
+- **WHCC**: Print fulfillment service.
+- **OpenAI**: AI-powered blog generation.
 
 ### Development & Deployment
 - **Drizzle ORM**: Type-safe database operations.
 - **Express.js**: Web application framework.
 - **Multer**: File upload handling.
 - **Archiver**: ZIP file generation.
-- **Sharp**: Image processing for thumbnail generation.
-- **AWS SDK**: S3-compatible interface for R2 storage operations.
-
-### Frontend Libraries
+- **Sharp**: Image processing.
+- **AWS SDK**: S3-compatible interface for R2 storage.
 - **JSZip**: Client-side ZIP file creation.
 - **Uppy**: Advanced file upload interface.
-- **Google Fonts**: Typography system.
-
-
 
 ### APIs
 - **Google Distance Matrix API**: For mileage tracking.

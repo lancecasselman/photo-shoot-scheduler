@@ -264,6 +264,40 @@ function createR2Routes(realTimeGalleryUpdates = null) {
 
       console.log(`📤 Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
 
+      // CRITICAL FIX: Check R2 connectivity FIRST before showing misleading quota errors
+      if (!r2Manager.r2Available) {
+        console.log(`❌ R2 cloud storage is not available - attempting to reconnect...`);
+        
+        // Try to reconnect to R2 and create bucket if needed
+        const reconnectResult = await r2Manager.testConnection();
+        
+        if (!reconnectResult) {
+          return res.status(503).json({ 
+            error: 'Cloud storage unavailable',
+            message: `Cloud storage (R2) is not available. This could be due to:
+• Missing or invalid R2 bucket '${r2Manager.bucketName}'
+• Network connectivity issues
+• Invalid R2 credentials
+
+Please check your R2 configuration or contact support.`,
+            details: {
+              bucketName: r2Manager.bucketName,
+              accountId: r2Manager.accountId,
+              r2Available: r2Manager.r2Available,
+              endpoint: `https://${r2Manager.accountId}.r2.cloudflarestorage.com`
+            },
+            solutions: [
+              'Verify the R2 bucket exists in your Cloudflare dashboard',
+              'Check R2 API credentials are valid',
+              'Ensure the bucket name matches: ' + r2Manager.bucketName,
+              'Wait a moment and try again if this is a temporary network issue'
+            ]
+          });
+        }
+        
+        console.log(`✅ R2 reconnection successful`);
+      }
+
       // Check total upload size against storage limit with admin bypass
       const userEmail = req.user?.email;
       const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
@@ -1469,6 +1503,104 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       res.status(500).json({ 
         error: 'Failed to get sync status', 
         details: error.message 
+      });
+    }
+  });
+
+  /**
+   * POST /api/r2/admin/create-bucket
+   * Manually create the R2 bucket (admin only)
+   */
+  router.post('/admin/create-bucket', async (req, res) => {
+    try {
+      const userEmail = req.user?.email;
+      
+      // Admin check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com'
+      ];
+      
+      if (!userEmail || !adminEmails.includes(userEmail.toLowerCase())) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      console.log(`🗂️ Admin ${userEmail} requesting manual bucket creation`);
+      
+      const result = await r2Manager.createBucketManually();
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: 'R2 bucket created successfully',
+          details: result
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Bucket creation failed',
+          details: result
+        });
+      }
+      
+    } catch (error) {
+      console.error('Admin bucket creation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create bucket',
+        message: error.message 
+      });
+    }
+  });
+
+  /**
+   * GET /api/r2/admin/status
+   * Check R2 connection status and bucket existence (admin only)
+   */
+  router.get('/admin/status', async (req, res) => {
+    try {
+      const userEmail = req.user?.email;
+      
+      // Admin check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com'
+      ];
+      
+      if (!userEmail || !adminEmails.includes(userEmail.toLowerCase())) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      console.log(`🔍 Admin ${userEmail} checking R2 status`);
+      
+      const connectionResult = await r2Manager.testConnection();
+      
+      const status = {
+        r2Available: r2Manager.r2Available,
+        bucketName: r2Manager.bucketName,
+        accountId: r2Manager.accountId,
+        endpoint: `https://${r2Manager.accountId}.r2.cloudflarestorage.com`,
+        connectionTest: connectionResult,
+        credentialsConfigured: {
+          accessKeyId: !!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+          secretAccessKey: !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+          bucketName: !!process.env.CLOUDFLARE_R2_BUCKET_NAME,
+          accountId: !!process.env.CLOUDFLARE_R2_ACCOUNT_ID
+        }
+      };
+      
+      res.json({
+        success: true,
+        status: status,
+        message: r2Manager.r2Available ? 'R2 is fully operational' : 'R2 is not available'
+      });
+      
+    } catch (error) {
+      console.error('Admin status check error:', error);
+      res.status(500).json({ 
+        error: 'Failed to check R2 status',
+        message: error.message 
       });
     }
   });
