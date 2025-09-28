@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Photo Gallery - Shopping Cart</title>
     <style>
         * {
@@ -1669,7 +1672,7 @@
                     if (validateResponse.success && validateResponse.data.session) {
                         const verifyData = validateResponse.data;
                         // Update photos array with new data
-                        this.photos = verifyData.session.photos || [];
+                        this.photos = verifyData.photos || [];
                         console.log(`📸 Gallery refreshed: now showing ${this.photos.length} photos`);
                         
                         // Refresh the display
@@ -1838,8 +1841,8 @@
                     await this.loadPolicy();
                     console.log('🔧 Policy loaded:', this.policy);
                     
-                    // FIX: Photos are in verifyData.session.photos, not verifyData.photos
-                    this.photos = sessionData.photos || [];
+                    // FIX: Photos are in verifyData.photos, not sessionData.photos
+                    this.photos = verifyData.photos || [];
                     console.log(`📸 Photos array found:`, this.photos);
                     console.log(`📸 Loaded ${this.photos.length} photos`);
                     
@@ -1891,7 +1894,7 @@
                         if (emergencyData.success && emergencyData.session) {
                             console.log('✅ EMERGENCY RECOVERY SUCCESS - Processing data...');
                             this.sessionData = emergencyData.session;
-                            this.photos = this.sessionData.photos || [];
+                            this.photos = emergencyData.photos || [];
                             
                             // Set freemium policy directly from API response
                             this.policy = {
