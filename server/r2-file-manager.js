@@ -1294,6 +1294,7 @@ class R2FileManager {
 
   /**
    * Get file stream from R2 for ZIP downloads and direct access
+   * FIXED: Use proper Node.js stream handling to prevent file corruption
    */
   async getFileStream(r2Key) {
     try {
@@ -1313,7 +1314,22 @@ class R2FileManager {
       
       if (response.Body) {
         console.log(` File stream retrieved: ${r2Key}`);
-        return response.Body;
+        
+        // FIXED: Use streamToBuffer to prevent AWS SDK v3 stream corruption
+        // This converts the problematic AWS SDK stream to a buffer, then creates
+        // a proper Node.js readable stream that can be safely piped
+        const fileBuffer = await streamToBuffer(response.Body);
+        
+        // Import Readable from Node.js streams module
+        const { Readable } = require('stream');
+        
+        // Create a proper readable stream from the buffer
+        // FIXED: Wrap buffer in array to emit as one binary chunk, not individual bytes
+        const readableStream = Readable.from([fileBuffer]);
+        
+        console.log(` File stream processed safely: ${r2Key} (${fileBuffer.length} bytes)`);
+        return readableStream;
+        
       } else {
         console.warn(` No body in response for: ${r2Key}`);
         return null;
