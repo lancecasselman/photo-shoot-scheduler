@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 const R2FileManager = require('./r2-file-manager');
 // REMOVED: Old stripe storage billing - using new storage system
 const R2SyncService = require('./r2-sync-service');
@@ -1058,6 +1059,7 @@ Please check your R2 configuration or contact support.`,
   /**
    * POST /api/r2/complete-upload
    * Mark upload as complete and update database tracking
+   * CRITICAL FIX: Now updates the main photos JSONB column with actual R2 URLs
    */
   router.post('/complete-upload', async (req, res) => {
     try {
@@ -1069,6 +1071,15 @@ Please check your R2 configuration or contact support.`,
       }
       
       console.log(`✅ Completing upload for ${files.length} files in session ${sessionId}`);
+      
+      // Get R2 configuration for URL construction
+      const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+      const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+      
+      if (!accountId || !bucketName) {
+        console.error('❌ Missing R2 configuration for URL construction');
+        return res.status(500).json({ error: 'R2 configuration missing' });
+      }
       
       // Track each uploaded file in the database
       for (const file of files) {
@@ -1084,16 +1095,49 @@ Please check your R2 configuration or contact support.`,
         }
       }
       
-      // Update session edit status
+      // CRITICAL FIX: Build R2 URLs and update photos JSONB column
+      const photoData = files.map(file => {
+        // Sanitize filename for R2 key (same pattern as generateR2Key method)
+        const sanitizedFilename = file.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileType = file.fileType || 'gallery';
+        
+        // Construct full R2 URL using the same pattern as generateR2Key
+        const r2Key = `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+        const fullR2Url = `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/${r2Key}`;
+        
+        // Generate thumbnail URL (for gallery file types)
+        const isImage = r2Manager.isImageFile(file.filename);
+        const thumbnailUrl = isImage ? 
+          `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/photographer-${userId}/session-${sessionId}/thumbnails/${file.filename.split('.')[0]}_md.jpg` :
+          fullR2Url;
+        
+        return {
+          photoId: file.filename.split('.')[0] || crypto.randomUUID().substring(0, 8),
+          filename: file.filename,
+          url: fullR2Url,
+          thumbnailUrl: thumbnailUrl,
+          fileSize: file.size || 0,
+          fileType: fileType,
+          uploadedAt: new Date().toISOString()
+        };
+      });
+      
+      console.log(`📸 Updating photos JSONB column with ${photoData.length} R2 URLs for session ${sessionId}`);
+      
+      // Update the main photos JSONB column in photography_sessions
       await pool.query(`
-        UPDATE photography_sessions
-        SET edited = true, updated_at = NOW()
-        WHERE id = $1
-      `, [sessionId]);
+        UPDATE photography_sessions 
+        SET photos = $1, edited = true, updated_at = NOW() 
+        WHERE id = $2
+      `, [JSON.stringify(photoData), sessionId]);
+      
+      console.log(`✅ Successfully updated photos column with R2 URLs for session ${sessionId}`);
       
       res.json({
         success: true,
-        message: `Successfully tracked ${files.length} uploaded files`
+        message: `Successfully tracked ${files.length} uploaded files and updated photos with R2 URLs`,
+        photosUpdated: photoData.length,
+        photoData: photoData.map(p => ({ filename: p.filename, url: p.url })) // Return basic info for verification
       });
       
     } catch (error) {
