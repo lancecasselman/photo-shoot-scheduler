@@ -640,6 +640,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       if (authResult.success) {
         const processingTime = Date.now() - startTime;
         const resolvedSessionId = authResult.session.id;
+        const userId = authResult.session.userId;
         console.log(`✅ [${correlationId}] Access validated for session ${resolvedSessionId} in ${processingTime}ms`);
         
         // Get session policy for client information
@@ -647,6 +648,39 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         
         if (!policyResult.success) {
           console.warn(`⚠️ [${correlationId}] Policy retrieval failed but access granted: ${policyResult.error}`);
+        }
+        
+        // Fetch photos for the gallery - FIXED: Use same session_files table query as successful gallery route
+        let photos = [];
+        let photoCount = 0;
+        try {
+          // Query session_files table directly (same as successful gallery route)
+          const photosQuery = await pool.query(`
+            SELECT filename, file_size_bytes, uploaded_at, r2_key
+            FROM session_files 
+            WHERE session_id = $1 AND folder_type = 'gallery'
+            ORDER BY uploaded_at ASC
+          `, [resolvedSessionId]);
+          
+          if (photosQuery.rows.length > 0) {
+            photos = photosQuery.rows.map((row, index) => ({
+              index: index + 1,
+              filename: row.filename,
+              fileSizeBytes: row.file_size_bytes,
+              fileSizeMB: row.file_size_bytes / (1024 * 1024),
+              uploadedAt: row.uploaded_at,
+              contentType: 'image/jpeg', // Default for gallery images
+              r2Key: row.r2_key,
+              photoId: row.filename, // Use filename as photoId for consistency
+              originalFormat: 'jpeg'
+            }));
+            photoCount = photos.length;
+          }
+          console.log(`📷 [${correlationId}] Retrieved ${photoCount} photos for session ${resolvedSessionId}`);
+          console.log(`📷 [${correlationId}] photoCount: ${photoCount}, photosBeingServed: [${photos.slice(0, 3).map(p => `{ index: ${p.index}, filename: '${p.filename}' }`).join(', ')}${photos.length > 3 ? ', ...' : ''}]`);
+        } catch (photoError) {
+          console.error(`⚠️ [${correlationId}] Error fetching photos for session ${resolvedSessionId}:`, photoError);
+          // Continue with empty photos array if photo fetching fails
         }
         
         res.json({
@@ -659,11 +693,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
             galleryExpiresAt: authResult.session.galleryExpiresAt
           },
           policy: policyResult.success ? policyResult.policy : null,
+          photos: photos, // Include the photos array in the response
+          photoCount: photoCount, // Include photo count for easy reference
           meta: {
             correlationId,
             processingTime,
             timestamp: new Date().toISOString(),
-            policyRetrieved: policyResult.success
+            policyRetrieved: policyResult.success,
+            photosRetrieved: photoCount > 0
           }
         });
       } else {
@@ -2583,11 +2620,23 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       const downloadUsage = usageResult[0]?.count || 0;
 
-      // Get gallery photos from R2 file manager
+      // Get gallery photos from session_files table (same as successful gallery route)
       let photos = [];
       try {
-        const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionId);
-        photos = sessionFiles.filesByType.gallery || [];
+        const photosQuery = await pool.query(`
+          SELECT filename, file_size_bytes, uploaded_at, r2_key
+          FROM session_files 
+          WHERE session_id = $1 AND folder_type = 'gallery'
+          ORDER BY uploaded_at ASC
+        `, [sessionId]);
+        
+        photos = photosQuery.rows.map(row => ({
+          filename: row.filename,
+          fileSizeBytes: row.file_size_bytes,
+          fileSizeMB: row.file_size_bytes / (1024 * 1024),
+          uploadedAt: row.uploaded_at,
+          r2Key: row.r2_key
+        }));
       } catch (error) {
         console.warn('Could not load gallery photos:', error.message);
       }
@@ -2783,13 +2832,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       const sessionData = session[0];
 
-      // Verify photo exists in this session
-      const sessionFiles = await r2Manager.getSessionFiles(sessionData.userId, sessionId);
-      const photoExists = sessionFiles.filesByType.gallery?.some(photo => 
-        photo.filename === photoId || photo.key.includes(photoId)
-      );
+      // Verify photo exists in this session using session_files table
+      const photoQuery = await pool.query(`
+        SELECT filename FROM session_files 
+        WHERE session_id = $1 AND folder_type = 'gallery' AND filename = $2
+        LIMIT 1
+      `, [sessionId, photoId]);
 
-      if (!photoExists) {
+      if (photoQuery.rows.length === 0) {
         return res.status(404).json({ error: 'Photo not found in this session' });
       }
       
