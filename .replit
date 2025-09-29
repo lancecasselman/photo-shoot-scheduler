@@ -32,57 +32,7 @@ outputType = "webview"
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 34885
-externalPort = 8000
 
-[[ports]]
-localPort = 35833
-externalPort = 8008
-
-[[ports]]
-localPort = 37229
-externalPort = 9000
-
-[[ports]]
-localPort = 37341
-externalPort = 3002
-
-[[ports]]
-localPort = 37997
-externalPort = 5173
-
-[[ports]]
-localPort = 38195
-externalPort = 6800
-
-[[ports]]
-localPort = 38691
-externalPort = 3001
-
-[[ports]]
-localPort = 39903
-externalPort = 5000
-
-[[ports]]
-localPort = 40963
-externalPort = 3003
-
-[[ports]]
-localPort = 41985
-externalPort = 8081
-
-[[ports]]
-localPort = 42485
-externalPort = 3000
-
-[[ports]]
-localPort = 43623
-externalPort = 8099
-
-[[ports]]
-localPort = 46063
-externalPort = 4200
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -94,3 +44,4 @@ defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"
 [agent]
 expertMode = true
 integrations = ["javascript_sendgrid==1.0.0==1.0.0==1.0.0:1.0.0", "twilio_send_message==1.0.0==1.0.0==1.0.0==1.0.0:1.0.0", "twilio_send_message==1.0.0==1.0.0==1.0.0==1.0.0==1.0.0:1.0.0", "javascript_sendgrid:1.0.0", "twilio_send_message==1.0.0==1.0.0:1.0.0", "javascript_stripe:1.0.0"]
+
