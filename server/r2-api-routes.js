@@ -80,36 +80,81 @@ function createR2Routes(realTimeGalleryUpdates = null) {
   const unifiedDeletion = new UnifiedFileDeletionService();
   const gallerySync = new GalleryPhotoSync();
 
-  // Authentication middleware for all routes - compatible with main server auth
-  router.use((req, res, next) => {
-    // Strict authentication check - no fallbacks that could be bypassed
-    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
-    
-    if (isAuthenticated && req.user && req.user.uid) {
-      // Primary authentication method
-      return next();
-    }
-    
-    if (hasValidSession) {
-      // Secondary authentication via session - but verify user ID exists
-      req.user = req.session.user;
-      if (req.user.uid) {
+  // Authentication middleware for all routes - compatible with main server auth and Bearer tokens
+  router.use(async (req, res, next) => {
+    try {
+      // Strict authentication check - session OR Bearer token
+      const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
+      const hasValidSession = req.session && req.session.user && req.session.user.uid;
+      const authHeader = req.headers.authorization;
+      const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
+      
+      // Method 1: Session-based authentication (existing method)
+      if (isAuthenticated && req.user && req.user.uid) {
         return next();
       }
+      
+      if (hasValidSession) {
+        req.user = req.session.user;
+        if (req.user.uid) {
+          return next();
+        }
+      }
+      
+      // Method 2: Bearer token authentication (new method for frontend uploads)
+      if (hasBearerToken) {
+        const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        
+        try {
+          // Import Firebase admin here to avoid circular dependencies
+          const { admin } = require('./firebase-admin');
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          
+          // Create user object from verified token (matching main server pattern)
+          const normalizedUser = {
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            normalized_uid: decodedToken.uid,
+            canonical_email: decodedToken.email,
+            displayName: decodedToken.name || decodedToken.email,
+            photoURL: decodedToken.picture
+          };
+          
+          // Apply Lance normalization if needed
+          if (decodedToken.email === 'lancecasselman@icloud.com' || 
+              decodedToken.email === 'lancecasselman2011@gmail.com' || 
+              decodedToken.email === 'Lance@thelegacyphotography.com') {
+            normalizedUser.normalized_uid = '44735007';
+            normalizedUser.canonical_email = 'lancecasselman@icloud.com';
+          }
+          
+          req.user = normalizedUser;
+          console.log('✅ R2 API: Bearer token authentication successful for', decodedToken.email);
+          return next();
+          
+        } catch (tokenError) {
+          console.error('❌ R2 API: Bearer token verification failed:', tokenError.message);
+          return res.status(401).json({ error: 'Invalid Bearer token' });
+        }
+      }
+      
+      // Log failed authentication attempts for security monitoring
+      console.log('R2 API Auth failed - no valid session or token', {
+        hasIsAuthenticated: !!req.isAuthenticated,
+        isAuthenticated: isAuthenticated,
+        hasSession: !!req.session,
+        hasSessionUser: !!(req.session && req.session.user),
+        hasUserUid: !!(req.user && req.user.uid),
+        hasBearerToken: hasBearerToken,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+      });
+      return res.status(401).json({ error: 'Authentication required' });
+      
+    } catch (error) {
+      console.error('❌ R2 API Auth middleware error:', error);
+      return res.status(500).json({ error: 'Authentication system error' });
     }
-    
-    // Log failed authentication attempts for security monitoring
-    console.log('R2 API Auth failed - no valid session', {
-      hasIsAuthenticated: !!req.isAuthenticated,
-      isAuthenticated: isAuthenticated,
-      hasSession: !!req.session,
-      hasSessionUser: !!(req.session && req.session.user),
-      hasUserUid: !!(req.user && req.user.uid),
-      userAgent: req.get('User-Agent'),
-      ip: req.ip
-    });
-    return res.status(401).json({ error: 'Authentication required' });
   });
 
   /**
