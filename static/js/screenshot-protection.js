@@ -60,7 +60,56 @@ class ScreenshotProtection {
                 return;
             }
             
-            // Fetch session policy from orchestrator health endpoint
+            // CRITICAL FIX: Use the correct policy endpoint that includes pricing model
+            try {
+                const policyResponse = await fetch(`/api/downloads/policies/${sessionId}`);
+                if (policyResponse.ok) {
+                    const policyData = await policyResponse.json();
+                    
+                    if (policyData.success && policyData.policy) {
+                        this.sessionPolicy = policyData.policy;
+                        
+                        // CRITICAL FIX: Adjust protection based on pricing model
+                        const pricingModel = this.sessionPolicy.pricingModel || 'free';
+                        
+                        this.log('Session policy loaded from policy endpoint:', {
+                            pricingModel,
+                            screenshotProtection: this.sessionPolicy.screenshotProtection,
+                            watermarkEnabled: this.sessionPolicy.watermarkEnabled
+                        });
+                        
+                        // Configure protection based on pricing model
+                        if (pricingModel === 'free') {
+                            // FREE pricing model: Minimal protection to allow easy access
+                            this.protectionEnabled = this.sessionPolicy.screenshotProtection !== false;
+                            this.settings.useWatermarks = !!this.sessionPolicy.watermarkEnabled;
+                            
+                            // Reduce protection intensity for FREE models
+                            this.settings.disableRightClick = false; // Allow right-click on free photos
+                            this.settings.disableKeyboardShortcuts = false; // Allow keyboard shortcuts
+                            this.settings.disableDragDrop = false; // Allow drag/drop
+                            this.settings.useBlurEffect = false; // No blur on free photos
+                            this.settings.useBlobUrls = false; // No blob URL conversion
+                            
+                            this.log('FREE pricing model detected - reduced protection enabled');
+                        } else {
+                            // PAID/FREEMIUM: Full protection enabled
+                            this.protectionEnabled = this.sessionPolicy.screenshotProtection !== false;
+                            this.settings.useWatermarks = !!this.sessionPolicy.watermarkEnabled;
+                            
+                            this.log(`${pricingModel.toUpperCase()} pricing model detected - full protection enabled`);
+                        }
+                        
+                        return; // Successfully loaded policy
+                    }
+                }
+                
+                this.log('Policy endpoint did not return valid data, falling back to health check');
+            } catch (policyError) {
+                this.log('Policy endpoint failed, falling back to health check:', policyError);
+            }
+            
+            // Fallback: Try orchestrator health endpoint
             const healthResponse = await fetch('/api/downloads/orchestrator/health');
             if (healthResponse.ok) {
                 const healthData = await healthResponse.json();
@@ -89,6 +138,7 @@ class ScreenshotProtection {
                 // Fallback to default protection settings when orchestrator is healthy
                 this.sessionPolicy = {
                     mode: 'ENABLED',
+                    pricingModel: 'freemium', // Default to freemium for safety
                     screenshotProtection: true,
                     watermarkEnabled: true
                 };
@@ -98,11 +148,12 @@ class ScreenshotProtection {
                 this.log('Using default protection policy (orchestrator healthy)');
             }
         } catch (error) {
-            this.log('Error loading session policy from orchestrator:', error);
+            this.log('Error loading session policy:', error);
             // Default to enabled protection on error
             this.protectionEnabled = true;
             this.sessionPolicy = {
                 mode: 'ENABLED',
+                pricingModel: 'freemium', // Default to freemium for safety
                 screenshotProtection: true,
                 watermarkEnabled: true
             };
@@ -606,9 +657,15 @@ class ScreenshotProtection {
             wrapper.appendChild(overlay);
         }
         
-        // Apply protection based on purchase status and URL type
-        if (!isPurchased && !isDownloadUrl) {
-            // Add watermark for unpurchased photos (but not download URLs)
+        // CRITICAL FIX: Apply protection based on purchase status, URL type, AND pricing model
+        const pricingModel = this.sessionPolicy?.pricingModel || 'freemium';
+        const isFreeModel = pricingModel === 'free';
+        
+        // For FREE pricing models, treat photos as "purchased" since they should be freely accessible
+        const effectivelyPurchased = isPurchased || isFreeModel;
+        
+        if (!effectivelyPurchased && !isDownloadUrl) {
+            // Add watermark for unpurchased photos (but not download URLs or FREE model photos)
             if (this.settings.useWatermarks && this.protectionEnabled) {
                 this.addWatermarkOverlay(wrapper);
             }
@@ -616,7 +673,7 @@ class ScreenshotProtection {
             // Note: Removed blur effect and purchase overlay - users can now see watermarked previews directly
             // Server-side watermarked previews provide sufficient protection while allowing purchase decisions
             
-            // Use blob URLs for enhanced protection (EXEMPT download URLs)
+            // Use blob URLs for enhanced protection (EXEMPT download URLs and FREE model photos)
             if (this.settings.useBlobUrls && this.protectionEnabled) {
                 this.convertToBlobUrl(imgElement);
             }
