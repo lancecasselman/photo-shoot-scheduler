@@ -17,8 +17,9 @@ class UnifiedFileDeletion {
 
     /**
      * Complete photo deletion with zero traces remaining
+     * @param {boolean} skipPhotosArraySync - Set to true to skip photos array sync (for batch operations)
      */
-    async deletePhotoCompletely(userId, sessionId, filename) {
+    async deletePhotoCompletely(userId, sessionId, filename, skipPhotosArraySync = false) {
         const deletionLog = [];
         const errors = [];
         
@@ -248,8 +249,12 @@ class UnifiedFileDeletion {
                 console.log(`📝 Community posts cleanup (table may not exist): ${communityError.message}`);
             }
 
-            // Step 8: Update session photos array using robust synchronization
-            console.log(`📋 Synchronizing session photos array with actual files for session: ${sessionId}`);
+            // Step 8: Update session photos array using robust synchronization (skip if batch operation)
+            if (skipPhotosArraySync) {
+                deletionLog.push(`⏭️ Skipped photos array sync (will sync at end of batch)`);
+                console.log(`⏭️ Skipping photos array sync for batch operation`);
+            } else {
+                console.log(`📋 Synchronizing session photos array with actual files for session: ${sessionId}`);
             
             // Get current photos array
             const sessionQuery = await client.query(`
@@ -333,6 +338,7 @@ class UnifiedFileDeletion {
             } else {
                 // Session not found is a critical error for data consistency
                 throw new Error(`Session not found for photos array update: ${sessionId}`);
+            }
             }
             
             // Step 8.5: Update R2 backup-index.json to remove deleted file
@@ -573,7 +579,8 @@ class UnifiedFileDeletion {
     }
 
     /**
-     * Delete multiple photos in batch
+     * Delete multiple photos in batch with parallel processing
+     * Race-condition safe: Syncs photos array once at the end
      */
     async deleteMultiplePhotos(userId, sessionId, filenames) {
         console.log(`🗑️ Batch deletion: ${filenames.length} photos from session ${sessionId}`);
@@ -583,19 +590,49 @@ class UnifiedFileDeletion {
         let successCount = 0;
         let errorCount = 0;
 
-        for (const filename of filenames) {
-            const result = await this.deletePhotoCompletely(userId, sessionId, filename);
-            results.push(result);
+        // Process deletions in parallel batches for speed (10 at a time to avoid overwhelming the system)
+        const BATCH_SIZE = 10;
+        const totalBatches = Math.ceil(filenames.length / BATCH_SIZE);
+        
+        console.log(`📦 Processing ${filenames.length} deletions in ${totalBatches} parallel batches of ${BATCH_SIZE}`);
+        
+        for (let i = 0; i < filenames.length; i += BATCH_SIZE) {
+            const batch = filenames.slice(i, i + BATCH_SIZE);
+            const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
             
-            if (result.success) {
-                successCount++;
-                totalReclaimed += parseFloat(result.fileSizeMB || 0);
-            } else {
-                errorCount++;
+            console.log(`🔄 Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)...`);
+            
+            // Delete all files in this batch in parallel (skip photos array sync - will do once at end)
+            const batchPromises = batch.map(filename => 
+                this.deletePhotoCompletely(userId, sessionId, filename, true)
+            );
+            
+            const batchResults = await Promise.all(batchPromises);
+            results.push(...batchResults);
+            
+            // Update counters
+            for (const result of batchResults) {
+                if (result.success) {
+                    successCount++;
+                    totalReclaimed += parseFloat(result.fileSizeMB || 0);
+                } else {
+                    errorCount++;
+                }
             }
+            
+            console.log(`✅ Batch ${batchNumber} complete: ${batchResults.filter(r => r.success).length}/${batch.length} successful`);
         }
 
-        console.log(` Batch deletion complete: ${successCount} success, ${errorCount} errors, ${totalReclaimed.toFixed(2)}MB reclaimed`);
+        console.log(`✅ Batch deletion complete: ${successCount} success, ${errorCount} errors, ${totalReclaimed.toFixed(2)}MB reclaimed`);
+        
+        // NOW sync photos array once to prevent race conditions
+        console.log(`🔄 Final step: Synchronizing photos array after all deletions...`);
+        const syncResult = await this.synchronizePhotosArray(userId, sessionId);
+        if (syncResult.success) {
+            console.log(`✅ Photos array synchronized: ${syncResult.syncedCount} photos remaining`);
+        } else {
+            console.warn(`⚠️ Photos array sync failed: ${syncResult.error}`);
+        }
 
         return {
             success: errorCount === 0,
@@ -603,6 +640,8 @@ class UnifiedFileDeletion {
             successCount: successCount,
             errorCount: errorCount,
             totalReclaimedMB: totalReclaimed.toFixed(2),
+            photosSynced: syncResult.success,
+            remainingPhotos: syncResult.syncedCount || 0,
             results: results,
             message: `Deleted ${successCount}/${filenames.length} photos, reclaimed ${totalReclaimed.toFixed(2)}MB`
         };
