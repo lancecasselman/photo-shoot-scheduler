@@ -2509,25 +2509,11 @@ router.get('/secure/:token', async (req, res) => {
         
         const download = tokenRecord[0];
         
-        // Check if token has expired
-        if (new Date() > download.expiresAt) {
-            console.warn('⚠️ Expired download token:', token.substring(0, 8));
-            return res.status(410).json({ error: 'Download link has expired' });
-        }
+        // REMOVED: Token expiration and usage restrictions for unlimited downloads
+        console.log(`🔓 Token validation passed - unlimited access enabled for ${token.substring(0, 8)}`);
         
-        // Check if token has already been used
-        if (download.isUsed) {
-            console.warn('⚠️ Already used download token:', token.substring(0, 8));
-            return res.status(410).json({ error: 'Download link has already been used' });
-        }
-        
-        // Mark token as used
-        await db.update(downloadTokens)
-            .set({ 
-                isUsed: true, 
-                usedAt: new Date() 
-            })
-            .where(eq(downloadTokens.token, token));
+        // REMOVED: Token usage marking for unlimited re-downloads
+        console.log(`🔓 Token usage tracking disabled - allowing unlimited re-downloads`);
         
         // Verify the Stripe session is still valid and paid
         try {

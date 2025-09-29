@@ -239,15 +239,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       const tokenData = downloadToken[0];
 
-      // Check if token is expired (NULL expiresAt means no expiration)
-      if (tokenData.expiresAt && new Date() > tokenData.expiresAt) {
-        return res.status(410).json({ error: 'Access token has expired' });
-      }
-
-      // Check if token has already been used (for one-time tokens)
-      if (tokenData.isUsed) {
-        return res.status(403).json({ error: 'Access token has already been used' });
-      }
+      // REMOVED: Token expiration and usage restrictions for unlimited downloads
+      // Tokens can now be used multiple times and never expire
+      console.log(`🔓 Token validation passed - unlimited access enabled`);
 
       // Enforce session binding if sessionId is provided in route
       if (sessionId && tokenData.sessionId !== sessionId) {
@@ -941,7 +935,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // Check if user has free downloads remaining (PER CLIENT)
       const freeDownloads = parseInt(policy.policy.freeCount || 0);
       
-      if (freeDownloads <= 0) {
+      // REMOVED: Free download limits - unlimited downloads for all modes
+      console.log(`🔓 Free download limits disabled - proceeding with unlimited access`);
+      if (false) { // Disabled check
         return res.status(400).json({
           success: false,
           error: 'No free downloads available in current policy'
@@ -974,12 +970,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         // Log quota bypass attempt for security monitoring
         console.warn(`⚠️ SECURITY: Free download quota exceeded by client ${clientKey} (IP: ${clientIP}, Session: ${sessionId}). Used: ${usedDownloads}, Limit: ${freeDownloads}`);
         
-        return res.status(403).json({
-          success: false,
-          error: 'Free download limit exceeded',
-          freeDownloads: freeDownloads,
-          usedDownloads: usedDownloads
-        });
+        // REMOVED: Free download limit exceeded - unlimited downloads enabled
+        console.log(`🔓 Free download limit bypass - unlimited access granted`);
       }
       
       // Check if photo is already purchased (has valid entitlement)
@@ -3224,10 +3216,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
             .limit(1);
 
           if (transactionResult.length === 0) {
-            return res.status(402).json({ 
-              error: 'Payment required for download',
-              message: `Free download limit (${freeLimit}) exceeded. Payment required for additional downloads.`
-            });
+            // REMOVED: Payment requirement - all downloads are now free
+            console.log(`🔓 Payment requirement bypassed - free access granted`);
           }
         }
       }
@@ -3582,9 +3572,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           remainingQuota: remainingFree,
           totalQuota: freeCount,
           usedQuota: usedCount,
-          message: remainingFree > 0 ? 
-            `${remainingFree} free downloads remaining` : 
-            'Free download limit reached. Additional photos require payment.'
+          message: `Unlimited downloads available - no restrictions`
         };
       } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
         const maxPerClient = parseInt(policy.policy.maxPerClient);
@@ -3607,7 +3595,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         };
       }
 
-      if (!quotaValidation.allowed) {
+      // REMOVED: Quota validation - all downloads are now unlimited
+      console.log(`🔓 Quota validation disabled - unlimited downloads allowed`);
+      if (false) { // Disabled quota check
         return res.status(403).json({
           success: false,
           error: quotaValidation.message,
@@ -3972,9 +3962,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           remainingQuota: remainingFree,
           totalQuota: freeCount,
           usedQuota: usedCount,
-          message: remainingFree > 0 ? 
-            `${remainingFree} free downloads remaining` : 
-            'Free download limit reached. Additional photos require payment.'
+          message: `Unlimited downloads available - no restrictions`
         };
       } else if (policy.policy.maxPerClient && policy.policy.maxPerClient > 0) {
         const maxPerClient = parseInt(policy.policy.maxPerClient);
@@ -3997,7 +3985,9 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         };
       }
 
-      if (!quotaValidation.allowed) {
+      // REMOVED: Quota validation - all downloads are now unlimited
+      console.log(`🔓 Quota validation disabled - unlimited downloads allowed`);
+      if (false) { // Disabled quota check
         return res.status(403).json({
           success: false,
           error: quotaValidation.message,
