@@ -2843,7 +2843,7 @@
                     
                     if (downloadResult.success && downloadResult.downloadToken) {
                         // Trigger download using the token
-                        const downloadUrl = `/api/downloads/token/${downloadResult.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${downloadResult.downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename || 'photo.jpg';
@@ -2894,7 +2894,7 @@
                     
                     if (downloadResult.success && downloadResult.downloadToken) {
                         // Trigger download using the token
-                        const downloadUrl = `/api/downloads/token/${downloadResult.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${downloadResult.downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename || 'photo.jpg';
@@ -3322,7 +3322,7 @@
                         this.updateProgress(progressIndicator, 'Downloading file...', 80);
                         
                         // Trigger download
-                        const downloadUrl = `/api/downloads/token/${result.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${result.downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename;
