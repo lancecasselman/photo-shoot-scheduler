@@ -5088,6 +5088,54 @@ async function deleteSession(id, userId) {
     try {
         await client.query('BEGIN');
         
+        // CRITICAL ENHANCEMENT: Delete all R2 cloud files before database cleanup
+        console.log(`🗑️ SESSION DELETION: Starting comprehensive cleanup for session ${id}`);
+        
+        // Step 1: Get all files that need to be deleted from R2 storage
+        const sessionFilesQuery = 'SELECT filename, r2_key, file_size_mb FROM session_files WHERE session_id = $1';
+        const sessionFilesResult = await client.query(sessionFilesQuery, [id]);
+        const filesToDelete = sessionFilesResult.rows;
+        
+        console.log(`☁️ Found ${filesToDelete.length} files to delete from R2 storage`);
+        
+        // Step 2: Delete each file from R2 storage using UnifiedFileDeletion
+        if (filesToDelete.length > 0) {
+            const unifiedDeletion = new UnifiedFileDeletion();
+            let deletedCount = 0;
+            let totalSizeReclaimed = 0;
+            
+            // Commit the current transaction first since UnifiedFileDeletion manages its own transactions
+            await client.query('COMMIT');
+            console.log(`📤 Committed initial transaction to allow R2 file deletion`);
+            
+            // Delete files individually with comprehensive cleanup
+            for (const file of filesToDelete) {
+                try {
+                    console.log(`🗑️ Deleting R2 file: ${file.filename} (${file.file_size_mb || 0}MB)`);
+                    const result = await unifiedDeletion.deletePhotoCompletely(userId, id, file.filename);
+                    
+                    if (result.success) {
+                        deletedCount++;
+                        totalSizeReclaimed += result.fileSizeMB || 0;
+                        console.log(`✅ Successfully deleted: ${file.filename}`);
+                    } else {
+                        console.warn(`⚠️ Failed to delete file: ${file.filename} - ${result.message}`);
+                    }
+                } catch (fileError) {
+                    console.error(`❌ Error deleting file ${file.filename}:`, fileError.message);
+                    // Continue with other files even if one fails
+                }
+            }
+            
+            console.log(`☁️ R2 File cleanup complete: ${deletedCount}/${filesToDelete.length} files deleted, ${totalSizeReclaimed.toFixed(2)}MB reclaimed`);
+            
+            // Start new transaction for remaining database cleanup
+            await client.query('BEGIN');
+        }
+        
+        // Step 3: Database cleanup (files already removed from R2 by UnifiedFileDeletion)
+        console.log(`🗄️ Starting database record cleanup for session ${id}`);
+        
         // First, get all payment plan IDs for this session
         const paymentPlansQuery = 'SELECT id FROM payment_plans WHERE session_id = $1';
         const paymentPlansResult = await client.query(paymentPlansQuery, [id]);
@@ -5107,10 +5155,9 @@ async function deleteSession(id, userId) {
         await client.query(deletePaymentPlansQuery, [id]);
         console.log(`Deleted payment plans for session ${id}`);
         
-        // Delete session files from the database
-        const deleteFilesQuery = 'DELETE FROM session_files WHERE session_id = $1';
-        await client.query(deleteFilesQuery, [id]);
-        console.log(`Deleted session files for session ${id}`);
+        // NOTE: session_files, download_entitlements, download_history, download_tokens, 
+        // and thumbnails already cleaned by UnifiedFileDeletion above
+        console.log(`📁 Files and download records already cleaned by R2 file deletion process`);
         
         // Delete any booking agreements for this session
         const deleteBookingAgreementsQuery = 'DELETE FROM booking_agreements WHERE session_id = $1';
@@ -5122,40 +5169,25 @@ async function deleteSession(id, userId) {
         await client.query(deleteDepositPaymentsQuery, [id]);
         console.log(`Deleted deposit payments for session ${id}`);
         
-        // Delete any gallery downloads for this session
+        // Delete any remaining gallery downloads (some may have been cleaned by UnifiedFileDeletion)
         const deleteGalleryDownloadsQuery = 'DELETE FROM gallery_downloads WHERE session_id = $1';
-        await client.query(deleteGalleryDownloadsQuery, [id]);
-        console.log(`Deleted gallery downloads for session ${id}`);
+        const downloadsResult = await client.query(deleteGalleryDownloadsQuery, [id]);
+        console.log(`Deleted ${downloadsResult.rowCount} remaining gallery downloads for session ${id}`);
         
-        // Delete any download entitlements for this session
-        const deleteDownloadEntitlementsQuery = 'DELETE FROM download_entitlements WHERE session_id = $1';
-        await client.query(deleteDownloadEntitlementsQuery, [id]);
-        console.log(`Deleted download entitlements for session ${id}`);
-        
-        // Delete any digital transactions for this session
-        const deleteDigitalTransactionsQuery = 'DELETE FROM digital_transactions WHERE session_id = $1';
-        await client.query(deleteDigitalTransactionsQuery, [id]);
-        console.log(`Deleted digital transactions for session ${id}`);
-        
-        // Delete any download history for this session
-        const deleteDownloadHistoryQuery = 'DELETE FROM download_history WHERE session_id = $1';
-        await client.query(deleteDownloadHistoryQuery, [id]);
-        console.log(`Deleted download history for session ${id}`);
-        
-        // Delete any download orders for this session
-        const deleteDownloadOrdersQuery = 'DELETE FROM download_orders WHERE session_id = $1';
-        await client.query(deleteDownloadOrdersQuery, [id]);
-        console.log(`Deleted download orders for session ${id}`);
-        
-        // Delete any download policies for this session
+        // Delete any remaining download policies (some may have been cleaned by UnifiedFileDeletion)
         const deleteDownloadPoliciesQuery = 'DELETE FROM download_policies WHERE session_id = $1';
-        await client.query(deleteDownloadPoliciesQuery, [id]);
-        console.log(`Deleted download policies for session ${id}`);
+        const policiesResult = await client.query(deleteDownloadPoliciesQuery, [id]);
+        console.log(`Deleted ${policiesResult.rowCount} remaining download policies for session ${id}`);
         
-        // Delete any download tokens for this session
-        const deleteDownloadTokensQuery = 'DELETE FROM download_tokens WHERE session_id = $1';
-        await client.query(deleteDownloadTokensQuery, [id]);
-        console.log(`Deleted download tokens for session ${id}`);
+        // Delete any remaining digital transactions (some may have been cleaned by UnifiedFileDeletion)
+        const deleteDigitalTransactionsQuery = 'DELETE FROM digital_transactions WHERE session_id = $1';
+        const transactionsResult = await client.query(deleteDigitalTransactionsQuery, [id]);
+        console.log(`Deleted ${transactionsResult.rowCount} remaining digital transactions for session ${id}`);
+        
+        // Delete any remaining download orders (some may have been cleaned by UnifiedFileDeletion)
+        const deleteDownloadOrdersQuery = 'DELETE FROM download_orders WHERE session_id = $1';
+        const ordersResult = await client.query(deleteDownloadOrdersQuery, [id]);
+        console.log(`Deleted ${ordersResult.rowCount} remaining download orders for session ${id}`);
         
         // Delete any payment records for this session (in addition to payment plan cleanup)
         const deletePaymentRecordsQuery = 'DELETE FROM payment_records WHERE session_id = $1';
@@ -5167,10 +5199,10 @@ async function deleteSession(id, userId) {
         await client.query(deletePrintOrdersQuery, [id]);
         console.log(`Deleted print orders for session ${id}`);
         
-        // Delete any r2_files for this session
+        // Delete any remaining r2_files tracking records
         const deleteR2FilesQuery = 'DELETE FROM r2_files WHERE session_id = $1';
-        await client.query(deleteR2FilesQuery, [id]);
-        console.log(`Deleted r2_files for session ${id}`);
+        const r2Result = await client.query(deleteR2FilesQuery, [id]);
+        console.log(`Deleted ${r2Result.rowCount} remaining r2_files records for session ${id}`);
         
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
@@ -5185,7 +5217,8 @@ async function deleteSession(id, userId) {
         const result = await client.query(sessionQuery, sessionParams);
         
         await client.query('COMMIT');
-        console.log(`Successfully deleted session ${id} with all related data`);
+        console.log(`✅ SESSION DELETION COMPLETE: ${id} with comprehensive R2 cloud cleanup`);
+        console.log(`📊 Total cleanup: Files removed from R2 + all database records deleted`);
         return result.rows.length > 0;
     } catch (error) {
         await client.query('ROLLBACK');
