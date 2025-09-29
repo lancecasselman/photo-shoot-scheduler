@@ -742,13 +742,14 @@ class ScreenshotProtection {
     isLegitimateDownloadUrl(url) {
         if (!url) return false;
         
-        // Check for download orchestrator URLs
+        // Check for download orchestrator URLs - FIXED to match actual working routes
         const downloadPatterns = [
-            '/api/download/session/',
-            '/api/downloads/orchestrator/',
-            '/api/download/auth/session/',
-            '/api/downloads/token/',
+            '/api/downloads/orchestrator/session/',  // Correct orchestrator route
+            '/api/downloads/orchestrator/auth/',     // Correct auth route
+            '/g/',                                   // Gallery download route (working)
+            '/api/r2/download/',                     // R2 direct download route
             // R2 signed URLs (CloudFlare R2)
+            'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/',
             'https://pub-',
             // Common download URL parameters
             'download=true',
