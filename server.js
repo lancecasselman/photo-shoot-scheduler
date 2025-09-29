@@ -11013,6 +11013,120 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:filename', isAuthenticat
     }
 });
 
+// Delete all photos from a session using unified deletion system
+app.delete('/api/sessions/:sessionId/delete-all-photos', isAuthenticated, async (req, res) => {
+    const { sessionId } = req.params;
+    const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
+    
+    try {
+        console.log(`🗑️ Delete all photos request for session ${sessionId} by user ${userId}`);
+        
+        // Verify session exists and belongs to user
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Session not found' 
+            });
+        }
+        
+        // Verify ownership
+        if (session.userId !== userId) {
+            console.log(`❌ Access denied: User ${userId} cannot delete photos from session owned by ${session.userId}`);
+            return res.status(403).json({ 
+                success: false,
+                error: 'Access denied: Cannot delete photos from sessions owned by other users' 
+            });
+        }
+        
+        // Query session_files table to get all gallery photos for the session
+        const photosResult = await pool.query(`
+            SELECT filename, file_size_mb 
+            FROM session_files 
+            WHERE session_id = $1 AND folder_type = 'gallery'
+            ORDER BY filename
+        `, [sessionId]);
+        
+        const photos = photosResult.rows;
+        
+        if (photos.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No photos found to delete',
+                deletedCount: 0,
+                failedCount: 0,
+                storageReclaimed: '0 MB'
+            });
+        }
+        
+        console.log(`📸 Found ${photos.length} photos to delete from session ${sessionId}`);
+        
+        // Initialize unified deletion service
+        const unifiedDeletion = new UnifiedFileDeletion();
+        
+        // Track deletion results
+        let deletedCount = 0;
+        let failedCount = 0;
+        let totalStorageReclaimed = 0;
+        const failedPhotos = [];
+        
+        // Loop through each photo and delete using unified deletion
+        for (const photo of photos) {
+            try {
+                console.log(`🗑️ Deleting photo: ${photo.filename}`);
+                const deleteResult = await unifiedDeletion.deletePhotoCompletely(userId, sessionId, photo.filename);
+                
+                if (deleteResult.success) {
+                    deletedCount++;
+                    totalStorageReclaimed += parseFloat(deleteResult.fileSizeMB || photo.file_size_mb || 0);
+                    console.log(`✅ Successfully deleted: ${photo.filename} (${deleteResult.fileSizeMB || 0}MB)`);
+                } else {
+                    failedCount++;
+                    failedPhotos.push(photo.filename);
+                    console.log(`❌ Failed to delete: ${photo.filename} - ${deleteResult.error}`);
+                }
+            } catch (error) {
+                failedCount++;
+                failedPhotos.push(photo.filename);
+                console.error(`❌ Error deleting ${photo.filename}:`, error.message);
+            }
+        }
+        
+        // Format storage reclaimed (guard against NaN)
+        const storageReclaimedValue = isNaN(totalStorageReclaimed) ? 0 : totalStorageReclaimed;
+        const storageReclaimed = storageReclaimedValue >= 1024 
+            ? `${(storageReclaimedValue / 1024).toFixed(2)} GB`
+            : `${storageReclaimedValue.toFixed(2)} MB`;
+        
+        console.log(`✅ Deletion complete: ${deletedCount} deleted, ${failedCount} failed, ${storageReclaimed} reclaimed`);
+        
+        // Return summary
+        const response = {
+            success: failedCount === 0,
+            message: failedCount === 0 
+                ? 'All photos deleted successfully'
+                : `${deletedCount} photos deleted, ${failedCount} failed`,
+            deletedCount,
+            failedCount,
+            storageReclaimed,
+            totalPhotos: photos.length
+        };
+        
+        if (failedPhotos.length > 0) {
+            response.failedPhotos = failedPhotos;
+        }
+        
+        res.json(response);
+        
+    } catch (error) {
+        console.error('❌ Error deleting all photos:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to delete photos: ' + error.message 
+        });
+    }
+});
+
 // Delete session
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
