@@ -341,7 +341,7 @@ exports.downloadTokens = (0, pg_core_1.pgTable)("download_tokens", {
     photoUrl: (0, pg_core_1.varchar)("photo_url"),
     filename: (0, pg_core_1.varchar)("filename"),
     sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
-    expiresAt: (0, pg_core_1.timestamp)("expires_at").notNull(),
+    expiresAt: (0, pg_core_1.timestamp)("expires_at"), // Nullable - tokens don't expire
     isUsed: (0, pg_core_1.boolean)("is_used").default(false),
     usedAt: (0, pg_core_1.timestamp)("used_at"),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),

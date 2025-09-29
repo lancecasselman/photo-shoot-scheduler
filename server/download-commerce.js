@@ -1365,9 +1365,8 @@ class DownloadCommerceManager {
             const token = crypto.randomBytes(32).toString('hex');
             const tokenId = uuidv4();
             
-            // Token expires in 5 minutes
-            const expiresAt = new Date();
-            expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+            // No expiration
+            const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
             
             // Get photo details from session_files table (authoritative source)
             const session = await this.db.select()
@@ -2051,9 +2050,8 @@ class DownloadCommerceManager {
                 .update(JSON.stringify(tokenData))
                 .digest('hex');
             
-            // Set strict expiration (5 minutes max)
-            const expiresAt = new Date();
-            expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+            // No expiration
+            const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
             
             // Store token with all security constraints
             const tokenId = uuidv4();
@@ -2186,10 +2184,8 @@ class DownloadCommerceManager {
     // Clean up expired tokens (should be run periodically)
     async cleanupExpiredTokens() {
         try {
-            const result = await this.db.delete(downloadTokens)
-                .where(lte(downloadTokens.expiresAt, new Date()));
-            
-            console.log(`🧹 Cleaned up expired download tokens`);
+            // No cleanup needed since tokens don't expire
+            console.log(`🧹 Token cleanup skipped - tokens don't expire`);
             return { success: true };
             
         } catch (error) {
@@ -2332,8 +2328,7 @@ class DownloadCommerceManager {
 
             // Create entitlement record
             const entitlementId = uuidv4();
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiration for paid downloads
+            const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration) // No expiration
 
             await this.db.insert(downloadEntitlements).values({
                 id: entitlementId,

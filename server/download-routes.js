@@ -884,7 +884,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         // Create free entitlement immediately without quota checks
         const entitlementId = uuidv4();
         const downloadToken = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+        const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
 
         // Create entitlement record
         await db.insert(downloadEntitlements).values({
@@ -2085,7 +2085,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         
         // Free download - generate immediate download token
         const downloadToken = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+        const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
 
         await db.insert(downloadTokens).values({
           id: uuidv4(),
@@ -2128,7 +2128,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         if (policyCheck.reason === 'within_free_quota') {
           // Free download available - generate immediate download token
           const downloadToken = crypto.randomBytes(32).toString('hex');
-          const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+          const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
 
           await db.insert(downloadTokens).values({
             id: uuidv4(),
@@ -2556,7 +2556,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       // Generate unique token
       const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + (expiresInHours * 60 * 60 * 1000));
+      const expiresAt = null; // No expiration
 
       // Create download token
       await db.insert(downloadTokens).values({
@@ -3633,7 +3633,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         orderId: null,
         isActive: false, // Mark as inactive to indicate it's a cart reservation
         // Note: Cart reservations are identified by orderId=null, remaining=0, isActive=false
-        expiresAt: new Date(Date.now() + (2 * 60 * 60 * 1000)), // 2 hours expiry
+        expiresAt: null, // No expiration
         createdAt: new Date()
       });
 
@@ -4022,7 +4022,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         remaining: 0, // Cart reservations don't allow downloads yet
         isActive: false, // Cart reservations are inactive
         // Note: Cart reservations are identified by orderId=null, remaining=0, isActive=false
-        expiresAt: new Date(Date.now() + (2 * 60 * 60 * 1000)), // 2 hours expiry
+        expiresAt: null, // No expiration
         createdAt: new Date()
       });
 
