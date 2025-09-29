@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Protection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-image {
+            max-width: 300px;
+            height: 200px;
+            object-fit: cover;
+            margin: 10px;
+            border: 1px solid #ccc;
+        }
+        .test-results {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Screenshot Protection System Test</h1>
+    <p>This page tests the screenshot protection fix for legitimate download URLs.</p>
+
+    <div class="test-section">
+        <h2>URL Pattern Tests</h2>
+        <button class="button" onclick="runUrlTests()">Test URL Detection</button>
+        <div id="url-test-results" class="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample Images for Testing</h2>
+        <p>Try right-clicking these images to test download protection:</p>
+        
+        <!-- Preview image (should be protected) -->
+        <div>
+            <h3>Preview Image (Protected)</h3>
+            <img src="https://example.com/preview/photo123.jpg" 
+                 alt="Preview Image" 
+                 class="test-image"
+                 data-photo-id="photo123">
+        </div>
+
+        <!-- Download URL (should be exempt) -->
+        <div>
+            <h3>Download URL (Should Allow Right-Click)</h3>
+            <img src="/api/download/session/session123/file/photo123.jpg?token=abc123" 
+                 alt="Download Image" 
+                 class="test-image"
+                 data-photo-id="photo123">
+        </div>
+
+        <!-- R2 URL (should be exempt) -->
+        <div>
+            <h3>R2 Signed URL (Should Allow Right-Click)</h3>
+            <img src="https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photo123.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=test&X-Amz-Date=20250929T001800Z&X-Amz-Expires=3600&X-Amz-Signature=test123&X-Amz-SignedHeaders=host" 
+                 alt="R2 Download Image" 
+                 class="test-image"
+                 data-photo-id="photo123">
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Protection Status Tests</h2>
+        <button class="button" onclick="enableDebugMode()">Enable Debug Mode</button>
+        <button class="button" onclick="testPurchasedPhoto()">Mark Photo as Purchased</button>
+        <button class="button" onclick="checkProtectionStatus()">Check Protection Status</button>
+        <div id="protection-test-results" class="test-results"></div>
+    </div>
+
+    <!-- Include the screenshot protection script -->
+    <script src="/static/js/screenshot-protection.js"></script>
+    
+    <script>
+        // Test URL pattern detection
+        function runUrlTests() {
+            const testUrls = [
+                // Should be detected as download URLs
+                '/api/download/session/123/file/photo.jpg?token=abc',
+                '/api/downloads/orchestrator/process',
+                '/api/downloads/token/xyz123',
+                'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photo.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=test&X-Amz-Date=20250929T001800Z&X-Amz-Expires=3600&X-Amz-Signature=longsignature123',
+                'https://example.com/photo.jpg?download=true',
+                
+                // Should NOT be detected as download URLs
+                'https://example.com/preview/photo.jpg',
+                '/static/images/watermark.png',
+                'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...'
+            ];
+
+            const results = document.getElementById('url-test-results');
+            let output = '<h4>URL Detection Test Results:</h4>';
+            
+            if (window.screenshotProtection) {
+                window.screenshotProtection.enableDebugMode();
+                
+                testUrls.forEach(url => {
+                    const isDownload = window.screenshotProtection.testUrlPattern(url);
+                    const expected = url.includes('/api/download') || 
+                                   url.includes('/api/downloads') || 
+                                   url.includes('r2.cloudflarestorage.com') ||
+                                   url.includes('download=true') ||
+                                   url.includes('X-Amz-');
+                    const status = isDownload === expected ? '✅' : '❌';
+                    output += `<div>${status} ${url.substring(0, 60)}... → ${isDownload ? 'DOWNLOAD' : 'PREVIEW'}</div>`;
+                });
+            } else {
+                output += '<div>❌ Screenshot protection not loaded</div>';
+            }
+            
+            results.innerHTML = output;
+        }
+
+        function enableDebugMode() {
+            if (window.screenshotProtection) {
+                window.screenshotProtection.enableDebugMode();
+                document.getElementById('protection-test-results').innerHTML = '<div>✅ Debug mode enabled. Check browser console for logs.</div>';
+            } else {
+                document.getElementById('protection-test-results').innerHTML = '<div>❌ Screenshot protection not available</div>';
+            }
+        }
+
+        function testPurchasedPhoto() {
+            if (window.screenshotProtection) {
+                window.screenshotProtection.updatePurchasedPhotos(['photo123']);
+                document.getElementById('protection-test-results').innerHTML = '<div>✅ Marked photo123 as purchased. Original URLs should be restored.</div>';
+            } else {
+                document.getElementById('protection-test-results').innerHTML = '<div>❌ Screenshot protection not available</div>';
+            }
+        }
+
+        function checkProtectionStatus() {
+            if (window.screenshotProtection) {
+                const images = document.querySelectorAll('.test-image');
+                let status = '<h4>Image Protection Status:</h4>';
+                
+                images.forEach((img, index) => {
+                    const isDownloadUrl = window.screenshotProtection.isLegitimateDownloadUrl(img.src);
+                    const photoId = img.dataset.photoId;
+                    const isPurchased = photoId && window.screenshotProtection.purchasedPhotos.has(photoId);
+                    const isBlob = img.src.startsWith('blob:');
+                    
+                    status += `<div>Image ${index + 1}: Download URL: ${isDownloadUrl}, Purchased: ${isPurchased}, Blob URL: ${isBlob}</div>`;
+                });
+                
+                document.getElementById('protection-test-results').innerHTML = status;
+            }
+        }
+
+        // Simulate client-gallery page for auto-initialization
+        if (window.location.pathname.includes('test-screenshot') && !window.screenshotProtection) {
+            // Force initialization for testing
+            setTimeout(() => {
+                window.screenshotProtection = new ScreenshotProtection();
+                console.log('Screenshot protection initialized for testing');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

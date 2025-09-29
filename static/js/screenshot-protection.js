@@ -158,13 +158,26 @@ class ScreenshotProtection {
                 e.target.closest('.photo-wrapper') || 
                 e.target.closest('.photo-card') ||
                 e.target.closest('.protected-image')) {
+                
+                // CRITICAL FIX: Allow right-click on legitimate download URLs
+                if (e.target.tagName === 'IMG') {
+                    const isDownloadUrl = this.isLegitimateDownloadUrl(e.target.src);
+                    const photoId = e.target.dataset.photoId;
+                    const isPurchased = photoId && this.purchasedPhotos.has(photoId);
+                    
+                    if (isDownloadUrl || isPurchased) {
+                        this.log('Allowing right-click on legitimate download/purchased photo');
+                        return true; // Allow right-click for downloads
+                    }
+                }
+                
                 e.preventDefault();
                 this.showProtectionNotice('Right-click disabled for image protection');
                 return false;
             }
         }, true);
         
-        this.log('Right-click protection enabled');
+        this.log('Right-click protection enabled with download exemptions');
     }
     
     /**
@@ -205,6 +218,19 @@ class ScreenshotProtection {
         document.addEventListener('keydown', (e) => {
             const blocker = blockedKeys[e.key];
             if (blocker && (typeof blocker === 'boolean' || blocker(e))) {
+                // CRITICAL FIX: Allow keyboard shortcuts on legitimate download URLs
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.tagName === 'IMG') {
+                    const isDownloadUrl = this.isLegitimateDownloadUrl(activeElement.src);
+                    const photoId = activeElement.dataset.photoId;
+                    const isPurchased = photoId && this.purchasedPhotos.has(photoId);
+                    
+                    if (isDownloadUrl || isPurchased) {
+                        this.log('Allowing keyboard shortcut on legitimate download/purchased photo');
+                        return true; // Allow keyboard shortcuts for downloads
+                    }
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
                 this.showProtectionNotice('This keyboard shortcut has been disabled for image protection');
@@ -212,9 +238,21 @@ class ScreenshotProtection {
             }
         }, true);
         
-        // Also block copy events on images
+        // Also block copy events on images (with download exemptions)
         document.addEventListener('copy', (e) => {
             if (e.target.tagName === 'IMG' || e.target.closest('.protected-image')) {
+                // CRITICAL FIX: Allow copying legitimate download URLs
+                if (e.target.tagName === 'IMG') {
+                    const isDownloadUrl = this.isLegitimateDownloadUrl(e.target.src);
+                    const photoId = e.target.dataset.photoId;
+                    const isPurchased = photoId && this.purchasedPhotos.has(photoId);
+                    
+                    if (isDownloadUrl || isPurchased) {
+                        this.log('Allowing copy operation on legitimate download/purchased photo');
+                        return true; // Allow copying for downloads
+                    }
+                }
+                
                 e.clipboardData.setData('text/plain', 'Images are protected by copyright');
                 e.preventDefault();
                 this.showProtectionNotice('Copying images is disabled');
@@ -549,6 +587,9 @@ class ScreenshotProtection {
             isPurchased = true;
         }
         
+        // CRITICAL FIX: Check if this is a legitimate download URL
+        const isDownloadUrl = this.isLegitimateDownloadUrl(imgElement.src);
+        
         // Get parent wrapper
         const wrapper = imgElement.closest('.photo-wrapper') || imgElement.parentElement;
         
@@ -565,9 +606,9 @@ class ScreenshotProtection {
             wrapper.appendChild(overlay);
         }
         
-        // Apply protection based on purchase status
-        if (!isPurchased) {
-            // Add watermark for unpurchased photos
+        // Apply protection based on purchase status and URL type
+        if (!isPurchased && !isDownloadUrl) {
+            // Add watermark for unpurchased photos (but not download URLs)
             if (this.settings.useWatermarks && this.protectionEnabled) {
                 this.addWatermarkOverlay(wrapper);
             }
@@ -575,7 +616,7 @@ class ScreenshotProtection {
             // Note: Removed blur effect and purchase overlay - users can now see watermarked previews directly
             // Server-side watermarked previews provide sufficient protection while allowing purchase decisions
             
-            // Use blob URLs for enhanced protection
+            // Use blob URLs for enhanced protection (EXEMPT download URLs)
             if (this.settings.useBlobUrls && this.protectionEnabled) {
                 this.convertToBlobUrl(imgElement);
             }
@@ -636,6 +677,81 @@ class ScreenshotProtection {
             </div>
         `;
         element.appendChild(overlay);
+    }
+    
+    /**
+     * Check if URL is a legitimate download URL that should be exempt from protection
+     */
+    isLegitimateDownloadUrl(url) {
+        if (!url) return false;
+        
+        // Check for download orchestrator URLs
+        const downloadPatterns = [
+            '/api/download/session/',
+            '/api/downloads/orchestrator/',
+            '/api/download/auth/session/',
+            '/api/downloads/token/',
+            // R2 signed URLs (CloudFlare R2)
+            'https://pub-',
+            // Common download URL parameters
+            'download=true',
+            'disposition=attachment',
+            // File extension patterns for direct downloads
+            '&download',
+            '?download'
+        ];
+        
+        // Check for explicit download patterns
+        for (const pattern of downloadPatterns) {
+            if (url.includes(pattern)) {
+                this.log('Legitimate download URL detected, exempting from protection:', url.substring(0, 100));
+                return true;
+            }
+        }
+        
+        // Check for R2 URLs with signed parameters (long query strings indicate signed URLs)
+        try {
+            const urlObj = new URL(url, window.location.origin);
+            if (urlObj.searchParams.toString().length > 100) {
+                // Long query strings typically indicate signed download URLs
+                this.log('Signed URL detected (long query string), exempting from protection');
+                return true;
+            }
+        } catch (e) {
+            // If URL parsing fails, assume it's not a download URL
+            this.log('URL parsing failed, treating as non-download:', e.message);
+        }
+        
+        // Check for specific R2 domains and signed URL patterns
+        if (url.match(/^https:\/\/[a-f0-9-]+\.r2\.cloudflarestorage\.com/)) {
+            this.log('CloudFlare R2 URL detected, exempting from protection');
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Restore original URL for purchased photos or download contexts
+     */
+    restoreOriginalUrl(imgElement) {
+        const originalSrc = imgElement.dataset.originalSrc;
+        if (originalSrc && originalSrc !== imgElement.src) {
+            this.log('Restoring original URL for purchased/download photo:', originalSrc.substring(0, 100));
+            
+            // Revoke current blob URL if it exists
+            if (imgElement.src.startsWith('blob:')) {
+                URL.revokeObjectURL(imgElement.src);
+                this.blobUrlCache.delete(originalSrc);
+            }
+            
+            // Restore original URL
+            imgElement.src = originalSrc;
+            imgElement.removeAttribute('data-original-src');
+            
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -742,6 +858,9 @@ class ScreenshotProtection {
         document.querySelectorAll(`img[data-photo-id]`).forEach(img => {
             const photoId = img.dataset.photoId;
             if (this.purchasedPhotos.has(photoId)) {
+                // CRITICAL FIX: Restore original URL for purchased photos
+                this.restoreOriginalUrl(img);
+                
                 // Remove heavy protection from purchased photos
                 img.classList.remove('blur-unpurchased');
                 const wrapper = img.closest('.photo-wrapper');
@@ -749,6 +868,12 @@ class ScreenshotProtection {
                     const purchaseOverlay = wrapper.querySelector('.purchase-overlay');
                     if (purchaseOverlay) {
                         purchaseOverlay.remove();
+                    }
+                    
+                    // Remove watermark for purchased photos
+                    const watermarkOverlay = wrapper.querySelector('.watermark-overlay');
+                    if (watermarkOverlay) {
+                        watermarkOverlay.remove();
                     }
                 }
             }
@@ -774,6 +899,27 @@ class ScreenshotProtection {
         }
         
         this.log(`Protection ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    /**
+     * Enable debugging mode for testing
+     */
+    enableDebugMode() {
+        this.settings.consoleLogs = true;
+        console.log('[Screenshot Protection] Debug mode enabled');
+        console.log('[Screenshot Protection] Current settings:', this.settings);
+        console.log('[Screenshot Protection] Purchased photos:', Array.from(this.purchasedPhotos));
+        console.log('[Screenshot Protection] Protected images count:', this.protectedImages.size);
+        console.log('[Screenshot Protection] Blob URL cache size:', this.blobUrlCache.size);
+    }
+    
+    /**
+     * Test URL patterns for debugging
+     */
+    testUrlPattern(url) {
+        const isDownload = this.isLegitimateDownloadUrl(url);
+        console.log(`[Screenshot Protection] URL Test: ${url} -> Download URL: ${isDownload}`);
+        return isDownload;
     }
     
     /**
