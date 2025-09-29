@@ -3186,7 +3186,7 @@
                 
                 // Call server endpoint to delete all files using optimized batch deletion
                 const response = await fetch(`/api/sessions/${sessionId}/delete-all-photos`, {
-                    method: 'POST',
+                    method: 'DELETE',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
