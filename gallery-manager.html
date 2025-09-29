@@ -3184,14 +3184,17 @@
                 // Extract all filenames for batch deletion
                 const filenames = files.map(file => file.fileName || file.name);
                 
-                // Call server endpoint to delete all files in the folder
-                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
-                    method: 'DELETE',
+                // Call server endpoint to delete all files using optimized batch deletion
+                const response = await fetch(`/api/sessions/${sessionId}/delete-all-photos`, {
+                    method: 'POST',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ filenames })
+                    body: JSON.stringify({ 
+                        filenames,
+                        folderType 
+                    })
                 });
                 
                 if (!response.ok) {
