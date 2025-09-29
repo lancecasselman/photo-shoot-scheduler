@@ -151,7 +151,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   const storage = multer.memoryStorage();
   const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit for logos
+    limits: { fileSize: Infinity }, // No file size limit
     fileFilter: (req, file, cb) => {
       const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
       if (allowedTypes.includes(file.mimetype)) {

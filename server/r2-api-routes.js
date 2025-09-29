@@ -13,8 +13,8 @@ const { Pool } = require('pg');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024 * 1024, // 5GB max file size (R2 technical limit)
-    files: 50, // Max 50 files per request - optimized for gallery uploads
+    fileSize: Infinity, // No file size limit - handle files of any size
+    files: 200, // Increased file count per request for large galleries
   },
   fileFilter: (req, file, cb) => {
     // Security: Validate file types - allow photography-related files
