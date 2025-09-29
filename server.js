@@ -11146,17 +11146,7 @@ app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
             return res.status(403).json({ error: 'Access denied: Cannot delete sessions owned by other users' });
         }
 
-        // Delete associated photo files
-        if (session.photos && session.photos.length > 0) {
-            session.photos.forEach(photo => {
-                const filePath = path.join(__dirname, 'uploads', photo.filename);
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                }
-            });
-        }
-
-        // Use comprehensive deletion with proper user verification
+        // Use comprehensive deletion with proper user verification (handles all file deletion)
         const deletionSuccess = await deleteSession(sessionId, userId);
         
         if (deletionSuccess) {
