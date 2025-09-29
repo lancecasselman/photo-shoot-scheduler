@@ -42,7 +42,7 @@ class DownloadService {
     
     // Service configuration
     this.config = {
-      tokenExpirationTime: 30 * 60 * 1000, // 30 minutes
+      tokenExpirationTime: 4 * 60 * 60 * 1000, // 4 hours (enough time for clients to browse and download)
       maxDownloadsPerHour: 50,
       maxBulkDownloadSize: 100,
       supportedImageFormats: ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.tif'],
