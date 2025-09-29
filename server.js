@@ -2897,6 +2897,301 @@ app.post('/api/admin/backups/create', async (req, res) => {
     }
 });
 
+// R2 Storage Investigation endpoint (admin only)
+app.get('/api/admin/r2-investigation', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        console.log('🔍 Starting R2 Storage Investigation...');
+
+        // Step 1: Get database records
+        const dbQuery = `
+            SELECT 
+                user_id,
+                session_id,
+                filename,
+                r2_key,
+                file_size_bytes,
+                file_size_mb,
+                folder_type,
+                uploaded_at,
+                CASE 
+                    WHEN r2_key IS NULL THEN 'NO_R2_KEY'
+                    WHEN r2_key LIKE 'photographer-%/session-%/%' THEN 'HUMAN_READABLE' 
+                    ELSE 'UUID_STYLE'
+                END as key_pattern
+            FROM session_files 
+            ORDER BY uploaded_at DESC
+        `;
+        
+        const dbResult = await pool.query(dbQuery);
+        const dbFiles = dbResult.rows;
+        
+        const dbSummary = {
+            totalFiles: dbFiles.length,
+            totalSizeBytes: dbFiles.reduce((sum, f) => sum + parseInt(f.file_size_bytes || 0), 0),
+            totalSizeMB: dbFiles.reduce((sum, f) => sum + parseFloat(f.file_size_mb || 0), 0),
+            totalSizeGB: dbFiles.reduce((sum, f) => sum + parseFloat(f.file_size_mb || 0), 0) / 1024,
+            keyPatterns: {},
+            missingR2Keys: 0
+        };
+        
+        dbFiles.forEach(file => {
+            const pattern = file.key_pattern;
+            dbSummary.keyPatterns[pattern] = (dbSummary.keyPatterns[pattern] || 0) + 1;
+            if (!file.r2_key) dbSummary.missingR2Keys++;
+        });
+
+        console.log(`📊 Database Analysis: ${dbSummary.totalFiles} files, ${dbSummary.totalSizeGB.toFixed(2)} GB`);
+
+        // Step 2: Get R2 bucket contents using working connection
+        const r2Objects = await r2FileManager.listObjects(''); // List all objects
+        
+        const r2Analysis = {
+            totalObjects: r2Objects.length,
+            totalSizeBytes: 0,
+            totalSizeMB: 0,
+            totalSizeGB: 0,
+            pathPatterns: {
+                humanReadable: [],
+                uuidStyle: [],
+                thumbnails: [],
+                backupIndexes: [],
+                other: []
+            },
+            fileTypeCounts: {}
+        };
+        
+        r2Objects.forEach(obj => {
+            r2Analysis.totalSizeBytes += obj.Size || 0;
+            
+            const key = obj.Key;
+            
+            // Classify path patterns
+            if (key.includes('/thumbnails/') || key.includes('_sm.') || key.includes('_md.') || key.includes('_lg.')) {
+                r2Analysis.pathPatterns.thumbnails.push(key);
+            } else if (key.includes('backup-index.json')) {
+                r2Analysis.pathPatterns.backupIndexes.push(key);
+            } else if (key.startsWith('photographer-') && key.includes('/session-')) {
+                r2Analysis.pathPatterns.humanReadable.push(key);
+            } else if (key.includes('/') && key.length > 30) {
+                r2Analysis.pathPatterns.uuidStyle.push(key);
+            } else {
+                r2Analysis.pathPatterns.other.push(key);
+            }
+            
+            // File type analysis
+            const ext = key.substring(key.lastIndexOf('.') + 1).toLowerCase();
+            r2Analysis.fileTypeCounts[ext] = (r2Analysis.fileTypeCounts[ext] || 0) + 1;
+        });
+        
+        r2Analysis.totalSizeMB = r2Analysis.totalSizeBytes / (1024 * 1024);
+        r2Analysis.totalSizeGB = r2Analysis.totalSizeMB / 1024;
+
+        console.log(`☁️ R2 Analysis: ${r2Analysis.totalObjects} objects, ${r2Analysis.totalSizeGB.toFixed(2)} GB`);
+
+        // Step 3: Compare and find orphaned files
+        const dbKeyMap = new Map();
+        dbFiles.forEach(file => {
+            if (file.r2_key) {
+                dbKeyMap.set(file.r2_key, file);
+            }
+        });
+        
+        const orphanedFiles = [];
+        const orphanedSizeBytes = { total: 0, byType: {} };
+        
+        r2Objects.forEach(r2Object => {
+            const dbFile = dbKeyMap.get(r2Object.Key);
+            if (!dbFile) {
+                // This is an orphaned file
+                const key = r2Object.Key;
+                let orphanType = 'unknown';
+                
+                if (key.includes('/thumbnails/') || key.includes('_sm.') || key.includes('_md.') || key.includes('_lg.')) {
+                    orphanType = 'thumbnail';
+                } else if (key.includes('backup-index.json')) {
+                    orphanType = 'backup_index';
+                } else if (key.startsWith('photographer-') && key.includes('/session-')) {
+                    orphanType = 'gallery_file';
+                } else if (key.includes('/') && key.length > 30) {
+                    orphanType = 'legacy_uuid';
+                }
+                
+                orphanedFiles.push({
+                    key: r2Object.Key,
+                    size: r2Object.Size,
+                    lastModified: r2Object.LastModified,
+                    type: orphanType
+                });
+                
+                orphanedSizeBytes.total += r2Object.Size || 0;
+                if (!orphanedSizeBytes.byType[orphanType]) {
+                    orphanedSizeBytes.byType[orphanType] = { count: 0, bytes: 0 };
+                }
+                orphanedSizeBytes.byType[orphanType].count++;
+                orphanedSizeBytes.byType[orphanType].bytes += r2Object.Size || 0;
+            }
+        });
+
+        const orphanedSizeGB = orphanedSizeBytes.total / (1024 * 1024 * 1024);
+        const discrepancyGB = r2Analysis.totalSizeGB - dbSummary.totalSizeGB;
+
+        console.log(`🗑️ Found ${orphanedFiles.length} orphaned files (${orphanedSizeGB.toFixed(2)} GB)`);
+
+        // Step 4: Generate cleanup recommendations
+        const recommendations = [];
+        
+        if (orphanedFiles.length > 0) {
+            recommendations.push({
+                priority: 'HIGH',
+                action: 'Remove orphaned files',
+                description: `${orphanedFiles.length} orphaned files consuming ${orphanedSizeGB.toFixed(2)} GB`,
+                affectedFiles: orphanedFiles.length
+            });
+        }
+
+        const result = {
+            investigation: {
+                timestamp: new Date().toISOString(),
+                database: dbSummary,
+                r2Bucket: r2Analysis,
+                discrepancy: {
+                    expectedGB: dbSummary.totalSizeGB,
+                    actualGB: r2Analysis.totalSizeGB,
+                    differenceGB: discrepancyGB,
+                    orphanedFiles: orphanedFiles.length,
+                    orphanedSizeGB: orphanedSizeGB
+                },
+                orphanedFilesByType: orphanedSizeBytes.byType,
+                recommendations
+            },
+            // Include sample orphaned files for review (first 20)
+            sampleOrphanedFiles: orphanedFiles.slice(0, 20),
+            // Include all orphaned files for cleanup if needed
+            allOrphanedFiles: orphanedFiles
+        };
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('❌ R2 Investigation failed:', error);
+        res.status(500).json({ 
+            error: 'Investigation failed', 
+            details: error.message,
+            stack: error.stack 
+        });
+    }
+});
+
+// Simple R2 Investigation endpoint (temporary - no auth)
+app.get('/api/r2-investigation-simple', async (req, res) => {
+    try {
+        console.log('🔍 Starting Simple R2 Storage Investigation...');
+
+        // Step 1: Database Analysis
+        const dbQuery = `
+            SELECT 
+                user_id,
+                session_id,
+                filename,
+                r2_key,
+                file_size_bytes,
+                file_size_mb,
+                folder_type,
+                uploaded_at
+            FROM session_files 
+            ORDER BY uploaded_at DESC
+        `;
+        
+        const dbResult = await pool.query(dbQuery);
+        const dbFiles = dbResult.rows;
+        
+        const dbSummary = {
+            totalFiles: dbFiles.length,
+            totalSizeBytes: dbFiles.reduce((sum, f) => sum + parseInt(f.file_size_bytes || 0), 0),
+            totalSizeMB: dbFiles.reduce((sum, f) => sum + parseFloat(f.file_size_mb || 0), 0),
+            totalSizeGB: dbFiles.reduce((sum, f) => sum + parseFloat(f.file_size_mb || 0), 0) / 1024
+        };
+        
+        console.log(`📊 Database: ${dbSummary.totalFiles} files, ${dbSummary.totalSizeGB.toFixed(2)} GB`);
+
+        // Step 2: R2 Analysis
+        const r2Objects = await r2FileManager.listObjects('');
+        const totalR2Size = r2Objects.reduce((sum, obj) => sum + (obj.Size || 0), 0);
+        const totalR2SizeGB = totalR2Size / (1024 * 1024 * 1024);
+        
+        console.log(`☁️ R2: ${r2Objects.length} objects, ${totalR2SizeGB.toFixed(2)} GB`);
+        
+        // Step 3: Find orphaned files
+        const dbKeySet = new Set(dbFiles.map(f => f.r2_key).filter(Boolean));
+        const orphanedFiles = r2Objects.filter(obj => !dbKeySet.has(obj.Key));
+        const orphanedSize = orphanedFiles.reduce((sum, obj) => sum + (obj.Size || 0), 0);
+        const orphanedSizeGB = orphanedSize / (1024 * 1024 * 1024);
+        
+        console.log(`🗑️ Orphaned: ${orphanedFiles.length} files, ${orphanedSizeGB.toFixed(2)} GB`);
+        
+        // Categorize orphaned files
+        const orphanCategories = {};
+        orphanedFiles.forEach(file => {
+            const key = file.Key;
+            let category = 'unknown';
+            
+            if (key.includes('/thumbnails/') || key.includes('_sm.') || key.includes('_md.') || key.includes('_lg.')) {
+                category = 'thumbnails';
+            } else if (key.includes('backup-index.json')) {
+                category = 'backup_indexes';
+            } else if (key.startsWith('photographer-') && key.includes('/session-')) {
+                category = 'gallery_files';
+            } else if (key.includes('/') && key.length > 30) {
+                category = 'legacy_uuid';
+            }
+            
+            if (!orphanCategories[category]) {
+                orphanCategories[category] = { count: 0, size: 0 };
+            }
+            orphanCategories[category].count++;
+            orphanCategories[category].size += file.Size || 0;
+        });
+        
+        const result = {
+            timestamp: new Date().toISOString(),
+            database: dbSummary,
+            r2: {
+                totalObjects: r2Objects.length,
+                totalSizeGB: totalR2SizeGB
+            },
+            orphaned: {
+                count: orphanedFiles.length,
+                sizeGB: orphanedSizeGB,
+                categories: orphanCategories
+            },
+            discrepancy: {
+                expectedGB: dbSummary.totalSizeGB,
+                actualGB: totalR2SizeGB,
+                differenceGB: totalR2SizeGB - dbSummary.totalSizeGB
+            },
+            sampleOrphanedFiles: orphanedFiles.slice(0, 20).map(f => ({
+                key: f.Key,
+                size: f.Size,
+                lastModified: f.LastModified
+            }))
+        };
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('❌ Simple R2 Investigation failed:', error);
+        res.status(500).json({ 
+            error: 'Investigation failed', 
+            details: error.message
+        });
+    }
+});
+
 // Object Storage Routes for Gallery and Raw Storage
 const objectStorageService = new ObjectStorageService();
 
