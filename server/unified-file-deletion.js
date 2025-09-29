@@ -590,8 +590,8 @@ class UnifiedFileDeletion {
         let successCount = 0;
         let errorCount = 0;
 
-        // Process deletions in parallel batches for speed (10 at a time to avoid overwhelming the system)
-        const BATCH_SIZE = 10;
+        // Process deletions in parallel batches for speed (30 at a time for maximum performance)
+        const BATCH_SIZE = 30;
         const totalBatches = Math.ceil(filenames.length / BATCH_SIZE);
         
         console.log(`📦 Processing ${filenames.length} deletions in ${totalBatches} parallel batches of ${BATCH_SIZE}`);
