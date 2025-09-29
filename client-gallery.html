@@ -2841,9 +2841,11 @@
                     // Use unified API for processing the download
                     const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, false, null);
                     
-                    if (downloadResult.success && downloadResult.downloadToken) {
+                    // Fix structural mismatch: handle both token locations
+                    const downloadTokenEntitled = downloadResult?.downloadToken || downloadResult?.data?.downloadToken;
+                    if (downloadResult && downloadResult.success && downloadTokenEntitled) {
                         // Trigger download using the token
-                        const downloadUrl = `/api/downloads/photo/${downloadResult.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${downloadTokenEntitled}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename || 'photo.jpg';
@@ -2892,9 +2894,11 @@
                     // Use unified API for immediate download processing
                     const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, price > 0, null);
                     
-                    if (downloadResult.success && downloadResult.downloadToken) {
+                    // Fix structural mismatch: handle both token locations
+                    const downloadTokenImmediate = downloadResult?.downloadToken || downloadResult?.data?.downloadToken;
+                    if (downloadResult && downloadResult.success && downloadTokenImmediate) {
                         // Trigger download using the token
-                        const downloadUrl = `/api/downloads/photo/${downloadResult.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${downloadTokenImmediate}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename || 'photo.jpg';
@@ -3318,11 +3322,13 @@
                         this.processUnifiedDownload(photoId, photoUrl, filename, isPaid, paymentIntentId)
                     );
                     
-                    if (result.success && result.downloadToken) {
+                    // Fix structural mismatch: handle both token locations
+                    const downloadToken = result?.downloadToken || result?.data?.downloadToken;
+                    if (result && result.success && downloadToken) {
                         this.updateProgress(progressIndicator, 'Downloading file...', 80);
                         
                         // Trigger download
-                        const downloadUrl = `/api/downloads/photo/${result.downloadToken}`;
+                        const downloadUrl = `/api/downloads/photo/${downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename;
@@ -3340,7 +3346,20 @@
                         
                     } else {
                         this.hideProgressIndicator(progressIndicator);
-                        this.handleDownloadError(result, photoId, photoUrl, filename);
+                        // Add detailed logging to debug what's happening
+                        console.error('❌ Download failed with result:', result);
+                        console.error('❌ Success condition failed:', {
+                            hasResult: !!result,
+                            hasSuccess: !!(result && result.success),
+                            hasDownloadToken: !!(result && result.downloadToken),
+                            fullResult: result
+                        });
+                        
+                        if (result) {
+                            this.handleDownloadError(result, photoId, photoUrl, filename);
+                        } else {
+                            this.showError('Download failed: No response received');
+                        }
                         return result;
                     }
                 } catch (error) {
