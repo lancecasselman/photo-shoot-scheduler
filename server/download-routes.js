@@ -43,7 +43,7 @@ const downloadTokens = pgTable("download_tokens", {
   filename: varchar("filename"),
   sessionId: varchar("session_id").notNull(),
   clientEmail: varchar("client_email"),
-  expiresAt: timestamp("expires_at").notNull(),
+  expiresAt: timestamp("expires_at"), // Nullable - tokens don't expire
   isUsed: boolean("is_used").default(false),
   usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").defaultNow()
@@ -239,8 +239,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       const tokenData = downloadToken[0];
 
-      // Check if token is expired
-      if (new Date() > tokenData.expiresAt) {
+      // Check if token is expired (NULL expiresAt means no expiration)
+      if (tokenData.expiresAt && new Date() > tokenData.expiresAt) {
         return res.status(410).json({ error: 'Access token has expired' });
       }
 
@@ -2229,8 +2229,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       const tokenData = tokenResult[0];
 
-      // Check if token is expired
-      if (new Date() > tokenData.expiresAt) {
+      // Check if token is expired (NULL expiresAt means no expiration)
+      if (tokenData.expiresAt && new Date() > tokenData.expiresAt) {
         return res.status(410).json({ error: 'Download token has expired' });
       }
 
@@ -2603,8 +2603,8 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       const tokenData = downloadToken[0];
 
-      // Check if token is expired
-      if (new Date() > tokenData.expiresAt) {
+      // Check if token is expired (NULL expiresAt means no expiration)
+      if (tokenData.expiresAt && new Date() > tokenData.expiresAt) {
         return res.status(410).json({ error: 'Token has expired' });
       }
 
@@ -2864,7 +2864,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         .where(eq(downloadTokens.token, token))
         .limit(1);
 
-      if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt) {
+      if (downloadToken.length === 0 || (downloadToken[0].expiresAt && new Date() > downloadToken[0].expiresAt)) {
         return res.status(403).json({ error: 'Invalid or expired access token' });
       }
 
@@ -3075,7 +3075,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         .where(eq(downloadTokens.token, token))
         .limit(1);
 
-      if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt || downloadToken[0].sessionId !== sessionId) {
+      if (downloadToken.length === 0 || (downloadToken[0].expiresAt && new Date() > downloadToken[0].expiresAt) || downloadToken[0].sessionId !== sessionId) {
         return res.status(403).send(`
           <html>
             <head><title>Token Validation Error</title></head>
@@ -3164,7 +3164,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         .where(eq(downloadTokens.token, token))
         .limit(1);
 
-      if (downloadToken.length === 0 || new Date() > downloadToken[0].expiresAt) {
+      if (downloadToken.length === 0 || (downloadToken[0].expiresAt && new Date() > downloadToken[0].expiresAt)) {
         return res.status(403).json({ error: 'Invalid or expired access token' });
       }
 
@@ -4726,7 +4726,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       console.log(`📥 Processing download request for token: ${token.substring(0, 8)}...`);
       console.log(`📥 Token data - Session: ${tokenData.sessionId}, Photo: ${tokenData.photoUrl}, File: ${tokenData.filename}`);
       
-      // Extract file path from photoUrl - handle both formats
+      // Extract file path from photoUrl - handle multiple formats
       let r2Key;
       if (tokenData.photoUrl.startsWith('/r2/file/')) {
         // Format: /r2/file/photographer-userId/session-sessionId/gallery/filename.jpg
@@ -4734,6 +4734,15 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       } else if (tokenData.photoUrl.startsWith('photographer-')) {
         // Already in R2 key format
         r2Key = tokenData.photoUrl;
+      } else if (tokenData.photoUrl.includes('r2.cloudflarestorage.com/') || tokenData.photoUrl.includes('pub-') && tokenData.photoUrl.includes('.r2.dev/')) {
+        // Full R2 URL format: https://pub-fc48b3b29b574ea18a4ede9b6a3b1c0e.r2.dev/photographer-44735007/session-25efa46f-573c-4708-85f0-bf05e7e4d333/gallery/20250929004926-DSC_0012.jpg
+        const urlParts = tokenData.photoUrl.split('/');
+        const photographerIndex = urlParts.findIndex(part => part.startsWith('photographer-'));
+        if (photographerIndex !== -1) {
+          r2Key = urlParts.slice(photographerIndex).join('/');
+        } else {
+          throw new Error('Could not extract R2 key from URL');
+        }
       } else {
         throw new Error('Invalid photo URL format');
       }
