@@ -3221,7 +3221,7 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthe
             
             // Set headers
             res.setHeader('Content-Type', 'image/jpeg');
-            res.setHeader('Content-Disposition', `inline; filename="${fileInfo.original_name || fileName}"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${fileInfo.original_name || fileName}"`);
             
             // Stream the file to response
             response.Body.pipe(res);
