@@ -10842,12 +10842,12 @@ app.get('/g/:token([A-Za-z0-9_-]{20,})/photo/:filename', async (req, res) => {
             return res.status(404).send('Photo not found');
         }
 
-        // Set appropriate headers for image serving
+        // Set appropriate headers for image downloading
         res.set({
             'Content-Type': fileResult.contentType || 'image/jpeg',
             'Content-Length': fileResult.buffer.length,
-            'Cache-Control': 'public, max-age=31536000', // 1 year cache
-            'Content-Disposition': `inline; filename="${fileResult.filename}"`
+            'Cache-Control': 'no-cache', // Prevent caching for downloads
+            'Content-Disposition': `attachment; filename="${fileResult.filename}"`
         });
 
         res.send(fileResult.buffer);
