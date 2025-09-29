@@ -5683,36 +5683,25 @@ async function deleteSession(id, userId) {
         
         console.log(`☁️ Found ${filesToDelete.length} files to delete from R2 storage`);
         
-        // Step 2: Delete each file from R2 storage using UnifiedFileDeletion
+        // Step 2: Delete all files from R2 storage using batch deletion (FAST!)
         if (filesToDelete.length > 0) {
             const unifiedDeletion = new UnifiedFileDeletion();
-            let deletedCount = 0;
-            let totalSizeReclaimed = 0;
             
             // Commit the current transaction first since UnifiedFileDeletion manages its own transactions
             await client.query('COMMIT');
             console.log(`📤 Committed initial transaction to allow R2 file deletion`);
             
-            // Delete files individually with comprehensive cleanup
-            for (const file of filesToDelete) {
-                try {
-                    console.log(`🗑️ Deleting R2 file: ${file.filename} (${file.file_size_mb || 0}MB)`);
-                    const result = await unifiedDeletion.deletePhotoCompletely(userId, id, file.filename);
-                    
-                    if (result.success) {
-                        deletedCount++;
-                        totalSizeReclaimed += result.fileSizeMB || 0;
-                        console.log(`✅ Successfully deleted: ${file.filename}`);
-                    } else {
-                        console.warn(`⚠️ Failed to delete file: ${file.filename} - ${result.message}`);
-                    }
-                } catch (fileError) {
-                    console.error(`❌ Error deleting file ${file.filename}:`, fileError.message);
-                    // Continue with other files even if one fails
-                }
-            }
+            // Use batch deletion for speed - processes files in parallel
+            const filenames = filesToDelete.map(f => f.filename);
+            console.log(`🚀 Using parallel batch deletion for ${filenames.length} files`);
             
-            console.log(`☁️ R2 File cleanup complete: ${deletedCount}/${filesToDelete.length} files deleted, ${totalSizeReclaimed.toFixed(2)}MB reclaimed`);
+            const batchResult = await unifiedDeletion.deleteMultiplePhotos(userId, id, filenames);
+            
+            console.log(`☁️ R2 File cleanup complete: ${batchResult.successCount}/${filenames.length} files deleted, ${batchResult.totalReclaimedMB}MB reclaimed`);
+            
+            if (batchResult.errorCount > 0) {
+                console.warn(`⚠️ ${batchResult.errorCount} files failed to delete - continuing with session deletion`);
+            }
             
             // Start new transaction for remaining database cleanup
             await client.query('BEGIN');
