@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const sharp = require('sharp');
@@ -26,6 +26,10 @@ class R2FileManager {
     this.pool = pool;
     this.db = pool; // Database connection pool
     this.r2Available = false;
+    
+    // In-memory cache for database queries (cleared between requests)
+    this.queryCache = new Map();
+    this.cacheEnabled = true;
     
     // Debug database connection
     if (pool) {
@@ -293,8 +297,9 @@ class R2FileManager {
           sharpInstance.destroy();
           sharpInstance = null;
 
-          // Upload thumbnail to R2
-          const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size.suffix}.jpg`;
+          // Upload thumbnail to R2 with human-readable path
+          const thumbnailFilename = `${baseName}${size.suffix}.jpg`;
+          const thumbnailKey = await this.generateR2Key(userId, sessionId, thumbnailFilename, 'thumbnails');
           
           const putCommand = new PutObjectCommand({
             Bucket: this.bucketName,
@@ -357,18 +362,31 @@ class R2FileManager {
     }
   }
 
-  // Get thumbnail for a file
+  // Get thumbnail for a file with fallback logic for backward compatibility
   async getThumbnail(userId, sessionId, originalFilename, size = '_md') {
     try {
       const ext = originalFilename.split('.').pop();
       const baseName = originalFilename.replace(`.${ext}`, '');
-      const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size}.jpg`;
       
-      console.log(`🖼️ Retrieving thumbnail: ${thumbnailKey}`);
+      // Generate thumbnail filename
+      const thumbnailFilename = `${baseName}${size}.jpg`;
       
+      console.log(`🖼️ Retrieving thumbnail: ${thumbnailFilename}`);
+      
+      // Use fallback logic to find thumbnail
+      const fileResult = await this.findFileWithFallback(userId, sessionId, thumbnailFilename, 'thumbnails');
+      
+      if (!fileResult.success) {
+        console.log(` Thumbnail not found at any path, attempting on-demand generation for: ${originalFilename}`);
+        return this.generateThumbnailOnDemand(userId, sessionId, originalFilename, size);
+      }
+      
+      console.log(`🖼️ Found thumbnail at ${fileResult.pathType} path: ${fileResult.r2Key}`);
+      
+      // Get the actual thumbnail file
       const getCommand = new GetObjectCommand({
         Bucket: this.bucketName,
-        Key: thumbnailKey
+        Key: fileResult.r2Key
       });
       
       const response = await this.s3Client.send(getCommand);
@@ -380,7 +398,8 @@ class R2FileManager {
         buffer: Buffer.from(buffer),
         contentType: 'image/jpeg',
         size: size,
-        key: thumbnailKey
+        key: fileResult.r2Key,
+        pathType: fileResult.pathType // Indicates if found via human-readable or legacy path
       };
       
     } catch (error) {
@@ -438,19 +457,214 @@ class R2FileManager {
   }
 
   /**
-   * Generate organized R2 key path
-   * Format: photographer-{userId}/session-{sessionId}/{fileType}/{filename}
+   * Clear query cache (call this between requests to prevent memory leaks)
    */
-  generateR2Key(userId, sessionId, filename, fileType) {
+  clearQueryCache() {
+    this.queryCache.clear();
+    console.log('🧹 R2FileManager query cache cleared');
+  }
+
+  /**
+   * Get cached database query result or execute and cache
+   */
+  async getCachedQuery(cacheKey, queryFn) {
+    if (!this.cacheEnabled) {
+      return await queryFn();
+    }
+    
+    if (this.queryCache.has(cacheKey)) {
+      console.log(`🎯 Cache hit for: ${cacheKey}`);
+      return this.queryCache.get(cacheKey);
+    }
+    
+    console.log(`📊 Cache miss, executing query: ${cacheKey}`);
+    const result = await queryFn();
+    this.queryCache.set(cacheKey, result);
+    return result;
+  }
+
+  /**
+   * Generate legacy UUID-based R2 key for backward compatibility
+   */
+  generateLegacyR2Key(userId, sessionId, filename, fileType) {
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
     return `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
   }
 
   /**
-   * Generate backup index file path for a session
+   * Find file with fallback logic - tries human-readable path first, then legacy UUID path
    */
-  generateBackupIndexKey(userId, sessionId) {
-    return `photographer-${userId}/session-${sessionId}/backup-index.json`;
+  async findFileWithFallback(userId, sessionId, filename, fileType) {
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    try {
+      // First, try the new human-readable path
+      const humanReadableKey = await this.generateR2Key(userId, sessionId, filename, fileType);
+      
+      console.log(`🔍 Trying human-readable path: ${humanReadableKey}`);
+      const headCommand = new HeadObjectCommand({
+        Bucket: this.bucketName,
+        Key: humanReadableKey
+      });
+      
+      try {
+        const response = await this.s3Client.send(headCommand);
+        console.log(`✅ Found file at human-readable path: ${humanReadableKey}`);
+        return {
+          success: true,
+          r2Key: humanReadableKey,
+          pathType: 'human-readable',
+          contentType: response.ContentType || 'application/octet-stream',
+          contentLength: response.ContentLength
+        };
+      } catch (error) {
+        if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+          console.log(`❌ File not found at human-readable path, trying legacy path...`);
+          
+          // Fallback to legacy UUID-based path
+          const legacyKey = this.generateLegacyR2Key(userId, sessionId, filename, fileType);
+          console.log(`🔍 Trying legacy UUID path: ${legacyKey}`);
+          
+          const legacyHeadCommand = new HeadObjectCommand({
+            Bucket: this.bucketName,
+            Key: legacyKey
+          });
+          
+          try {
+            const legacyResponse = await this.s3Client.send(legacyHeadCommand);
+            console.log(`✅ Found file at legacy UUID path: ${legacyKey}`);
+            return {
+              success: true,
+              r2Key: legacyKey,
+              pathType: 'legacy-uuid',
+              contentType: legacyResponse.ContentType || 'application/octet-stream',
+              contentLength: legacyResponse.ContentLength
+            };
+          } catch (legacyError) {
+            if (legacyError.name === 'NoSuchKey' || legacyError.$metadata?.httpStatusCode === 404) {
+              console.log(`❌ File not found at either path: ${filename}`);
+              return {
+                success: false,
+                error: 'File not found at human-readable or legacy paths',
+                triedPaths: [humanReadableKey, legacyKey]
+              };
+            }
+            throw legacyError;
+          }
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error(`❌ Error in findFileWithFallback for ${filename}:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Sanitize names for file paths (replace spaces/special chars with underscores)
+   */
+  sanitizeForFilePath(name) {
+    if (!name || typeof name !== 'string') {
+      return 'unknown';
+    }
+    return name
+      .trim()
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .toLowerCase() || 'unknown';
+  }
+
+  /**
+   * Generate organized R2 key path with human-readable names
+   * Format: photographer-{photographer_name}/session-{client_name}_{session_type}/{fileType}/{filename}
+   * Falls back to UUID-based naming if database queries fail
+   * Now uses caching to prevent repeated database queries
+   */
+  async generateR2Key(userId, sessionId, filename, fileType) {
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    try {
+      // Query database for photographer and session names
+      if (!this.db) {
+        console.warn('📂 No database connection available, using UUID-based path');
+        return `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+      }
+
+      // Use cached queries to prevent repeated database hits
+      const photographerCacheKey = `photographer_${userId}`;
+      const sessionCacheKey = `session_${sessionId}_${userId}`;
+
+      // Get photographer name (prefer display_name, fallback to business_name) - CACHED
+      const photographer = await this.getCachedQuery(photographerCacheKey, async () => {
+        const photographerQuery = await this.db.query(`
+          SELECT display_name, business_name, first_name, last_name 
+          FROM users 
+          WHERE id = $1
+        `, [userId]);
+        return photographerQuery.rows[0] || null;
+      });
+
+      if (!photographer) {
+        console.warn(`📂 Photographer not found for userId: ${userId}, using UUID-based path`);
+        return `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+      }
+
+      const photographerName = photographer.display_name || 
+                              photographer.business_name || 
+                              `${photographer.first_name || ''}_${photographer.last_name || ''}`.replace('_', '') ||
+                              'photographer';
+
+      // Get session details (client_name and session_type) - CACHED
+      const session = await this.getCachedQuery(sessionCacheKey, async () => {
+        const sessionQuery = await this.db.query(`
+          SELECT client_name, session_type 
+          FROM photography_sessions 
+          WHERE id = $1 AND user_id = $2
+        `, [sessionId, userId]);
+        return sessionQuery.rows[0] || null;
+      });
+
+      if (!session) {
+        console.warn(`📂 Session not found for sessionId: ${sessionId}, using UUID-based path`);
+        return `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+      }
+
+      const clientName = session.client_name || 'client';
+      const sessionType = session.session_type || 'session';
+
+      // Create human-readable path
+      const sanitizedPhotographerName = this.sanitizeForFilePath(photographerName);
+      const sanitizedClientName = this.sanitizeForFilePath(clientName);
+      const sanitizedSessionType = this.sanitizeForFilePath(sessionType);
+      
+      const humanReadablePath = `photographer-${sanitizedPhotographerName}/session-${sanitizedClientName}_${sanitizedSessionType}/${fileType}/${sanitizedFilename}`;
+      
+      console.log(`📂 Generated human-readable R2 path: ${humanReadablePath}`);
+      return humanReadablePath;
+
+    } catch (error) {
+      console.error('📂 Error generating human-readable R2 path, falling back to UUID-based:', error.message);
+      return `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+    }
+  }
+
+  /**
+   * Generate backup index file path for a session with human-readable names
+   */
+  async generateBackupIndexKey(userId, sessionId) {
+    try {
+      // Use the same logic as generateR2Key but for backup index
+      const baseKey = await this.generateR2Key(userId, sessionId, 'backup-index.json', 'index');
+      // Replace the filename part with just backup-index.json
+      return baseKey.replace('/index/backup-index.json', '/backup-index.json');
+    } catch (error) {
+      console.warn('📂 Failed to generate human-readable backup index path, using UUID-based:', error.message);
+      return `photographer-${userId}/session-${sessionId}/backup-index.json`;
+    }
   }
 
   /**
@@ -458,7 +672,7 @@ class R2FileManager {
    */
   async updateBackupIndex(userId, sessionId, fileInfo, action = 'add') {
     try {
-      const indexKey = this.generateBackupIndexKey(userId, sessionId);
+      const indexKey = await this.generateBackupIndexKey(userId, sessionId);
       let backupIndex = { sessionId, userId, files: [], lastUpdated: new Date().toISOString() };
       
       // Try to get existing backup index
@@ -583,7 +797,7 @@ class R2FileManager {
   async uploadToR2(fileBuffer, filename, userId, sessionId, fileType) {
     const fileSizeBytes = fileBuffer.length;
     const fileSizeMB = (fileSizeBytes / (1024 * 1024));
-    const r2Key = this.generateR2Key(userId, sessionId, filename, fileType);
+    const r2Key = await this.generateR2Key(userId, sessionId, filename, fileType);
     const fileId = crypto.randomUUID();
 
     // Determine content type from filename
@@ -901,59 +1115,77 @@ class R2FileManager {
   }
 
   /**
-   * Download file from R2 at full resolution
+   * Download file from R2 at full resolution with fallback logic for backward compatibility
    */
   async downloadFile(userId, sessionId, filename) {
     try {
-      // First, try to get file info from database
-      let fileInfo;
+      console.log(`📷 Downloading file: ${filename} from session ${sessionId}`);
       
-      // Try session_files table first
-      const sessionFileQuery = `
-        SELECT filename, r2_key, file_size_bytes, original_name
-        FROM session_files 
-        WHERE session_id = $1 AND filename = $2
-      `;
-      const sessionFileResult = await this.db.query(sessionFileQuery, [sessionId, filename]);
+      // Determine file type for path generation
+      const fileType = this.getFileTypeCategory(filename);
       
-      if (sessionFileResult.rows.length > 0) {
-        const row = sessionFileResult.rows[0];
-        fileInfo = {
-          filename: row.filename,
-          r2Key: row.r2_key,
-          fileSizeBytes: row.file_size_bytes,
-          originalName: row.original_name,
-          contentType: 'image/jpeg' // Default, will be determined by file extension
-        };
-      } else {
-        // Try raw_backups table
-        const backupQuery = `
-          SELECT filename, r2_object_key, file_size, original_name, mime_type
-          FROM raw_backups 
-          WHERE session_id = $1 AND filename = $2
-        `;
-        const backupResult = await this.db.query(backupQuery, [sessionId, filename]);
+      // Use fallback logic to find the file
+      const fileResult = await this.findFileWithFallback(userId, sessionId, filename, fileType);
+      
+      if (!fileResult.success) {
+        // If fallback fails, try to get info from database as last resort
+        console.log(` Fallback failed, trying database lookup for: ${filename}`);
+        let fileInfo;
         
-        if (backupResult.rows.length > 0) {
-          const row = backupResult.rows[0];
+        // Try session_files table first
+        const sessionFileQuery = `
+          SELECT filename, r2_key, file_size_bytes, original_name
+          FROM session_files 
+          WHERE session_id = $1 AND (filename = $2 OR filename LIKE $3)
+        `;
+        const sessionFileResult = await this.db.query(sessionFileQuery, [sessionId, filename, `%${filename}`]);
+        
+        if (sessionFileResult.rows.length > 0) {
+          const row = sessionFileResult.rows[0];
           fileInfo = {
             filename: row.filename,
-            r2Key: row.r2_object_key,
-            fileSizeBytes: row.file_size,
+            r2Key: row.r2_key,
+            fileSizeBytes: row.file_size_bytes,
             originalName: row.original_name,
-            contentType: row.mime_type || 'image/jpeg'
+            contentType: 'image/jpeg' // Default, will be determined by file extension
           };
+        } else {
+          // Try raw_backups table
+          const backupQuery = `
+            SELECT filename, r2_object_key, file_size, original_name, mime_type
+            FROM raw_backups 
+            WHERE session_id = $1 AND (filename = $2 OR filename LIKE $3)
+          `;
+          const backupResult = await this.db.query(backupQuery, [sessionId, filename, `%${filename}`]);
+          
+          if (backupResult.rows.length > 0) {
+            const row = backupResult.rows[0];
+            fileInfo = {
+              filename: row.filename,
+              r2Key: row.r2_object_key,
+              fileSizeBytes: row.file_size,
+              originalName: row.original_name,
+              contentType: row.mime_type || 'image/jpeg'
+            };
+          }
         }
+        
+        if (!fileInfo) {
+          throw new Error(`File not found: ${filename}`);
+        }
+        
+        // Use the r2Key from database
+        fileResult.r2Key = fileInfo.r2Key;
+        fileResult.pathType = 'database-lookup';
+        fileResult.contentType = fileInfo.contentType;
       }
       
-      if (!fileInfo) {
-        throw new Error(`File not found in database: ${filename}`);
-      }
+      console.log(`📷 Found file at ${fileResult.pathType} path: ${fileResult.r2Key}`);
       
       // Download the file from R2
       const getFileCommand = new GetObjectCommand({ 
         Bucket: this.bucketName, 
-        Key: fileInfo.r2Key 
+        Key: fileResult.r2Key 
       });
       const fileResponse = await this.s3Client.send(getFileCommand);
       
@@ -961,21 +1193,57 @@ class R2FileManager {
       // Replace transformToByteArray() which doesn't exist in Node.js AWS SDK v3
       const fileBuffer = await streamToBuffer(fileResponse.Body);
       
-      console.log(` Downloaded from R2: ${filename} (${fileBuffer.length} bytes)`);
+      console.log(` Downloaded from R2: ${filename} (${fileBuffer.length} bytes) via ${fileResult.pathType} path`);
       
       return {
         success: true,
-        filename: fileInfo.filename,
+        filename: filename,
         buffer: Buffer.from(fileBuffer),
-        contentType: fileInfo.contentType,
-        fileSizeBytes: fileInfo.fileSizeBytes,
-        originalFormat: fileInfo.originalFormat || 'jpeg',
+        contentType: fileResult.contentType || fileResponse.ContentType || 'application/octet-stream',
+        fileSizeBytes: fileBuffer.length,
+        originalFormat: filename.substring(filename.lastIndexOf('.')) || 'unknown',
+        metadata: fileResponse.Metadata,
+        pathType: fileResult.pathType,
+        r2Key: fileResult.r2Key
+      };
+      
+    } catch (error) {
+      console.error(`❌ R2 download failed for ${filename}:`, error.message);
+      throw new Error(`Download failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Download file buffer from R2 - simpler version for buffer-only access
+   * Used by data export system and other services that need raw file data
+   */
+  async downloadFileBuffer(r2Key) {
+    try {
+      console.log(`💾 Downloading file buffer from R2: ${r2Key}`);
+      
+      // Direct download using provided R2 key
+      const getFileCommand = new GetObjectCommand({ 
+        Bucket: this.bucketName, 
+        Key: r2Key 
+      });
+      const fileResponse = await this.s3Client.send(getFileCommand);
+      
+      // FIXED: Convert stream to buffer using proper Node.js stream handling
+      const fileBuffer = await streamToBuffer(fileResponse.Body);
+      
+      console.log(` Downloaded buffer from R2: ${r2Key} (${fileBuffer.length} bytes)`);
+      
+      return {
+        success: true,
+        buffer: Buffer.from(fileBuffer),
+        contentType: fileResponse.ContentType || 'application/octet-stream',
+        fileSizeBytes: fileBuffer.length,
         metadata: fileResponse.Metadata
       };
       
     } catch (error) {
-      console.error('❌ R2 download failed:', error);
-      throw new Error(`Download failed: ${error.message}`);
+      console.error(`❌ R2 buffer download failed for ${r2Key}:`, error.message);
+      throw new Error(`Buffer download failed: ${error.message}`);
     }
   }
 
@@ -1101,20 +1369,48 @@ class R2FileManager {
   }
 
   /**
-   * Get backup index for a session
+   * Get backup index for a session with fallback logic
    */
   async getSessionBackupIndex(userId, sessionId) {
     try {
-      const indexKey = this.generateBackupIndexKey(userId, sessionId);
-      const getCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: indexKey });
-      const response = await this.s3Client.send(getCommand);
-      const backupIndex = JSON.parse(await response.Body.transformToString());
+      // Try both human-readable and legacy paths for backup index
+      let indexKey;
+      let backupIndex;
       
-      console.log(` Retrieved backup index for session ${sessionId}: ${backupIndex.totalFiles} files`);
-      return backupIndex;
+      try {
+        // First try human-readable path
+        indexKey = await this.generateBackupIndexKey(userId, sessionId);
+        console.log(` Trying human-readable backup index: ${indexKey}`);
+        
+        const getCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: indexKey });
+        const response = await this.s3Client.send(getCommand);
+        // FIXED: Use proper stream handling instead of transformToString()
+        const indexData = await streamToBuffer(response.Body);
+        backupIndex = JSON.parse(indexData.toString());
+        
+        console.log(` Retrieved backup index from human-readable path for session ${sessionId}: ${backupIndex.totalFiles} files`);
+        return backupIndex;
+        
+      } catch (error) {
+        if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+          // Try legacy UUID-based path
+          indexKey = `photographer-${userId}/session-${sessionId}/backup-index.json`;
+          console.log(` Trying legacy backup index: ${indexKey}`);
+          
+          const legacyGetCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: indexKey });
+          const legacyResponse = await this.s3Client.send(legacyGetCommand);
+          const legacyIndexData = await streamToBuffer(legacyResponse.Body);
+          backupIndex = JSON.parse(legacyIndexData.toString());
+          
+          console.log(` Retrieved backup index from legacy path for session ${sessionId}: ${backupIndex.totalFiles} files`);
+          return backupIndex;
+        }
+        throw error;
+      }
       
     } catch (error) {
-      if (error.name === 'NoSuchKey') {
+      if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+        console.log(` No backup index found for session ${sessionId}, returning empty index`);
         return { sessionId, userId, files: [], totalFiles: 0, totalSizeBytes: 0 };
       }
       console.error('Error getting backup index:', error);

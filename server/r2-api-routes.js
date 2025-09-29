@@ -1140,21 +1140,22 @@ Please check your R2 configuration or contact support.`,
         }
       }
       
-      // CRITICAL FIX: Build R2 URLs and update photos JSONB column
-      const photoData = files.map(file => {
-        // Sanitize filename for R2 key (same pattern as generateR2Key method)
-        const sanitizedFilename = file.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+      // CRITICAL FIX: Build R2 URLs using human-readable paths and update photos JSONB column
+      const photoData = await Promise.all(files.map(async (file) => {
         const fileType = file.fileType || 'gallery';
         
-        // Construct full R2 URL using the same pattern as generateR2Key
-        const r2Key = `photographer-${userId}/session-${sessionId}/${fileType}/${sanitizedFilename}`;
+        // Use the new generateR2Key method for human-readable paths
+        const r2Key = await r2Manager.generateR2Key(userId, sessionId, file.filename, fileType);
         const fullR2Url = `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/${r2Key}`;
         
-        // Generate thumbnail URL (for gallery file types)
+        // Generate thumbnail URL using human-readable paths (for gallery file types)
         const isImage = r2Manager.isImageFile(file.filename);
-        const thumbnailUrl = isImage ? 
-          `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/photographer-${userId}/session-${sessionId}/thumbnails/${file.filename.split('.')[0]}_md.jpg` :
-          fullR2Url;
+        let thumbnailUrl = fullR2Url;
+        if (isImage) {
+          const thumbnailFilename = `${file.filename.split('.')[0]}_md.jpg`;
+          const thumbnailKey = await r2Manager.generateR2Key(userId, sessionId, thumbnailFilename, 'thumbnails');
+          thumbnailUrl = `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/${thumbnailKey}`;
+        }
         
         return {
           photoId: file.filename.split('.')[0] || crypto.randomUUID().substring(0, 8),
@@ -1165,7 +1166,7 @@ Please check your R2 configuration or contact support.`,
           fileType: fileType,
           uploadedAt: new Date().toISOString()
         };
-      });
+      }));
       
       console.log(`📸 Updating photos JSONB column with ${photoData.length} R2 URLs for session ${sessionId}`);
       
