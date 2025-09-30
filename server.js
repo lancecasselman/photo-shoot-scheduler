@@ -7681,44 +7681,221 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
     const normalizedUser = normalizeUserForLance(req.user);
     const userId = normalizedUser.uid;
     const { files } = req.body; // Array of {filename, contentType, size}
+    
+    // Generate correlation ID for tracking this request
+    const correlationId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     try {
-        console.log(`🚀 Generating presigned URLs for ${files.length} files`);
-        
-        // Check storage quota first
+        // === STEP 1: LOG ENTRY POINT ===
         const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-        const quotaCheck = await storageSystem.canUpload(userId, totalSize, normalizedUser.email);
+        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
         
-        if (!quotaCheck.canUpload) {
-            return res.status(403).json({
-                error: 'Storage quota exceeded',
-                currentUsageGB: quotaCheck.currentUsageGB,
-                quotaGB: quotaCheck.quotaGB,
-                message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit.`
+        console.log(`\n═══════════════════════════════════════════════════════`);
+        console.log(`🚀 PRESIGNED URL REQUEST [${correlationId}]`);
+        console.log(`   User ID: ${userId}`);
+        console.log(`   Email: ${normalizedUser.email}`);
+        console.log(`   Session ID: ${sessionId}`);
+        console.log(`   File count: ${files.length}`);
+        console.log(`   Total size: ${totalSizeMB} MB (${totalSize} bytes)`);
+        console.log(`   Files: ${files.map(f => `${f.filename} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`).join(', ')}`);
+        console.log(`═══════════════════════════════════════════════════════\n`);
+        
+        // === STEP 2: VERIFY R2 ENVIRONMENT VARIABLES ===
+        console.log(`[${correlationId}] ✓ Step 1: Verifying R2 environment variables...`);
+        const r2EnvVars = {
+            CLOUDFLARE_R2_BUCKET_NAME: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+            CLOUDFLARE_R2_ACCOUNT_ID: process.env.CLOUDFLARE_R2_ACCOUNT_ID,
+            CLOUDFLARE_R2_ACCESS_KEY_ID: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+            CLOUDFLARE_R2_SECRET_ACCESS_KEY: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY
+        };
+        
+        const missingVars = Object.entries(r2EnvVars)
+            .filter(([key, value]) => !value)
+            .map(([key]) => key);
+        
+        if (missingVars.length > 0) {
+            console.error(`[${correlationId}] ❌ MISSING R2 ENVIRONMENT VARIABLES:`, missingVars);
+            return res.status(500).json({
+                error: 'R2 storage not configured',
+                message: 'R2 storage credentials are missing. Please contact support.',
+                details: `Missing environment variables: ${missingVars.join(', ')}`,
+                correlationId,
+                fallbackToServerUpload: true
             });
         }
-
-        // Generate presigned URLs for all files
-        const result = await r2Manager.generateBatchUploadUrls(userId, sessionId, files);
+        
+        console.log(`[${correlationId}] ✅ R2 environment variables verified`);
+        console.log(`   Bucket: ${r2EnvVars.CLOUDFLARE_R2_BUCKET_NAME}`);
+        console.log(`   Account ID: ${r2EnvVars.CLOUDFLARE_R2_ACCOUNT_ID}`);
+        console.log(`   Access Key: ${r2EnvVars.CLOUDFLARE_R2_ACCESS_KEY_ID?.substring(0, 8)}...`);
+        
+        // === STEP 3: R2 HEALTH CHECK ===
+        console.log(`\n[${correlationId}] ✓ Step 2: Performing R2 health check...`);
+        
+        if (!r2Manager) {
+            console.error(`[${correlationId}] ❌ R2 manager not initialized`);
+            return res.status(500).json({
+                error: 'R2 storage not available',
+                message: 'R2 storage service is not initialized',
+                correlationId,
+                fallbackToServerUpload: true
+            });
+        }
+        
+        if (!r2Manager.r2Available) {
+            console.warn(`[${correlationId}] ⚠️ R2 marked as unavailable, testing connection...`);
+            
+            // Attempt to test connection
+            const connectionTest = await r2Manager.testConnection();
+            
+            if (!connectionTest) {
+                console.error(`[${correlationId}] ❌ R2 connection test failed`);
+                return res.status(500).json({
+                    error: 'R2 storage unavailable',
+                    message: 'Cannot connect to R2 storage. Your files will need to use server upload.',
+                    details: 'R2 bucket unreachable or credentials invalid',
+                    correlationId,
+                    fallbackToServerUpload: true
+                });
+            }
+        }
+        
+        console.log(`[${correlationId}] ✅ R2 health check passed - storage available`);
+        
+        // === STEP 4: STORAGE QUOTA CHECK ===
+        console.log(`\n[${correlationId}] ✓ Step 3: Checking storage quota...`);
+        console.log(`   User: ${userId} (${normalizedUser.email})`);
+        console.log(`   Requested upload size: ${totalSizeMB} MB`);
+        
+        let quotaCheck;
+        try {
+            quotaCheck = await storageSystem.canUpload(userId, totalSize, normalizedUser.email);
+            
+            console.log(`[${correlationId}] 📊 Quota check result:`);
+            console.log(`   Can upload: ${quotaCheck.canUpload}`);
+            console.log(`   Current usage: ${quotaCheck.currentUsageGB?.toFixed(2)} GB`);
+            console.log(`   Total quota: ${quotaCheck.quotaGB} GB`);
+            console.log(`   Remaining: ${quotaCheck.remainingGB?.toFixed(2)} GB`);
+            
+            if (!quotaCheck.canUpload) {
+                console.warn(`[${correlationId}] ⚠️ QUOTA EXCEEDED - Upload denied`);
+                return res.status(403).json({
+                    error: 'Storage quota exceeded',
+                    currentUsageGB: quotaCheck.currentUsageGB,
+                    quotaGB: quotaCheck.quotaGB,
+                    remainingGB: quotaCheck.remainingGB,
+                    requestedMB: parseFloat(totalSizeMB),
+                    message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit. Current usage: ${quotaCheck.currentUsageGB?.toFixed(2)}GB`,
+                    correlationId
+                });
+            }
+            
+            console.log(`[${correlationId}] ✅ Storage quota check passed`);
+            
+        } catch (quotaError) {
+            console.error(`[${correlationId}] ❌ Storage quota check FAILED:`, quotaError);
+            console.error(`   Error type: ${quotaError.constructor.name}`);
+            console.error(`   Error message: ${quotaError.message}`);
+            console.error(`   Stack trace:`, quotaError.stack);
+            
+            // Allow upload to proceed if quota check fails (graceful degradation)
+            console.warn(`[${correlationId}] ⚠️ Allowing upload despite quota check failure (graceful degradation)`);
+            quotaCheck = { canUpload: true, remainingGB: null };
+        }
+        
+        // === STEP 5: GENERATE PRESIGNED URLS ===
+        console.log(`\n[${correlationId}] ✓ Step 4: Generating presigned URLs...`);
+        console.log(`   Calling r2Manager.generateBatchUploadUrls()`);
+        console.log(`   Parameters: userId=${userId}, sessionId=${sessionId}, fileCount=${files.length}`);
+        
+        let result;
+        try {
+            result = await r2Manager.generateBatchUploadUrls(userId, sessionId, files);
+            
+            console.log(`[${correlationId}] 📤 R2 Manager response:`);
+            console.log(`   Success: ${result.success}`);
+            console.log(`   URLs generated: ${result.count || 0}`);
+            if (!result.success) {
+                console.error(`   Error: ${result.error}`);
+            }
+            
+        } catch (r2Error) {
+            console.error(`[${correlationId}] ❌ R2 MANAGER ERROR:`, r2Error);
+            console.error(`   Error type: ${r2Error.constructor.name}`);
+            console.error(`   Error message: ${r2Error.message}`);
+            console.error(`   Error code: ${r2Error.code}`);
+            console.error(`   Stack trace:`, r2Error.stack);
+            
+            // Check for specific error types
+            if (r2Error.message?.includes('credentials') || r2Error.code === 'InvalidAccessKeyId') {
+                return res.status(500).json({
+                    error: 'R2 authentication failed',
+                    message: 'Invalid R2 credentials. Please contact support.',
+                    details: r2Error.message,
+                    correlationId,
+                    fallbackToServerUpload: true
+                });
+            } else if (r2Error.message?.includes('bucket') || r2Error.code === 'NoSuchBucket') {
+                return res.status(500).json({
+                    error: 'R2 bucket not found',
+                    message: 'R2 storage bucket is not accessible. Please contact support.',
+                    details: r2Error.message,
+                    correlationId,
+                    fallbackToServerUpload: true
+                });
+            } else if (r2Error.code === 'NetworkingError' || r2Error.message?.includes('timeout')) {
+                return res.status(503).json({
+                    error: 'R2 temporarily unavailable',
+                    message: 'R2 storage is temporarily unavailable. Please try again in a moment.',
+                    details: r2Error.message,
+                    correlationId,
+                    retry: true,
+                    fallbackToServerUpload: true
+                });
+            }
+            
+            throw r2Error; // Re-throw unknown errors
+        }
         
         if (!result.success) {
+            console.error(`[${correlationId}] ❌ Failed to generate presigned URLs`);
             throw new Error(result.error || 'Failed to generate upload URLs');
         }
 
-        console.log(`✅ Generated ${result.count} presigned URLs for direct upload`);
+        // === STEP 6: SUCCESS ===
+        console.log(`\n[${correlationId}] ✅ SUCCESS - Presigned URLs generated`);
+        console.log(`   URLs created: ${result.count}`);
+        console.log(`   Storage remaining: ${quotaCheck.remainingGB?.toFixed(2)} GB`);
+        console.log(`   Expiration: 1 hour (3600 seconds)`);
+        console.log(`═══════════════════════════════════════════════════════\n`);
         
         res.json({
             success: true,
             urls: result.urls,
             count: result.count,
-            storageRemaining: quotaCheck.remainingGB
+            storageRemaining: quotaCheck.remainingGB,
+            correlationId,
+            expiresIn: 3600
         });
 
     } catch (error) {
-        console.error('Error generating presigned URLs:', error);
+        console.error(`\n[${correlationId}] ❌❌❌ FATAL ERROR IN PRESIGNED URL ENDPOINT ❌❌❌`);
+        console.error(`   Error type: ${error.constructor.name}`);
+        console.error(`   Error message: ${error.message}`);
+        console.error(`   Error code: ${error.code}`);
+        console.error(`   User: ${userId} (${normalizedUser.email})`);
+        console.error(`   Session: ${sessionId}`);
+        console.error(`   Files requested: ${files?.length || 'unknown'}`);
+        console.error(`   Full error object:`, error);
+        console.error(`   Stack trace:`, error.stack);
+        console.error(`═══════════════════════════════════════════════════════\n`);
+        
         res.status(500).json({ 
             error: 'Failed to generate upload URLs',
-            message: error.message 
+            message: error.message,
+            correlationId,
+            fallbackToServerUpload: true,
+            details: 'An unexpected error occurred. The system will fall back to server upload.'
         });
     }
 });
