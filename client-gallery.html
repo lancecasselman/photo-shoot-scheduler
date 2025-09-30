@@ -2531,6 +2531,7 @@
                         }
                     } else {
                         console.error('Failed to release server reservation:', data.error);
+                        this.showNotification('Photo removed locally. Server sync will retry later.', 'warning');
                         // Still remove from local cart to avoid inconsistency
                         this.cart = this.cart.filter(item => item.photoId !== photoId);
                         this.saveCart();
@@ -2544,6 +2545,7 @@
 
                 } catch (error) {
                     console.error('Error removing photo from cart:', error);
+                    this.showNotification('Photo removed locally. Network error - server sync will retry later.', 'warning');
                     // Remove from local cart even if server call fails to avoid inconsistency
                     this.cart = this.cart.filter(item => item.photoId !== photoId);
                     this.saveCart();
@@ -2673,6 +2675,9 @@
                         });
                     } catch (error) {
                         console.error('Error clearing server cart reservations:', error);
+                        if (!silent) {
+                            this.showNotification('Cart cleared locally. Server sync will be updated.', 'warning');
+                        }
                         // Continue with local clear even if server call fails
                     }
 
