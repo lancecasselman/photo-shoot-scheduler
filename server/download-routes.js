@@ -31,7 +31,8 @@ const schema = require('../shared/schema');
 const { 
   photographySessions, 
   digitalTransactions,
-  downloadEntitlements
+  downloadEntitlements,
+  downloadOrders
 } = schema;
 const { eq, and, desc, count, sum, gte, lte, sql } = require('drizzle-orm');
 
@@ -1488,6 +1489,82 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     } catch (error) {
       console.error('Error getting download policy:', error);
       res.status(500).json({ error: 'Failed to get download policy' });
+    }
+  });
+
+  /**
+   * GET /api/downloads/order/:orderId
+   * Get order details and entitlements status for download purchase success page
+   * SECURE: Requires sessionId or clientKey authentication
+   */
+  router.get('/order/:orderId', downloadRateLimit, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { sessionId, clientKey } = req.query;
+      
+      if (!sessionId && !clientKey) {
+        return res.status(403).json({
+          success: false,
+          error: 'Authentication required. Please provide sessionId or clientKey.'
+        });
+      }
+      
+      const orders = await db.select()
+        .from(downloadOrders)
+        .where(eq(downloadOrders.id, orderId))
+        .limit(1);
+      
+      if (orders.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Order not found'
+        });
+      }
+      
+      const order = orders[0];
+      
+      const isSessionValid = sessionId && sessionId === order.sessionId;
+      const isClientKeyValid = clientKey && clientKey === order.clientKey;
+      
+      if (!isSessionValid && !isClientKeyValid) {
+        console.warn(`🚨 Unauthorized order access attempt for order ${orderId.substring(0, 8)}...`);
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied. Invalid authentication credentials.'
+        });
+      }
+      
+      const entitlements = await db.select()
+        .from(downloadEntitlements)
+        .where(eq(downloadEntitlements.orderId, orderId));
+      
+      const entitlementsCreated = entitlements.length > 0;
+      const photoCount = order.items ? order.items.length : 0;
+      
+      console.log(`✅ Secure order access: ${orderId.substring(0, 8)}... (${photoCount} photos, ${order.status})`);
+      
+      res.json({
+        success: true,
+        order: {
+          id: order.id,
+          sessionId: order.sessionId,
+          clientKey: order.clientKey,
+          amount: order.amount,
+          currency: order.currency,
+          photoCount: photoCount,
+          status: order.status,
+          createdAt: order.createdAt
+        },
+        entitlementsCreated: entitlementsCreated,
+        entitlementsCount: entitlements.length
+      });
+      
+    } catch (error) {
+      console.error('❌ Order fetch error:', error.message);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch order details'
+      });
     }
   });
 

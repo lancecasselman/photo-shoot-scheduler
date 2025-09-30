@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Purchase Successful - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .success-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease-out 0.2s both;
+        }
+        
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+        
+        .checkmark {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 0.5s ease-out 0.5s forwards;
+        }
+        
+        @keyframes drawCheck {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .amount {
+            font-size: 36px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .message {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .photos-purchased {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .photos-purchased h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .photos-count {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .download-info {
+            background: #e7f5ff;
+            border-left: 4px solid #339af0;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .download-info h3 {
+            color: #1864ab;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .download-info p {
+            color: #1864ab;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        
+        .btn {
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .error-message h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .error-message p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .entitlement-status {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        @media (min-width: 480px) {
+            .actions {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">
+            <svg class="checkmark" viewBox="0 0 52 52">
+                <path d="M14 27l10 10 20-20"/>
+            </svg>
+        </div>
+        
+        <h1>Purchase Successful!</h1>
+        
+        <div class="amount" id="purchaseAmount">
+            <span class="loading"></span>
+        </div>
+        
+        <p class="message">
+            Your photo purchase has been completed successfully!
+        </p>
+        
+        <div class="photos-purchased" id="photosPurchased" style="display: none;">
+            <h3>Photos Purchased</h3>
+            <div class="photos-count" id="photosCount">-</div>
+            <p style="font-size: 14px; opacity: 0.95;">High-resolution photos ready to download</p>
+        </div>
+        
+        <div class="details" id="orderDetails" style="display: none;">
+            <div class="detail-row">
+                <span class="detail-label">Order ID</span>
+                <span class="detail-value" id="orderId">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Transaction ID</span>
+                <span class="detail-value" id="transactionId">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Amount Paid</span>
+                <span class="detail-value" id="amountPaid">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Purchase Date</span>
+                <span class="detail-value" id="purchaseDate">-</span>
+            </div>
+        </div>
+        
+        <div class="entitlement-status" id="entitlementStatus" style="display: none;">
+            ✓ Your download access has been activated
+        </div>
+        
+        <div class="download-info">
+            <h3>📸 Ready to Download Your Photos</h3>
+            <p>
+                Your photos are now available for download! Click the button below to return to the gallery 
+                where you can download your high-resolution images.
+            </p>
+        </div>
+        
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <h3>Unable to Load Order Details</h3>
+            <p id="errorText">We encountered an issue loading your order information. Don't worry - your payment was successful and your photos are available for download. Please check your email for order confirmation or contact support if you need assistance.</p>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" id="galleryButton" onclick="goToGallery()">Go to Gallery</button>
+            <button class="btn btn-secondary" onclick="window.location.href='/'">Return Home</button>
+        </div>
+    </div>
+    
+    <script>
+        let sessionId = null;
+        let clientKey = null;
+        
+        async function loadOrderDetails() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const checkoutSessionId = urlParams.get('session_id');
+                const orderId = urlParams.get('order_id');
+                sessionId = urlParams.get('sessionId');
+                clientKey = urlParams.get('clientKey');
+                
+                if (!orderId) {
+                    throw new Error('Order ID not found in URL');
+                }
+                
+                if (!sessionId && !clientKey) {
+                    throw new Error('Authentication parameters missing. Please check your email for the gallery link.');
+                }
+                
+                const authParams = new URLSearchParams();
+                if (sessionId) authParams.append('sessionId', sessionId);
+                if (clientKey) authParams.append('clientKey', clientKey);
+                
+                const response = await fetch(`/api/downloads/order/${orderId}?${authParams.toString()}`);
+                
+                if (response.status === 403) {
+                    throw new Error('Access denied. This order cannot be accessed with the provided credentials.');
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch order: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load order details');
+                }
+                
+                const order = data.order;
+                sessionId = order.sessionId;
+                clientKey = order.clientKey;
+                
+                document.getElementById('purchaseAmount').textContent = `$${parseFloat(order.amount).toFixed(2)}`;
+                
+                document.getElementById('photosPurchased').style.display = 'block';
+                const photoCount = order.photoCount || 0;
+                document.getElementById('photosCount').textContent = photoCount;
+                
+                document.getElementById('orderDetails').style.display = 'block';
+                document.getElementById('orderId').textContent = order.id.substring(0, 12) + '...';
+                document.getElementById('transactionId').textContent = checkoutSessionId 
+                    ? checkoutSessionId.substring(0, 20) + '...'
+                    : order.id.substring(0, 20) + '...';
+                document.getElementById('amountPaid').textContent = `$${parseFloat(order.amount).toFixed(2)} ${order.currency.toUpperCase()}`;
+                document.getElementById('purchaseDate').textContent = new Date(order.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                if (data.entitlementsCreated) {
+                    document.getElementById('entitlementStatus').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                
+                document.getElementById('purchaseAmount').textContent = 'Purchase Confirmed';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorText').textContent = error.message || 'An unexpected error occurred while loading order details.';
+            }
+        }
+        
+        function goToGallery() {
+            if (sessionId) {
+                const galleryUrl = clientKey 
+                    ? `/gallery?session=${sessionId}&clientKey=${clientKey}`
+                    : `/gallery?session=${sessionId}`;
+                window.location.href = galleryUrl;
+            } else {
+                const urlParams = new URLSearchParams(window.location.search);
+                const orderId = urlParams.get('order_id');
+                if (orderId) {
+                    window.location.href = `/gallery`;
+                } else {
+                    alert('Unable to determine gallery location. Please check your email for the gallery link.');
+                }
+            }
+        }
+        
+        window.addEventListener('load', loadOrderDetails);
+    </script>
+</body>
+</html>

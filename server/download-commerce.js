@@ -877,8 +877,8 @@ class DownloadCommerceManager {
                 payment_method_types: ['card'],
                 line_items: lineItems,
                 mode: mode,
-                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/download-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-                cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/gallery?session=${sessionId}`,
+                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/download-success.html?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}&sessionId=${sessionId}&clientKey=${clientKey}`,
+                cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/gallery?session=${sessionId}&clientKey=${clientKey}`,
                 metadata: {
                     orderId: orderId,
                     sessionId: sessionId,
