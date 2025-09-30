@@ -1629,6 +1629,60 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         .set(updateData)
         .where(eq(photographySessions.id, sessionId));
 
+      // SYNC: Also update the download_policies table to keep both tables in sync
+      // This ensures the client gallery reads the correct pricing information
+      if (pricingModel !== undefined || pricePerDownload !== undefined || freeDownloads !== undefined) {
+        const policyUpdateData = {};
+        
+        // Map pricing model to policy mode
+        if (pricingModel !== undefined) {
+          const modeMap = {
+            'free': 'free',
+            'paid': 'fixed',
+            'freemium': 'freemium',
+            'per_photo': 'per_photo'
+          };
+          policyUpdateData.mode = modeMap[pricingModel] || 'free';
+        }
+        
+        if (pricePerDownload !== undefined) {
+          policyUpdateData.pricePerPhoto = pricePerDownload ? String(pricePerDownload) : '0';
+        }
+        
+        if (freeDownloads !== undefined) {
+          policyUpdateData.freeCount = parseInt(freeDownloads) || null;
+        }
+        
+        policyUpdateData.updatedAt = new Date();
+        
+        // Check if policy exists for this session
+        const existingPolicy = await db.select()
+          .from(downloadPolicies)
+          .where(eq(downloadPolicies.sessionId, sessionId))
+          .limit(1);
+        
+        if (existingPolicy.length > 0) {
+          // Update existing policy
+          await db
+            .update(downloadPolicies)
+            .set(policyUpdateData)
+            .where(eq(downloadPolicies.sessionId, sessionId));
+          console.log(`✅ Synced download_policies table for session ${sessionId}`);
+        } else {
+          // Create new policy
+          const { v4: uuidv4 } = require('uuid');
+          await db.insert(downloadPolicies).values({
+            id: uuidv4(),
+            sessionId: sessionId,
+            ...policyUpdateData,
+            currency: 'USD',
+            taxIncluded: false,
+            createdAt: new Date()
+          });
+          console.log(`✅ Created download_policies entry for session ${sessionId}`);
+        }
+      }
+
       console.log(`📋 Download policy updated for session ${sessionId}`);
       res.json({ success: true, message: 'Download policy updated successfully' });
       
