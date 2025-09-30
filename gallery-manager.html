@@ -2648,14 +2648,12 @@
                     }
                     
                     if (response.status === 413) {
-                        try {
-                            const errorData = JSON.parse(errorText);
-                            alert(errorData.message || 'Storage quota exceeded. Please upgrade your storage plan.');
-                            throw new Error(errorData.message || 'Storage quota exceeded');
-                        } catch {
-                            alert('Storage quota exceeded. Please upgrade your storage plan.');
-                            throw new Error('Storage quota exceeded');
-                        }
+                        const errorMessage = 'This file is too large for direct server upload (over 30-40MB limit). ' +
+                            'Large files should be uploaded using direct-to-cloud method. ' +
+                            'The system attempted to use fast upload but it failed. ' +
+                            'If you continue seeing this error, please contact support.';
+                        alert(errorMessage);
+                        throw new Error('File too large for server upload (413)');
                     }
                     
                     alert(`Upload failed: ${errorText}. Please try again.`);
