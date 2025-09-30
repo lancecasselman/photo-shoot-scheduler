@@ -11116,7 +11116,7 @@ app.delete('/api/sessions/:sessionId/delete-all-photos', isAuthenticated, async 
     }
 });
 
-// Delete session
+// Delete session (with background processing to avoid timeout)
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
@@ -11146,21 +11146,30 @@ app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
             return res.status(403).json({ error: 'Access denied: Cannot delete sessions owned by other users' });
         }
 
-        // Use comprehensive deletion with proper user verification (handles all file deletion)
-        const deletionSuccess = await deleteSession(sessionId, userId);
-        
-        if (deletionSuccess) {
-            console.log(`✅ Successfully deleted session: ${session.clientName} (${sessionId})`);
-            res.json({ 
-                success: true,
-                message: 'Session deleted successfully',
-                sessionId: sessionId,
-                clientName: session.clientName
-            });
-        } else {
-            console.log(`❌ Failed to delete session: ${sessionId}`);
-            res.status(404).json({ error: 'Session not found or already deleted' });
-        }
+        // Return success immediately to avoid gateway timeout
+        res.json({ 
+            success: true,
+            message: 'Session deletion started. This may take a few moments for large sessions.',
+            sessionId: sessionId,
+            clientName: session.clientName,
+            processing: true
+        });
+
+        // Process deletion in background (prevents 504 timeout on large sessions)
+        setImmediate(async () => {
+            try {
+                console.log(`🔄 Background deletion starting for session ${sessionId}...`);
+                const deletionSuccess = await deleteSession(sessionId, userId);
+                
+                if (deletionSuccess) {
+                    console.log(`✅ Background deletion complete: ${session.clientName} (${sessionId})`);
+                } else {
+                    console.error(`❌ Background deletion failed: ${sessionId}`);
+                }
+            } catch (bgError) {
+                console.error(`❌ Background deletion error for ${sessionId}:`, bgError.message);
+            }
+        });
         
     } catch (error) {
         console.error('❌ Error deleting session:', error);
