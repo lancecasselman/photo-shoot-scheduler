@@ -18115,32 +18115,28 @@ END:VCALENDAR`;
                     return;
                 }
                     
-                    // Populate form fields
-                    document.getElementById('downloadEnabled').checked = policy.downloadEnabled || false;
-                    document.getElementById('pricingModel').value = policy.pricingModel || 'free';
-                    document.getElementById('downloadMax').value = policy.downloadMax || '';
-                    document.getElementById('pricePerDownload').value = policy.pricePerDownload || '';
-                    document.getElementById('freeDownloads').value = policy.freeDownloads || '';
-                    document.getElementById('freemiumPrice').value = policy.pricePerDownload || '';
-                    
-                    // Watermark settings
-                    document.getElementById('watermarkEnabled').checked = policy.watermarkEnabled || false;
-                    document.getElementById('watermarkText').value = policy.watermarkText || '© Your Studio Name';
-                    document.getElementById('watermarkPosition').value = policy.watermarkPosition || 'bottom-right';
-                    document.getElementById('watermarkOpacity').value = policy.watermarkOpacity || 60;
-                    document.getElementById('opacityValue').textContent = policy.watermarkOpacity || 60;
-                    
-                    // Update UI based on settings
-                    toggleDownloadSettings();
-                    updatePricingModelFields();
-                    toggleWatermarkSettings();
-                    
-                    // Load gallery link
-                    await loadGalleryLink(sessionId);
-                } else {
-                    console.error('Failed to load download settings');
-                    showMessage('Failed to load current settings', 'error');
-                }
+                // Populate form fields
+                document.getElementById('downloadEnabled').checked = policy.downloadEnabled || false;
+                document.getElementById('pricingModel').value = policy.pricingModel || 'free';
+                document.getElementById('downloadMax').value = policy.downloadMax || '';
+                document.getElementById('pricePerDownload').value = policy.pricePerDownload || '';
+                document.getElementById('freeDownloads').value = policy.freeDownloads || '';
+                document.getElementById('freemiumPrice').value = policy.pricePerDownload || '';
+                
+                // Watermark settings
+                document.getElementById('watermarkEnabled').checked = policy.watermarkEnabled || false;
+                document.getElementById('watermarkText').value = policy.watermarkText || '© Your Studio Name';
+                document.getElementById('watermarkPosition').value = policy.watermarkPosition || 'bottom-right';
+                document.getElementById('watermarkOpacity').value = policy.watermarkOpacity || 60;
+                document.getElementById('opacityValue').textContent = policy.watermarkOpacity || 60;
+                
+                // Update UI based on settings
+                toggleDownloadSettings();
+                updatePricingModelFields();
+                toggleWatermarkSettings();
+                
+                // Load gallery link
+                await loadGalleryLink(sessionId);
             } catch (error) {
                 console.error('Error loading download settings:', error);
                 showMessage('Error loading settings', 'error');
