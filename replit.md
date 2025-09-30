@@ -25,7 +25,14 @@ The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is
 Cloudflare R2 serves as the primary cloud storage with human-readable file organization including photographer and session names for easier tracking in the R2 dashboard. The system uses dual-path support with automatic fallback to legacy UUID-based paths for backward compatibility. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation with performance-optimized caching and single-download operations.
 
 ### Photography Delivery System
-A comprehensive download-based delivery system with flexible pricing models (free, paid, freemium), customizable watermarking, and Stripe Connect integration for payment processing. It includes per-client quota tracking and robust entitlement management.
+A comprehensive download-based delivery system with flexible pricing models (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration for payment processing. It includes per-client quota tracking and robust entitlement management with photo-level purchase tracking.
+
+**FREEMIUM Model Features:**
+- Clients get X free downloads (photographer configurable)
+- After free quota exhausted, clients can purchase unlimited additional photos
+- Once a photo is purchased, it's permanently unlocked with unlimited re-downloads
+- No paid quotas or limits - each photo only needs to be purchased once
+- Purchases tracked at photo-level in entitlements system
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features, user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction.

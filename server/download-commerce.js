@@ -451,12 +451,12 @@ class DownloadCommerceManager {
                             sessionId: sessionId,
                             clientKey: clientKey,
                             photoId: item.photoId,
-                            remaining: 1, // Each photo gets 1 download
+                            remaining: 999999, // FREE mode: Unlimited re-downloads
                             orderId: null, // Free entitlements have no order
                             expiresAt: null, // Free entitlements don't expire
                             createdAt: new Date()
                         });
-                    console.log(`✅ Created FREE unlimited entitlement ${entitlementId} for photo ${item.photoId}`);
+                    console.log(`✅ Created FREE entitlement ${entitlementId} for photo ${item.photoId} - UNLIMITED RE-DOWNLOADS`);
                     entitlementIds.push(entitlementId);
                 }
                 
@@ -531,12 +531,12 @@ class DownloadCommerceManager {
                         sessionId: sessionId,
                         clientKey: clientKey,
                         photoId: item.photoId,
-                        remaining: 1, // Each photo gets 1 download
+                        remaining: 999999, // FREEMIUM: Unlimited re-downloads for free photos too!
                         orderId: null, // Free entitlements have no order
                         expiresAt: null, // Free entitlements don't expire
                         createdAt: new Date()
                     });
-                console.log(`✅ Created entitlement ${entitlementId} for photo ${item.photoId}`);
+                console.log(`✅ Created FREEMIUM free entitlement ${entitlementId} for photo ${item.photoId} - UNLIMITED RE-DOWNLOADS`);
                 entitlementIds.push(entitlementId);
             }
             
@@ -1245,24 +1245,37 @@ class DownloadCommerceManager {
             }
             
             // Check freemium quota
+            // NEW: Freemium allows unlimited purchases, but each photo only needs to be purchased once
+            // Once purchased, a photo is permanently unlocked (checked above via specificEntitlement)
             if (policy.success && policy.policy.mode === 'freemium') {
-                const downloads = await this.db.select()
+                // Count UNIQUE photos downloaded (not total downloads)
+                // This ensures re-downloading the same photo doesn't consume extra quota
+                const uniquePhotosDownloaded = await this.db.select({
+                    photoId: downloadHistory.photoId
+                })
                     .from(downloadHistory)
                     .where(and(
                         eq(downloadHistory.sessionId, sessionId),
                         eq(downloadHistory.clientKey, clientKey),
                         eq(downloadHistory.status, 'success')
-                    ));
+                    ))
+                    .groupBy(downloadHistory.photoId);
                 
-                if (downloads.length < (policy.policy.freeCount || 0)) {
+                const uniqueDownloadCount = uniquePhotosDownloaded.length;
+                const freeCount = policy.policy.freeCount || 0;
+                
+                if (uniqueDownloadCount < freeCount) {
+                    console.log(`✅ FREEMIUM: Client has used ${uniqueDownloadCount}/${freeCount} free downloads`);
                     return {
                         success: true,
                         entitled: true,
                         entitlement: null,
                         reason: 'freemium_quota',
-                        remaining: (policy.policy.freeCount || 0) - downloads.length
+                        remaining: freeCount - uniqueDownloadCount
                     };
                 }
+                
+                console.log(`📊 FREEMIUM: Free quota exhausted (${uniqueDownloadCount}/${freeCount}), photo requires purchase or entitlement`);
             }
             
             return {
@@ -1302,22 +1315,30 @@ class DownloadCommerceManager {
             if (entitlementCheck.entitlement) {
                 const entitlement = entitlementCheck.entitlement;
                 
-                // Decrement remaining count
-                const newRemaining = entitlement.remaining - 1;
-                const updates = {
-                    remaining: newRemaining
-                };
+                // FREEMIUM MODE: Don't decrement purchased photo entitlements (they're unlimited)
+                // Check if this is a FREEMIUM purchased entitlement (remaining = 999999)
+                const isFreemiumPurchased = entitlement.remaining >= 999999;
                 
-                // Mark as used if depleted
-                if (newRemaining <= 0) {
-                    updates.usedAt = new Date();
+                if (!isFreemiumPurchased) {
+                    // Decrement remaining count for non-freemium entitlements
+                    const newRemaining = entitlement.remaining - 1;
+                    const updates = {
+                        remaining: newRemaining
+                    };
+                    
+                    // Mark as used if depleted
+                    if (newRemaining <= 0) {
+                        updates.usedAt = new Date();
+                    }
+                    
+                    await this.db.update(downloadEntitlements)
+                        .set(updates)
+                        .where(eq(downloadEntitlements.id, entitlement.id));
+                    
+                    console.log(`📉 Consumed entitlement ${entitlement.id}, ${newRemaining} remaining`);
+                } else {
+                    console.log(`♾️ FREEMIUM purchased photo - unlimited re-downloads, not consuming entitlement`);
                 }
-                
-                await this.db.update(downloadEntitlements)
-                    .set(updates)
-                    .where(eq(downloadEntitlements.id, entitlement.id));
-                
-                console.log(`📉 Consumed entitlement ${entitlement.id}, ${newRemaining} remaining`);
             }
             
             // Create download history entry
@@ -2326,9 +2347,17 @@ class DownloadCommerceManager {
                 };
             }
 
+            // Check if session is FREEMIUM mode to determine remaining downloads
+            const policy = await this.getPolicyForSession(sessionId);
+            const isFreemium = policy.success && policy.policy.mode === 'freemium';
+            
+            // FREEMIUM MODE: Purchased photos are permanently unlocked (unlimited re-downloads)
+            // OTHER MODES: Single download per purchase
+            const remainingDownloads = isFreemium ? 999999 : 1;
+
             // Create entitlement record
             const entitlementId = uuidv4();
-            const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration) // No expiration
+            const expiresAt = new Date(Date.now() + (100 * 365 * 24 * 60 * 60 * 1000)); // 100 years (effectively no expiration)
 
             await this.db.insert(downloadEntitlements).values({
                 id: entitlementId,
@@ -2339,13 +2368,17 @@ class DownloadCommerceManager {
                 amount: amount.toFixed(2),
                 currency: currency,
                 paymentIntentId: paymentIntentId,
-                remaining: 1, // Single download for paid entitlement
+                remaining: remainingDownloads, // Unlimited for freemium, single for others
                 isActive: true,
                 expiresAt: expiresAt,
                 createdAt: new Date()
             });
 
-            console.log(`💰 Created paid entitlement: ${entitlementId} for photo ${photoId} ($${amount})`);
+            if (isFreemium) {
+                console.log(`💰 Created FREEMIUM entitlement: ${entitlementId} for photo ${photoId} ($${amount}) - UNLIMITED RE-DOWNLOADS`);
+            } else {
+                console.log(`💰 Created paid entitlement: ${entitlementId} for photo ${photoId} ($${amount}) - Single download`);
+            }
 
             return {
                 success: true,
