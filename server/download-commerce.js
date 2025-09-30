@@ -475,17 +475,18 @@ class DownloadCommerceManager {
             // For FREEMIUM pricing model, enforce quota limits
             console.log(`📊 FREEMIUM pricing model detected: session allows ${freeDownloads} free downloads per client`);
 
-            // Check existing entitlements for this client and count actual downloads consumed
+            // Check existing free entitlements for this client (orderId is null for free downloads)
             const existingEntitlements = await this.db.select()
                 .from(downloadEntitlements)
                 .where(and(
                     eq(downloadEntitlements.sessionId, sessionId),
-                    eq(downloadEntitlements.clientKey, clientKey)
+                    eq(downloadEntitlements.clientKey, clientKey),
+                    eq(downloadEntitlements.orderId, null)
                 ));
 
-            // CRITICAL FIX: Count actual downloads consumed by counting how many entitlements were created
-            // Each entitlement represents one photo download attempt (whether used or not)
-            // This prevents the quota accounting bug where maxDownloads=sessionTotal caused wrong calculations
+            // SINGLE SOURCE OF TRUTH: Count free downloads by counting entitlements where orderId is null
+            // Each free entitlement represents one photo download attempt (whether used or not)
+            // This ensures consistency with checkEntitlement() method
             let totalConsumedDownloads = existingEntitlements.length;
             
             console.log(`📊 Client ${clientKey} has ${existingEntitlements.length} existing entitlements (each represents 1 download attempt)`);
@@ -800,6 +801,111 @@ class DownloadCommerceManager {
             }
             
             const policy = policyResult.policy;
+            
+            // **SECURITY: SERVER-SIDE PRICE VALIDATION**
+            // Recalculate prices server-side and validate against client-submitted prices
+            // to prevent price manipulation attacks
+            console.log(`🔒 [PRICE VALIDATION] Starting server-side price validation for ${items.length} items`);
+            
+            if (policy.mode === 'freemium') {
+                // Get existing free entitlements for this client (orderId = null indicates free downloads)
+                const freeEntitlements = await this.db.select()
+                    .from(downloadEntitlements)
+                    .where(and(
+                        eq(downloadEntitlements.sessionId, sessionId),
+                        eq(downloadEntitlements.clientKey, clientKey),
+                        or(eq(downloadEntitlements.orderId, null), eq(downloadEntitlements.orderId, ''))
+                    ));
+                
+                const freeCount = parseInt(policy.freeCount) || 0;
+                const remainingFreeSlots = Math.max(0, freeCount - freeEntitlements.length);
+                const pricePerPhoto = parseFloat(policy.pricePerPhoto || 0);
+                
+                console.log(`🔒 [PRICE VALIDATION] Freemium mode: ${freeCount} total free, ${freeEntitlements.length} used, ${remainingFreeSlots} remaining`);
+                
+                // Validate each item's price based on position
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const serverPrice = i < remainingFreeSlots ? 0 : pricePerPhoto;
+                    const clientPrice = parseFloat(item.price || 0);
+                    
+                    // Allow 1 cent tolerance for floating point comparison
+                    if (Math.abs(serverPrice - clientPrice) > 0.01) {
+                        console.error(`🚨 [SECURITY] Price validation failed for item ${i}:`, {
+                            photoId: item.photoId || item.id,
+                            position: i,
+                            serverPrice: serverPrice,
+                            clientPrice: clientPrice,
+                            remainingFreeSlots: remainingFreeSlots,
+                            sessionId: sessionId,
+                            clientKey: clientKey
+                        });
+                        
+                        return {
+                            success: false,
+                            error: 'Price validation failed - cart prices do not match server calculation. Please refresh and try again.'
+                        };
+                    }
+                    
+                    console.log(`✅ [PRICE VALIDATION] Item ${i} validated: server=${serverPrice}, client=${clientPrice}`);
+                }
+                
+                console.log(`✅ [PRICE VALIDATION] All ${items.length} items passed validation`);
+                
+            } else if (policy.mode === 'per_photo' || policy.mode === 'fixed') {
+                // For per_photo and fixed modes, all items should have the same price
+                const pricePerPhoto = parseFloat(policy.pricePerPhoto || 0);
+                
+                console.log(`🔒 [PRICE VALIDATION] ${policy.mode} mode: expected price per photo = ${pricePerPhoto}`);
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const clientPrice = parseFloat(item.price || 0);
+                    
+                    if (Math.abs(pricePerPhoto - clientPrice) > 0.01) {
+                        console.error(`🚨 [SECURITY] Price validation failed for item ${i}:`, {
+                            photoId: item.photoId || item.id,
+                            serverPrice: pricePerPhoto,
+                            clientPrice: clientPrice,
+                            mode: policy.mode,
+                            sessionId: sessionId,
+                            clientKey: clientKey
+                        });
+                        
+                        return {
+                            success: false,
+                            error: 'Price validation failed - cart prices do not match server calculation. Please refresh and try again.'
+                        };
+                    }
+                }
+                
+                console.log(`✅ [PRICE VALIDATION] All ${items.length} items passed validation`);
+                
+            } else if (policy.mode === 'free') {
+                // Free mode - all items should be price 0
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const clientPrice = parseFloat(item.price || 0);
+                    
+                    if (clientPrice > 0.01) {
+                        console.error(`🚨 [SECURITY] Price validation failed - free mode but client sent non-zero price:`, {
+                            photoId: item.photoId || item.id,
+                            clientPrice: clientPrice,
+                            sessionId: sessionId,
+                            clientKey: clientKey
+                        });
+                        
+                        return {
+                            success: false,
+                            error: 'Price validation failed - this session has free downloads only'
+                        };
+                    }
+                }
+                
+                console.log(`✅ [PRICE VALIDATION] All items validated as free`);
+            }
+            
+            // Now calculate total using server-validated prices
             const totalPrice = await this.calculateTotalPrice(paidItems, policy);
             
             if (totalPrice <= 0) {
@@ -1245,37 +1351,34 @@ class DownloadCommerceManager {
             }
             
             // Check freemium quota
-            // NEW: Freemium allows unlimited purchases, but each photo only needs to be purchased once
-            // Once purchased, a photo is permanently unlocked (checked above via specificEntitlement)
+            // SINGLE SOURCE OF TRUTH: Count from downloadEntitlements table (matching createFreeEntitlements logic)
             if (policy.success && policy.policy.mode === 'freemium') {
-                // Count UNIQUE photos downloaded (not total downloads)
-                // This ensures re-downloading the same photo doesn't consume extra quota
-                const uniquePhotosDownloaded = await this.db.select({
-                    photoId: downloadHistory.photoId
-                })
-                    .from(downloadHistory)
-                    .where(and(
-                        eq(downloadHistory.sessionId, sessionId),
-                        eq(downloadHistory.clientKey, clientKey),
-                        eq(downloadHistory.status, 'success')
-                    ))
-                    .groupBy(downloadHistory.photoId);
-                
-                const uniqueDownloadCount = uniquePhotosDownloaded.length;
                 const freeCount = policy.policy.freeCount || 0;
                 
-                if (uniqueDownloadCount < freeCount) {
-                    console.log(`✅ FREEMIUM: Client has used ${uniqueDownloadCount}/${freeCount} free downloads`);
+                // Count existing free entitlements for this client (orderId is null for free downloads)
+                const freeEntitlements = await this.db.select()
+                    .from(downloadEntitlements)
+                    .where(and(
+                        eq(downloadEntitlements.sessionId, sessionId),
+                        eq(downloadEntitlements.clientKey, clientKey),
+                        eq(downloadEntitlements.orderId, null)
+                    ));
+                
+                // Calculate remaining free downloads (identical to createFreeEntitlements logic)
+                const remainingFree = freeCount - freeEntitlements.length;
+                
+                if (remainingFree > 0) {
+                    console.log(`✅ FREEMIUM: Client has used ${freeEntitlements.length}/${freeCount} free downloads, ${remainingFree} remaining`);
                     return {
                         success: true,
                         entitled: true,
                         entitlement: null,
                         reason: 'freemium_quota',
-                        remaining: freeCount - uniqueDownloadCount
+                        remaining: remainingFree
                     };
                 }
                 
-                console.log(`📊 FREEMIUM: Free quota exhausted (${uniqueDownloadCount}/${freeCount}), photo requires purchase or entitlement`);
+                console.log(`📊 FREEMIUM: Free quota exhausted (${freeEntitlements.length}/${freeCount}), photo requires purchase or entitlement`);
             }
             
             return {

@@ -2184,13 +2184,11 @@
                 console.log(`🃏 Photo ${index + 1} in cart: ${inCart}`);
                 
                 // Check if photo is already purchased (entitled)
-                // Check if photo is already entitled using filename as primary identifier
+                // STANDARDIZED: Always use filename as PRIMARY identifier, URL as fallback only
                 const photoIdToCheck = photo.filename;
                 const isEntitled = this.entitlements.some(e => 
-                    e.photoId === photo.filename ||     // Primary: filename match
-                    e.photoId === photo.id ||           // Legacy: photo.id match
-                    e.photoId === index.toString() ||   // Legacy: index match for compatibility
-                    e.photoUrl === photo.url            // Fallback: URL-based match
+                    e.photoId === photo.filename ||     // PRIMARY: filename match
+                    e.photoUrl === photo.url            // FALLBACK: URL-based match (backwards compatibility)
                 );
                 console.log(`🃏 Photo ${index + 1} (photoId: ${photoIdToCheck}) entitled: ${isEntitled}`, {
                     availableEntitlements: this.entitlements.map(e => ({ photoId: e.photoId, photoUrl: e.photoUrl })),
@@ -2301,31 +2299,16 @@
                         
                         // CRITICAL FIX: Count how many free downloads have ACTUALLY been completed
                         // Only count ACTIVE entitlements (completed downloads), NOT cart reservations
-                        let totalFreeDownloadsUsed = 0;
-                        
-                        // Count the number of photos in ACTIVE free entitlements (actually completed downloads)
-                        for (const entitlement of this.entitlements) {
-                            // Only count active entitlements (completed downloads) for quota calculation
-                            if ((!entitlement.orderId || entitlement.orderId === null) && entitlement.isActive === true) {
-                                // This is a completed free download (not a cart reservation)
-                                if (entitlement.photoIds && Array.isArray(entitlement.photoIds)) {
-                                    totalFreeDownloadsUsed += entitlement.photoIds.length;
-                                } else {
-                                    // Fallback: count the entitlement itself
-                                    totalFreeDownloadsUsed++;
-                                }
-                            }
-                        }
+                        // Each entitlement has photoId (singular), not photoIds (array)
+                        const freeEntitlements = this.entitlements.filter(e => 
+                            (!e.orderId || e.orderId === null) && e.isActive === true
+                        );
+                        const totalFreeDownloadsUsed = freeEntitlements.length;
                         
                         // Check if THIS specific photo is already entitled (already downloaded)
+                        // STANDARDIZED: Use filename as PRIMARY identifier, URL as fallback
                         const isPhotoAlreadyEntitled = this.entitlements.some(e => {
-                            // Check if this photo is in the entitlement's photoIds array
-                            if (e.photoIds && Array.isArray(e.photoIds)) {
-                                return e.photoIds.includes(String(photoIndex)) || 
-                                       (this.photos[photoIndex] && e.photoIds.includes(this.photos[photoIndex].id));
-                            }
-                            // Fallback: check by photoUrl or photoId
-                            return (e.photoId === String(photoIndex)) || 
+                            return (this.photos[photoIndex] && e.photoId === this.photos[photoIndex].filename) || 
                                    (this.photos[photoIndex] && e.photoUrl === this.photos[photoIndex].url);
                         });
                         
@@ -2335,20 +2318,22 @@
                             return null; // Will show "Download" button instead of price
                         }
                         
-                        // Count how many free items are currently in the cart (not yet downloaded)
-                        const freeCartItems = this.cart.filter(item => item.price === 0).length;
+                        // POSITION-BASED PRICING FIX: No circular dependency
+                        // Calculate remaining free slots based only on completed downloads
+                        const remainingFreeSlots = Math.max(0, freeCount - totalFreeDownloadsUsed);
                         
-                        // Calculate if this photo can be free
-                        // User can select photos for free if: (already used free downloads + current free cart items) < freeCount
-                        const totalFreeAllocated = totalFreeDownloadsUsed + freeCartItems;
-                        const canBeFree = totalFreeAllocated < freeCount;
+                        // Position this photo would take in cart (count current cart items)
+                        const cartPosition = this.cart.length;
+                        
+                        // If cart position < remaining free slots, this photo is free
+                        const canBeFree = cartPosition < remainingFreeSlots;
                         const calculatedPrice = canBeFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         
                         console.log(`💰 Photo ${photoIndex + 1} FREEMIUM calculation:`, {
                             freeCount: freeCount,
                             totalFreeDownloadsUsed: totalFreeDownloadsUsed,
-                            freeCartItems: freeCartItems,
-                            totalFreeAllocated: totalFreeAllocated,
+                            remainingFreeSlots: remainingFreeSlots,
+                            cartPosition: cartPosition,
                             canBeFree: canBeFree,
                             calculatedPrice: calculatedPrice,
                             isAlreadyEntitled: isPhotoAlreadyEntitled
@@ -2401,7 +2386,8 @@
                     cards.forEach((card) => {
                         const photoIndex = card.id.replace('photo-', '');
                         const photo = this.photos[photoIndex];
-                        if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                        // STANDARDIZED: Only check filename match
+                        if (photo && photo.filename === photoId) {
                             targetCard = card;
                         }
                     });
@@ -2477,7 +2463,8 @@
                     cards.forEach((card) => {
                         const photoIndex = card.id.replace('photo-', '');
                         const photo = this.photos[photoIndex];
-                        if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                        // STANDARDIZED: Only check filename match
+                        if (photo && photo.filename === photoId) {
                             const btn = card.querySelector('.add-to-cart-btn');
                             if (btn) {
                                 btn.disabled = false;
@@ -2560,13 +2547,50 @@
             
             recalculatePrices() {
                 // Recalculate prices for all items in cart based on current policy
-                this.cart.forEach((item, index) => {
-                    const photoIndex = this.photos.findIndex(p => p.id === item.photoId || 
-                                                                  this.photos.indexOf(p).toString() === item.photoId);
-                    if (photoIndex !== -1) {
-                        item.price = this.calculatePhotoPrice(photoIndex);
-                    }
-                });
+                // For freemium mode, use position-based pricing to avoid circular dependency
+                
+                if (this.policy?.mode === 'freemium') {
+                    const freeCount = parseInt(this.policy.freeCount || 0);
+                    
+                    // Count completed free downloads
+                    const freeEntitlements = this.entitlements.filter(e => 
+                        (!e.orderId || e.orderId === null) && e.isActive === true
+                    );
+                    const totalFreeDownloadsUsed = freeEntitlements.length;
+                    const remainingFreeSlots = Math.max(0, freeCount - totalFreeDownloadsUsed);
+                    
+                    // Recalculate each cart item based on its POSITION in the cart
+                    this.cart.forEach((item, cartPosition) => {
+                        const photoIndex = this.photos.findIndex(p => p.id === item.photoId || 
+                                                                      this.photos.indexOf(p).toString() === item.photoId);
+                        
+                        // Skip if photo not found or already entitled
+                        if (photoIndex === -1) return;
+                        
+                        const isPhotoAlreadyEntitled = this.entitlements.some(e => {
+                            return (e.photoId === String(photoIndex)) || 
+                                   (this.photos[photoIndex] && e.photoUrl === this.photos[photoIndex].url) ||
+                                   (this.photos[photoIndex] && e.photoId === this.photos[photoIndex].id);
+                        });
+                        
+                        if (isPhotoAlreadyEntitled) {
+                            item.price = 0; // Already entitled, keep free
+                        } else {
+                            // Position-based pricing: if cart position < remaining free slots, it's free
+                            const canBeFree = cartPosition < remainingFreeSlots;
+                            item.price = canBeFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
+                        }
+                    });
+                } else {
+                    // For other modes (bulk, fixed, free, paid), use standard calculation
+                    this.cart.forEach((item, index) => {
+                        // STANDARDIZED: Use filename as PRIMARY identifier
+                        const photoIndex = this.photos.findIndex(p => p.filename === item.photoId);
+                        if (photoIndex !== -1) {
+                            item.price = this.calculatePhotoPrice(photoIndex);
+                        }
+                    });
+                }
                 
                 this.saveCart();
                 this.updateCartUI();
@@ -2578,7 +2602,8 @@
                 cards.forEach((card) => {
                     const photoIndex = card.id.replace('photo-', '');
                     const photo = this.photos[photoIndex];
-                    if (photo && (photo.id === photoId || photoIndex === photoId)) {
+                    // STANDARDIZED: Only check filename match
+                    if (photo && photo.filename === photoId) {
                         if (inCart) {
                             card.classList.add('in-cart');
                         } else {
@@ -3891,8 +3916,9 @@
                         // Update UI with current local cart state
                         this.updateCartUI();
                         this.photos.forEach(photo => {
-                            const isInCart = this.cart.some(item => item.photoId === photo.id);
-                            this.updatePhotoCard(photo.id, isInCart);
+                            // STANDARDIZED: Use filename as photoId
+                            const isInCart = this.cart.some(item => item.photoId === photo.filename);
+                            this.updatePhotoCard(photo.filename, isInCart);
                         });
                         
                         return { 
@@ -4063,8 +4089,9 @@
                     
                     // Update all photo cards to reflect in-cart status
                     this.photos.forEach((photo, index) => {
-                        const isInCart = this.cart.some(item => item.photoId === photo.id);
-                        this.updatePhotoCard(photo.id, isInCart);
+                        // STANDARDIZED: Use filename as photoId
+                        const isInCart = this.cart.some(item => item.photoId === photo.filename);
+                        this.updatePhotoCard(photo.filename, isInCart);
                     });
 
                     // Update quota display if available
