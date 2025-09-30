@@ -2702,6 +2702,15 @@
                     return;
                 }
                 
+                // Validate cart before proceeding to payment
+                const validation = await this.validateCartBeforeCheckout();
+                
+                if (!validation.isValid) {
+                    // Handle validation failure
+                    await this.handleCartValidationFailure(validation);
+                    return;
+                }
+                
                 // Create checkout session
                 await this.createCheckoutSession();
             }
@@ -3531,6 +3540,232 @@
                     } catch (error) {
                         console.error('Error loading cart:', error);
                         this.cart = [];
+                    }
+                }
+            }
+            
+            /**
+             * Validate cart before checkout
+             * Ensures backend cart state matches client UI state to prevent payment/entitlement mismatches
+             */
+            async validateCartBeforeCheckout() {
+                try {
+                    console.log('🔍 Validating cart before checkout...');
+                    
+                    // Fetch current cart status from backend
+                    const backendStatus = await this.fetchCartStatus();
+                    
+                    // Handle network errors - allow proceeding with warning
+                    if (backendStatus.networkError || !backendStatus.backendAvailable) {
+                        console.warn('⚠️ Network error during validation - allowing checkout with warning');
+                        return {
+                            isValid: true,
+                            warning: true,
+                            message: 'Unable to validate cart. Proceeding with current selections.',
+                            reason: 'network_error'
+                        };
+                    }
+                    
+                    // Handle backend errors
+                    if (!backendStatus.success) {
+                        return {
+                            isValid: false,
+                            message: 'Cart validation failed. Please try again.',
+                            reason: 'backend_error',
+                            error: backendStatus.error
+                        };
+                    }
+                    
+                    // Get backend and local cart items
+                    const backendItems = backendStatus.cart?.items || [];
+                    const localItems = this.cart || [];
+                    
+                    // Create maps for efficient comparison
+                    const backendMap = new Map();
+                    backendItems.forEach(item => {
+                        backendMap.set(item.photoId, item);
+                    });
+                    
+                    const localMap = new Map();
+                    localItems.forEach(item => {
+                        localMap.set(item.photoId, item);
+                    });
+                    
+                    // Check for discrepancies
+                    const discrepancies = {
+                        missingFromBackend: [],
+                        missingFromUI: [],
+                        priceChanges: []
+                    };
+                    
+                    // Check items in UI but not on backend (reservation lost)
+                    for (const [photoId, localItem] of localMap) {
+                        if (!backendMap.has(photoId)) {
+                            console.warn(`⚠️ Item in UI but not on backend: ${localItem.filename}`);
+                            discrepancies.missingFromBackend.push(localItem);
+                        }
+                    }
+                    
+                    // Check items on backend but not in UI (UI out of sync)
+                    for (const [photoId, backendItem] of backendMap) {
+                        if (!localMap.has(photoId)) {
+                            console.warn(`⚠️ Item on backend but not in UI: ${backendItem.filename}`);
+                            discrepancies.missingFromUI.push(backendItem);
+                        }
+                    }
+                    
+                    // Check for price mismatches
+                    for (const [photoId, localItem] of localMap) {
+                        const backendItem = backendMap.get(photoId);
+                        if (backendItem) {
+                            const localPrice = parseFloat(localItem.price) || 0;
+                            const backendPrice = parseFloat(backendItem.price) || 0;
+                            
+                            if (Math.abs(localPrice - backendPrice) > 0.01) {
+                                console.warn(`⚠️ Price mismatch for ${localItem.filename}: UI=$${localPrice}, Backend=$${backendPrice}`);
+                                discrepancies.priceChanges.push({
+                                    photoId,
+                                    filename: localItem.filename,
+                                    oldPrice: localPrice,
+                                    newPrice: backendPrice
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Determine if cart is valid
+                    const hasDiscrepancies = 
+                        discrepancies.missingFromBackend.length > 0 ||
+                        discrepancies.missingFromUI.length > 0 ||
+                        discrepancies.priceChanges.length > 0;
+                    
+                    if (hasDiscrepancies) {
+                        console.warn('❌ Cart validation failed - discrepancies found:', discrepancies);
+                        
+                        // Determine primary reason for failure
+                        let reason = 'unknown';
+                        let message = 'Cart has changed. Please review your cart.';
+                        
+                        if (discrepancies.missingFromBackend.length > 0) {
+                            reason = 'reservations_lost';
+                            message = 'Some items are no longer available. Please review your cart.';
+                        } else if (discrepancies.priceChanges.length > 0) {
+                            reason = 'price_changed';
+                            message = 'Prices have been updated. Please confirm before checkout.';
+                        } else if (discrepancies.missingFromUI.length > 0) {
+                            reason = 'ui_out_of_sync';
+                            message = 'Cart has changed. Refreshing...';
+                        }
+                        
+                        return {
+                            isValid: false,
+                            message,
+                            reason,
+                            discrepancies,
+                            backendStatus
+                        };
+                    }
+                    
+                    console.log('✅ Cart validation successful - all items match');
+                    return {
+                        isValid: true,
+                        message: 'Cart validated successfully'
+                    };
+                    
+                } catch (error) {
+                    console.error('❌ Error validating cart:', error);
+                    
+                    // Allow proceeding with warning on unexpected errors
+                    return {
+                        isValid: true,
+                        warning: true,
+                        message: 'Unable to validate cart. Proceeding with current selections.',
+                        reason: 'validation_error',
+                        error: error.message
+                    };
+                }
+            }
+            
+            /**
+             * Handle cart validation failure
+             * Shows user-friendly messages and offers to resync cart
+             */
+            async handleCartValidationFailure(validation) {
+                const { reason, message, discrepancies } = validation;
+                
+                // Show loading state while handling
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                const originalText = checkoutBtn?.textContent || 'Proceed to Checkout';
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.textContent = 'Validating...';
+                }
+                
+                try {
+                    switch (reason) {
+                        case 'reservations_lost':
+                            // Items in UI but not on backend - reservations expired or lost
+                            if (confirm(`${message}\n\nWould you like to refresh your cart and try to re-reserve these items?`)) {
+                                console.log('🔄 User chose to reconcile cart after reservation loss');
+                                await this.reconcileCart();
+                                this.updateCartUI();
+                                this.showSuccess('Cart refreshed. Please review and try checkout again.');
+                            } else {
+                                console.log('❌ User cancelled cart reconciliation');
+                                this.showError('Please review your cart before checkout.');
+                            }
+                            break;
+                            
+                        case 'price_changed':
+                            // Prices have changed
+                            const priceChanges = discrepancies.priceChanges || [];
+                            const changeDetails = priceChanges.map(change => 
+                                `${change.filename}: $${change.oldPrice.toFixed(2)} → $${change.newPrice.toFixed(2)}`
+                            ).join('\n');
+                            
+                            if (confirm(`${message}\n\n${changeDetails}\n\nWould you like to update your cart with the new prices?`)) {
+                                console.log('🔄 User accepted price changes');
+                                await this.reconcileCart();
+                                this.updateCartUI();
+                                this.showSuccess('Cart updated with new prices. Please review and try checkout again.');
+                            } else {
+                                console.log('❌ User rejected price changes');
+                                this.showError('Please review your cart before checkout.');
+                            }
+                            break;
+                            
+                        case 'ui_out_of_sync':
+                            // Items on backend but not in UI - sync automatically
+                            console.log('🔄 Auto-syncing cart - items on backend but not in UI');
+                            await this.reconcileCart();
+                            this.updateCartUI();
+                            this.showSuccess('Cart has changed. Refreshing...');
+                            
+                            // Auto-retry checkout after sync
+                            setTimeout(() => {
+                                this.proceedToCheckout();
+                            }, 1500);
+                            break;
+                            
+                        case 'backend_error':
+                            // Backend error
+                            this.showError(`${message}\n\nPlease try again in a moment.`);
+                            break;
+                            
+                        default:
+                            // Unknown error - offer reconciliation
+                            if (confirm(`${message}\n\nWould you like to refresh your cart?`)) {
+                                await this.reconcileCart();
+                                this.updateCartUI();
+                                this.showSuccess('Cart refreshed. Please try checkout again.');
+                            }
+                            break;
+                    }
+                } finally {
+                    // Reset button state
+                    if (checkoutBtn) {
+                        checkoutBtn.disabled = false;
+                        checkoutBtn.textContent = originalText;
                     }
                 }
             }
