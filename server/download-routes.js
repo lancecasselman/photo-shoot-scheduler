@@ -1760,6 +1760,66 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
 
+  /**
+   * GET /api/downloads/sessions/:sessionId/analytics
+   * Get download analytics for a session
+   */
+  router.get('/sessions/:sessionId/analytics', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { sessionId } = req.params;
+
+      const session = await verifySessionOwnership(sessionId, userId);
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found or access denied' });
+      }
+
+      // Get download stats from the database
+      const downloadStats = await db
+        .select({
+          totalDownloads: sql`COUNT(*)::int`,
+          totalRevenue: sql`COALESCE(SUM(price), 0)::decimal`,
+          uniqueClients: sql`COUNT(DISTINCT client_key)::int`
+        })
+        .from(downloadTransactions)
+        .where(eq(downloadTransactions.sessionId, sessionId));
+
+      const stats = downloadStats[0] || {
+        totalDownloads: 0,
+        totalRevenue: '0.00',
+        uniqueClients: 0
+      };
+
+      // Get recent downloads (last 10)
+      const recentDownloads = await db
+        .select({
+          id: downloadTransactions.id,
+          clientKey: downloadTransactions.clientKey,
+          photoCount: downloadTransactions.photoCount,
+          totalPrice: downloadTransactions.price,
+          createdAt: downloadTransactions.createdAt
+        })
+        .from(downloadTransactions)
+        .where(eq(downloadTransactions.sessionId, sessionId))
+        .orderBy(sql`${downloadTransactions.createdAt} DESC`)
+        .limit(10);
+
+      res.json({
+        success: true,
+        analytics: {
+          totalDownloads: stats.totalDownloads,
+          totalRevenue: stats.totalRevenue,
+          uniqueClients: stats.uniqueClients,
+          recentDownloads: recentDownloads
+        }
+      });
+
+    } catch (error) {
+      console.error('Error getting download analytics:', error);
+      res.status(500).json({ error: 'Failed to get download analytics' });
+    }
+  });
+
   // ==================== GALLERY ACCESS TOKEN MIDDLEWARE ====================
 
   /**
