@@ -34,6 +34,15 @@ A comprehensive download-based delivery system with flexible pricing models (FRE
 - No paid quotas or limits - each photo only needs to be purchased once
 - Purchases tracked at photo-level in entitlements system
 
+**Cart System Features (Updated September 2025):**
+- **Automatic Cart Synchronization:** Cart state syncs with backend on page load, reconciling localStorage with server reservations
+- **Cart Preservation:** Network failures don't wipe cart; local state preserved with user notifications during backend unavailability
+- **Pre-Checkout Validation:** Server-side cart validation before payment prevents entitlement mismatches; detects expired reservations and price changes
+- **Performance Optimized:** Only reserves NEW items not already on backend; includes timeouts and error differentiation
+- **Comprehensive Error Handling:** All cart operations include user-friendly notifications for failures with automatic retry logic
+- **Secure Payment Flow:** Authenticated order confirmation page with redirect to gallery for download access
+- **Enhanced Cart Manager:** Backend quota enforcement, reservation expiry (30-minute TTL), and conflict resolution
+
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features, user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction.
 
