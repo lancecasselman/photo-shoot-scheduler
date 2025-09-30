@@ -1566,6 +1566,19 @@
                 // Load initial quota status
                 await this.loadQuotaStatus();
                 
+                // Synchronize cart state with backend after session is fully loaded
+                // This ensures cart consistency between localStorage and server
+                console.log('🔄 Synchronizing cart state with backend...');
+                const syncResult = await this.reconcileCart();
+                if (syncResult.success) {
+                    console.log('✅ Cart synchronization complete:', syncResult.changes);
+                    if (syncResult.changes.itemsAdded > 0 || syncResult.changes.itemsRemoved > 0) {
+                        this.showSuccess(`Cart synchronized: ${syncResult.changes.itemsAdded} added, ${syncResult.changes.itemsRemoved} removed`);
+                    }
+                } else {
+                    console.warn('⚠️ Cart synchronization failed, using local state:', syncResult.message || syncResult.error);
+                }
+                
                 // Initialize real-time gallery updates after everything is loaded
                 this.initializeRealTimeUpdates();
             }
@@ -3026,6 +3039,15 @@
             }
 
             /**
+             * Show user notification for cart sync issues and warnings
+             * This is a convenience wrapper around showToast for cart-related notifications
+             */
+            showNotification(message, type = 'info') {
+                console.log(`📢 User Notification [${type}]:`, message);
+                this.showToast(message, type, 'cart-sync');
+            }
+
+            /**
              * Enhanced toast notification system
              */
             showToast(message, type = 'info', category = '') {
@@ -3510,6 +3532,327 @@
                         console.error('Error loading cart:', error);
                         this.cart = [];
                     }
+                }
+            }
+            
+            /**
+             * Fetch cart status from backend
+             * Returns current cart reservations and quota information
+             */
+            async fetchCartStatus() {
+                try {
+                    if (!this.sessionData || !this.sessionData.id) {
+                        console.warn('⚠️ Cannot fetch cart status - session data not loaded');
+                        return { success: false, error: 'Session data not available', networkError: false };
+                    }
+
+                    const clientKey = this.getClientKey();
+                    console.log(`🔄 Fetching cart status from backend for session ${this.sessionData.id}...`);
+
+                    // Add timeout handling (10 seconds)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    try {
+                        const response = await fetch(
+                            `${this.getApiBaseUrl()}/api/downloads/cart/status?sessionId=${encodeURIComponent(this.sessionData.id)}&clientKey=${encodeURIComponent(clientKey)}`,
+                            {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                signal: controller.signal
+                            }
+                        );
+
+                        clearTimeout(timeoutId);
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            console.log(`✅ Cart status fetched successfully:`, {
+                                cartItems: data.cart?.items?.length || data.cartReservations?.length || 0,
+                                quotaInfo: data.quota || data.quotaInfo
+                            });
+                            
+                            return {
+                                success: true,
+                                backendAvailable: true,
+                                cart: data.cart || { items: data.cartReservations || [] },
+                                quota: data.quota || data.quotaInfo,
+                                policy: data.policy,
+                                entitlements: data.entitlements || []
+                            };
+                        } else {
+                            console.warn('⚠️ Backend returned error:', data.error);
+                            return { 
+                                success: false, 
+                                backendAvailable: true,
+                                error: data.error || 'Failed to fetch cart status',
+                                networkError: false
+                            };
+                        }
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        
+                        // Distinguish between network errors and other errors
+                        const isNetworkError = fetchError.name === 'AbortError' || 
+                                              fetchError.message.includes('fetch') ||
+                                              fetchError.message.includes('network');
+                        
+                        if (fetchError.name === 'AbortError') {
+                            console.error('❌ Cart status fetch timed out after 10 seconds');
+                        } else {
+                            console.error('❌ Network error fetching cart status:', fetchError);
+                        }
+                        
+                        return { 
+                            success: false, 
+                            backendAvailable: false,
+                            error: fetchError.message,
+                            networkError: true
+                        };
+                    }
+                } catch (error) {
+                    console.error('❌ Unexpected error in fetchCartStatus:', error);
+                    return { 
+                        success: false, 
+                        backendAvailable: false,
+                        error: error.message,
+                        networkError: true
+                    };
+                }
+            }
+
+            /**
+             * Reconcile backend cart state with localStorage
+             * Ensures consistency between server and client cart states
+             * CRITICAL: Only clears local cart if backend explicitly confirms no reservations
+             * Preserves cart on network errors and failures
+             */
+            async reconcileCart() {
+                try {
+                    console.log('🔄 Starting cart reconciliation...');
+                    
+                    // Fetch current cart status from backend
+                    const backendStatus = await this.fetchCartStatus();
+                    
+                    // CRITICAL FIX #1: Don't wipe cart on backend failures
+                    // Only reconcile if backend is explicitly available and successful
+                    if (!backendStatus.success || !backendStatus.backendAvailable) {
+                        if (backendStatus.networkError) {
+                            console.warn('⚠️ CART PRESERVED: Backend unavailable due to network error - keeping localStorage cart intact');
+                            this.showNotification('Cart preserved locally - backend temporarily unavailable', 'warning');
+                        } else {
+                            console.warn('⚠️ CART PRESERVED: Backend returned error - keeping localStorage cart intact');
+                            this.showNotification('Cart sync failed - your cart is safe locally', 'warning');
+                        }
+                        
+                        // Update UI with current local cart state
+                        this.updateCartUI();
+                        this.photos.forEach(photo => {
+                            const isInCart = this.cart.some(item => item.photoId === photo.id);
+                            this.updatePhotoCard(photo.id, isInCart);
+                        });
+                        
+                        return { 
+                            success: false, 
+                            message: 'Backend unavailable - cart preserved locally',
+                            cartPreserved: true
+                        };
+                    }
+
+                    // Backend is available and successful - proceed with reconciliation
+                    console.log('✅ Backend available - proceeding with cart reconciliation');
+
+                    // Get backend cart items (handle both enhanced and legacy response formats)
+                    const backendItems = backendStatus.cart?.items || [];
+                    const localItems = this.cart || [];
+                    
+                    console.log(`📊 Reconciliation state:`, {
+                        backendItemCount: backendItems.length,
+                        localItemCount: localItems.length,
+                        backendAvailable: true
+                    });
+
+                    // Track changes for UI updates
+                    let itemsAdded = 0;
+                    let itemsRemoved = 0;
+                    let itemsMatched = 0;
+                    let reservationsFailed = [];
+
+                    // Create maps for efficient lookup
+                    const backendMap = new Map();
+                    backendItems.forEach(item => {
+                        backendMap.set(item.photoId, item);
+                    });
+
+                    const localMap = new Map();
+                    localItems.forEach(item => {
+                        localMap.set(item.photoId, item);
+                    });
+
+                    // Step 1: Add backend items that are missing from localStorage
+                    for (const [photoId, backendItem] of backendMap) {
+                        if (!localMap.has(photoId)) {
+                            console.log(`➕ Adding missing item from backend: ${backendItem.filename}`);
+                            this.cart.push({
+                                photoId: backendItem.photoId,
+                                photoUrl: backendItem.photoUrl,
+                                filename: backendItem.filename,
+                                price: backendItem.price || 0,
+                                reservationId: backendItem.reservationId || backendItem.id
+                            });
+                            itemsAdded++;
+                        } else {
+                            // Item exists in both - update reservation ID if needed
+                            const localItem = localMap.get(photoId);
+                            if (!localItem.reservationId && backendItem.reservationId) {
+                                localItem.reservationId = backendItem.reservationId || backendItem.id;
+                            }
+                            itemsMatched++;
+                        }
+                    }
+
+                    // CRITICAL FIX #2: Only reserve NEW items not already on backend
+                    // Don't re-reserve items that already exist
+                    // Step 2: Handle localStorage items that are missing from backend
+                    const newItemsToReserve = [];
+                    const itemsToRemove = [];
+                    
+                    for (const [photoId, localItem] of localMap) {
+                        if (!backendMap.has(photoId)) {
+                            console.log(`🔍 Local item not on backend: ${localItem.filename}`);
+                            
+                            // Check if photo still exists in gallery
+                            const photo = this.photos.find(p => p.id === photoId);
+                            if (photo) {
+                                // Queue for reservation attempt
+                                newItemsToReserve.push({ photoId, localItem, photo });
+                            } else {
+                                console.warn(`⚠️ Photo not found in gallery: ${photoId} - removing from cart`);
+                                itemsToRemove.push(photoId);
+                                itemsRemoved++;
+                            }
+                        }
+                    }
+
+                    // CRITICAL FIX #3: Better error handling for reservations
+                    // Only remove items if backend explicitly rejects them (not on network errors)
+                    if (newItemsToReserve.length > 0) {
+                        console.log(`🔄 Attempting to reserve ${newItemsToReserve.length} new items on backend...`);
+                        
+                        for (const { photoId, localItem, photo } of newItemsToReserve) {
+                            try {
+                                console.log(`📤 Reserving: ${localItem.filename}`);
+                                
+                                // Add timeout for individual reservation requests
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                                
+                                const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/add-item`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        sessionId: this.sessionData.id,
+                                        clientKey: this.getClientKey(),
+                                        photoId: photoId,
+                                        photoUrl: localItem.photoUrl,
+                                        filename: localItem.filename
+                                    }),
+                                    signal: controller.signal
+                                });
+
+                                clearTimeout(timeoutId);
+                                const addResult = await response.json();
+                                
+                                if (response.ok && addResult.success) {
+                                    console.log(`✅ Successfully reserved: ${localItem.filename}`);
+                                    // Update local item with reservation ID
+                                    localItem.reservationId = addResult.reservationId;
+                                    itemsMatched++;
+                                } else {
+                                    // Backend explicitly rejected - remove from cart
+                                    console.warn(`⚠️ Backend explicitly rejected reservation: ${addResult.error || 'Unknown error'}`);
+                                    itemsToRemove.push(photoId);
+                                    reservationsFailed.push({ filename: localItem.filename, reason: addResult.error });
+                                    itemsRemoved++;
+                                }
+                            } catch (error) {
+                                // Network error or timeout - KEEP the item in cart
+                                if (error.name === 'AbortError') {
+                                    console.warn(`⚠️ CART PRESERVED: Reservation timeout for ${localItem.filename} - keeping in cart`);
+                                } else {
+                                    console.warn(`⚠️ CART PRESERVED: Network error reserving ${localItem.filename} - keeping in cart:`, error.message);
+                                }
+                                // Don't remove item - let user try again later
+                                itemsMatched++;
+                            }
+                        }
+                    }
+
+                    // Remove items that were explicitly rejected by backend
+                    if (itemsToRemove.length > 0) {
+                        console.log(`🗑️ Removing ${itemsToRemove.length} items that backend rejected or don't exist`);
+                        this.cart = this.cart.filter(item => !itemsToRemove.includes(item.photoId));
+                    }
+
+                    // Step 3: Update localStorage with reconciled state
+                    this.saveCart();
+                    
+                    console.log(`✅ Cart reconciliation complete:`, {
+                        itemsAdded,
+                        itemsRemoved,
+                        itemsMatched,
+                        finalCartSize: this.cart.length,
+                        reservationsFailed: reservationsFailed.length
+                    });
+
+                    // Show notification if some reservations failed
+                    if (reservationsFailed.length > 0) {
+                        this.showNotification(
+                            `${reservationsFailed.length} item(s) could not be reserved and were removed`, 
+                            'warning'
+                        );
+                    }
+
+                    // Step 4: Update UI to reflect reconciled state
+                    this.updateCartUI();
+                    
+                    // Update all photo cards to reflect in-cart status
+                    this.photos.forEach((photo, index) => {
+                        const isInCart = this.cart.some(item => item.photoId === photo.id);
+                        this.updatePhotoCard(photo.id, isInCart);
+                    });
+
+                    // Update quota display if available
+                    if (backendStatus.quota) {
+                        this.updateQuotaDisplay(backendStatus.quota);
+                    }
+
+                    return {
+                        success: true,
+                        changes: {
+                            itemsAdded,
+                            itemsRemoved,
+                            itemsMatched
+                        }
+                    };
+
+                } catch (error) {
+                    console.error('❌ Unexpected error during cart reconciliation:', error);
+                    console.warn('⚠️ CART PRESERVED: Keeping localStorage cart intact due to unexpected error');
+                    
+                    // Show notification but don't wipe cart
+                    this.showNotification('Cart sync error - your cart is safe', 'error');
+                    
+                    return { 
+                        success: false, 
+                        error: error.message,
+                        cartPreserved: true
+                    };
                 }
             }
             
