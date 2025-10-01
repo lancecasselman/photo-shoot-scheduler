@@ -32,95 +32,154 @@
             line-height: 1.6;
         }
 
-        /* Hero Section */
+        /* Enhanced Hero Section */
         .hero-section {
-            min-height: 80vh;
+            min-height: 90vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+            background: 
+                linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%),
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                var(--bg-white);
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(99,102,241,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
         }
 
         .hero-content {
-            max-width: 700px;
+            max-width: 800px;
+            position: relative;
+            z-index: 2;
         }
 
         .hero-title {
-            font-size: clamp(2.2rem, 6vw, 3.5rem);
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 1rem;
-            letter-spacing: -0.025em;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
         }
 
         .hero-subtitle {
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
             color: var(--primary-blue);
             font-weight: 600;
+            text-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
         }
 
         .hero-description {
-            font-size: 1.1rem;
-            margin-bottom: 2.5rem;
-            line-height: 1.7;
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            line-height: 1.8;
             color: var(--text-muted);
-            max-width: 600px;
+            max-width: 650px;
             margin-left: auto;
             margin-right: auto;
         }
 
         .cta-buttons {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             justify-content: center;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 12px 28px;
-            font-size: 1rem;
+            padding: 16px 32px;
+            font-size: 1.1rem;
             font-weight: 600;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
-            transition: all 0.2s ease;
-            display: inline-block;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: var(--primary-blue);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #8b5cf6 100%);
             color: white;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
         }
 
         .btn-primary:hover {
-            background: var(--primary-light);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(37, 99, 235, 0.4);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: white;
             color: var(--primary-blue);
             border: 2px solid var(--primary-blue);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .btn-secondary:hover {
             background: var(--primary-blue);
             color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
         }
 
-        /* Features Section */
+        /* Enhanced Features Section */
         .features-preview {
-            padding: 80px 20px;
-            background: var(--bg-white);
+            padding: 100px 20px;
+            background: 
+                linear-gradient(180deg, var(--bg-white) 0%, var(--bg-light) 100%);
+            position: relative;
+        }
+
+        .features-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
         }
 
         .features-title {
-            font-size: 2.25rem;
+            font-size: 2.75rem;
             font-weight: 700;
             text-align: center;
             color: var(--text-dark);
