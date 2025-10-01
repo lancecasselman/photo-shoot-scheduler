@@ -11323,30 +11323,21 @@ app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
             return res.status(403).json({ error: 'Access denied: Cannot delete sessions owned by other users' });
         }
 
-        // Return success immediately to avoid gateway timeout
-        res.json({ 
-            success: true,
-            message: 'Session deletion started. This may take a few moments for large sessions.',
-            sessionId: sessionId,
-            clientName: session.clientName,
-            processing: true
-        });
-
-        // Process deletion in background (prevents 504 timeout on large sessions)
-        setImmediate(async () => {
-            try {
-                console.log(`🔄 Background deletion starting for session ${sessionId}...`);
-                const deletionSuccess = await deleteSession(sessionId, userId);
-                
-                if (deletionSuccess) {
-                    console.log(`✅ Background deletion complete: ${session.clientName} (${sessionId})`);
-                } else {
-                    console.error(`❌ Background deletion failed: ${sessionId}`);
-                }
-            } catch (bgError) {
-                console.error(`❌ Background deletion error for ${sessionId}:`, bgError.message);
-            }
-        });
+        // Delete the session synchronously to ensure UI consistency
+        console.log(`🔄 Starting deletion for session ${sessionId}...`);
+        const deletionSuccess = await deleteSession(sessionId, userId);
+        
+        if (deletionSuccess) {
+            console.log(`✅ Session deletion complete: ${session.clientName} (${sessionId})`);
+            res.json({ 
+                success: true,
+                message: 'Session deleted successfully',
+                sessionId: sessionId,
+                clientName: session.clientName
+            });
+        } else {
+            throw new Error('Session deletion failed');
+        }
         
     } catch (error) {
         console.error('❌ Error deleting session:', error);
