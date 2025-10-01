@@ -220,8 +220,12 @@ class DatabaseTransactionManager {
         )
       ]);
       
+      // Set connection-level timeouts to prevent idle-in-transaction
+      await client.query(`SET idle_in_transaction_session_timeout = '20s'`);
+      await client.query(`SET statement_timeout = '30s'`);
+      
       const acquireTime = Date.now() - acquireStartTime;
-      console.log(`🔌 [${transactionId}] Connection acquired in ${acquireTime}ms`);
+      console.log(`🔌 [${transactionId}] Connection acquired in ${acquireTime}ms with timeouts set`);
       
       return client;
       

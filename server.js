@@ -254,19 +254,20 @@ async function updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBy
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Multi-photographer SaaS platform configuration - supports hundreds of photographers
-    max: process.env.NODE_ENV === 'production' ? 100 : 20, // Production: 100 connections for scale
-    min: process.env.NODE_ENV === 'production' ? 10 : 2,   // Production: Higher minimum for performance
-    idleTimeoutMillis: 60000, // Longer idle timeout for busy periods
-    connectionTimeoutMillis: 15000, // More time for connection establishment
-    acquireTimeoutMillis: 120000, // Extended acquire timeout for peak loads
-    maxUses: 10000, // Higher max uses for better connection recycling
+    // Optimized configuration to prevent idle-in-transaction timeouts
+    max: process.env.NODE_ENV === 'production' ? 20 : 10, // Reduced to prevent connection exhaustion
+    min: process.env.NODE_ENV === 'production' ? 2 : 1,   // Lower minimum for stability
+    idleTimeoutMillis: 30000, // 30 seconds - shorter to prevent idle timeouts
+    connectionTimeoutMillis: 10000, // 10 seconds connection timeout
+    acquireTimeoutMillis: 60000, // 60 seconds acquire timeout
+    maxUses: 7500, // Lower max uses for better connection recycling
     keepAlive: true,
-    keepAliveInitialDelayMillis: 15000, // Longer initial delay for stability
+    keepAliveInitialDelayMillis: 10000, // 10 second initial delay
     allowExitOnIdle: false, // Prevent pool from exiting
-    // Additional production optimizations
-    statementTimeout: 30000, // 30 second query timeout
-    queryTimeout: 25000,     // 25 second query timeout
+    // Critical timeout settings to prevent idle-in-transaction errors
+    statement_timeout: 30000, // 30 second statement timeout
+    query_timeout: 25000,     // 25 second query timeout
+    idle_in_transaction_session_timeout: 20000, // 20 second idle-in-transaction timeout
 });
 
 // Initialize health check system
@@ -303,9 +304,21 @@ console.log('✅ Real-time gallery updates system initialized');
 // Add comprehensive error handling for database pool
 pool.on('error', (err) => {
     console.error('Database pool error (handled):', err.code || err.message);
-    // Don't terminate connections on non-critical errors
-    if (err.code !== '57P01' && err.code !== 'ECONNRESET') {
-        console.error('Non-recoverable database error:', err);
+    
+    // Handle specific error codes
+    if (err.code === '25P03') {
+        console.error('❌ IDLE-IN-TRANSACTION TIMEOUT - Connection held too long');
+    } else if (err.code === '57P01') {
+        console.error('❌ ADMIN SHUTDOWN - Database is shutting down');
+    } else if (err.code === 'ECONNRESET') {
+        console.error('❌ CONNECTION RESET - Network issue or timeout');
+    } else {
+        console.error('❌ Database error details:', {
+            code: err.code,
+            severity: err.severity,
+            message: err.message,
+            stack: err.stack?.substring(0, 500)
+        });
     }
 });
 
@@ -811,14 +824,42 @@ const PORT = process.env.PORT || 5000;
 
 // Global error handlers for unhandled rejections and exceptions
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    // Don't exit the process, just log it
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    
+    // Handle database-specific rejections
+    if (reason && reason.code === '25P03') {
+        console.error('🔄 Database idle-in-transaction timeout - continuing operation');
+        return; // Don't exit for this error
+    }
+    
+    // Log other rejections but don't exit
+    console.error('⚠️ Unhandled promise rejection logged, continuing operation');
 });
 
 process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-    // For uncaught exceptions, we should restart gracefully
-    setTimeout(() => process.exit(1), 1000);
+    console.error('💥 UNCAUGHT EXCEPTION - Server will shut down gracefully:', error.message);
+    console.error('Stack trace:', error.stack);
+    
+    // Handle database idle timeout specifically
+    if (error.code === '25P03') {
+        console.error('🔄 Database idle-in-transaction timeout - attempting recovery');
+        
+        // Attempt to close problematic connections
+        if (pool) {
+            pool.end().catch(closeError => {
+                console.error('Error closing pool:', closeError);
+            });
+        }
+        
+        // Don't exit for this specific error - let the system recover
+        return;
+    }
+    
+    // For other uncaught exceptions, exit gracefully
+    setTimeout(() => {
+        console.error('💥 Server shutting down due to uncaught exception');
+        process.exit(1);
+    }, 1000);
 });
 
 // ============================================================================
