@@ -980,19 +980,34 @@ window.editSession = function(sessionId) {
 
 // Delete session function
 window.deleteSession = async function(sessionId) {
+    console.log('🗑️ DELETE FUNCTION CALLED - SessionId:', sessionId);
+    
     if (!confirm('Are you sure you want to delete this session?')) {
+        console.log('❌ User cancelled deletion');
         return;
     }
 
+    console.log('✅ User confirmed deletion, sending DELETE request...');
+
     try {
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const url = `/api/sessions/${sessionId}`;
+        console.log('📡 DELETE URL:', url);
+        
+        const response = await fetch(url, {
             method: 'DELETE',
             credentials: 'include'
         });
 
+        console.log('📥 DELETE Response status:', response.status);
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ DELETE failed:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
+
+        const result = await response.json();
+        console.log('✅ DELETE successful:', result);
 
         // Remove from local array and re-render
         sessions = sessions.filter(s => s.id !== sessionId);
@@ -1002,7 +1017,7 @@ window.deleteSession = async function(sessionId) {
         showMessage('Session deleted successfully!', 'success');
 
     } catch (error) {
-        console.error('Error deleting session:', error);
+        console.error('❌ Error deleting session:', error);
         showMessage('Error deleting session: ' + error.message, 'error');
     }
 }

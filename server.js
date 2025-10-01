@@ -11298,6 +11298,11 @@ app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
 
+    console.log('🗑️🗑️🗑️ DELETE SESSION ENDPOINT HIT');
+    console.log('  Session ID:', sessionId);
+    console.log('  User ID:', userId);
+    console.log('  User object:', req.user);
+
     try {
         console.log(`🗑️ Deleting session ${sessionId} for user ${userId}`);
         
