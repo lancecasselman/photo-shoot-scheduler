@@ -47,8 +47,13 @@ function requireAuth(req, res, next) {
 // Get user profile
 router.get('/profile', requireAuth, async (req, res) => {
     try {
-        const userId = req.session.user.uid || req.session.user.id;
+        const userId = req.session.user.uid || req.session.user.id || req.session.user.userId;
         const userEmail = req.session.user.email;
+
+        if (!userId) {
+            console.error('No user ID found in session:', req.session.user);
+            return res.status(400).json({ error: 'Invalid user session' });
+        }
 
         // Set proper display name, ensuring Lance (Admin) is consistent
         const lanceEmails = [

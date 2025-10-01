@@ -1203,6 +1203,11 @@
                 if (response.ok) {
                     currentUser = await response.json();
 
+                    // Ensure userId is available in different formats
+                    if (!currentUser.userId && currentUser.user_id) {
+                        currentUser.userId = currentUser.user_id;
+                    }
+
                     // Set proper display name for Lance (admin) consistently
                     const lanceEmails = [
                         'lancecasselman@icloud.com',
@@ -1221,16 +1226,16 @@
                     console.log('Current user profile:', currentUser);
                     updateUserDisplay();
                     displayUserAccount();
+                } else {
+                    console.error('Failed to load user profile:', response.status);
+                    throw new Error('Authentication failed');
                 }
             } catch (error) {
                 console.error('Error initializing user:', error);
-                // Set a default user for development
-                currentUser = {
-                    userId: 'default',
-                    email: 'user@example.com',
-                    displayName: 'Guest User'
-                };
-                updateUserDisplay();
+                // Redirect to login if authentication fails
+                if (window.location.pathname !== '/secure-login.html') {
+                    window.location.href = '/secure-login.html';
+                }
             }
         }
 
@@ -2422,9 +2427,9 @@
                         `;
                     } else {
                         container.innerHTML = messages.map(msg => `
-                            <div style="margin-bottom: 15px; ${msg.sender_id === currentUserProfile?.userId ? 'text-align: right;' : ''}">
+                            <div style="margin-bottom: 15px; ${msg.sender_id === currentUser?.userId ? 'text-align: right;' : ''}">
                                 <div style="display: inline-block; max-width: 70%; padding: 10px; border-radius: 8px; 
-                                           background: ${msg.sender_id === currentUserProfile?.userId ? '#667eea' : '#374151'};">
+                                           background: ${msg.sender_id === currentUser?.userId ? '#667eea' : '#374151'};">
                                     <div style="font-size: 12px; color: #D1D5DB; margin-bottom: 5px;">
                                         ${msg.sender_name}
                                     </div>

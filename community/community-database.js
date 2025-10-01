@@ -461,13 +461,30 @@ class CommunityDatabase {
 
     // Delete post
     async deletePost(postId) {
+        const client = await this.pool.connect();
         try {
-            const query = 'DELETE FROM community_posts WHERE id = $1 RETURNING *';
-            const result = await this.pool.query(query, [postId]);
+            await client.query('BEGIN');
+            
+            // First delete all comments for this post
+            await client.query('DELETE FROM community_comments WHERE post_id = $1', [postId]);
+            
+            // Then delete all likes for this post
+            await client.query('DELETE FROM community_likes WHERE post_id = $1', [postId]);
+            
+            // Then delete all saves for this post
+            await client.query('DELETE FROM community_saves WHERE post_id = $1', [postId]);
+            
+            // Finally delete the post
+            const result = await client.query('DELETE FROM community_posts WHERE id = $1 RETURNING *', [postId]);
+            
+            await client.query('COMMIT');
             return result.rows[0];
         } catch (error) {
+            await client.query('ROLLBACK');
             console.error('Error deleting post:', error);
             throw error;
+        } finally {
+            client.release();
         }
     }
 
