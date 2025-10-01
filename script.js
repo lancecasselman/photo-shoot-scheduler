@@ -1031,30 +1031,53 @@ window.editSession = function(sessionId) {
 
 // Delete session function
 window.deleteSession = async function(sessionId) {
+    console.log('🗑️ DELETE FUNCTION CALLED - SessionId:', sessionId);
+    console.log('🗑️ Session ID type:', typeof sessionId);
+    console.log('🗑️ Session ID value:', JSON.stringify(sessionId));
+    
     if (!confirm('Are you sure you want to delete this session?')) {
+        console.log('❌ User cancelled deletion');
         return;
     }
 
+    console.log('✅ User confirmed deletion, sending DELETE request...');
+
     try {
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const url = `/api/sessions/${sessionId}`;
+        console.log('📡 DELETE URL:', url);
+        
+        const response = await fetch(url, {
             method: 'DELETE',
             credentials: 'include'
         });
 
+        console.log('📥 DELETE Response status:', response.status);
+        console.log('📥 DELETE Response ok:', response.ok);
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ DELETE failed - Error text:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
+
+        const result = await response.json();
+        console.log('✅ DELETE successful - Result:', result);
 
         // Remove from local array and re-render
         sessions = sessions.filter(s => s.id !== sessionId);
+        console.log('✅ Filtered sessions, remaining count:', sessions.length);
+        
         if (typeof window.renderSessions === 'function') {
+            console.log('✅ Calling renderSessions...');
             window.renderSessions();
+        } else {
+            console.error('❌ renderSessions function not found');
         }
         showMessage('Session deleted successfully!', 'success');
 
     } catch (error) {
-        console.error('Error deleting session:', error.message || error);
-        console.error('Full error details:', error);
+        console.error('❌ Error deleting session:', error.message || error);
+        console.error('❌ Full error details:', error);
         showMessage('Error deleting session: ' + error.message, 'error');
     }
 }
