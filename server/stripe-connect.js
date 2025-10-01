@@ -22,14 +22,14 @@ class StripeConnectManager {
                     error: 'Stripe API not configured. Please add STRIPE_SECRET_KEY to environment.'
                 };
             }
-            
+
             console.log('🔧 STRIPE: Creating new Express account for email:', email);
             console.log('🔧 STRIPE: Business name:', businessName, 'Country:', country);
-            
+
             // Create unique Express account - each photographer gets their own
             // Add unique identifier to prevent any account cross-contamination
             const uniqueId = Math.random().toString(36).substring(2, 15);
-            
+
             const account = await stripe.accounts.create({
                 type: 'express', // Express is the simplest - Stripe handles all compliance
                 country: country,
@@ -79,7 +79,7 @@ class StripeConnectManager {
             console.log('✅ STRIPE: Account ID:', account.id);
             console.log('✅ STRIPE: Account email:', account.email);
             console.log('✅ STRIPE: Account status:', account.details_submitted ? 'Details submitted' : 'Needs onboarding');
-            
+
             return {
                 success: true,
                 accountId: account.id,
@@ -91,12 +91,12 @@ class StripeConnectManager {
             console.error('❌ STRIPE: Error details:', error.message);
             console.error('❌ STRIPE: Error type:', error.type);
             console.error('❌ STRIPE: Error code:', error.code);
-            
+
             // Log the full error for debugging
             if (error.raw) {
                 console.error('❌ STRIPE: Raw error:', JSON.stringify(error.raw, null, 2));
             }
-            
+
             return {
                 success: false,
                 error: error.message,
@@ -116,7 +116,7 @@ class StripeConnectManager {
                     error: 'Stripe API not configured'
                 };
             }
-            
+
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
                 refresh_url: refreshUrl,
@@ -148,12 +148,12 @@ class StripeConnectManager {
                     error: 'Stripe API not configured'
                 };
             }
-            
+
             console.log('🔍 STRIPE: Retrieving account status for:', accountId);
             const account = await stripe.accounts.retrieve(accountId);
-            
-            const isOnboardingComplete = account.details_submitted && 
-                                       account.charges_enabled && 
+
+            const isOnboardingComplete = account.details_submitted &&
+                                       account.charges_enabled &&
                                        account.payouts_enabled;
 
             return {
@@ -179,7 +179,7 @@ class StripeConnectManager {
         try {
             console.log('💳 Creating DIRECT payment on photographer account:', connectedAccountId);
             console.log('💰 Amount: $', amount);
-            
+
             // Create payment intent DIRECTLY on the connected account
             // This means payment goes straight to photographer, not through platform
             const paymentIntent = await stripe.paymentIntents.create({
@@ -223,7 +223,7 @@ class StripeConnectManager {
     async createCheckoutSession(sessionData, connectedAccountId, successUrl, cancelUrl) {
         try {
             console.log('💳 Creating DIRECT checkout session on photographer account:', connectedAccountId);
-            
+
             // Create checkout session DIRECTLY on the connected account
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
@@ -272,39 +272,11 @@ class StripeConnectManager {
         }
     }
 
-    // Create onboarding link for Express account
-    async createAccountLink(accountId, refreshUrl, returnUrl) {
-        try {
-            console.log('🔗 STRIPE: Creating onboarding link for account:', accountId);
-            
-            const accountLink = await stripe.accountLinks.create({
-                account: accountId,
-                refresh_url: refreshUrl,
-                return_url: returnUrl,
-                type: 'account_onboarding',
-            });
-
-            console.log('✅ STRIPE: Onboarding link created');
-            return {
-                success: true,
-                onboardingUrl: accountLink.url,
-                expiresAt: accountLink.expires_at
-            };
-
-        } catch (error) {
-            console.error('❌ STRIPE: Failed to create onboarding link:', error.message);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
     // Create login link for photographer to access Stripe dashboard
     async createLoginLink(accountId) {
         try {
             console.log('🔗 STRIPE: Creating login link for account:', accountId);
-            
+
             const loginLink = await stripe.accounts.createLoginLink(accountId);
 
             console.log('✅ STRIPE: Login link created');
@@ -326,7 +298,7 @@ class StripeConnectManager {
     async createCustomer(email, name, photographerAccountId) {
         try {
             console.log('👤 STRIPE CONNECT: Creating customer on photographer account:', photographerAccountId);
-            
+
             const customer = await stripe.customers.create({
                 email: email,
                 name: name,
@@ -357,7 +329,7 @@ class StripeConnectManager {
     async createInvoice(customerId, items, photographerAccountId, metadata = {}, options = {}) {
         try {
             console.log('📋 STRIPE CONNECT: Creating invoice on photographer account:', photographerAccountId);
-            
+
             // Create invoice with payment intent metadata
             const invoice = await stripe.invoices.create({
                 customer: customerId,
