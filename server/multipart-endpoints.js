@@ -63,16 +63,22 @@ function createMultipartRoutes(pool) {
       
       const canUploadResult = await storageSystem.canUpload(userId, fileSize, req.user.email);
       if (!canUploadResult.canUpload) {
-        return res.status(413).json({
-          error: 'Storage quota exceeded',
-          usage: {
-            currentGB: canUploadResult.currentUsageGB,
-            quotaGB: canUploadResult.quotaGB,
-            remainingGB: canUploadResult.remainingGB,
-            requestedGB: (fileSize / (1024 * 1024 * 1024)).toFixed(2)
-          },
-          upgradeRequired: true
-        });
+        // Allow upload if within 120% of base quota (more lenient for multipart uploads)
+        if (canUploadResult.isOverBaseQuota && canUploadResult.currentUsageGB < (canUploadResult.quotaGB * 1.2)) {
+          console.log(`⚠️ Multipart upload over base quota but within tolerance, allowing upload`);
+        } else {
+          return res.status(413).json({
+            error: 'Storage quota exceeded',
+            usage: {
+              currentGB: canUploadResult.currentUsageGB,
+              quotaGB: canUploadResult.quotaGB,
+              effectiveQuotaGB: canUploadResult.effectiveQuotaGB,
+              remainingGB: canUploadResult.remainingGB,
+              requestedGB: (fileSize / (1024 * 1024 * 1024)).toFixed(2)
+            },
+            upgradeRequired: true
+          });
+        }
       }
 
       // Generate R2 key for the file

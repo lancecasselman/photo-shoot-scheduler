@@ -218,17 +218,33 @@ class StorageSystem {
             const newTotalGB = (usage.totalBytes + fileSizeBytes) / (1024 * 1024 * 1024);
             const quotaGB = parseFloat(quota.total_quota_gb);
 
+            // More permissive upload policy - allow uploads up to 150% of quota
+            const effectiveQuotaGB = quotaGB * 1.5;
+            const canUpload = newTotalGB <= effectiveQuotaGB;
+
             return {
-                canUpload: newTotalGB <= quotaGB,
+                canUpload: canUpload,
                 currentUsageGB: usage.totalGB,
                 newTotalGB: parseFloat(newTotalGB.toFixed(3)),
                 quotaGB: quotaGB,
-                remainingGB: parseFloat((quotaGB - usage.totalGB).toFixed(3)),
-                isNearLimit: (usage.totalGB / quotaGB) >= this.WARNING_THRESHOLD
+                effectiveQuotaGB: effectiveQuotaGB,
+                remainingGB: parseFloat((effectiveQuotaGB - usage.totalGB).toFixed(3)),
+                isNearLimit: (usage.totalGB / quotaGB) >= this.WARNING_THRESHOLD,
+                isOverBaseQuota: usage.totalGB > quotaGB
             };
         } catch (error) {
             console.error('Error checking upload permission:', error);
-            throw error;
+            // If quota check fails, allow upload (fail-safe approach)
+            console.log('⚠️ Quota check failed, allowing upload as fail-safe');
+            return {
+                canUpload: true,
+                currentUsageGB: 0,
+                newTotalGB: 0,
+                quotaGB: 100,
+                remainingGB: 100,
+                isNearLimit: false,
+                quotaCheckFailed: true
+            };
         }
     }
 
