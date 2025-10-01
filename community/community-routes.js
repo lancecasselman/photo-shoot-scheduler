@@ -90,7 +90,10 @@ router.get('/profile', requireAuth, async (req, res) => {
         });
     } catch (error) {
         console.error('Error getting profile:', error);
-        res.status(500).json({ error: 'Failed to get profile' });
+        res.status(500).json({ 
+            error: 'Failed to get profile',
+            details: error.message 
+        });
     }
 });
 
@@ -241,8 +244,15 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
 
         console.log('✅ Community: Post created successfully', { postId: post.id });
 
-        // Update user's post count - will be handled by database trigger
-        // or we can update it separately after post creation
+        // Update user's post count
+        try {
+            await db.updateProfile(userId, { 
+                posts_count: await db.getUserPostCount(userId) 
+            });
+        } catch (updateError) {
+            console.warn('Failed to update user post count:', updateError.message);
+            // Don't fail the post creation for this
+        }
 
         res.json(post);
     } catch (error) {

@@ -502,19 +502,31 @@ class CommunityDatabase {
 
     // Delete comment
     async deleteComment(commentId) {
+        const client = await this.pool.connect();
         try {
-            // First decrease the comment count on the post
+            await client.query('BEGIN');
+            
+            // First get the comment to update post stats
             const comment = await this.getCommentById(commentId);
             if (comment) {
-                await this.updatePostStats(comment.post_id, 'comments_count', -1);
+                await client.query(
+                    'UPDATE community_posts SET comments_count = comments_count - 1, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+                    [comment.post_id]
+                );
             }
             
-            const query = 'DELETE FROM community_comments WHERE id = $1 RETURNING *';
-            const result = await this.pool.query(query, [commentId]);
+            // Delete the comment and any replies
+            await client.query('DELETE FROM community_comments WHERE parent_comment_id = $1', [commentId]);
+            const result = await client.query('DELETE FROM community_comments WHERE id = $1 RETURNING *', [commentId]);
+            
+            await client.query('COMMIT');
             return result.rows[0];
         } catch (error) {
+            await client.query('ROLLBACK');
             console.error('Error deleting comment:', error);
             throw error;
+        } finally {
+            client.release();
         }
     }
 
@@ -601,6 +613,20 @@ class CommunityDatabase {
         } catch (error) {
             console.error('Error marking messages as read:', error);
             throw error;
+        }
+    }
+
+    // Get user post count
+    async getUserPostCount(userId) {
+        try {
+            const result = await this.pool.query(
+                'SELECT COUNT(*) as count FROM community_posts WHERE user_id = $1',
+                [userId]
+            );
+            return parseInt(result.rows[0].count);
+        } catch (error) {
+            console.error('Error getting user post count:', error);
+            return 0;
         }
     }
 

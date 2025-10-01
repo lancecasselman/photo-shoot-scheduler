@@ -1494,7 +1494,7 @@
         // Show current user's profile
         function showMyProfile() {
             if (currentUser) {
-                viewUserProfile(currentUser.userId, currentUser.displayName || 'User');
+                viewUserProfile(currentUser.userId || currentUser.user_id, currentUser.displayName || 'User');
             }
         }
 
@@ -1512,10 +1512,15 @@
                     posts = await response.json();
                     console.log(`✅ Loaded ${posts.length} posts for category: ${type || 'all'}`);
                     renderPosts();
+                } else if (response.status === 401) {
+                    console.error('Authentication required for community');
+                    document.getElementById('postsContainer').innerHTML = 
+                        '<p style="text-align: center; color: #ff6b6b; padding: 2rem;">Please log in to view community posts.</p>';
                 } else {
                     console.error('Failed to load posts:', response.status);
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
                     document.getElementById('postsContainer').innerHTML = 
-                        '<p style="text-align: center; color: #ff6b6b; padding: 2rem;">Failed to load posts. Please try again.</p>';
+                        `<p style="text-align: center; color: #ff6b6b; padding: 2rem;">Failed to load posts: ${errorData.error || 'Please try again.'}</p>`;
                 }
             } catch (error) {
                 console.error('Error loading posts:', error);
@@ -1582,12 +1587,16 @@
                              post.type === 'tip' ? 'tip' : 
                              post.type === 'marketplace' ? 'marketplace' : '';
 
+            const authorName = post.user_name || post.userName || 'Anonymous';
+            const postUserId = post.user_id || 'unknown';
+            const currentUserId = currentUser?.userId || currentUser?.user_id;
+
             return `
                 <div class="post-card ${postClass}" data-post-id="${post.id}">
                     <div class="post-header">
                         <div class="post-author">
-                            <div class="user-avatar clickable" onclick="viewUserProfile('${post.user_id}', '${post.user_name || post.userName}')" title="View ${post.user_name || post.userName}'s profile">
-                                ${post.user_name || post.userName}
+                            <div class="user-avatar clickable" onclick="viewUserProfile('${postUserId}', '${authorName}')" title="View ${authorName}'s profile">
+                                ${authorName}
                             </div>
                             <div class="author-info">
                                 <div class="author-name clickable" onclick="viewUserProfile('${post.user_id}', '${post.user_name || post.userName}')">${post.user_name || post.userName}</div>
@@ -1595,7 +1604,7 @@
                                 ${post.user_id === currentUser?.userId ? '<span style="color: #4CAF50; font-size: 0.75rem;">(You)</span>' : ''}
                             </div>
                         </div>
-                        ${(post.user_id === currentUser?.userId || isAdmin()) ? `
+                        ${(postUserId === currentUserId || isAdmin()) ? `
                             <div class="post-menu" onclick="togglePostMenu('${post.id}', event)">⋮</div>
                             <div class="post-menu-dropdown" id="menu-${post.id}" style="display: none;">
                                 <button onclick="deletePost('${post.id}')">Delete Post</button>
@@ -1889,7 +1898,9 @@
                     await loadPosts();
                     showMessage('Post created successfully!', 'success');
                 } else {
-                    showMessage('Failed to create post', 'error');
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    console.error('Post creation failed:', errorData);
+                    showMessage(`Failed to create post: ${errorData.error || 'Please try again'}`, 'error');
                 }
             } catch (error) {
                 console.error('Error submitting post:', error);
