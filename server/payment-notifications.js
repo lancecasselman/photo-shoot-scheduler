@@ -22,11 +22,14 @@ class PaymentNotificationManager {
         const amountInCents = paymentIntent.amount_received || paymentIntent.amount || paymentIntent.amount_total || 0;
         const amount = amountInCents / 100;
         
-        console.log(' Payment successful:', paymentIntent.id, 'Amount: $', amount.toFixed(2));
-        console.log(' Payment data fields:', {
+        console.log('💳 STRIPE CONNECT: Payment successful:', paymentIntent.id, 'Amount: $', amount.toFixed(2));
+        console.log('💳 STRIPE CONNECT: Payment data fields:', {
             amount_received: paymentIntent.amount_received,
             amount: paymentIntent.amount,
-            amount_total: paymentIntent.amount_total
+            amount_total: paymentIntent.amount_total,
+            on_behalf_of: paymentIntent.on_behalf_of,
+            transfer_data: paymentIntent.transfer_data,
+            application_fee_amount: paymentIntent.application_fee_amount
         });
         
         try {
@@ -34,6 +37,7 @@ class PaymentNotificationManager {
             const sessionId = paymentIntent.metadata?.sessionId;
             const paymentType = paymentIntent.metadata?.type || 'invoice'; // 'deposit' or 'invoice'
             const clientEmail = paymentIntent.receipt_email || paymentIntent.customer_details?.email;
+            const photographerId = paymentIntent.metadata?.photographerId;
             
             if (!sessionId) {
                 console.log(' No session ID in payment metadata, skipping notification');

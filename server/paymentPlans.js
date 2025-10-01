@@ -11,13 +11,13 @@ class PaymentPlanManager {
       // Calculate payments based on frequency
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       // Calculate number of payments based on frequency
       const paymentInfo = this.calculatePaymentsByFrequency(start, end, frequency, totalAmount);
       const { totalPayments, paymentAmount, paymentDates } = paymentInfo;
-      
+
       const planId = uuidv4();
-      
+
       // Create payment plan
       const [plan] = await db.insert(paymentPlans).values({
         id: planId,
@@ -79,7 +79,7 @@ class PaymentPlanManager {
     const end = new Date(endDate);
     const paymentDates = [];
     let currentDate = new Date(start);
-    
+
     // Calculate interval based on frequency
     let intervalDays;
     switch (frequency) {
@@ -95,11 +95,11 @@ class PaymentPlanManager {
       default:
         intervalDays = 30;
     }
-    
+
     // Generate payment dates
     while (currentDate <= end) {
       paymentDates.push(new Date(currentDate));
-      
+
       if (frequency === 'monthly') {
         // For monthly, increment by actual month
         currentDate.setMonth(currentDate.getMonth() + 1);
@@ -108,10 +108,10 @@ class PaymentPlanManager {
         currentDate.setDate(currentDate.getDate() + intervalDays);
       }
     }
-    
+
     const totalPayments = paymentDates.length;
     const paymentAmount = (parseFloat(totalAmount) / totalPayments).toFixed(2);
-    
+
     return {
       totalPayments,
       paymentAmount,
@@ -121,7 +121,7 @@ class PaymentPlanManager {
 
   // Calculate months between two dates (legacy method)
   calculateMonthsBetween(start, end) {
-    const months = (end.getFullYear() - start.getFullYear()) * 12 + 
+    const months = (end.getFullYear() - start.getFullYear()) * 12 +
                   (end.getMonth() - start.getMonth());
     return Math.max(1, months); // Minimum 1 month
   }
@@ -152,8 +152,8 @@ class PaymentPlanManager {
     try {
       // Use direct SQL to avoid Drizzle timestamp issues
       const result = await db.execute(sql`
-        UPDATE payment_records 
-        SET status = 'paid', 
+        UPDATE payment_records
+        SET status = 'paid',
             paid_date = CURRENT_TIMESTAMP,
             payment_method = ${paymentMethod},
             notes = ${notes},
@@ -161,7 +161,7 @@ class PaymentPlanManager {
         WHERE id = ${paymentId}
         RETURNING *
       `);
-      
+
       const payment = result.rows[0];
       if (!payment) throw new Error('Payment record not found');
 
@@ -176,13 +176,13 @@ class PaymentPlanManager {
         const newAmountPaid = parseFloat(plan.amountPaid) + parseFloat(payment.amount);
         const newRemainingBalance = parseFloat(plan.remainingBalance) - parseFloat(payment.amount);
         const newPaymentsCompleted = plan.paymentsCompleted + 1;
-        
+
         // Check if plan is completed
         const isCompleted = newRemainingBalance <= 0.01; // Account for floating point precision
-        
+
         // Get next payment date if not completed
         const nextPaymentDate = isCompleted ? null : await this.getNextPaymentDate(payment.planId);
-        
+
         await db.update(paymentPlans)
           .set({
             paymentsCompleted: newPaymentsCompleted,
@@ -242,7 +242,7 @@ class PaymentPlanManager {
         .where(eq(paymentRecords.id, paymentId));
 
       if (!payment) throw new Error('Payment record not found');
-      
+
       if (payment.invoiceSent && !forceResend) {
         console.log(`Invoice already sent for payment ${payment.paymentNumber}`);
         return payment;
@@ -254,27 +254,27 @@ class PaymentPlanManager {
         .where(eq(photographySessions.id, payment.sessionId));
 
       if (!session) throw new Error('Session not found');
-      
+
       // Get photographer's business information
       const [photographer] = await db.select()
         .from(users)
         .where(eq(users.id, session.userId));
-      
+
       if (!photographer) throw new Error('Photographer not found');
-      
+
       // Use photographer's business name, contact info and address for invoicing
-      const businessName = photographer.businessName || 
+      const businessName = photographer.businessName ||
                           (photographer.displayName ? `${photographer.displayName} Photography` : 'Photography Business');
       const businessEmail = photographer.email || 'noreply@photomanagementsystem.com';
       const businessPhone = photographer.phoneNumber || '';
-      const businessAddress = (photographer.streetAddress && photographer.city && photographer.state) 
+      const businessAddress = (photographer.streetAddress && photographer.city && photographer.state)
         ? `${photographer.streetAddress}, ${photographer.city}, ${photographer.state} ${photographer.zipCode || ''}`
         : '';
 
-      // Create Stripe invoice
+      // Create Stripe invoice using Stripe Connect Manager
       let stripeInvoice = null;
       let invoiceSuccessfullySent = false;
-      
+
       if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 50) {
         try {
           // Check if photographer has Stripe Connect account
@@ -282,31 +282,57 @@ class PaymentPlanManager {
             throw new Error('Photographer must complete Stripe Connect onboarding before accepting payments');
           }
 
-          // Create or get customer ON THE CONNECTED ACCOUNT
-          const customer = await stripe.customers.create({
-            email: session.email,
-            name: session.clientName,
+          // Verify Stripe Connect account is active
+          const StripeConnectManager = require('./stripe-connect');
+          const stripeConnectManager = new StripeConnectManager();
+
+          const accountStatus = await stripeConnectManager.getAccountStatus(photographer.stripeConnectAccountId);
+          if (!accountStatus.success || !accountStatus.canReceivePayments) {
+            throw new Error('Photographer Stripe account is not ready to receive payments');
+          }
+
+          // Create customer using Stripe Connect Manager
+          const customerResult = await stripeConnectManager.createCustomer(
+            session.email,
+            session.clientName,
+            photographer.stripeConnectAccountId
+          );
+
+          if (!customerResult.success) {
+            throw new Error('Failed to create customer on photographer account');
+          }
+
+          const customer = customerResult.customer;
+
+          // Create invoice using Stripe Connect Manager
+          const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
+          const invoiceCustomUrl = `${baseUrl}/invoice.html?payment=${payment.id}`;
+
+          const invoiceItems = [{
+            amount: parseFloat(payment.amount),
+            description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
             metadata: {
               sessionId: session.id,
-              paymentPlanId: payment.planId,
+              paymentId: payment.id,
               paymentNumber: payment.paymentNumber.toString()
             }
-          }, {
-            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-          });
+          }];
 
-          // Use production domain
-          const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
-          
-          // Create invoice ON THE CONNECTED ACCOUNT
-          const invoiceCustomUrl = `${baseUrl}/invoice.html?payment=${payment.id}`;
-          
-          const invoice = await stripe.invoices.create({
-            customer: customer.id,
-            collection_method: 'send_invoice',
-            days_until_due: 7,
-            description: `Payment ${payment.paymentNumber} for ${session.sessionType} session`,
-            metadata: {
+          // Add optional tip if specified
+          const tipAmount = parseFloat(payment.tipAmount || '0');
+          if (tipAmount > 0) {
+            invoiceItems.push({
+              amount: tipAmount,
+              description: 'Optional Tip',
+              metadata: { type: 'tip' }
+            });
+          }
+
+          const invoiceResult = await stripeConnectManager.createInvoice(
+            customer.id,
+            invoiceItems,
+            photographer.stripeConnectAccountId,
+            {
               sessionId: session.id,
               paymentId: payment.id,
               paymentNumber: payment.paymentNumber.toString(),
@@ -316,43 +342,18 @@ class PaymentPlanManager {
               photographerAddress: businessAddress,
               customInvoiceUrl: invoiceCustomUrl
             },
-            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
-          }, {
-            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-          });
+            {
+              daysUntilDue: 7,
+              description: `Payment ${payment.paymentNumber} for ${session.sessionType} session`,
+              footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
+            }
+          );
 
-          // Add main invoice item ON THE CONNECTED ACCOUNT
-          await stripe.invoiceItems.create({
-            customer: customer.id,
-            invoice: invoice.id,
-            amount: Math.round(parseFloat(payment.amount) * 100), // Convert to cents
-            currency: 'usd',
-            description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
-          }, {
-            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-          });
-
-          // Add optional tip line if tip amount is specified ON THE CONNECTED ACCOUNT
-          const tipAmount = parseFloat(payment.tipAmount || '0');
-          if (tipAmount > 0) {
-            await stripe.invoiceItems.create({
-              customer: customer.id,
-              invoice: invoice.id,
-              amount: Math.round(tipAmount * 100), // Convert to cents
-              currency: 'usd',
-              description: 'Optional Tip',
-            }, {
-              stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-            });
+          if (!invoiceResult.success) {
+            throw new Error(`Failed to create invoice: ${invoiceResult.error}`);
           }
 
-          // Finalize and send invoice ON THE CONNECTED ACCOUNT
-          const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id, {}, {
-            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-          });
-          const sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id, {}, {
-            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
-          });
+          const sentInvoice = invoiceResult.invoice;
 
           stripeInvoice = {
             id: sentInvoice.id,
@@ -361,10 +362,10 @@ class PaymentPlanManager {
             status: sentInvoice.status
           };
 
-          // Mark as successfully sent only after finalize + send complete
+          // Mark as successfully sent only after create complete
           invoiceSuccessfullySent = true;
-          console.log(`SUCCESS: Stripe invoice sent for payment ${payment.paymentNumber}: ${sentInvoice.hosted_invoice_url}`);
-          
+          console.log(`SUCCESS: Stripe invoice created for payment ${payment.paymentNumber}: ${sentInvoice.hosted_invoice_url}`);
+
         } catch (stripeError) {
           console.error(`❌ STRIPE ERROR for payment ${payment.paymentNumber}:`, stripeError.message);
           // Don't continue - throw the error to prevent marking as sent
@@ -442,7 +443,7 @@ class PaymentPlanManager {
   // Process automated monthly invoices and reminders
   async processAutomatedPayments() {
     console.log(' Processing automated payment invoices and reminders...');
-    
+
     try {
       // Send invoices for payments due today
       const today = new Date();
@@ -489,7 +490,7 @@ class PaymentPlanManager {
       const overduePayments = await this.getOverduePayments();
       if (overduePayments.length > 0) {
         console.log(`WARNING: Found ${overduePayments.length} overdue payments`);
-        
+
         for (const payment of overduePayments) {
           await db.update(paymentRecords)
             .set({ status: 'overdue' })
@@ -521,13 +522,13 @@ class PaymentPlanManager {
     let client;
     try {
       client = await pool.connect();
-      
+
       await client.query(`
-        UPDATE payment_records 
+        UPDATE payment_records
         SET tip_amount = $1
         WHERE id = $2
       `, [tipAmount.toString(), paymentId]);
-      
+
       console.log(`SUCCESS: Tip amount updated for payment ${paymentId}: $${tipAmount}`);
       return true;
     } catch (error) {
@@ -552,11 +553,11 @@ class PaymentPlanManager {
     let client;
     try {
       client = await pool.connect();
-      
+
       // Get payment details
       const paymentResult = await client.query(`
         SELECT id, payment_number, amount, tip_amount, due_date, status, session_id, stripe_invoice_url
-        FROM payment_records 
+        FROM payment_records
         WHERE id = $1
       `, [paymentId]);
 
@@ -580,9 +581,9 @@ class PaymentPlanManager {
       }
 
       const session = sessionResult.rows[0];
-      
+
       // Determine photographer business name
-      const businessName = session.business_name || 
+      const businessName = session.business_name ||
                           (session.display_name ? `${session.display_name} Photography` : 'Photography Business');
       const businessEmail = session.photographer_email || 'noreply@photomanagementsystem.com';
 
