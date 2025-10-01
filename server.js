@@ -11293,9 +11293,9 @@ app.delete('/api/sessions/:sessionId/delete-all-photos', isAuthenticated, async 
     }
 });
 
-// Delete session (with background processing to avoid timeout)
-app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
+// Delete session - changed :id to :sessionId to match client requests
+app.delete('/api/sessions/:sessionId', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.sessionId;
     const userId = req.user?.normalized_uid || req.user?.uid || req.user?.id;
 
     console.log('🗑️🗑️🗑️ DELETE SESSION ENDPOINT HIT');
