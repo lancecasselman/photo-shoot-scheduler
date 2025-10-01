@@ -1351,7 +1351,7 @@
         <!-- Dynamic Pricing Configuration -->
         <div class="control-section pricing-config-section" id="pricingConfig">
             <h4 class="section-title">Pricing Configuration</h4>
-            
+
             <!-- Free Mode Config -->
             <div class="pricing-config" id="config-free" style="display: none;">
                 <div class="config-message success">
@@ -1654,8 +1654,8 @@
             </div>
         </div>
     </div>
-    
-    
+
+
 
     <script>
         let sessionId = '';
@@ -1685,10 +1685,10 @@
             async init() {
                 // Load initial policy
                 await this.loadPolicy();
-                
+
                 // Set up event listeners
                 this.setupEventListeners();
-                
+
                 // Load analytics
                 await this.loadAnalytics();
             }
@@ -1716,17 +1716,17 @@
                     const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
                         credentials: 'include'
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to load policy');
                     }
-                    
+
                     const data = await response.json();
                     this.currentPolicy = data.policy;
-                    
+
                     // Populate UI with current policy
                     this.populateUI();
-                    
+
                 } catch (error) {
                     console.error('Error loading policy:', error);
                     showMessage('Failed to load download settings', 'error');
@@ -1735,16 +1735,16 @@
 
             populateUI() {
                 if (!this.currentPolicy) return;
-                
+
                 const policy = this.currentPolicy;
-                
+
                 // Set download enabled status
                 const downloadEnabled = document.getElementById('downloadEnabled');
                 if (downloadEnabled) {
                     downloadEnabled.checked = policy.downloadEnabled || false;
                     this.updateStatus();
                 }
-                
+
                 // Set pricing mode
                 const pricingModel = policy.pricingModel || 'free';
                 const modeRadio = document.getElementById(`mode-${pricingModel === 'paid' ? 'fixed' : pricingModel}`);
@@ -1752,7 +1752,7 @@
                     modeRadio.checked = true;
                     this.updatePricingMode();
                 }
-                
+
                 // Set pricing values based on mode
                 if (pricingModel === 'paid' || pricingModel === 'fixed') {
                     const fixedPrice = document.getElementById('fixed-price');
@@ -1760,20 +1760,20 @@
                         fixedPrice.value = policy.pricePerDownload || '0.00';
                     }
                 }
-                
+
                 if (pricingModel === 'freemium') {
                     const freeCount = document.getElementById('freemium-free-count');
                     const freemiumPrice = document.getElementById('freemium-price');
                     if (freeCount) freeCount.value = policy.freeDownloads || 5;
                     if (freemiumPrice) freemiumPrice.value = policy.pricePerDownload || '5.00';
                 }
-                
+
                 // Set download limits
                 if (policy.downloadMax) {
                     const limitGlobal = document.getElementById('limit-global');
                     if (limitGlobal) limitGlobal.value = policy.downloadMax;
                 }
-                
+
                 // Set watermark settings
                 const watermarkEnabled = document.getElementById('watermark-enabled');
                 if (watermarkEnabled) {
@@ -1783,17 +1783,17 @@
                         config.style.display = watermarkEnabled.checked ? 'block' : 'none';
                     }
                 }
-                
+
                 if (policy.watermarkText) {
                     const watermarkText = document.getElementById('watermark-text');
                     if (watermarkText) watermarkText.value = policy.watermarkText;
                 }
-                
+
                 if (policy.watermarkPosition) {
                     const watermarkPosition = document.getElementById('watermark-position');
                     if (watermarkPosition) watermarkPosition.value = policy.watermarkPosition;
                 }
-                
+
                 if (policy.watermarkOpacity) {
                     const watermarkOpacity = document.getElementById('watermark-opacity');
                     if (watermarkOpacity) {
@@ -1809,17 +1809,17 @@
                 const statusDesc = document.getElementById('statusDescription');
                 const indicator = document.getElementById('statusIndicator');
                 const indicatorText = indicator?.querySelector('.indicator-text');
-                
+
                 if (statusText) {
                     statusText.textContent = enabled ? 'Downloads Enabled' : 'Downloads Disabled';
                 }
-                
+
                 if (statusDesc) {
                     statusDesc.textContent = enabled ? 
                         'Clients can download photos based on your pricing settings' : 
                         'Clients cannot download photos';
                 }
-                
+
                 if (indicator) {
                     indicator.classList.toggle('active', enabled);
                     if (indicatorText) {
@@ -1833,11 +1833,11 @@
                 document.querySelectorAll('.pricing-config').forEach(config => {
                     config.style.display = 'none';
                 });
-                
+
                 // Get selected mode
                 const selectedMode = document.querySelector('input[name="pricingMode"]:checked')?.value;
                 if (!selectedMode) return;
-                
+
                 // Map mode values to config IDs
                 const modeMap = {
                     'free': 'config-free',
@@ -1847,7 +1847,7 @@
                     'perPhoto': 'config-perPhoto',
                     'bulk': 'config-bulk'
                 };
-                
+
                 // Show selected config
                 const configId = modeMap[selectedMode];
                 const config = document.getElementById(configId);
@@ -1860,7 +1860,7 @@
                 const type = document.getElementById('watermark-type')?.value;
                 const textGroup = document.getElementById('watermark-text-group');
                 const logoGroup = document.getElementById('watermark-logo-group');
-                
+
                 if (textGroup && logoGroup) {
                     if (type === 'text') {
                         textGroup.style.display = 'block';
@@ -1896,12 +1896,12 @@
                         <button class="tier-remove" onclick="downloadControls.removeTier(${this.tierCount})" style="display: block;">×</button>
                     </div>
                 `;
-                
+
                 const container = document.getElementById('bulkTiers');
                 if (container) {
                     container.insertAdjacentHTML('beforeend', tierHtml);
                 }
-                
+
                 // Show remove button on first tier if there are multiple
                 if (this.tierCount > 1) {
                     const firstRemove = document.querySelector('.tier-item[data-tier="1"] .tier-remove');
@@ -1915,7 +1915,7 @@
                 const tier = document.querySelector(`.tier-item[data-tier="${tierNum}"]`);
                 if (tier) {
                     tier.remove();
-                    
+
                     // Hide remove button on first tier if it's the only one
                     const remainingTiers = document.querySelectorAll('.tier-item');
                     if (remainingTiers.length === 1) {
@@ -1938,7 +1938,7 @@
                     }
                 }
                 this.updatePricingMode();
-                
+
                 // Auto-save for quick presets
                 await this.savePolicy();
             }
@@ -1946,10 +1946,10 @@
             async savePolicy() {
                 try {
                     const formData = new FormData();
-                    
+
                     // Get download enabled status
                     formData.append('downloadEnabled', document.getElementById('downloadEnabled').checked);
-                    
+
                     // Get pricing mode
                     const pricingMode = document.querySelector('input[name="pricingMode"]:checked')?.value || 'free';
                     const modeMapping = {
@@ -1958,7 +1958,7 @@
                         'bulk': 'paid'
                     };
                     formData.append('pricingModel', modeMapping[pricingMode] || pricingMode);
-                    
+
                     // Get pricing values based on mode
                     if (pricingMode === 'fixed') {
                         const price = document.getElementById('fixed-price')?.value || '0';
@@ -1976,21 +1976,21 @@
                         const firstTierPrice = document.querySelector('.tier-price')?.value || '0';
                         formData.append('pricePerDownload', firstTierPrice);
                     }
-                    
+
                     // Get download limits
                     const globalLimit = document.getElementById('limit-global')?.value;
                     if (globalLimit) {
                         formData.append('downloadMax', globalLimit);
                     }
-                    
+
                     // Get watermark settings
                     const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
                     formData.append('watermarkEnabled', watermarkEnabled);
-                    
+
                     if (watermarkEnabled) {
                         const watermarkType = document.getElementById('watermark-type')?.value || 'text';
                         formData.append('watermarkType', watermarkType);
-                        
+
                         if (watermarkType === 'text') {
                             const watermarkText = document.getElementById('watermark-text')?.value;
                             if (watermarkText) {
@@ -2003,18 +2003,18 @@
                                 formData.append('logo', logoInput.files[0]);
                             }
                         }
-                        
+
                         formData.append('watermarkPosition', document.getElementById('watermark-position')?.value || 'center');
                         formData.append('watermarkOpacity', document.getElementById('watermark-opacity')?.value || '60');
                     }
-                    
+
                     // Send update request
                     const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
                         method: 'PUT',
                         credentials: 'include',
                         body: formData
                     });
-                    
+
                     if (response.ok) {
                         showMessage('Download settings saved successfully!', 'success');
                         // Reload policy to ensure UI is in sync
@@ -2022,7 +2022,7 @@
                     } else {
                         throw new Error('Failed to save settings');
                     }
-                    
+
                 } catch (error) {
                     console.error('Error saving policy:', error);
                     showMessage('Failed to save download settings', 'error');
@@ -2039,12 +2039,12 @@
             async copyFromSession() {
                 const otherSessionId = prompt('Enter the session ID to copy settings from:');
                 if (!otherSessionId) return;
-                
+
                 try {
                     const response = await fetch(`/api/downloads/sessions/${otherSessionId}/policy`, {
                         credentials: 'include'
                     });
-                    
+
                     if (response.ok) {
                         const data = await response.json();
                         this.currentPolicy = data.policy;
@@ -2065,15 +2065,15 @@
                     const response = await fetch(`/api/downloads/sessions/${this.sessionId}/analytics`, {
                         credentials: 'include'
                     });
-                    
+
                     if (response.ok) {
                         const data = await response.json();
-                        
+
                         // Update analytics display
                         const downloads = document.getElementById('stat-downloads');
                         const revenue = document.getElementById('stat-revenue');
                         const orders = document.getElementById('stat-orders');
-                        
+
                         if (downloads) downloads.textContent = data.totalDownloads || '0';
                         if (revenue) revenue.textContent = `$${(data.totalRevenue || 0).toFixed(2)}`;
                         if (orders) orders.textContent = data.activeOrders || '0';
@@ -2100,16 +2100,16 @@
                 const response = await fetch(`/api/sessions/${sessionId}`, {
                     credentials: 'include'
                 });
-                
+
                 if (response.ok) {
                     sessionData = await response.json(); // Store in global variable
                     console.log('Session data loaded:', sessionData);
-                    
+
                     // Update client info from session data
                     clientName = sessionData.clientName || sessionData.client_name || clientName;
                     clientEmail = sessionData.email || '';
                     clientPhoneNumber = sessionData.phoneNumber || sessionData.phone_number || '';
-                    
+
                     console.log(`Client: ${clientName}, Email: ${clientEmail}, Phone: ${clientPhoneNumber}`);
                 } else {
                     console.warn('Failed to load session data, using URL parameters only');
@@ -2125,18 +2125,18 @@
             sessionId = urlParams.get('sessionId');
             folderType = urlParams.get('folderType');
             clientName = urlParams.get('clientName') || 'Client';
-            
+
             console.log('URL Parameters:', { sessionId, folderType, clientName });
-            
+
             // Update UI
             document.getElementById('folderTitle').textContent = 'Gallery Manager';
             document.getElementById('folderType').textContent = 'Gallery';
-            
+
             // Show send to client button only for gallery
             if (folderType === 'gallery') {
                 document.getElementById('sendClientBtn').style.display = 'flex';
             }
-            
+
             // Validate folder type
             if (!folderType || folderType !== 'gallery') {
                 console.error('Invalid or missing folderType:', folderType);
@@ -2149,7 +2149,7 @@
                 `;
                 return false;
             }
-            
+
             return true;
         }
 
@@ -2158,10 +2158,10 @@
             if (getUrlParams()) {
                 // Load complete session data to get client contact info
                 await loadSessionData();
-                
+
                 // Initialize the download controls manager
                 downloadControls = new DownloadControlsManager();
-                
+
                 loadFiles();
                 setupDragAndDrop();
                 setupFileInput();
@@ -2171,17 +2171,17 @@
         // Setup drag and drop
         function setupDragAndDrop() {
             const uploadZone = document.getElementById('uploadZone');
-            
+
             uploadZone.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 uploadZone.classList.add('dragover');
             });
-            
+
             uploadZone.addEventListener('dragleave', function(e) {
                 e.preventDefault();
                 uploadZone.classList.remove('dragover');
             });
-            
+
             uploadZone.addEventListener('drop', function(e) {
                 e.preventDefault();
                 uploadZone.classList.remove('dragover');
@@ -2210,33 +2210,33 @@
         let currentBatchIndex = 0;
         let totalFilesInQueue = 0;
         let isProcessingBatch = false;
-        
+
         // Handle file selection
         function handleFileSelection(selectedFiles) {
             if (!selectedFiles.length) return;
             uploadQueue = [...selectedFiles];
             processUploadQueue();
         }
-        
+
         // Add files to batch queue and start processing
         function addFilesToBatchQueue(files) {
             // Add files to the batch queue
             batchUploadQueue.push(...files);
             totalFilesInQueue = batchUploadQueue.length;
-            
+
             console.log(`📋 Added ${files.length} files to queue. Total in queue: ${totalFilesInQueue}`);
-            
+
             // Start processing if not already running
             if (!isProcessingBatch) {
                 processBatchQueue();
             }
         }
-        
+
         // Update queue status display
         function updateQueueStatus(filesInQueue, currentBatch, totalBatches) {
             const queueStatusDiv = document.getElementById('batchQueueStatus');
             const queueStatusText = document.getElementById('queueStatusText');
-            
+
             if (filesInQueue > 0) {
                 queueStatusDiv.style.display = 'block';
                 queueStatusText.textContent = `${filesInQueue} files waiting • Processing batch ${currentBatch} of ${totalBatches}`;
@@ -2244,58 +2244,58 @@
                 queueStatusDiv.style.display = 'none';
             }
         }
-        
+
         // Calculate and update progress bar
         function updateBatchProgress(filesCompleted, totalFiles) {
             const percentage = Math.round((filesCompleted / totalFiles) * 100);
             document.getElementById('progressFill').style.width = percentage + '%';
             document.getElementById('progressStats').textContent = `${filesCompleted} / ${totalFiles} files`;
         }
-        
+
         // Process the batch queue - uploads files in chunks of 4
         async function processBatchQueue() {
             if (isProcessingBatch || batchUploadQueue.length === 0) return;
-            
+
             isProcessingBatch = true;
             currentBatchIndex = 0;
             let totalFilesProcessed = 0;
-            
+
             // Show progress container
             document.getElementById('progressContainer').style.display = 'block';
-            
+
             while (batchUploadQueue.length > 0) {
                 // Take up to 4 files from the queue
                 const batch = batchUploadQueue.splice(0, 4);
                 currentBatchIndex++;
-                
+
                 const filesProcessed = totalFilesProcessed;
                 const batchStart = filesProcessed + 1;
                 const batchEnd = filesProcessed + batch.length;
                 const totalBatches = Math.ceil(totalFilesInQueue / 4);
-                
+
                 // Update displays
                 updateProgressText(`🚀 Uploading batch ${currentBatchIndex} (files ${batchStart}-${batchEnd} of ${totalFilesInQueue})...`);
                 updateQueueStatus(batchUploadQueue.length, currentBatchIndex, totalBatches);
                 updateBatchProgress(filesProcessed, totalFilesInQueue);
-                
+
                 // Process this batch
                 await processBatchUpload(batch, batchStart, batchEnd, totalFilesInQueue);
-                
+
                 totalFilesProcessed += batch.length;
                 updateBatchProgress(totalFilesProcessed, totalFilesInQueue);
-                
+
                 // Check if more files were added while processing
                 if (batchUploadQueue.length > 0 && (totalFilesProcessed + batchUploadQueue.length) > totalFilesInQueue) {
                     totalFilesInQueue = totalFilesProcessed + batchUploadQueue.length;
                     console.log(`📋 More files added during upload. New total: ${totalFilesInQueue}`);
                 }
             }
-            
+
             // All files processed
             updateProgressText(`✅ All ${totalFilesInQueue} files uploaded successfully!`);
             updateBatchProgress(totalFilesInQueue, totalFilesInQueue);
             updateQueueStatus(0, 0, 0);
-            
+
             setTimeout(() => {
                 document.getElementById('progressContainer').style.display = 'none';
                 document.getElementById('batchQueueStatus').style.display = 'none';
@@ -2303,21 +2303,21 @@
                 totalFilesInQueue = 0;
                 totalFilesProcessed = 0;
             }, 3000);
-            
+
             isProcessingBatch = false;
         }
 
         // NEW: Process batch upload (up to 4 files at once using pre-signed URLs)
         async function processBatchUpload(files, batchStart = 1, batchEnd = files.length, totalFiles = files.length) {
             const startTime = Date.now();
-            
+
             // Note: Don't check isUploading here, as we're managing state in processBatchQueue
-            updateProgressText(`📤 Uploading files ${batchStart}-${batchEnd} of ${totalFiles}...`);
-            
+            updateProgressText(`Uploading files ${batchStart}-${batchEnd} of ${totalFiles}...`);
+
             try {
                 // Step 1: Get batch pre-signed URLs from server
                 console.log('🚀 Getting batch pre-signed URLs for', files.length, 'files');
-                
+
                 const urlResponse = await fetch('/api/gallery/batch-presigned-urls', {
                     method: 'POST',
                     credentials: 'include',
@@ -2332,18 +2332,18 @@
                         }))
                     })
                 });
-                
+
                 if (!urlResponse.ok) {
                     const error = await urlResponse.json();
                     throw new Error(error.message || 'Failed to get pre-signed URLs');
                 }
-                
+
                 const urlData = await urlResponse.json();
                 console.log('✅ Got batch pre-signed URLs:', urlData);
-                
+
                 // Step 2: Upload all files directly to R2 in parallel
                 updateProgressText(`Uploading ${files.length} files directly to cloud...`);
-                
+
                 const uploadPromises = files.map((file, index) => {
                     const presignedData = urlData.presignedUrls[index];
                     if (!presignedData || presignedData.error) {
@@ -2352,9 +2352,9 @@
                     }
                     return uploadFileDirectToR2(file, presignedData);
                 });
-                
+
                 const uploadResults = await Promise.allSettled(uploadPromises);
-                
+
                 // Step 3: Process successfully uploaded files
                 const successfulUploads = [];
                 uploadResults.forEach((result, index) => {
@@ -2371,10 +2371,10 @@
                         console.error(`Upload failed for ${files[index].name}:`, result.reason || result.value?.error);
                     }
                 });
-                
+
                 if (successfulUploads.length > 0) {
                     updateProgressText(`Processing ${successfulUploads.length} uploaded files...`);
-                    
+
                     // Notify server to process uploaded files (generate thumbnails)
                     const processResponse = await fetch('/api/gallery/process-uploaded-files', {
                         method: 'POST',
@@ -2387,23 +2387,23 @@
                             uploadedFiles: successfulUploads
                         })
                     });
-                    
+
                     if (processResponse.ok) {
                         const processResult = await processResponse.json();
                         console.log('✅ Files processed:', processResult);
                     }
                 }
-                
+
                 // Step 4: Show completion for this batch
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
                 console.log(`✅ Batch complete! ${successfulUploads.length}/${files.length} files uploaded in ${elapsed}s`);
-                
+
                 // Don't hide progress container or refresh yet - let processBatchQueue handle that
                 if (batchEnd === totalFiles) {
                     // This was the last batch, refresh files
                     loadFiles();
                 }
-                
+
             } catch (error) {
                 console.error('Batch upload error:', error);
                 updateProgressText(`❌ Upload failed for batch ${batchStart}-${batchEnd}: ${error.message}`);
@@ -2415,7 +2415,7 @@
         async function uploadFileDirectToR2(file, presignedData) {
             try {
                 console.log(`📤 Uploading ${file.name} directly to R2...`);
-                
+
                 // Use the presignedUrl from the corrected server response
                 const response = await fetch(presignedData.presignedUrl, {
                     method: 'PUT',
@@ -2424,7 +2424,7 @@
                         'Content-Type': file.type || 'application/octet-stream'
                     }
                 });
-                
+
                 if (response.ok) {
                     console.log(`✅ ${file.name} uploaded successfully to R2`);
                     return { success: true, filename: file.name };
@@ -2440,42 +2440,42 @@
         // Process upload queue (2 files at a time) - LEGACY MODE
         async function processUploadQueue() {
             if (isUploading || uploadQueue.length === 0) return;
-            
+
             isUploading = true;
             totalFiles = uploadQueue.length;
             completedFiles = 0;
             startTime = Date.now();
             totalBytes = uploadQueue.reduce((sum, file) => sum + file.size, 0);
             uploadedBytes = 0;
-            
+
             // Show progress container and initialize queue display
             document.getElementById('progressContainer').style.display = 'block';
             initializeUploadQueue();
             updateProgressDisplay();
-            
+
             // Increase batch size to 4 for faster uploads
             const batchSize = 4;
-            
+
             while (uploadQueue.length > 0) {
                 const batch = uploadQueue.splice(0, batchSize);
                 const uploadPromises = batch.map(file => uploadFile(file));
-                
+
                 try {
                     await Promise.all(uploadPromises);
                 } catch (error) {
                     console.error('Batch upload error:', error);
                 }
             }
-            
+
             isUploading = false;
-            
+
             // Show completion message briefly
             updateProgressText('Upload complete!');
             setTimeout(() => {
                 document.getElementById('progressContainer').style.display = 'none';
                 document.getElementById('uploadQueue').innerHTML = '';
             }, 2000);
-            
+
             loadFiles(); // Refresh file list
         }
 
@@ -2483,7 +2483,7 @@
         function initializeUploadQueue() {
             const queueContainer = document.getElementById('uploadQueue');
             queueContainer.innerHTML = '';
-            
+
             [...uploadQueue].forEach(file => {
                 const item = createUploadItem(file);
                 queueContainer.appendChild(item);
@@ -2495,7 +2495,7 @@
             const div = document.createElement('div');
             div.className = 'upload-item';
             div.id = `upload-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            
+
             div.innerHTML = `
                 <div class="status-icon">⏳</div>
                 <div style="flex: 1;">
@@ -2503,7 +2503,7 @@
                     <div style="font-size: 0.8em; color: var(--soft-brown);">${formatFileSize(file.size)}</div>
                 </div>
             `;
-            
+
             return div;
         }
 
@@ -2522,7 +2522,7 @@
             const percentage = totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
             document.getElementById('progressFill').style.width = percentage + '%';
             document.getElementById('progressStats').textContent = `${completedFiles} / ${totalFiles} files`;
-            
+
             // Calculate upload speed
             const elapsed = (Date.now() - startTime) / 1000;
             const speed = elapsed > 0 ? (uploadedBytes / elapsed / 1024 / 1024) : 0;
@@ -2539,17 +2539,17 @@
             try {
                 console.log(`Starting FAST direct upload for ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
                 console.log(`Session ID: ${sessionId}, Folder Type: ${folderType}`);
-                
+
                 // Mark upload as starting
                 markUploadStarting(file.name);
-                
+
                 // Check storage quota before upload
                 const canUpload = await checkStorageQuota(file.size);
                 if (!canUpload) {
                     updateUploadItem(file.name, 'error', '🚫');
                     return; // Stop upload if quota exceeded
                 }
-                
+
                 // Step 1: Get presigned URL for direct R2 upload (bypasses server)
                 const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
@@ -2565,25 +2565,25 @@
                         }]
                     })
                 });
-                
+
                 let response;
                 let uploadedFileName;
-                
+
                 if (urlResponse.ok) {
                     // FAST PATH: Direct upload to R2 using presigned URL
                     const urlData = await urlResponse.json();
                     console.log('Presigned URL response:', urlData);
-                    
+
                     // The API returns { urls: [...], count: X }
                     const uploadData = urlData.urls[0];
-                    
+
                     if (!uploadData || !uploadData.presignedUrl) {
                         console.error('Invalid presigned URL data:', uploadData);
                         throw new Error('Failed to get valid presigned URL');
                     }
-                    
+
                     console.log(`✅ Got presigned URL for FAST direct R2 upload, bypassing server completely`);
-                    
+
                     // Step 2: Upload directly to R2 (MUCH FASTER - no server proxy!)
                     const r2Response = await fetch(uploadData.presignedUrl, {
                         method: 'PUT',
@@ -2592,11 +2592,11 @@
                             'Content-Type': file.type || 'image/jpeg'
                         }
                     });
-                    
+
                     if (r2Response.ok) {
                         console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
                         uploadedFileName = uploadData.fileName;
-                        
+
                         // Step 3: Update database with the uploaded file info
                         response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
                             method: 'POST',
@@ -2616,7 +2616,7 @@
                         // Fallback to server upload
                         const formData = new FormData();
                         formData.append('file', file);
-                        
+
                         response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                             method: 'POST',
                             credentials: 'include',
@@ -2628,25 +2628,25 @@
                     // Fallback to server upload
                     const formData = new FormData();
                     formData.append('file', file);
-                    
+
                     response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                         method: 'POST',
                         credentials: 'include',
                         body: formData
                     });
                 }
-                
+
                 console.log(`Upload response status: ${response.status}`);
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Upload response error:', errorText);
-                    
+
                     if (response.status === 401) {
                         alert('Authentication error. Please refresh the page and try again.');
                         throw new Error(`Authentication failed: ${response.status}`);
                     }
-                    
+
                     if (response.status === 413) {
                         const errorMessage = 'This file is too large for direct server upload (over 30-40MB limit). ' +
                             'Large files should be uploaded using direct-to-cloud method. ' +
@@ -2655,26 +2655,26 @@
                         alert(errorMessage);
                         throw new Error('File too large for server upload (413)');
                     }
-                    
+
                     alert(`Upload failed: ${errorText}. Please try again.`);
                     throw new Error(`Upload failed: ${response.status} - ${errorText}`);
                 }
-                
+
                 const result = await response.json();
                 console.log(`Successfully uploaded ${file.name} to R2:`, result);
-                
+
                 // Update progress tracking
                 completedFiles++;
                 uploadedBytes += file.size;
                 updateProgressDisplay();
                 updateProgressText(`Uploaded ${file.name}`);
                 updateUploadItem(file.name, 'completed', '');
-                
+
                 // Wait a moment for upload to propagate, then reload files
                 setTimeout(() => {
                     loadFiles();
                 }, 1000);
-                
+
             } catch (error) {
                 console.error('Upload error for', file.name, ':', error);
                 updateUploadItem(file.name, 'error', '❌');
@@ -2686,72 +2686,72 @@
         function markUploadStarting(filename) {
             updateUploadItem(filename, 'uploading', '📤');
         }
-        
+
         // Storage quota checking function
         async function checkStorageQuota(fileSizeBytes) {
             try {
                 const response = await fetch('/api/storage/quota', {
                     credentials: 'include'
                 });
-                
+
                 if (!response.ok) {
                     console.error('Failed to check storage quota:', response.status, response.statusText);
                     // For security, don't allow upload if we can't verify quota
                     showMessage('Unable to verify storage quota. Please try again later.', 'error');
                     return false;
                 }
-                
+
                 const result = await response.json();
                 console.log('Storage quota API response:', result);
-                
+
                 // Handle the actual API response structure
                 if (result.can_upload === false) {
                     console.warn('Upload not allowed by API');
                     return false;
                 }
-                
+
                 // Use the actual fields from the API response
                 const fileSizeGB = fileSizeBytes / (1024 * 1024 * 1024);
                 const totalUsageGB = parseFloat(result.used_gb || 0);
                 const totalQuotaGB = parseFloat(result.quota_gb || 100);
                 const wouldExceedQuota = (totalUsageGB + fileSizeGB) > totalQuotaGB;
-                
+
                 if (wouldExceedQuota) {
                     const upgradeMessage = `
                         ❌ Upload blocked - Storage quota exceeded!
-                        
+
                         Current usage: ${totalUsageGB.toFixed(2)} GB / ${totalQuotaGB.toFixed(0)} GB
                         File size: ${fileSizeGB.toFixed(2)} GB
-                        
+
                         You need more storage to upload this file.
                         Would you like to upgrade your storage plan?
                     `;
-                    
+
                     if (confirm(upgradeMessage)) {
                         // Open storage dashboard for upgrade
                         window.open('/storage-dashboard.html', '_blank');
                     }
-                    
+
                     return false;
                 }
-                
+
                 // Show warning if approaching limit (90%+)
                 const usagePercentage = (totalUsageGB / totalQuotaGB) * 100;
                 if (usagePercentage >= 90) {
                     const warningMessage = `
                          Storage nearly full!
-                        
+
                         You're using ${quotaData.usagePercentage.toFixed(1)}% of your storage quota.
                         Consider upgrading soon to avoid future upload issues.
-                        
+
                         Continue with this upload?
                     `;
-                    
+
                     return confirm(warningMessage);
                 }
-                
+
                 return true;
-                
+
             } catch (error) {
                 console.error('Error checking storage quota:', error);
                 return true; // Allow upload if quota check failed
@@ -2759,22 +2759,22 @@
         }
 
         // Update stats display - removed old function causing syntax errors
-        
+
         // Load and display storage statistics for both folders
         async function loadStorageStats() {
             try {
                 const response = await fetch('/api/sessions/' + sessionId + '/storage', {
                     credentials: 'include'
                 });
-                
+
                 if (!response.ok) {
                     console.warn('Failed to load storage stats');
                     return;
                 }
-                
+
                 const stats = await response.json();
                 console.log('Storage stats received:', stats);
-                
+
                 // Add or update storage stats display
                 let storageDiv = document.getElementById('storage-stats');
                 if (!storageDiv) {
@@ -2788,19 +2788,19 @@
                     storageDiv.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
                     document.body.insertBefore(storageDiv, document.getElementById('fileContainer'));
                 }
-                
+
                 // Build HTML content using string concatenation
                 var galleryMeasured = '';
                 if (stats.gallery.validFiles !== stats.gallery.fileCount) {
                     galleryMeasured = '<div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">(' + stats.gallery.validFiles + ' measured)</div>';
                 }
-                
-                
+
+
                 var combinedMeasured = '';
                 if (stats.combined.validFiles !== stats.combined.fileCount) {
                     combinedMeasured = '<div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">(' + stats.combined.validFiles + ' measured)</div>';
                 }
-                
+
                 storageDiv.innerHTML = 
                     '<h3 style="margin: 0 0 10px 0; font-size: 18px;"> Session Storage Overview</h3>' +
                     '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">' +
@@ -2817,7 +2817,7 @@
                             combinedMeasured +
                         '</div>' +
                     '</div>';
-                
+
                 console.log('Storage stats loaded successfully');
             } catch (error) {
                 console.error('Error loading storage stats:', error);
@@ -2830,20 +2830,20 @@
                 const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
                     credentials: 'include' // Include cookies for authentication
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Load files response error:', errorText);
                     throw new Error(`Failed to load files: ${response.status} - ${errorText}`);
                 }
-                
+
                 const data = await response.json();
                 files = data.files || [];
-                
+
                 console.log(`Loaded ${files.length} files for ${folderType} folder`);
                 renderFiles();
                 loadStorageStats();
-                
+
             } catch (error) {
                 console.error('Load files error:', error);
                 document.getElementById('fileContainer').innerHTML = `
@@ -2860,14 +2860,14 @@
         function renderFiles() {
             const container = document.getElementById('fileContainer');
             const emptyState = document.getElementById('emptyState');
-            
+
             if (!container) {
                 console.error('File container not found');
                 return;
             }
-            
+
             // File count and size now handled by storage overview section
-            
+
             if (files.length === 0) {
                 if (emptyState) {
                     emptyState.style.display = 'block';
@@ -2883,19 +2883,19 @@
                 }
                 return;
             }
-            
+
             if (emptyState) {
                 emptyState.style.display = 'none';
             }
-            
+
             const fileGrid = document.createElement('div');
             fileGrid.className = 'file-grid';
-            
+
             files.forEach(file => {
                 const fileCard = createFileCard(file);
                 fileGrid.appendChild(fileCard);
             });
-            
+
             container.innerHTML = '';
             container.appendChild(fileGrid);
         }
@@ -2904,18 +2904,18 @@
         function createFileCard(file) {
             const card = document.createElement('div');
             card.className = 'file-card';
-            
+
             // File preview section
             const filePreview = document.createElement('div');
             filePreview.className = 'file-preview';
-            
+
             const isImage = file.contentType && file.contentType.startsWith('image/');
-            
+
             if (isImage) {
                 const img = document.createElement('img');
                 const thumbnailFileName = file.fileName || file.name;
                 const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
-                
+
                 img.src = thumbnailUrl;
                 img.alt = file.name;
                 img.loading = 'lazy';
@@ -2924,7 +2924,7 @@
                     img.style.display = 'none';
                     filePreview.innerHTML = '<div class="file-icon">IMG</div>';
                 };
-                
+
                 filePreview.appendChild(img);
             } else {
                 const fileIcon = document.createElement('div');
@@ -2932,61 +2932,61 @@
                 fileIcon.textContent = getFileIcon(file.contentType);
                 filePreview.appendChild(fileIcon);
             }
-            
+
             card.appendChild(filePreview);
-            
+
             // Create content wrapper for info and actions
             const fileCardContent = document.createElement('div');
             fileCardContent.className = 'file-card-content';
-            
+
             // File info section
             const fileInfo = document.createElement('div');
             fileInfo.className = 'file-info';
-            
+
             const fileName = document.createElement('div');
             fileName.className = 'file-name';
             fileName.textContent = file.name;
-            
+
             const fileMeta = document.createElement('div');
             fileMeta.className = 'file-meta';
             fileMeta.innerHTML = `
                 <span>${formatDate(file.timeCreated)}</span>
                 <span class="file-size">${formatFileSize(file.size)}</span>
             `;
-            
+
             fileInfo.appendChild(fileName);
             fileInfo.appendChild(fileMeta);
             fileCardContent.appendChild(fileInfo);
-            
+
             // File actions section
             const fileActions = document.createElement('div');
             fileActions.className = 'file-actions';
-            
+
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'btn btn-secondary';
             downloadBtn.innerHTML = 'Download';
             downloadBtn.onclick = () => downloadFile(file.downloadUrl, file.name);
-            
+
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn btn-danger';
             deleteBtn.innerHTML = 'Delete';
             const deleteFileName = file.fileName || file.name;
             deleteBtn.dataset.deletePhoto = deleteFileName;
             deleteBtn.onclick = () => deleteFile(deleteFileName);
-            
+
             fileActions.appendChild(downloadBtn);
             fileActions.appendChild(deleteBtn);
             fileCardContent.appendChild(fileActions);
-            
+
             card.appendChild(fileCardContent);
-            
+
             return card;
         }
 
         // Get file icon based on content type
         function getFileIcon(contentType) {
             if (!contentType) return '📄';
-            
+
             if (contentType.startsWith('image/')) return '🖼️';
             if (contentType.startsWith('video/')) return '🎥';
             if (contentType.startsWith('audio/')) return '🎵';
@@ -2994,7 +2994,7 @@
             if (contentType.includes('document') || contentType.includes('word')) return '';
             if (contentType.includes('spreadsheet') || contentType.includes('excel')) return '';
             if (contentType.includes('zip') || contentType.includes('archive')) return '';
-            
+
             return '📄';
         }
 
@@ -3027,13 +3027,13 @@
         // Download all files as ZIP
         async function downloadAllFiles() {
             console.log(' Download All button clicked!');
-            
+
             if (!files || files.length === 0) {
                 console.error('❌ No files available for download');
                 alert('No files to download');
                 return;
             }
-            
+
             console.log(` Attempting to download ${files.length} files as ZIP`);
             console.log('📍 Request details:', {
                 sessionId,
@@ -3041,14 +3041,14 @@
                 clientName,
                 endpoint: `/api/sessions/${sessionId}/files/${folderType}/download-zip`
             });
-            
+
             try {
                 // Show loading indicator
                 const downloadBtn = document.querySelector('button[onclick="downloadAllFiles()"]');
                 const originalText = downloadBtn.innerHTML;
                 downloadBtn.innerHTML = '⏳ Creating ZIP...';
                 downloadBtn.disabled = true;
-                
+
                 const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/download-zip`, {
                     method: 'GET',
                     credentials: 'include', // Include cookies for authentication
@@ -3056,35 +3056,35 @@
                         'Accept': 'application/zip',
                     }
                 });
-                
+
                 console.log('📥 Server response:', {
                     status: response.status,
                     statusText: response.statusText,
                     contentType: response.headers.get('content-type'),
                     contentLength: response.headers.get('content-length')
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('❌ Download ZIP response error:', errorText);
                     throw new Error(`Server error: ${response.status} - ${errorText}`);
                 }
-                
+
                 // Get the blob data
                 const blob = await response.blob();
                 console.log(' ZIP blob received:', {
                     size: blob.size,
                     type: blob.type
                 });
-                
+
                 if (blob.size === 0) {
                     throw new Error('Received empty ZIP file from server');
                 }
-                
+
                 // Create filename
                 const filename = `${clientName.replace(/[^a-zA-Z0-9\s-]/g, '_')}_${folderType}_photos.zip`;
                 console.log('📁 Creating download with filename:', filename);
-                
+
                 // Try multiple download methods to ensure compatibility
                 try {
                     // Method 1: Direct blob download (preferred)
@@ -3093,11 +3093,11 @@
                     a.href = url;
                     a.download = filename;
                     a.style.display = 'none';
-                    
+
                     document.body.appendChild(a);
                     console.log(' Method 1: Triggering blob download for:', filename);
                     a.click();
-                    
+
                     // Cleanup
                     setTimeout(() => {
                         try {
@@ -3107,49 +3107,49 @@
                             console.warn('Cleanup warning:', cleanupError);
                         }
                     }, 1000);
-                    
+
                 } catch (blobError) {
                     console.warn('Blob method failed, trying alternative:', blobError);
-                    
+
                     // Method 2: Force browser navigation (fallback)
                     const form = document.createElement('form');
                     form.method = 'GET';
                     form.action = `/api/sessions/${sessionId}/files/${folderType}/download-zip`;
                     form.target = '_blank';
                     form.style.display = 'none';
-                    
+
                     document.body.appendChild(form);
                     console.log(' Method 2: Triggering form download');
                     form.submit();
-                    
+
                     setTimeout(() => {
                         document.body.removeChild(form);
                     }, 1000);
                 }
-                
+
                 // Cleanup
                 setTimeout(() => {
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
                 }, 1000);
-                
+
                 console.log(` Successfully triggered ZIP download for ${folderType} folder`);
-                
+
                 // Give user feedback about the download
                 setTimeout(() => {
                     alert(`ZIP download initiated! Check your browser's download folder for: ${filename}`);
                 }, 500);
-                
+
                 // Restore button
                 setTimeout(() => {
                     downloadBtn.innerHTML = originalText;
                     downloadBtn.disabled = false;
                 }, 2000);
-                
+
             } catch (error) {
                 console.error('❌ Download ZIP error:', error);
                 alert('Failed to download ZIP: ' + error.message);
-                
+
                 // Restore button on error
                 const downloadBtn = document.querySelector('button[onclick="downloadAllFiles()"]');
                 downloadBtn.innerHTML = ' Download All ZIP';
@@ -3170,18 +3170,18 @@
             if (!confirmation) {
                 return;
             }
-            
+
             const deleteBtn = document.querySelector('button[onclick="deleteAllFiles()"]');
             const originalText = deleteBtn.innerHTML;
             deleteBtn.innerHTML = '🗑️ Deleting...';
             deleteBtn.disabled = true;
-            
+
             try {
                 console.log(`🗑️ Starting delete all for ${files.length} files in ${folderType} folder`);
-                
+
                 // Extract all filenames for batch deletion
                 const filenames = files.map(file => file.fileName || file.name);
-                
+
                 // Call server endpoint to delete all files using optimized batch deletion
                 const response = await fetch(`/api/sessions/${sessionId}/delete-all-photos`, {
                     method: 'DELETE',
@@ -3194,22 +3194,22 @@
                         folderType 
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`Server error: ${response.status} - ${errorText}`);
                 }
-                
+
                 const result = await response.json();
                 console.log(' Delete all result:', result);
-                
+
                 // Show success message
                 alert(`Successfully deleted ${result.successCount || result.deletedCount || files.length} files from ${folderType} folder. Reclaimed ${result.totalReclaimedMB || 0}MB of storage.`);
-                
+
                 // Refresh file list and storage stats
                 loadFiles();
                 loadStorageStats();
-                
+
             } catch (error) {
                 console.error('❌ Delete all error:', error);
                 alert('Failed to delete files: ' + error.message);
@@ -3236,12 +3236,12 @@
                 align-items: center;
                 z-index: 1000;
             `;
-            
+
             modal.innerHTML = `
                 <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
                     <h3 style="margin: 0 0 20px 0; color: #333;">Send Gallery Link to Client</h3>
                     <p style="margin: 0 0 20px 0; color: #666;">How would you like to send the gallery link to ${clientName}?</p>
-                    
+
                     <div style="display: flex; gap: 15px; margin-bottom: 20px;">
                         <button onclick="sendViaEmail()" style="flex: 1; padding: 15px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
                              Email
@@ -3250,15 +3250,15 @@
                             📱 SMS
                         </button>
                     </div>
-                    
+
                     <button onclick="closeModal()" style="width: 100%; padding: 10px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer;">
                         Cancel
                     </button>
                 </div>
             `;
-            
+
             document.body.appendChild(modal);
-            
+
             // Add global functions for the modal
             window.sendViaEmail = async function() {
                 if (!clientEmail) {
@@ -3266,17 +3266,17 @@
                     closeModal();
                     return;
                 }
-                
+
                 console.log('📧 SENDING GALLERY EMAIL:', {
                     sessionId,
                     clientName,
                     clientEmail,
                     sessionData
                 });
-                
+
                 // Get the gallery access token from the session data
                 let galleryToken = sessionData?.gallery_access_token || sessionData?.galleryAccessToken;
-                
+
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
                     try {
@@ -3287,7 +3287,7 @@
                             },
                             credentials: 'same-origin'
                         });
-                        
+
                         if (response.ok) {
                             const data = await response.json();
                             galleryToken = data.accessToken;
@@ -3308,7 +3308,7 @@
                         return;
                     }
                 }
-                
+
                 // Use the accessible public URL for client access
                 const clientGalleryUrl = `https://photomanagementsystem.com/g/${galleryToken}`;
                 const subject = `Your Photography Gallery - ${clientName}`;
@@ -3333,17 +3333,17 @@ Lance - The Legacy Photography`;
                 window.open(mailtoUrl, '_blank');
                 closeModal();
             };
-            
+
             window.sendViaSMS = async function() {
                 if (!clientPhoneNumber) {
                     alert('Client phone number not available. Please add phone number to session details first.');
                     closeModal();
                     return;
                 }
-                
+
                 // Get the gallery access token from the session data
                 let galleryToken = sessionData?.gallery_access_token || sessionData?.galleryAccessToken;
-                
+
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
                     try {
@@ -3354,7 +3354,7 @@ Lance - The Legacy Photography`;
                             },
                             credentials: 'same-origin'
                         });
-                        
+
                         if (response.ok) {
                             const data = await response.json();
                             galleryToken = data.accessToken;
@@ -3375,16 +3375,16 @@ Lance - The Legacy Photography`;
                         return;
                     }
                 }
-                
+
                 // Use the accessible public URL for client access
                 const clientGalleryUrl = `https://photomanagementsystem.com/g/${galleryToken}`;
                 const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
-                
+
                 const smsUrl = `sms:${clientPhoneNumber}?body=${encodeURIComponent(message)}`;
                 window.open(smsUrl, '_blank');
                 closeModal();
             };
-            
+
             window.closeModal = function() {
                 document.body.removeChild(modal);
                 delete window.sendViaEmail;
@@ -3400,7 +3400,7 @@ Lance - The Legacy Photography`;
 
         // Lightbox functions
         let currentImage = null;
-        
+
         function openLightbox(imageSrc) {
             currentImage = imageSrc;
             document.getElementById('lightboxImage').src = imageSrc;
@@ -3414,8 +3414,8 @@ Lance - The Legacy Photography`;
             lightbox.style.display = 'none';
             lightbox.classList.remove('active');
         }
-        
-        
+
+
         function downloadImage() {
             if (!currentImage) return;
             const link = document.createElement('a');
@@ -3438,34 +3438,34 @@ Lance - The Legacy Photography`;
                 const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to load current policy');
                 }
-                
+
                 const policy = await response.json();
                 const newStatus = !policy.downloadEnabled;
-                
+
                 // Toggle the download status
                 const formData = new FormData();
                 formData.append('downloadEnabled', newStatus.toString());
-                
+
                 const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
                 });
-                
+
                 if (updateResponse.ok) {
                     // Update button text and icon
                     const btn = document.getElementById('downloadStatusText');
                     const icon = document.querySelector('#toggleDownloadsBtn');
-                    
+
                     if (btn && icon) {
                         btn.textContent = newStatus ? 'Disable Downloads' : 'Enable Downloads';
                         icon.innerHTML = `${newStatus ? '🔒' : '🔓'} <span id="downloadStatusText">${newStatus ? 'Disable Downloads' : 'Enable Downloads'}</span>`;
                     }
-                    
+
                     showMessage(`Downloads ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
                 } else {
                     throw new Error('Failed to update download status');
@@ -3478,41 +3478,41 @@ Lance - The Legacy Photography`;
 
         async function quickSetPricing() {
             const pricingModel = prompt("Select pricing model:\n1. free\n2. paid\n3. freemium\n\nEnter choice (1-3):");
-            
+
             if (!pricingModel) return;
-            
+
             const models = { '1': 'free', '2': 'paid', '3': 'freemium' };
             const selectedModel = models[pricingModel];
-            
+
             if (!selectedModel) {
                 showMessage('Invalid pricing model selected', 'error');
                 return;
             }
-            
+
             try {
                 const formData = new FormData();
                 formData.append('pricingModel', selectedModel);
-                
+
                 if (selectedModel === 'paid' || selectedModel === 'freemium') {
                     const price = prompt("Enter price per download ($):");
                     if (price) {
                         formData.append('pricePerDownload', price);
                     }
                 }
-                
+
                 if (selectedModel === 'freemium') {
                     const freeDownloads = prompt("Enter number of free downloads:");
                     if (freeDownloads) {
                         formData.append('freeDownloads', freeDownloads);
                     }
                 }
-                
+
                 const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
                 });
-                
+
                 if (response.ok) {
                     showMessage(`Pricing model set to ${selectedModel}`, 'success');
                 } else {
@@ -3530,17 +3530,17 @@ Lance - The Legacy Photography`;
                 const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to load current policy');
                 }
-                
+
                 const policy = await response.json();
                 const newStatus = !policy.watermarkEnabled;
-                
+
                 const formData = new FormData();
                 formData.append('watermarkEnabled', newStatus.toString());
-                
+
                 if (newStatus) {
                     // Set default watermark settings
                     formData.append('watermarkType', 'text');
@@ -3548,23 +3548,23 @@ Lance - The Legacy Photography`;
                     formData.append('watermarkPosition', 'bottom-right');
                     formData.append('watermarkOpacity', '60');
                 }
-                
+
                 const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
                 });
-                
+
                 if (updateResponse.ok) {
                     // Update button text
                     const btn = document.getElementById('watermarkStatusText');
                     const icon = document.querySelector('#toggleWatermarkBtn');
-                    
+
                     if (btn && icon) {
                         btn.textContent = newStatus ? 'Remove Watermark' : 'Add Watermark';
                         icon.innerHTML = `🎨 <span id="watermarkStatusText">${newStatus ? 'Remove Watermark' : 'Add Watermark'}</span>`;
                     }
-                    
+
                     showMessage(`Watermark ${newStatus ? 'enabled' : 'disabled'} successfully!`, 'success');
                 } else {
                     throw new Error('Failed to update watermark status');
@@ -3588,7 +3588,7 @@ Lance - The Legacy Photography`;
             window.open(fullControlsUrl, '_blank', 'width=800,height=600');
         }
     </script>
-    
+
     <!-- Import unified deletion system -->
     <script src="/static/js/photo-deletion.js"></script>
     <script>
@@ -3609,7 +3609,7 @@ Lance - The Legacy Photography`;
         // Initialize unified deletion system - ensure no conflicts
         if (typeof window.photoDeletion === 'undefined') {
             window.photoDeletion = null;
-            
+
             // Wait for PhotoDeletion class to be available
             window.initializePhotoDeletion = function() {
                 if (typeof PhotoDeletion !== 'undefined' && !window.photoDeletion) {
@@ -3621,7 +3621,7 @@ Lance - The Legacy Photography`;
                     return false;
                 }
             };
-            
+
             // Try to initialize immediately
             if (!window.initializePhotoDeletion()) {
                 // If not available immediately, try again after a short delay
@@ -3632,18 +3632,18 @@ Lance - The Legacy Photography`;
                 }, 100);
             }
         }
-        
+
         // Add loadStorageStats function to refresh storage statistics (global scope)
         window.loadStorageStats = async function loadStorageStats() {
             try {
                 const response = await fetch('/api/global-storage-stats', {
                     credentials: 'include'
                 });
-                
+
                 if (response.ok) {
                     const stats = await response.json();
                     console.log('Storage stats updated:', stats);
-                    
+
                     // Update any storage display elements
                     const storageElement = document.querySelector('.storage-info');
                     if (storageElement) {
@@ -3654,16 +3654,16 @@ Lance - The Legacy Photography`;
                 console.warn('Failed to load storage stats:', error);
             }
         };
-        
+
         // Define deleteFile function to use unified deletion (global scope)
         window.deleteFile = async function deleteFile(fileName) {
             if (!confirm(`Are you sure you want to delete ${fileName}?`)) {
                 return;
             }
-            
+
             try {
                 console.log(`Attempting to delete ${fileName} from session ${sessionId}, folder ${folderType}`);
-                
+
                 // Ensure PhotoDeletion is available
                 if (!window.photoDeletion) {
                     console.log('Initializing PhotoDeletion system...');
@@ -3671,19 +3671,19 @@ Lance - The Legacy Photography`;
                         throw new Error('PhotoDeletion system is not available');
                     }
                 }
-                
+
                 // Use unified deletion system
                 const result = await window.photoDeletion.deletePhoto(sessionId, folderType, fileName);
                 console.log('Delete result:', result);
-                
+
                 // Refresh file list and storage stats after successful deletion
                 console.log('Refreshing files after deletion...');
                 loadFiles();
                 loadStorageStats();
-                
+
             } catch (error) {
                 console.error('Delete error:', error);
-                
+
                 // Fallback: Try direct API call if PhotoDeletion fails
                 console.log('Attempting direct API deletion...');
                 try {
@@ -3691,15 +3691,15 @@ Lance - The Legacy Photography`;
                         method: 'DELETE',
                         credentials: 'include'
                     });
-                    
+
                     if (!response.ok) {
                         const errorText = await response.text();
                         throw new Error(`Server responded with ${response.status}: ${errorText}`);
                     }
-                    
+
                     const result = await response.json();
                     console.log('Direct API deletion success:', result);
-                    
+
                     if (result.success) {
                         alert(`File deleted successfully: ${fileName}`);
                         loadFiles();

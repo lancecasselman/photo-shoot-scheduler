@@ -23,16 +23,23 @@ class MultipartUploader {
    */
   calculateOptimalChunkSize(fileSize) {
     const minChunkSize = 5 * 1024 * 1024; // 5MB minimum
-    const maxChunkSize = 50 * 1024 * 1024; // 50MB for very large files
+    const maxChunkSize = 100 * 1024 * 1024; // 100MB for very large files
     const maxParts = 10000; // S3/R2 limit
+    
+    // Calculate optimal chunk size to stay under part limit
+    let optimalChunkSize = Math.max(minChunkSize, Math.ceil(fileSize / maxParts));
     
     // Dynamic chunk sizing based on file size:
     if (fileSize < 50 * 1024 * 1024) { // < 50MB - use smaller chunks for faster initial feedback
-      return 5 * 1024 * 1024; // 5MB chunks
+      return Math.min(optimalChunkSize, 5 * 1024 * 1024); // 5MB chunks
     } else if (fileSize < 500 * 1024 * 1024) { // 50-500MB - standard photo files
-      return 10 * 1024 * 1024; // 10MB chunks
-    } else { // > 500MB - large video/RAW files
-      return 25 * 1024 * 1024; // 25MB chunks for efficiency
+      return Math.min(optimalChunkSize, 10 * 1024 * 1024); // 10MB chunks
+    } else if (fileSize < 2 * 1024 * 1024 * 1024) { // 500MB-2GB - large video/RAW files
+      return Math.min(optimalChunkSize, 25 * 1024 * 1024); // 25MB chunks
+    } else if (fileSize < 10 * 1024 * 1024 * 1024) { // 2GB-10GB - very large files
+      return Math.min(optimalChunkSize, 50 * 1024 * 1024); // 50MB chunks
+    } else { // > 10GB - massive files
+      return Math.min(optimalChunkSize, maxChunkSize); // Up to 100MB chunks
     }
   }
 
@@ -44,13 +51,17 @@ class MultipartUploader {
       return this.MAX_CONCURRENT_PARTS;
     }
 
-    // Adaptive concurrency logic
-    if (fileSize < 50 * 1024 * 1024) { // Small files
+    // Adaptive concurrency logic with better scaling for large files
+    if (fileSize < 50 * 1024 * 1024) { // Small files (< 50MB)
       return Math.min(4, totalParts); // Conservative for small files
-    } else if (fileSize < 500 * 1024 * 1024) { // Medium files
+    } else if (fileSize < 500 * 1024 * 1024) { // Medium files (50MB-500MB)
       return Math.min(this.MAX_CONCURRENT_PARTS, totalParts);
-    } else { // Large files - maximize throughput
-      return Math.min(10, totalParts); // Up to 10 for very large files
+    } else if (fileSize < 2 * 1024 * 1024 * 1024) { // Large files (500MB-2GB)
+      return Math.min(12, totalParts); // Increased concurrency for large files
+    } else if (fileSize < 10 * 1024 * 1024 * 1024) { // Very large files (2GB-10GB)
+      return Math.min(16, totalParts); // Higher concurrency for very large files
+    } else { // Massive files (> 10GB)
+      return Math.min(20, totalParts); // Maximum concurrency for massive files
     }
   }
 
@@ -191,7 +202,7 @@ class MultipartUploader {
    */
   async smartUpload(fileBuffer, key, contentType, metadata = {}) {
     const fileSize = fileBuffer.length;
-    const MULTIPART_THRESHOLD = 10 * 1024 * 1024; // Use multipart for files > 10MB
+    const MULTIPART_THRESHOLD = 5 * 1024 * 1024; // Use multipart for files > 5MB (lowered for better handling)
     
     if (fileSize > MULTIPART_THRESHOLD) {
       // Use fast multipart upload for large files

@@ -14,7 +14,10 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: Infinity, // No file size limit - handle files of any size
-    files: 200, // Increased file count per request for large galleries
+    files: 500, // Increased file count per request for large galleries
+    fieldSize: Infinity, // No field size limit
+    fields: Infinity, // No field count limit
+    parts: Infinity // No part count limit
   },
   fileFilter: (req, file, cb) => {
     // Security: Validate file types - allow photography-related files

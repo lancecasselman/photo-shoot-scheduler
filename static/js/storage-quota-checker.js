@@ -77,6 +77,9 @@ class StorageQuotaChecker {
         }
 
         const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0);
+        const totalSizeGB = (totalSize / (1024 * 1024 * 1024)).toFixed(3);
+        
+        console.log(`📊 Validating upload: ${files.length} files, ${totalSizeGB}GB total`);
         
         try {
             const quotaCheck = await this.checkUploadQuota(totalSize);
