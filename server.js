@@ -332,10 +332,13 @@ pool.on('connect', (client) => {
 const LocalBackupFallback = require('./server/local-backup-fallback');
 const localBackup = new LocalBackupFallback();
 
-// Initialize services with proper dependencies
+// Initialize services with proper dependencies (single instance)
 const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
+
+// Ensure R2 is properly initialized before other services use it
+console.log('✅ Core services initialized: R2FileManager, PaymentPlanManager, PaymentScheduler');
 
 // Initialize Download Commerce Manager for advanced pricing and entitlement management
 const downloadCommerceManager = new DownloadCommerceManager();
@@ -2268,6 +2271,182 @@ app.get('/api/admin/content/:page', async (req, res) => {
     }
 });
 
+// Create new session endpoint
+app.post('/api/sessions', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        const sessionId = crypto.randomUUID();
+        
+        const {
+            clientName,
+            sessionType,
+            dateTime,
+            location,
+            phoneNumber,
+            email,
+            price,
+            depositAmount,
+            duration,
+            notes
+        } = req.body;
+        
+        // Validate required fields
+        if (!clientName || !sessionType || !dateTime) {
+            return res.status(400).json({ error: 'Missing required fields: clientName, sessionType, dateTime' });
+        }
+        
+        let client;
+        try {
+            client = await pool.connect();
+            
+            const result = await client.query(`
+                INSERT INTO photography_sessions (
+                    id, user_id, client_name, session_type, date_time,
+                    location, phone_number, email, price, deposit_amount,
+                    duration, notes, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+                RETURNING *
+            `, [
+                sessionId, userId, clientName, sessionType, dateTime,
+                location, phoneNumber, email, price || 0, depositAmount || 0,
+                duration || 60, notes || ''
+            ]);
+            
+            console.log(`✅ Session created: ${clientName} (${sessionId})`);
+            res.json({ success: true, session: result.rows[0] });
+            
+        } finally {
+            if (client) client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error creating session:', error);
+        res.status(500).json({ error: 'Failed to create session: ' + error.message });
+    }
+});
+
+// Update session endpoint
+app.put('/api/sessions/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // Verify session belongs to user
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Session not found' });
+            }
+            
+            if (sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
+            // Update session with provided fields
+            const updateFields = [];
+            const updateValues = [];
+            let paramCount = 1;
+            
+            const allowedFields = [
+                'client_name', 'session_type', 'date_time', 'location', 'phone_number',
+                'email', 'price', 'deposit_amount', 'duration', 'notes', 'contract_signed',
+                'paid', 'edited', 'delivered', 'send_reminder', 'notify_gallery_ready',
+                'deposit_paid', 'deposit_sent', 'invoice_sent'
+            ];
+            
+            for (const field of allowedFields) {
+                if (req.body[field] !== undefined) {
+                    updateFields.push(`${field} = $${paramCount}`);
+                    updateValues.push(req.body[field]);
+                    paramCount++;
+                }
+            }
+            
+            if (updateFields.length === 0) {
+                return res.status(400).json({ error: 'No valid fields to update' });
+            }
+            
+            updateFields.push(`updated_at = NOW()`);
+            updateValues.push(sessionId);
+            
+            const updateQuery = `
+                UPDATE photography_sessions 
+                SET ${updateFields.join(', ')}
+                WHERE id = $${paramCount}
+                RETURNING *
+            `;
+            
+            const result = await client.query(updateQuery, updateValues);
+            
+            res.json({ success: true, session: result.rows[0] });
+            
+        } finally {
+            if (client) client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating session:', error);
+        res.status(500).json({ error: 'Failed to update session: ' + error.message });
+    }
+});
+
+// Delete session endpoint
+app.delete('/api/sessions/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        console.log(`🗑️ DELETE SESSION: ${sessionId} by user ${userId}`);
+        
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // First verify session belongs to user
+            const sessionCheck = await client.query(
+                'SELECT user_id, client_name FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0) {
+                return res.status(404).json({ error: 'Session not found' });
+            }
+            
+            if (sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
+            const clientName = sessionCheck.rows[0].client_name;
+            
+            // Delete associated files first
+            await client.query('DELETE FROM session_files WHERE session_id = $1', [sessionId]);
+            
+            // Delete the session
+            await client.query('DELETE FROM photography_sessions WHERE id = $1', [sessionId]);
+            
+            console.log(`✅ Session deleted successfully: ${clientName} (${sessionId})`);
+            res.json({ success: true, message: `Session for ${clientName} deleted successfully` });
+            
+        } finally {
+            if (client) client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error deleting session:', error);
+        res.status(500).json({ error: 'Failed to delete session: ' + error.message });
+    }
+});
+
 // Get current user info endpoint
 app.get('/api/current-user', (req, res) => {
     if (req.session && req.session.user) {
@@ -2278,6 +2457,67 @@ app.get('/api/current-user', (req, res) => {
         });
     } else {
         res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
+// Get user sessions
+app.get('/api/sessions', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        let client;
+        try {
+            client = await pool.connect();
+            
+            const result = await client.query(`
+                SELECT 
+                    id,
+                    client_name as "clientName",
+                    session_type as "sessionType", 
+                    date_time as "dateTime",
+                    location,
+                    phone_number as "phoneNumber",
+                    email,
+                    price,
+                    deposit_amount as "depositAmount",
+                    deposit_paid as "depositPaid",
+                    deposit_sent as "depositSent",
+                    invoice_sent as "invoiceSent",
+                    deposit_paid_at as "depositPaidAt",
+                    invoice_paid_at as "invoicePaidAt",
+                    duration,
+                    notes,
+                    contract_signed as "contractSigned",
+                    paid,
+                    edited,
+                    delivered,
+                    send_reminder as "sendReminder",
+                    notify_gallery_ready as "notifyGalleryReady",
+                    photos,
+                    gallery_access_token as "galleryAccessToken",
+                    gallery_created_at as "galleryCreatedAt",
+                    gallery_expires_at as "galleryExpiresAt",
+                    gallery_ready_notified as "galleryReadyNotified",
+                    has_payment_plan as "hasPaymentPlan",
+                    payment_plan_id as "paymentPlanId",
+                    created_at as "createdAt",
+                    updated_at as "updatedAt",
+                    stripe_invoice as "stripeInvoice"
+                FROM photography_sessions 
+                WHERE user_id = $1 
+                ORDER BY date_time DESC
+            `, [userId]);
+            
+            res.json(result.rows);
+            
+        } finally {
+            if (client) client.release();
+        }
+        
+    } catch (error) {
+        console.error('Error loading sessions:', error);
+        res.status(500).json({ error: 'Failed to load sessions' });
     }
 });
 
