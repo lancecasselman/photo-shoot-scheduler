@@ -362,7 +362,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
 
       if (result.success) {
         const processingTime = Date.now() - startTime;
-        console.log(`✅ [${correlationId}] Download processed successfully: ${photoId} (${result.pricing.model}) in ${processingTime}ms`);
+        console.log(`✅ [${correlationId}] Download processed successfully: ${photoId} (${result.pricing?.model || 'unknown'}) in ${processingTime}ms`);
         
         // Add correlation ID and processing metadata to success response
         res.json({
@@ -374,16 +374,54 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
           }
         });
       } else {
-        // Use standardized error handling for download service errors
-        const errorCode = result.code || 'PROCESSING_ERROR';
+        // Handle specific error codes for different pricing models
+        let errorCode = result.code || 'PROCESSING_ERROR';
+        let statusCode = 400;
+        
+        // Map specific errors to appropriate HTTP status codes
+        switch (result.code) {
+          case 'PAYMENT_REQUIRED':
+            statusCode = 402; // Payment Required
+            break;
+          case 'QUOTA_EXCEEDED':
+            statusCode = 429; // Too Many Requests
+            break;
+          case 'INVALID_TOKEN':
+          case 'EXPIRED_ACCESS':
+            statusCode = 401; // Unauthorized
+            break;
+          case 'SESSION_NOT_FOUND':
+          case 'PHOTO_NOT_FOUND':
+            statusCode = 404; // Not Found
+            break;
+          default:
+            statusCode = 400; // Bad Request
+        }
+        
         const downloadContext = {
           ...context,
           additional: {
             ...context.additional,
             downloadServiceError: result.error,
-            pricingModel: result.pricing?.model
+            pricingModel: result.pricing?.model,
+            paymentInfo: result.paymentInfo
           }
         };
+        
+        // For payment required errors, include payment info in response
+        if (result.code === 'PAYMENT_REQUIRED' && result.paymentInfo) {
+          return res.status(statusCode).json({
+            success: false,
+            error: result.error,
+            code: result.code,
+            paymentInfo: result.paymentInfo,
+            meta: {
+              correlationId,
+              processingTime: Date.now() - startTime,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
         
         return res.handleError(errorCode, result.error, downloadContext);
       }

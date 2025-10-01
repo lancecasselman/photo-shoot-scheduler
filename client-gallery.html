@@ -22,7 +22,7 @@
             color: #333;
             position: relative;
         }
-        
+
         body::before {
             content: '';
             position: fixed;
@@ -52,7 +52,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .header::before {
             content: '';
             position: absolute;
@@ -63,7 +63,7 @@
             background: linear-gradient(90deg, transparent, #667eea, transparent);
             animation: shimmer 3s infinite;
         }
-        
+
         @keyframes shimmer {
             0% { left: -100%; }
             100% { left: 100%; }
@@ -100,42 +100,42 @@
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
             display: none;
         }
-        
+
         .pricing-banner.show {
             display: block;
             animation: slideDown 0.5s ease;
         }
-        
+
         /* Enhanced pricing mode visual indicators */
         .pricing-banner.free-mode {
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(101, 163, 13, 0.95) 100%);
         }
-        
+
         .pricing-banner.paid-mode {
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(185, 28, 28, 0.95) 100%);
         }
-        
+
         .pricing-banner.freemium-mode.freemium-free {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(34, 197, 94, 0.95) 100%);
         }
-        
+
         .pricing-banner.freemium-mode.freemium-paid {
             background: linear-gradient(135deg, rgba(245, 101, 101, 0.95) 0%, rgba(251, 146, 60, 0.95) 100%);
         }
-        
+
         .pricing-banner.bulk-mode {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
         }
-        
+
         .pricing-banner.rate-limited {
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-        
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -176,7 +176,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .photo-count::before {
             content: '📸';
             font-size: 1.5rem;
@@ -335,7 +335,7 @@
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
         }
-        
+
         .add-to-cart-btn.in-cart:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
@@ -894,41 +894,41 @@
             body {
                 padding: 15px;
             }
-            
+
             .gallery-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
-            
+
             .cart-drawer {
                 width: 100%;
                 right: -100%;
             }
-            
+
             .floating-cart {
                 width: 60px;
                 height: 60px;
                 font-size: 25px;
             }
-            
+
             .header {
                 padding: 30px 25px;
             }
-            
+
             .header h1 {
                 font-size: 2.2rem;
             }
-            
+
             .gallery-actions {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             .action-buttons {
                 width: 100%;
                 flex-direction: column;
             }
-            
+
             .select-all-btn {
                 width: 100%;
             }
@@ -938,7 +938,7 @@
             .header h1 {
                 font-size: 1.8rem;
             }
-            
+
             .cart-drawer {
                 padding-top: env(safe-area-inset-top);
             }
@@ -1353,7 +1353,7 @@
             </div>
             <button class="close-cart" id="closeCart">✕</button>
         </div>
-        
+
         <!-- Quota Information Display -->
         <div class="quota-info" id="quotaInfo" style="display: none;">
             <div class="quota-text" id="quotaText">Loading quota...</div>
@@ -1361,7 +1361,7 @@
                 <div class="quota-bar quota-good" id="quotaBar"></div>
             </div>
         </div>
-        
+
         <div class="cart-items" id="cartItems">
             <div class="cart-empty">
                 <div class="cart-empty-icon">🛒</div>
@@ -1418,7 +1418,7 @@
         <div class="download-queue-title">Downloads in Progress</div>
         <div id="downloadQueueItems"></div>
     </div>
-    
+
     <!-- Include Screenshot Protection Script -->
     <script src="/static/js/screenshot-protection.js"></script>
 
@@ -1431,10 +1431,10 @@
             indicator.textContent = '✅ JavaScript is running!';
             document.body.appendChild(indicator);
         });
-        
+
         // Add immediate debugging
         console.log('🚀 Gallery JavaScript starting to load...');
-        
+
         // Add error handler to catch any issues
         window.addEventListener('error', function(event) {
             console.error('❌ JavaScript Error:', event.error);
@@ -1446,7 +1446,7 @@
                 document.getElementById('errorMessage').textContent = 'JavaScript Error: ' + event.error.message;
             }
         });
-        
+
         // ClientGalleryCart Class
         class ClientGalleryCart {
             constructor() {
@@ -1461,14 +1461,15 @@
                 this.downloadQueue = [];
                 this.uniqueVisitorId = null;
                 this.cachedGalleryClientKey = null;
-                
+                this.currentQuota = null; // Track current quota status
+
                 // Initialize from URL - support both path and query parameter patterns
                 const urlParams = new URLSearchParams(window.location.search);
                 const pathParts = window.location.pathname.split('/');
-                
+
                 // Try to get token from URL parameters first (e.g., ?token=abc123)
                 this.galleryToken = urlParams.get('token');
-                
+
                 // If no token in parameters, extract from URL path 
                 if (!this.galleryToken) {
                     // Support patterns like /gallery/token or /g/token
@@ -1477,14 +1478,14 @@
                         this.galleryToken = lastPathSegment;
                     }
                 }
-                
+
                 console.log('🔑 Extracted gallery token:', this.galleryToken ? 'Found' : 'Not found', 'from', 
                            urlParams.get('token') ? 'URL parameters' : 'URL path');
-                
+
                 // Check for success/cancel from Stripe
                 this.checkoutStatus = urlParams.get('status');
                 this.sessionId = urlParams.get('session_id');
-                
+
                 // Bind methods
                 this.init = this.init.bind(this);
                 this.loadCart = this.loadCart.bind(this);
@@ -1497,11 +1498,14 @@
                 this.loadEntitlements = this.loadEntitlements.bind(this);
                 this.downloadPhoto = this.downloadPhoto.bind(this);
                 this.handleCheckoutReturn = this.handleCheckoutReturn.bind(this);
-                
+                this.updatePricingBanner = this.updatePricingBanner.bind(this);
+                this.calculatePrice = this.calculatePrice.bind(this);
+                this.renderPhotoCard = this.renderPhotoCard.bind(this);
+
                 // Initialize
                 this.init();
             }
-            
+
             /**
              * Get the correct API base URL for both localhost development and production
              * For localhost development: use current origin (e.g., http://localhost:5000)
@@ -1509,55 +1513,55 @@
              */
             getApiBaseUrl() {
                 const hostname = window.location.hostname;
-                
+
                 // For localhost development, use current origin
                 if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('replit')) {
                     return window.location.origin;
                 }
-                
+
                 // For production published galleries on subdomains, use main domain
                 return 'https://photomanagementsystem.com';
             }
-            
+
             async init() {
                 console.log('🛒 Initializing ClientGalleryCart...');
-                
+
                 // CRITICAL FIX: Generate unique visitor ID for freemium quota tracking
                 // Must be done FIRST before any API calls that use getClientKey()
                 this.generateUniqueVisitorId();
                 console.log('🆔 Visitor ID initialized:', this.uniqueVisitorId);
-                
+
                 // Initialize screenshot protection system
                 this.initializeProtection();
-                
+
                 // Load saved cart and client info
                 this.loadCart();
                 this.loadClientInfo();
-                
+
                 // Setup UI event listeners
                 this.setupEventListeners();
-                
+
                 // Load gallery data
                 await this.loadGallery();
-                
+
                 // FREEMIUM FIX: Generate and cache gallery-based client key for freemium mode
                 if (this.policy && this.policy.mode === 'freemium' && this.galleryToken && this.sessionData) {
                     this.cachedGalleryClientKey = await this.generateGalleryClientKey(this.galleryToken, this.sessionData.id);
                     console.log(`🔑 Cached gallery client key for freemium mode: ${this.cachedGalleryClientKey}`);
                 }
-                
+
                 // Recalculate cart prices based on correct freemium logic
                 // This fixes any cart items that were saved with incorrect prices
                 if (this.cart.length > 0 && this.policy) {
                     console.log('🛒 Recalculating cart prices after loading gallery policy...');
                     this.recalculatePrices();
                 }
-                
+
                 // Handle checkout return
                 if (this.checkoutStatus) {
                     await this.handleCheckoutReturn();
                 }
-                
+
                 // Load entitlements to check for already purchased photos
                 // For freemium galleries, we need to load entitlements even without client email
                 // to properly show download buttons for unpurchased photos
@@ -1565,7 +1569,7 @@
 
                 // Load initial quota status
                 await this.loadQuotaStatus();
-                
+
                 // Synchronize cart state with backend after session is fully loaded
                 // This ensures cart consistency between localStorage and server
                 console.log('🔄 Synchronizing cart state with backend...');
@@ -1578,27 +1582,27 @@
                 } else {
                     console.warn('⚠️ Cart synchronization failed, using local state:', syncResult.message || syncResult.error);
                 }
-                
+
                 // Initialize real-time gallery updates after everything is loaded
                 this.initializeRealTimeUpdates();
             }
-            
+
             initializeRealTimeUpdates() {
                 if (!this.galleryToken) {
                     console.warn('⚠️ No gallery token available for real-time updates');
                     return;
                 }
-                
+
                 try {
                     console.log('🔄 Initializing real-time gallery updates...');
-                    
+
                     // Create EventSource connection to SSE endpoint
                     this.eventSource = new EventSource(`${this.getApiBaseUrl()}/api/gallery/events?token=${this.galleryToken}`);
-                    
+
                     this.eventSource.onopen = (event) => {
                         console.log('✅ Real-time gallery updates connected');
                     };
-                    
+
                     // Listen for connection confirmation
                     this.eventSource.addEventListener('connected', (event) => {
                         try {
@@ -1608,7 +1612,7 @@
                             console.error('❌ Error parsing connection event:', error);
                         }
                     });
-                    
+
                     // Listen for photo updates (server sends 'photos_updated' events)
                     this.eventSource.addEventListener('photos_updated', (event) => {
                         try {
@@ -1619,7 +1623,7 @@
                             console.error('❌ Error parsing photos updated event:', error);
                         }
                     });
-                    
+
                     // Listen for gallery refresh events
                     this.eventSource.addEventListener('gallery_refresh', (event) => {
                         try {
@@ -1630,7 +1634,7 @@
                             console.error('❌ Error parsing gallery refresh event:', error);
                         }
                     });
-                    
+
                     // Listen for heartbeat events (keep-alive)
                     this.eventSource.addEventListener('heartbeat', (event) => {
                         try {
@@ -1640,10 +1644,10 @@
                             console.error('❌ Error parsing heartbeat event:', error);
                         }
                     });
-                    
+
                     this.eventSource.onerror = (event) => {
                         console.error('❌ Real-time gallery updates connection error:', event);
-                        
+
                         // Attempt to reconnect after a delay
                         setTimeout(() => {
                             if (this.eventSource.readyState === EventSource.CLOSED) {
@@ -1656,47 +1660,47 @@
                     console.error('❌ Failed to initialize real-time updates:', error);
                 }
             }
-            
+
             async handlePhotosAdded(data) {
                 try {
                     const newPhotosCount = data.newPhotosCount || 0;
                     console.log(`🆕 ${newPhotosCount} new photos added to gallery!`, data);
-                    
+
                     // Show a brief notification to the user
                     if (newPhotosCount > 0) {
                         this.showUpdateNotification(`${newPhotosCount} new photo${newPhotosCount > 1 ? 's' : ''} added!`);
                     }
-                    
+
                     // Refresh the gallery to show new photos
                     await this.refreshGallery();
-                    
+
                 } catch (error) {
                     console.error('❌ Error handling photos added:', error);
                 }
             }
-            
+
             async refreshGallery() {
                 try {
                     console.log('🔄 Refreshing gallery with new photos...');
-                    
+
                     // Re-verify gallery access using unified API
                     const validateResponse = await this.validateUnifiedAccess();
-                    
+
                     if (validateResponse.success && validateResponse.data.session) {
                         const verifyData = validateResponse.data;
                         // Update photos array with new data
                         this.photos = verifyData.photos || [];
                         console.log(`📸 Gallery refreshed: now showing ${this.photos.length} photos`);
-                        
+
                         // Refresh the display
                         this.displayPhotos();
-                        
+
                         // Update UI elements that show photo count
                         const photoCountElements = document.querySelectorAll('.photo-count');
                         photoCountElements.forEach(element => {
                             element.textContent = `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''}`;
                         });
-                        
+
                         // If gallery was empty before, show gallery actions
                         if (this.photos.length > 0) {
                             document.getElementById('galleryActions').style.display = 'flex';
@@ -1710,7 +1714,7 @@
                     console.error('❌ Error refreshing gallery:', error);
                 }
             }
-            
+
             showUpdateNotification(message) {
                 // Create or update notification element
                 let notification = document.getElementById('realtimeNotification');
@@ -1734,22 +1738,22 @@
                     `;
                     document.body.appendChild(notification);
                 }
-                
+
                 notification.textContent = message;
-                
+
                 // Show notification
                 requestAnimationFrame(() => {
                     notification.style.opacity = '1';
                     notification.style.transform = 'translateY(0)';
                 });
-                
+
                 // Hide notification after 3 seconds
                 setTimeout(() => {
                     notification.style.opacity = '0';
                     notification.style.transform = 'translateY(-20px)';
                 }, 3000);
             }
-            
+
             // Clean up EventSource on page unload
             disconnectRealTimeUpdates() {
                 if (this.eventSource) {
@@ -1758,7 +1762,7 @@
                     this.eventSource = null;
                 }
             }
-            
+
             initializeProtection() {
                 // Initialize screenshot protection if available
                 if (window.ScreenshotProtection) {
@@ -1768,36 +1772,36 @@
                     console.warn('⚠️ Screenshot protection module not loaded');
                 }
             }
-            
+
             setupEventListeners() {
                 // Cart toggle
                 const floatingCart = document.getElementById('floatingCart');
                 const closeCart = document.getElementById('closeCart');
                 const cartOverlay = document.getElementById('cartOverlay');
-                
+
                 floatingCart?.addEventListener('click', () => this.openCart());
                 closeCart?.addEventListener('click', () => this.closeCart());
                 cartOverlay?.addEventListener('click', () => this.closeCart());
-                
+
                 // Cart actions
                 document.getElementById('checkoutBtn')?.addEventListener('click', () => this.proceedToCheckout());
                 document.getElementById('clearCartBtn')?.addEventListener('click', () => this.clearCart());
-                
+
                 // Select all button
                 document.getElementById('selectAllBtn')?.addEventListener('click', () => this.selectAllPhotos());
-                
+
                 // Email modal
                 document.getElementById('emailForm')?.addEventListener('submit', (e) => this.handleEmailSubmit(e));
                 document.getElementById('cancelEmail')?.addEventListener('click', () => this.closeEmailModal());
-                
+
                 // Mobile swipe to close cart
                 let startX = 0;
                 const cartDrawer = document.getElementById('cartDrawer');
-                
+
                 cartDrawer?.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
                 });
-                
+
                 cartDrawer?.addEventListener('touchend', (e) => {
                     const endX = e.changedTouches[0].clientX;
                     if (endX - startX > 100) { // Swipe right
@@ -1805,37 +1809,37 @@
                     }
                 });
             }
-            
+
             async loadGallery() {
                 try {
                     console.log('📸 Loading gallery with token:', this.galleryToken);
-                    
+
                     // Use new unified API for gallery access validation
                     const validateResponse = await this.validateUnifiedAccess();
-                    
+
                     if (!validateResponse.success) {
                         console.error('❌ Gallery access validation failed:', validateResponse.error);
                         this.showError(validateResponse.error || 'Unable to access gallery');
                         return;
                     }
-                    
+
                     const verifyData = validateResponse.data;
                     console.log('🔍 Unified API Response received:', verifyData);
                     console.log('🔍 API Response data structure:', JSON.stringify(verifyData, null, 2));
-                    
+
                     if (!verifyData.success || !verifyData) {
                         throw new Error(verifyData?.error || 'Gallery access denied');
                     }
-                    
+
                     // Check if we have success and session data
                     if (!verifyData.success || !verifyData.session) {
                         console.error('❌ Invalid API response structure:', verifyData);
                         throw new Error('Invalid gallery response structure');
                     }
-                    
+
                     const sessionData = verifyData.session;
                     console.log('🔍 Session data extracted:', sessionData);
-                    
+
                     // Extract session data from the response (photos are included)
                     this.sessionData = {
                         id: verifyData.sessionId || sessionData.id,
@@ -1849,16 +1853,16 @@
                         freeDownloads: sessionData.freeDownloads
                     };
                     console.log('✅ Gallery verified:', this.sessionData);
-                    
+
                     // Load policy from session data to enable freemium mode
                     await this.loadPolicy();
                     console.log('🔧 Policy loaded:', this.policy);
-                    
+
                     // FIX: Photos are in verifyData.photos, not sessionData.photos
                     this.photos = verifyData.photos || [];
                     console.log(`📸 Photos array found:`, this.photos);
                     console.log(`📸 Loaded ${this.photos.length} photos`);
-                    
+
                     // Debug each photo
                     this.photos.forEach((photo, index) => {
                         console.log(`📸 Photo ${index + 1}:`, {
@@ -1869,15 +1873,15 @@
                             hasFilename: !!photo.filename
                         });
                     });
-                    
+
                     // Get download policy
                     await this.loadPolicy();
-                    
+
                     // Update UI
                     this.updateGalleryUI();
                     await this.updatePricingBanner();
                     this.displayPhotos();
-                    
+
                     // Hide loading, show gallery
                     document.getElementById('loadingContainer').style.display = 'none';
                     if (this.photos.length > 0) {
@@ -1888,27 +1892,27 @@
                         console.warn('⚠️ No photos found, showing empty gallery');
                         document.getElementById('emptyGallery').style.display = 'block';
                     }
-                    
+
                 } catch (error) {
                     console.error('❌ Error loading gallery:', error);
                     console.error('❌ Error stack:', error.stack);
                     console.error('❌ Token being used:', this.galleryToken);
-                    
+
                     // CRITICAL DEBUG: Try to force the gallery to work even with errors
                     console.log('🔄 ATTEMPTING EMERGENCY GALLERY RECOVERY...');
-                    
+
                     try {
                         // Make one more direct API call using unified endpoint
                         const emergencyResponse = await this.validateUnifiedAccess();
-                        
+
                         console.log('🚨 EMERGENCY RESPONSE:', emergencyResponse);
                         const emergencyData = emergencyResponse.data;
-                        
+
                         if (emergencyData.success && emergencyData.session) {
                             console.log('✅ EMERGENCY RECOVERY SUCCESS - Processing data...');
                             this.sessionData = emergencyData.session;
                             this.photos = emergencyData.photos || [];
-                            
+
                             // Set freemium policy directly from API response
                             this.policy = {
                                 mode: 'freemium',
@@ -1916,10 +1920,10 @@
                                 freeCount: parseInt(this.sessionData.freeDownloads || 2),
                                 screenshotProtection: true
                             };
-                            
+
                             console.log('✅ EMERGENCY POLICY SET:', this.policy);
                             console.log('✅ EMERGENCY PHOTOS LOADED:', this.photos.length);
-                            
+
                             // Force render the gallery
                             this.displayPhotos();
                             document.getElementById('loadingContainer').style.display = 'none';
@@ -1927,22 +1931,22 @@
                                 document.getElementById('galleryActions').style.display = 'flex';
                                 document.getElementById('floatingCart').style.display = 'flex';
                             }
-                            
+
                             console.log('🎉 EMERGENCY RECOVERY COMPLETE - Gallery should now show freemium buttons!');
                             return; // Exit successful recovery
                         }
                     } catch (emergencyError) {
                         console.error('💥 EMERGENCY RECOVERY FAILED:', emergencyError);
                     }
-                    
+
                     this.showError(error.message);
-                    
+
                     // Hide loading and show error
                     document.getElementById('loadingContainer').style.display = 'none';
                     document.getElementById('errorContainer').style.display = 'block';
                 }
             }
-            
+
             async loadPolicy() {
                 // Policy information is now included in the session data from verification
                 // Build policy object from session data
@@ -1968,14 +1972,14 @@
                         default:
                             mode = 'free';
                     }
-                    
+
                     this.policy = {
                         mode: mode,
                         pricePerPhoto: parseFloat(this.sessionData.pricePerDownload || this.sessionData.price_per_download || 0) || 0,
                         freeCount: parseInt(this.sessionData.freeDownloads || this.sessionData.free_downloads || 0, 10) || 0,
                         screenshotProtection: true // Enable by default for previews
                     };
-                    
+
                     console.log('📋 Built policy from session data:', this.policy);
                     console.log('🐛 DEBUG: Raw session data for policy:', {
                         pricingModel: pricingModel,
@@ -1984,7 +1988,7 @@
                         parsedPricePerPhoto: this.policy.pricePerPhoto,
                         parsedFreeCount: this.policy.freeCount
                     });
-                    
+
                     // CRITICAL DEBUG: Make absolutely sure freemium is detected
                     if (pricingModel === 'freemium') {
                         console.log('✅✅✅ FREEMIUM MODE CONFIRMED - Should show immediate download buttons!');
@@ -1994,7 +1998,7 @@
                         console.log('❌❌❌ NOT IN FREEMIUM MODE - Will show Add to Cart buttons');
                         console.log('❌ Current mode:', mode, 'from pricingModel:', pricingModel);
                     }
-                    
+
                     // Update screenshot protection settings
                     if (this.protection && this.policy.screenshotProtection !== undefined) {
                         this.protection.toggleProtection(this.policy.screenshotProtection);
@@ -2006,117 +2010,84 @@
                     console.log('📋 Using fallback free policy');
                 }
             }
-            
+
             updateGalleryUI() {
                 // Update header
                 document.getElementById('galleryTitle').textContent = 
                     this.sessionData.sessionName || 'Photo Gallery';
                 document.getElementById('gallerySubtitle').textContent = 
                     `${this.sessionData.clientName || ''} - ${new Date(this.sessionData.sessionDate).toLocaleDateString()}`;
-                
+
                 // Update photo count
                 document.getElementById('photoCount').textContent = 
                     `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''}`;
             }
-            
-            async updatePricingBanner() {
+
+            updatePricingBanner() {
                 const banner = document.getElementById('pricingBanner');
-                const info = document.getElementById('pricingInfo');
-                
-                if (!this.policy) {
-                    banner.classList.remove('show');
+                const pricingInfo = document.getElementById('pricingInfo');
+
+                if (!banner || !pricingInfo || !this.policy) {
+                    console.log('🚫 Cannot update pricing banner - missing elements or policy');
                     return;
                 }
-                
-                // Get real-time status from unified API for accurate quota info
-                let quotaInfo = this.currentQuota;
-                try {
-                    const statusResult = await this.getUnifiedSessionStatus();
-                    if (statusResult.success && statusResult.quota) {
-                        quotaInfo = statusResult.quota;
-                        // Also update policy if it has changed
-                        if (statusResult.policy) {
-                            this.policy = statusResult.policy;
-                        }
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Could not fetch real-time status for banner:', error);
-                }
-                
-                let message = '';
-                let bannerClass = 'pricing-banner';
-                
+
+                console.log(`🏷️ Updating pricing banner for mode: ${this.policy.mode}`);
+
+                // Reset classes
+                banner.className = 'pricing-banner show';
+
+                let bannerText = '';
+                let bannerClass = '';
+
                 switch (this.policy.mode) {
                     case 'free':
-                        message = '✨ ALL PHOTOS ARE FREE TO DOWNLOAD!';
-                        bannerClass += ' free-mode';
+                        bannerText = '🎉 All downloads are FREE! Click any photo to download instantly.';
+                        bannerClass = 'free-mode';
+                        console.log('🆓 Set FREE mode banner');
                         break;
-                        
+
+                    case 'freemium':
+                        const freeCount = parseInt(this.policy.freeCount) || 0;
+                        const priceAfterFree = parseFloat(this.policy.pricePerPhoto) || 5.00;
+
+                        if (freeCount > 0) {
+                            bannerText = `⭐ First ${freeCount} downloads FREE, then $${priceAfterFree.toFixed(2)} each. Start downloading!`;
+                            bannerClass = 'freemium-mode freemium-free';
+                        } else {
+                            bannerText = `💰 Downloads: $${priceAfterFree.toFixed(2)} per photo. Add to cart to purchase.`;
+                            bannerClass = 'freemium-mode freemium-paid';
+                        }
+                        console.log(`🎁 Set FREEMIUM mode banner: ${freeCount} free, $${priceAfterFree} paid`);
+                        break;
+
+                    case 'per_photo':
                     case 'fixed':
                     case 'paid':
-                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || this.policy.pricePerDownload || 0);
-                        message = `💳 PAID GALLERY - $${fixedPrice.toFixed(2)} per photo`;
-                        bannerClass += ' paid-mode';
+                        const paidPrice = parseFloat(this.policy.pricePerPhoto) || 5.00;
+                        bannerText = `💰 Premium downloads: $${paidPrice.toFixed(2)} per photo. Add to cart to purchase.`;
+                        bannerClass = 'paid-mode';
+                        console.log(`💵 Set PAID mode banner: $${paidPrice} per photo`);
                         break;
-                        
-                    case 'freemium':
-                        const freeCount = parseInt(this.policy.freeCount || 0);
-                        const afterPrice = parseFloat(this.policy.pricePerPhoto || this.policy.pricePerDownload || 0);
-                        
-                        // Use quota info from unified API for accurate remaining count
-                        let remaining = 0;
-                        if (quotaInfo && quotaInfo.freeRemaining !== undefined) {
-                            remaining = quotaInfo.freeRemaining;
-                        } else {
-                            // Fallback to entitlements calculation
-                            const usedFree = this.entitlements.filter(e => !e.orderId || e.orderId === null).length;
-                            remaining = Math.max(0, freeCount - usedFree);
-                        }
-                        
-                        console.log(`🔢 FREEMIUM Banner: freeCount=${freeCount}, remaining=${remaining}, afterPrice=${afterPrice}`);
-                        
-                        if (remaining > 0) {
-                            message = `🆓 FREEMIUM - ${remaining} FREE downloads left, then $${afterPrice.toFixed(2)} each`;
-                            bannerClass += ' freemium-mode freemium-free';
-                        } else {
-                            message = `💳 FREE QUOTA USED - Additional photos: $${afterPrice.toFixed(2)} each`;
-                            bannerClass += ' freemium-mode freemium-paid';
-                        }
-                        break;
-                        
-                    case 'per_photo':
-                        message = '💳 PAID GALLERY - Individual pricing per photo';
-                        bannerClass += ' paid-mode';
-                        break;
-                        
+
                     case 'bulk':
-                        if (this.policy.bulkTiers && this.policy.bulkTiers.length > 0) {
-                            const firstTier = this.policy.bulkTiers[0];
-                            const price = parseFloat(firstTier.price) || 0;
-                            const qty = parseInt(firstTier.qty) || 1;
-                            message = `📦 BULK PRICING - ${qty}+ photos at $${price.toFixed(2)} each`;
-                        } else {
-                            message = '📦 BULK PRICING AVAILABLE';
-                        }
-                        bannerClass += ' bulk-mode';
+                        bannerText = '📦 Bulk pricing available - better prices for multiple downloads!';
+                        bannerClass = 'bulk-mode';
+                        console.log('📦 Set BULK mode banner');
                         break;
-                        
+
                     default:
-                        message = '📥 DOWNLOADS AVAILABLE';
-                        bannerClass += ' default-mode';
+                        bannerText = `📷 Photo downloads available (${this.policy.mode} mode)`;
+                        bannerClass = '';
+                        console.warn(`⚠️ Unknown pricing mode: ${this.policy.mode}`);
                 }
-                
-                // Add rate limit warning if applicable
-                if (quotaInfo && quotaInfo.rateLimited) {
-                    message += ' ⚠️ Rate limit active';
-                    bannerClass += ' rate-limited';
-                }
-                
-                info.textContent = message;
-                banner.className = bannerClass;
-                banner.classList.add('show');
+
+                pricingInfo.textContent = bannerText;
+                banner.classList.add(bannerClass);
+
+                console.log(`✅ Pricing banner updated: "${bannerText}" with class "${bannerClass}"`);
             }
-            
+
             displayPhotos() {
                 console.log('🎨 Starting to display photos...');
                 const grid = document.getElementById('galleryGrid');
@@ -2124,36 +2095,36 @@
                     console.error('❌ Gallery grid element not found!');
                     return;
                 }
-                
+
                 console.log(`🎨 Clearing grid and rendering ${this.photos.length} photos`);
                 grid.innerHTML = '';
-                
+
                 this.photos.forEach((photo, index) => {
                     console.log(`🎨 Creating photo card ${index + 1}/${this.photos.length}:`, photo.filename);
                     try {
-                        const photoCard = this.createPhotoCard(photo, index);
+                        const photoCard = this.renderPhotoCard(photo, index);
                         grid.appendChild(photoCard);
                         console.log(`✅ Photo card ${index + 1} added to grid`);
                     } catch (error) {
                         console.error(`❌ Error creating photo card ${index + 1}:`, error);
                     }
                 });
-                
+
                 console.log(`🎨 Gallery grid now has ${grid.children.length} photo cards`);
-                
+
                 // Apply screenshot protection to all displayed photos
                 this.applyProtectionToPhotos();
                 console.log('🎨 Photo display complete');
             }
-            
+
             applyProtectionToPhotos() {
                 if (!this.protection) return;
-                
+
                 // Apply protection to all images based on entitlement status
                 document.querySelectorAll('.gallery-photo').forEach(img => {
                     const photoId = img.dataset.photoId;
                     const isEntitled = img.dataset.entitled === 'true';
-                    
+
                     // Only protect unpurchased photos
                     if (!isEntitled) {
                         this.protection.protectImage(img, false);
@@ -2163,241 +2134,226 @@
                     }
                 });
             }
-            
-            createPhotoCard(photo, index) {
-                console.log(`🃏 Creating card for photo ${index + 1}:`, {
-                    id: photo.id,
-                    filename: photo.filename,
-                    url: photo.url,
-                    sessionId: this.sessionData?.id
-                });
-                
-                const card = document.createElement('div');
-                card.className = 'photo-card';
-                card.id = `photo-${index}`;
-                
-                // Check if photo is in cart
-                const inCart = this.cart.some(item => item.photoId === photo.filename);
-                if (inCart) {
-                    card.classList.add('in-cart');
-                }
-                console.log(`🃏 Photo ${index + 1} in cart: ${inCart}`);
-                
-                // Check if photo is already purchased (entitled)
-                // STANDARDIZED: Always use filename as PRIMARY identifier, URL as fallback only
-                const photoIdToCheck = photo.filename;
+
+            renderPhotoCard(photo, index) {
+                // STANDARDIZED: Use filename as primary photo identifier
+                // Fallback to index if filename is missing
+                const photoIdToCheck = photo.filename || photo.id || String(index);
                 const isEntitled = this.entitlements.some(e => 
-                    e.photoId === photo.filename ||     // PRIMARY: filename match
+                    e.photoId === photoIdToCheck ||     // PRIMARY: filename match
                     e.photoUrl === photo.url            // FALLBACK: URL-based match (backwards compatibility)
                 );
-                console.log(`🃏 Photo ${index + 1} (photoId: ${photoIdToCheck}) entitled: ${isEntitled}`, {
-                    availableEntitlements: this.entitlements.map(e => ({ photoId: e.photoId, photoUrl: e.photoUrl })),
-                    checkingFor: { photoId: photo.id, index: index.toString(), filename: photo.filename, url: photo.url }
-                });
                 
-                // 🐛 DEBUG: Log policy and freemium button logic
-                console.log(`🐛 DEBUG Photo ${index + 1} Button Logic:`, {
-                    isEntitled: isEntitled,
-                    policy: this.policy,
-                    policyMode: this.policy?.mode,
-                    isFreemium: this.policy && this.policy.mode === 'freemium',
-                    willShowFreemiumButton: !isEntitled && this.policy && this.policy.mode === 'freemium'
-                });
-                
-                // Calculate price for this photo
-                const price = this.calculatePhotoPrice(index);
-                console.log(`🃏 Photo ${index + 1} price: ${price}`);
-                
-                // Generate preview URL using the new preview API
-                const filename = photo.filename || photo.name || `photo-${index}.jpg`;
-                const previewUrl = `/api/preview/${this.sessionData.id}/${encodeURIComponent(filename)}?token=${this.galleryToken}`;
-                console.log(`🃏 Photo ${index + 1} preview URL: ${previewUrl}`);
-                
-                card.innerHTML = `
-                    <div class="photo-wrapper">
-                        <img src="${previewUrl}" 
-                             alt="${photo.filename}" 
-                             loading="lazy"
-                             data-photo-id="${photo.filename}"
-                             data-entitled="${isEntitled}"
-                             data-price="${price}"
-                             data-original-url="${photo.url}"
-                             class="gallery-photo ${!isEntitled ? 'unpurchased' : 'purchased'}"
-                             onerror="console.error('❌ Failed to load image:', this.src)"
-                             onload="console.log('✅ Image loaded:', this.src)">
-                        ${!isEntitled && price !== null ? `
-                            <div class="price-badge ${price === 0 ? 'free' : 'paid'}">
-                                ${price === 0 ? 'FREE' : `$${price.toFixed(2)}`}
+                const price = this.calculatePrice(index, this.policy, this.entitlements.filter(e => e.photoId === photoIdToCheck).length);
+                const isInCart = this.cart.some(item => item.photoId === photoIdToCheck);
+
+                console.log(`🖼️ Rendering photo card ${index}: ${photoIdToCheck} (price: $${price === null ? 'N/A' : price.toFixed(2)}, hasEntitlement: ${isEntitled}, mode: ${this.policy?.mode})`);
+
+                let priceBadge = '';
+                // Show price badge only if not free, not entitled, and has a valid price
+                if (this.policy && this.policy.mode !== 'free' && !isEntitled && price !== null && price !== undefined && price !== 0) {
+                    priceBadge = `<div class="price-badge paid">$${price.toFixed(2)}</div>`;
+                } else if (this.policy && this.policy.mode !== 'free' && !isEntitled && price === 0) {
+                    // Show FREE badge if freemium and within free tier
+                    priceBadge = `<div class="price-badge free">FREE</div>`;
+                }
+
+                let downloadButtonClass = 'download-btn';
+                let downloadButtonText = '📥 Download';
+                let addToCartButtonClass = 'add-to-cart-btn';
+                let addToCartButtonText = '🛒 Add to Cart';
+                let showAddToCartButton = true;
+
+                // Determine button states based on pricing model and entitlements
+                if (isEntitled) {
+                    // User already has entitlement - immediate download
+                    downloadButtonClass += ' immediate';
+                    downloadButtonText = '📥 Download Now';
+                    showAddToCartButton = false; // Hide cart button if already entitled
+
+                    if (this.policy?.mode === 'free') {
+                        downloadButtonClass += ' free';
+                    } else {
+                        downloadButtonClass += ' paid';
+                    }
+                } else {
+                    // No entitlement yet - determine based on pricing model
+                    switch (this.policy?.mode) {
+                        case 'free':
+                            downloadButtonClass += ' immediate free';
+                            downloadButtonText = '📥 Free Download';
+                            showAddToCartButton = false; // No cart needed for free mode
+                            break;
+
+                        case 'freemium':
+                            if (price === 0) {
+                                // Within free limit
+                                downloadButtonClass += ' immediate free';
+                                downloadButtonText = '📥 Free Download';
+                                showAddToCartButton = false; // Free download, no cart needed
+                            } else {
+                                // Beyond free limit, requires payment
+                                downloadButtonText = '🛒 Add to Cart';
+                                addToCartButtonText = isInCart ? '✓ In Cart' : '🛒 Add to Cart';
+                                showAddToCartButton = true;
+                            }
+                            break;
+
+                        case 'per_photo':
+                        case 'fixed':
+                        case 'paid':
+                            // Always requires payment
+                            downloadButtonText = '🛒 Add to Cart';
+                            addToCartButtonText = isInCart ? '✓ In Cart' : '🛒 Add to Cart';
+                            showAddToCartButton = true;
+                            break;
+
+                        case 'bulk':
+                            downloadButtonText = '🛒 Add to Cart';
+                            addToCartButtonText = isInCart ? '✓ In Cart' : '🛒 Add to Cart';
+                            showAddToCartButton = true;
+                            break;
+
+                        default:
+                            downloadButtonText = '📥 Download'; // Fallback
+                            showAddToCartButton = false;
+                    }
+                }
+
+                if (isInCart) {
+                    addToCartButtonClass += ' in-cart';
+                    addToCartButtonText = '✓ In Cart';
+                }
+
+                const cardClass = isInCart ? 'photo-card in-cart' : 'photo-card';
+
+                // Build the action buttons HTML
+                let actionButtonsHTML = '';
+
+                if (showAddToCartButton) {
+                    actionButtonsHTML += `
+                        <button class="${addToCartButtonClass}" 
+                                onclick="galleryCart.addToCart('${photoIdToCheck}', '${photo.url}', '${photo.filename}', ${price})"
+                                data-photo-id="${photoIdToCheck}"
+                                data-price="${price !== null && price !== undefined ? price.toFixed(2) : 'N/A'}">
+                            ${addToCartButtonText}
+                        </button>
+                    `;
+                }
+
+                actionButtonsHTML += `
+                    <button class="${downloadButtonClass}" 
+                            onclick="galleryCart.downloadPhoto('${photoIdToCheck}', '${photo.url}', '${photo.filename}')"
+                            data-photo-id="${photoIdToCheck}">
+                        ${downloadButtonText}
+                    </button>
+                `;
+
+                return `
+                    <div class="${cardClass}" data-photo-id="${photoIdToCheck}">
+                        <div class="photo-wrapper">
+                            <img src="${photo.url}" alt="Gallery photo" loading="lazy" 
+                                 data-photo-id="${photoIdToCheck}" 
+                                 data-entitled="${isEntitled}"
+                                 onerror="console.error('❌ Failed to load image:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"
+                                 onload="console.log('✅ Image loaded:', this.src);">
+                            <div style="display:none; padding: 40px; text-align: center; color: #999;">
+                                Image unavailable
                             </div>
-                        ` : ''}
-                    </div>
-                    <div class="photo-info">
-                        <p class="photo-filename">${photo.filename || `Photo ${index + 1}`}</p>
-                        <div class="photo-actions">
-                            ${isEntitled ? `
-                                <button class="photo-btn download-btn" onclick="galleryCart.downloadPhoto('${photo.filename}', '${photo.url}', '${photo.filename}')">
-                                    📥 Download
-                                </button>
-                            ` : `
-                                ${this.policy && this.policy.mode === 'free' ? `
-                                    <!-- Free gallery - immediate download -->
-                                    <button class="photo-btn download-btn immediate free" 
-                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.filename}', '${photo.url}', '${photo.filename}', 0)">
-                                        📥 FREE Download
-                                    </button>
-                                ` : this.policy && this.policy.mode === 'freemium' ? `
-                                    <!-- Show both FREE and purchase buttons side by side in freemium mode -->
-                                    <button class="photo-btn download-btn immediate free ${price === 0 ? '' : 'quota-exhausted'}" 
-                                            onclick="galleryCart.downloadPhotoImmediately(event, '${photo.filename}', '${photo.url}', '${photo.filename}', ${price})"
-                                            ${price !== 0 ? 'disabled title="Free quota exhausted"' : ''}>
-                                        📥 FREE ${price === 0 ? '' : '(0 left)'}
-                                    </button>
-                                    <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
-                                            onclick="galleryCart.toggleCartItem('${photo.filename}', '${photo.url}', '${photo.filename}', ${index})">
-                                        ${inCart ? '✓ Added - Remove' : `🛒 $${price !== null && price > 0 ? price.toFixed(2) : '4.75'}`}
-                                    </button>
-                                ` : `
-                                    <button class="photo-btn add-to-cart-btn ${inCart ? 'in-cart' : ''}" 
-                                            onclick="galleryCart.toggleCartItem('${photo.filename}', '${photo.url}', '${photo.filename}', ${index})">
-                                        ${inCart ? '✓ Added - Remove' : `🛒 Add to Cart - $${price ? price.toFixed(2) : '4.75'}`}
-                                    </button>
-                                `}
-                            `}
+                            ${priceBadge}
+                        </div>
+                        <div class="photo-info">
+                            <h3 class="photo-filename">${photo.filename || `Photo ${index + 1}`}</h3>
+                            <div class="photo-actions">
+                                ${actionButtonsHTML}
+                            </div>
                         </div>
                     </div>
                 `;
-                
-                console.log(`🃏 Photo card ${index + 1} created successfully`);
-                return card;
             }
-            
-            calculatePhotoPrice(photoIndex) {
-                if (!this.policy) {
-                    console.log(`💰 Photo ${photoIndex + 1}: No policy, returning null`);
-                    return null;
+
+            calculatePrice(photoIndex, policy, existingDownloads = 0) {
+                if (!policy) {
+                    console.warn('⚠️ No policy provided to calculatePrice');
+                    return null; // Return null if no policy is available
                 }
-                
-                console.log(`💰 Photo ${photoIndex + 1}: Calculating price with policy:`, {
-                    mode: this.policy.mode,
-                    pricePerPhoto: this.policy.pricePerPhoto,
-                    freeCount: this.policy.freeCount
-                });
-                
-                switch (this.policy.mode) {
+
+                console.log(`💰 Calculating price for photo ${photoIndex} (mode: ${policy.mode}, existing: ${existingDownloads}, cart size: ${this.cart.length})`);
+
+                switch (policy.mode) {
                     case 'free':
-                        console.log(`💰 Photo ${photoIndex + 1}: FREE mode, returning 0`);
+                        console.log('🆓 FREE mode: $0.00');
                         return 0;
-                        
-                    case 'fixed':
-                    case 'per_photo':
-                        const fixedPrice = parseFloat(this.policy.pricePerPhoto || 0);
-                        console.log(`💰 Photo ${photoIndex + 1}: FIXED mode, returning ${fixedPrice}`);
-                        return fixedPrice;
-                        
+
                     case 'freemium':
-                        const freeCount = parseInt(this.policy.freeCount || 0);
+                        const freeCount = parseInt(policy.freeCount) || 0;
+                        const priceAfterFree = parseFloat(policy.pricePerPhoto) || 5.00;
                         
-                        // CRITICAL FIX: Count how many free downloads have ACTUALLY been completed
-                        // Only count ACTIVE entitlements (completed downloads), NOT cart reservations
-                        // Each entitlement has photoId (singular), not photoIds (array)
-                        const freeEntitlements = this.entitlements.filter(e => 
-                            (!e.orderId || e.orderId === null) && e.isActive === true
-                        );
-                        const totalFreeDownloadsUsed = freeEntitlements.length;
-                        
-                        // Check if THIS specific photo is already entitled (already downloaded)
-                        // STANDARDIZED: Use filename as PRIMARY identifier, URL as fallback
-                        const isPhotoAlreadyEntitled = this.entitlements.some(e => {
-                            return (this.photos[photoIndex] && e.photoId === this.photos[photoIndex].filename) || 
-                                   (this.photos[photoIndex] && e.photoUrl === this.photos[photoIndex].url);
-                        });
-                        
-                        // If this photo is already entitled/downloaded, show Download button
+                        // Check if this photo is already entitled (downloaded)
+                        const photoIdToCheck = this.photos[photoIndex]?.filename || this.photos[photoIndex]?.id || String(photoIndex);
+                        const isPhotoAlreadyEntitled = this.entitlements.some(e => e.photoId === photoIdToCheck);
+
                         if (isPhotoAlreadyEntitled) {
-                            console.log(`💰 Photo ${photoIndex + 1}: Already entitled, showing as downloaded`);
-                            return null; // Will show "Download" button instead of price
+                            console.log('🎁 FREEMIUM - Photo already entitled, price is effectively $0 for calculation purposes.');
+                            return 0; // Already purchased, so effectively free for cart calculation
                         }
+
+                        // Calculate total items in cart + this one
+                        const currentCartSize = this.cart.length + 1;
                         
-                        // POSITION-BASED PRICING FIX: No circular dependency
-                        // Calculate remaining free slots based only on completed downloads
-                        const remainingFreeSlots = Math.max(0, freeCount - totalFreeDownloadsUsed);
-                        
-                        // Position this photo would take in cart (count current cart items)
-                        const cartPosition = this.cart.length;
-                        
-                        // If cart position < remaining free slots, this photo is free
-                        const canBeFree = cartPosition < remainingFreeSlots;
-                        const calculatedPrice = canBeFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
-                        
-                        console.log(`💰 Photo ${photoIndex + 1} FREEMIUM calculation:`, {
-                            freeCount: freeCount,
-                            totalFreeDownloadsUsed: totalFreeDownloadsUsed,
-                            remainingFreeSlots: remainingFreeSlots,
-                            cartPosition: cartPosition,
-                            canBeFree: canBeFree,
-                            calculatedPrice: calculatedPrice,
-                            isAlreadyEntitled: isPhotoAlreadyEntitled
-                        });
-                        
-                        return calculatedPrice;
-                        
+                        if (currentCartSize <= freeCount) {
+                            console.log(`🎁 FREEMIUM free slot: $0.00 (${currentCartSize}/${freeCount} in cart)`);
+                            return 0; // Still within free limit for this item
+                        } else {
+                            console.log(`💵 FREEMIUM paid slot: $${priceAfterFree} (${currentCartSize}/${freeCount} in cart)`);
+                            return priceAfterFree; // Beyond free limit, charge
+                        }
+
+                    case 'per_photo':
+                    case 'fixed':
+                    case 'paid':
+                        const paidPrice = parseFloat(policy.pricePerPhoto) || 5.00;
+                        console.log(`💰 PAID mode: $${paidPrice}`);
+                        return paidPrice;
+
                     case 'bulk':
-                        // Calculate based on current cart size
-                        const cartSize = this.cart.length + 1; // Including this photo
-                        if (this.policy.bulkTiers) {
-                            // Find applicable tier
-                            let applicableTier = null;
-                            for (const tier of this.policy.bulkTiers.sort((a, b) => b.qty - a.qty)) {
-                                if (cartSize >= tier.qty) {
-                                    applicableTier = tier;
-                                    break;
-                                }
-                            }
-                            return applicableTier ? parseFloat(applicableTier.price) : parseFloat(this.policy.pricePerPhoto || 0);
-                        }
-                        return parseFloat(this.policy.pricePerPhoto || 0);
-                        
+                        // For bulk pricing, use the per-photo price as base
+                        // Actual bulk discounts would be applied at checkout
+                        const bulkPrice = parseFloat(policy.pricePerPhoto) || 5.00;
+                        console.log(`📦 BULK mode: $${bulkPrice} (base price)`);
+                        return bulkPrice;
+
                     default:
-                        return null;
+                        console.warn(`⚠️ Unknown pricing mode: ${policy.mode}`);
+                        return null; // Return null for unknown modes
                 }
             }
-            
+
             toggleCartItem(photoId, photoUrl, filename, index) {
                 const inCart = this.cart.some(item => item.photoId === photoId);
-                
+
                 if (inCart) {
                     this.removeFromCart(photoId);
                 } else {
-                    const price = this.calculatePhotoPrice(index);
+                    const price = this.calculatePrice(index, this.policy);
+                    if (price === null) { // Handle cases where price calculation failed
+                        this.showError('Could not determine price for this photo.');
+                        return;
+                    }
                     this.addToCart(photoId, photoUrl, filename, price);
                 }
             }
-            
+
             async addToCart(photoId, photoUrl, filename, price) {
                 // Check if already in cart
                 if (this.cart.some(item => item.photoId === photoId)) {
+                    console.log(`🛒 Item ${photoId} already in cart. Skipping add.`);
                     return;
                 }
 
                 try {
                     // Show loading state on the button
-                    const cards = document.querySelectorAll('.photo-card');
-                    let targetCard = null;
-                    cards.forEach((card) => {
-                        const photoIndex = card.id.replace('photo-', '');
-                        const photo = this.photos[photoIndex];
-                        // STANDARDIZED: Only check filename match
-                        if (photo && photo.filename === photoId) {
-                            targetCard = card;
-                        }
-                    });
-
-                    const btn = targetCard?.querySelector('.add-to-cart-btn');
-                    const originalText = btn?.textContent;
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.textContent = 'Checking quota...';
-                    }
+                    this.updateButtonState(photoId, 'Checking quota...');
 
                     // Call server API to validate quota and reserve slot
                     const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/add-item`, {
@@ -2410,44 +2366,46 @@
                             clientKey: this.getClientKey(),
                             photoId: photoId,
                             photoUrl: photoUrl,
-                            filename: filename || `Photo ${photoId}`
+                            filename: filename
                         })
                     });
 
                     const data = await response.json();
 
-                    if (data.success) {
+                    if (response.ok && data.success) {
                         // Server validated quota - now add to local cart
                         this.cart.push({
                             photoId,
                             photoUrl,
-                            filename: filename || `Photo ${photoId}`,
-                            price: price || 0,
+                            filename: filename || photoId, // Ensure filename is set
+                            price: price || 0, // Use calculated price or 0 if null/undefined
                             reservationId: data.reservationId // Track server reservation
                         });
-                        
+
                         this.saveCart();
                         this.updateCartUI();
-                        this.updatePhotoCard(photoId, true);
+                        this.updatePhotoCardUI(photoId, true);
                         this.showSuccess('Photo added to cart!');
-                        
+
                         // Update quota display with server response
-                        this.updateQuotaDisplay(data.quota);
-                        
-                        // Recalculate all prices for freemium/bulk modes
-                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                        if (data.quota) {
+                            this.updateQuotaDisplay(data.quota);
+                        }
+
+                        // Recalculate all prices for freemium/bulk modes after adding to cart
+                        if (this.policy?.mode === 'freemium' || this.policy?.mode === 'bulk') {
                             this.recalculatePrices();
                         }
                     } else {
                         // Handle quota exceeded or other errors
-                        if (data.quotaExceeded) {
+                        if (data.code === 'QUOTA_EXCEEDED') {
                             this.showQuotaExceededError(data.error, data.quota);
-                        } else if (data.alreadyPurchased) {
+                        } else if (data.code === 'ALREADY_PURCHASED') {
                             this.showError('This photo has already been purchased.');
                         } else {
                             this.showError(data.error || 'Failed to add photo to cart');
                         }
-                        
+
                         // Update quota display even on failure to show current state
                         if (data.quota) {
                             this.updateQuotaDisplay(data.quota);
@@ -2458,29 +2416,18 @@
                     console.error('Error adding photo to cart:', error);
                     this.showError('Network error. Please check your connection and try again.');
                 } finally {
-                    // Reset button state
-                    const cards = document.querySelectorAll('.photo-card');
-                    cards.forEach((card) => {
-                        const photoIndex = card.id.replace('photo-', '');
-                        const photo = this.photos[photoIndex];
-                        // STANDARDIZED: Only check filename match
-                        if (photo && photo.filename === photoId) {
-                            const btn = card.querySelector('.add-to-cart-btn');
-                            if (btn) {
-                                btn.disabled = false;
-                                // Check if item was actually added to cart
-                                const inCart = this.cart.some(item => item.photoId === photoId);
-                                btn.textContent = inCart ? '✓ Added - Remove' : '🛒 Add to Cart';
-                            }
-                        }
-                    });
+                    // Reset button state - make sure it reflects actual cart status
+                    const price = this.calculatePrice(this.photos.findIndex(p => p.id === photoId || p.filename === photoId), this.policy);
+                    const isInCart = this.cart.some(item => item.photoId === photoId);
+                    this.updateButtonState(photoId, isInCart ? '✓ Added - Remove' : '🛒 Add to Cart', isInCart);
                 }
             }
-            
+
             async removeFromCart(photoId) {
                 // Find the cart item to get reservation ID
                 const cartItem = this.cart.find(item => item.photoId === photoId);
                 if (!cartItem) {
+                    console.log(`🛒 Item ${photoId} not found in local cart. Skipping removal.`);
                     return; // Item not in cart
                 }
 
@@ -2500,22 +2447,23 @@
 
                     const data = await response.json();
 
-                    if (data.success || response.status === 404) {
-                        // Remove from local cart (allow removal even if server reservation not found)
+                    if (response.ok && (data.success || response.status === 404)) { // Allow removal if server confirms or not found
+                        // Remove from local cart
                         this.cart = this.cart.filter(item => item.photoId !== photoId);
                         this.saveCart();
                         this.updateCartUI();
-                        this.updatePhotoCard(photoId, false);
-                        
+                        this.updatePhotoCardUI(photoId, false);
+
                         // Update quota display with server response
                         if (data.quota) {
                             this.updateQuotaDisplay(data.quota);
                         }
-                        
+
                         // Recalculate all prices for freemium/bulk modes
-                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                        if (this.policy?.mode === 'freemium' || this.policy?.mode === 'bulk') {
                             this.recalculatePrices();
                         }
+                        this.showSuccess('Photo removed from cart.');
                     } else {
                         console.error('Failed to release server reservation:', data.error);
                         this.showNotification('Photo removed locally. Server sync will retry later.', 'warning');
@@ -2523,9 +2471,9 @@
                         this.cart = this.cart.filter(item => item.photoId !== photoId);
                         this.saveCart();
                         this.updateCartUI();
-                        this.updatePhotoCard(photoId, false);
-                        
-                        if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                        this.updatePhotoCardUI(photoId, false);
+
+                        if (this.policy?.mode === 'freemium' || this.policy?.mode === 'bulk') {
                             this.recalculatePrices();
                         }
                     }
@@ -2537,46 +2485,43 @@
                     this.cart = this.cart.filter(item => item.photoId !== photoId);
                     this.saveCart();
                     this.updateCartUI();
-                    this.updatePhotoCard(photoId, false);
-                    
-                    if (this.policy.mode === 'freemium' || this.policy.mode === 'bulk') {
+                    this.updatePhotoCardUI(photoId, false);
+
+                    if (this.policy?.mode === 'freemium' || this.policy?.mode === 'bulk') {
                         this.recalculatePrices();
                     }
                 }
             }
-            
+
             recalculatePrices() {
                 // Recalculate prices for all items in cart based on current policy
                 // For freemium mode, use position-based pricing to avoid circular dependency
-                
+
                 if (this.policy?.mode === 'freemium') {
-                    const freeCount = parseInt(this.policy.freeCount || 0);
-                    
-                    // Count completed free downloads
+                    const freeCount = parseInt(this.policy.freeCount) || 0;
+
+                    // Count completed free downloads (entitlements that are active and not from an order)
                     const freeEntitlements = this.entitlements.filter(e => 
                         (!e.orderId || e.orderId === null) && e.isActive === true
                     );
                     const totalFreeDownloadsUsed = freeEntitlements.length;
-                    const remainingFreeSlots = Math.max(0, freeCount - totalFreeDownloadsUsed);
-                    
+
                     // Recalculate each cart item based on its POSITION in the cart
                     this.cart.forEach((item, cartPosition) => {
-                        const photoIndex = this.photos.findIndex(p => p.id === item.photoId || 
-                                                                      this.photos.indexOf(p).toString() === item.photoId);
-                        
-                        // Skip if photo not found or already entitled
-                        if (photoIndex === -1) return;
-                        
+                        // Find the photo index to get its entitlement status and original price
+                        const photoIndex = this.photos.findIndex(p => p.filename === item.photoId || p.id === item.photoId);
+                        if (photoIndex === -1) return; // Skip if photo no longer exists
+
+                        // Check if this specific photo is already entitled
                         const isPhotoAlreadyEntitled = this.entitlements.some(e => {
-                            return (e.photoId === String(photoIndex)) || 
-                                   (this.photos[photoIndex] && e.photoUrl === this.photos[photoIndex].url) ||
-                                   (this.photos[photoIndex] && e.photoId === this.photos[photoIndex].id);
+                            return e.photoId === item.photoId; // Use photoId from cart item
                         });
-                        
+
                         if (isPhotoAlreadyEntitled) {
-                            item.price = 0; // Already entitled, keep free
+                            item.price = 0; // Already entitled, keep price as 0
                         } else {
                             // Position-based pricing: if cart position < remaining free slots, it's free
+                            const remainingFreeSlots = Math.max(0, freeCount - totalFreeDownloadsUsed);
                             const canBeFree = cartPosition < remainingFreeSlots;
                             item.price = canBeFree ? 0 : parseFloat(this.policy.pricePerPhoto || 0);
                         }
@@ -2584,54 +2529,50 @@
                 } else {
                     // For other modes (bulk, fixed, free, paid), use standard calculation
                     this.cart.forEach((item, index) => {
-                        // STANDARDIZED: Use filename as PRIMARY identifier
-                        const photoIndex = this.photos.findIndex(p => p.filename === item.photoId);
+                        const photoIndex = this.photos.findIndex(p => p.filename === item.photoId || p.id === item.photoId);
                         if (photoIndex !== -1) {
-                            item.price = this.calculatePhotoPrice(photoIndex);
+                            item.price = this.calculatePrice(photoIndex, this.policy);
+                        } else {
+                            item.price = null; // Price is unknown if photo not found
                         }
                     });
                 }
-                
+
                 this.saveCart();
                 this.updateCartUI();
-                this.displayPhotos(); // Refresh price badges
+                this.displayPhotos(); // Refresh price badges and buttons
             }
-            
-            updatePhotoCard(photoId, inCart) {
+
+            updatePhotoCardUI(photoId, inCart) {
                 const cards = document.querySelectorAll('.photo-card');
                 cards.forEach((card) => {
-                    const photoIndex = card.id.replace('photo-', '');
-                    const photo = this.photos[photoIndex];
-                    // STANDARDIZED: Only check filename match
-                    if (photo && photo.filename === photoId) {
-                        if (inCart) {
-                            card.classList.add('in-cart');
-                        } else {
-                            card.classList.remove('in-cart');
-                        }
-                        
+                    const photoIndex = card.dataset.photoId;
+                    // STANDARDIZED: Use filename or ID from card's data-photo-id
+                    if (photoIndex === photoId) {
+                        card.classList.toggle('in-cart', inCart);
+
                         // Update button text
                         const btn = card.querySelector('.add-to-cart-btn');
                         if (btn) {
-                            btn.textContent = inCart ? '✓ Added - Remove' : '🛒 Add to Cart';
+                            btn.textContent = inCart ? '✓ In Cart' : '🛒 Add to Cart';
                             btn.classList.toggle('in-cart', inCart);
                         }
                     }
                 });
             }
-            
+
             updateCartUI() {
                 const cartCount = document.getElementById('cartCount');
-                const cartItems = document.getElementById('cartItems');
+                const cartItemsContainer = document.getElementById('cartItems');
                 const cartTotal = document.getElementById('cartTotal');
                 const checkoutBtn = document.getElementById('checkoutBtn');
-                
+
                 // Update count
                 cartCount.textContent = this.cart.length;
-                
+
                 // Update items display
                 if (this.cart.length === 0) {
-                    cartItems.innerHTML = `
+                    cartItemsContainer.innerHTML = `
                         <div class="cart-empty">
                             <div class="cart-empty-icon">🛒</div>
                             <h3>Your cart is empty</h3>
@@ -2640,50 +2581,58 @@
                     `;
                     checkoutBtn.disabled = true;
                 } else {
-                    cartItems.innerHTML = this.cart.map(item => `
-                        <div class="cart-item" data-photo-id="${item.photoId}">
-                            <div class="cart-item-image">
-                                <img src="${item.photoUrl}" alt="${item.filename}">
-                            </div>
-                            <div class="cart-item-details">
-                                <div class="cart-item-name">${item.filename}</div>
-                                <div class="cart-item-price">
-                                    ${item.price === 0 ? 'FREE' : `$${item.price.toFixed(2)}`}
+                    cartItemsContainer.innerHTML = this.cart.map((item, index) => {
+                        // Find photo details for image URL
+                        const photo = this.photos.find(p => p.filename === item.photoId || p.id === item.photoId);
+                        const imageUrl = photo?.url || item.photoUrl || '/static/img/placeholder.png'; // Fallback image
+
+                        return `
+                            <div class="cart-item" data-photo-id="${item.photoId}">
+                                <div class="cart-item-image">
+                                    <img src="${imageUrl}" alt="${item.filename}">
                                 </div>
+                                <div class="cart-item-details">
+                                    <div class="cart-item-name">${item.filename}</div>
+                                    <div class="cart-item-price">
+                                        ${item.price === 0 ? 'FREE' : `$${item.price.toFixed(2)}`}
+                                    </div>
+                                </div>
+                                <button class="cart-item-remove" onclick="galleryCart.removeFromCart('${item.photoId}')">
+                                    ✕
+                                </button>
                             </div>
-                            <button class="cart-item-remove" onclick="galleryCart.removeFromCart('${item.photoId}')">
-                                ✕
-                            </button>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                     checkoutBtn.disabled = false;
                 }
-                
+
                 // Update total
                 const total = this.calculateTotal();
                 cartTotal.textContent = total === 0 ? 'FREE' : `$${total.toFixed(2)}`;
             }
-            
+
             calculateTotal() {
                 return this.cart.reduce((total, item) => total + (item.price || 0), 0);
             }
-            
+
             selectAllPhotos() {
-                // Add all photos to cart that aren't already entitled
+                // Add all photos to cart that aren't already entitled or in cart
                 this.photos.forEach((photo, index) => {
-                    const photoId = photo.id || index.toString();
-                    const isEntitled = this.entitlements.some(e => e.photoId === photoId || e.photoUrl === photo.url);
+                    const photoId = photo.filename || photo.id || String(index);
+                    const isEntitled = this.entitlements.some(e => e.photoId === photoId);
                     const inCart = this.cart.some(item => item.photoId === photoId);
-                    
+
                     if (!isEntitled && !inCart) {
-                        const price = this.calculatePhotoPrice(index);
-                        this.addToCart(photoId, photo.url, photo.filename, price);
+                        const price = this.calculatePrice(index, this.policy);
+                        if (price !== null) { // Only add if price is determined
+                            this.addToCart(photoId, photo.url, photo.filename, price);
+                        }
                     }
                 });
-                
+
                 this.showSuccess('All available photos added to cart!');
             }
-            
+
             async clearCart(silent = false) {
                 if (silent || confirm('Are you sure you want to clear your cart?')) {
                     try {
@@ -2709,42 +2658,49 @@
                     this.cart = [];
                     this.saveCart();
                     this.updateCartUI();
-                    this.displayPhotos(); // Reset all photo cards
+                    this.photos.forEach(photo => { // Reset all photo cards
+                        this.updatePhotoCardUI(photo.filename || photo.id, false);
+                    });
                     this.closeCart();
 
                     // Refresh quota display
                     await this.loadQuotaStatus();
                 }
             }
-            
+
             async proceedToCheckout() {
                 const total = this.calculateTotal();
-                
+
                 // If total is 0 (all free), process without payment
                 if (total === 0) {
+                    // Ensure cart is not empty before proceeding
+                    if (this.cart.length === 0) {
+                        this.showError('Your cart is empty.');
+                        return;
+                    }
                     await this.processFreeDownloads();
                     return;
                 }
-                
+
                 // Check if we have client email
                 if (!this.clientEmail) {
                     this.showEmailModal();
                     return;
                 }
-                
+
                 // Validate cart before proceeding to payment
                 const validation = await this.validateCartBeforeCheckout();
-                
+
                 if (!validation.isValid) {
                     // Handle validation failure
                     await this.handleCartValidationFailure(validation);
                     return;
                 }
-                
+
                 // Create checkout session
                 await this.createCheckoutSession();
             }
-            
+
             async processFreeDownloads() {
                 try {
                     // For free downloads, create entitlements directly
@@ -2753,7 +2709,7 @@
                         photoUrl: item.photoUrl,
                         filename: item.filename
                     }));
-                    
+
                     const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/entitlements`, {
                         method: 'POST',
                         headers: {
@@ -2766,25 +2722,26 @@
                             type: 'free'
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
-                    if (data.success) {
+
+                    if (response.ok && data.success) {
                         this.clearCart(true); // Silent clear after successful free downloads
                         this.closeCart();
                         await this.loadEntitlements();
                         this.displayPhotos();
                         this.showSuccess('Free downloads are ready! Click download on each photo.');
+                        await this.loadQuotaStatus(); // Update quota after free downloads
                     } else {
                         throw new Error(data.error || 'Failed to process free downloads');
                     }
-                    
+
                 } catch (error) {
                     console.error('Error processing free downloads:', error);
                     alert('Failed to process downloads. Please try again.');
                 }
             }
-            
+
             async createCheckoutSession() {
                 try {
                     // Show loading state
@@ -2792,10 +2749,10 @@
                     const originalText = checkoutBtn.textContent;
                     checkoutBtn.disabled = true;
                     checkoutBtn.textContent = 'Processing...';
-                    
+
                     // Prepare items for checkout
                     const items = this.cart.map(item => item.photoId);
-                    
+
                     const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/checkout`, {
                         method: 'POST',
                         headers: {
@@ -2803,229 +2760,230 @@
                         },
                         body: JSON.stringify({
                             sessionId: this.sessionData.id,
-                            clientKey: this.clientEmail,
+                            clientKey: this.clientEmail, // Use email as clientKey for checkout
                             clientName: this.clientName,
                             items: items
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
-                    if (data.success && data.checkoutUrl) {
+
+                    if (response.ok && data.success && data.checkoutUrl) {
                         // Redirect to Stripe Checkout
                         window.location.href = data.checkoutUrl;
                     } else {
                         throw new Error(data.error || 'Failed to create checkout session');
                     }
-                    
+
                 } catch (error) {
                     console.error('Error creating checkout:', error);
                     alert(`Checkout failed: ${error.message}`);
-                    
+
                     // Reset button
                     const checkoutBtn = document.getElementById('checkoutBtn');
                     checkoutBtn.disabled = false;
                     checkoutBtn.textContent = 'Proceed to Checkout';
                 }
             }
-            
+
             async handleCheckoutReturn() {
                 if (this.checkoutStatus === 'success') {
                     // Clear cart after successful purchase (silent - no confirmation)
                     this.clearCart(true);
-                    
+
                     // Load entitlements to show purchased items
-                    if (this.clientEmail) {
+                    if (this.clientEmail) { // Ensure client email is available
                         await this.loadEntitlements();
                     }
-                    
+
                     // Refresh gallery to show download buttons
                     this.displayPhotos();
-                    
+
                     // Show success message
                     this.showSuccess('Payment successful! Your photos are ready to download.');
-                    
+
                     // Remove URL parameters
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    
+
                 } else if (this.checkoutStatus === 'cancel') {
                     // Show message that checkout was cancelled
                     this.showSuccess('Checkout cancelled. Your cart has been saved.');
-                    
+
                     // Remove URL parameters
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
-            
+
             async loadEntitlements() {
                 try {
-                    if (!this.sessionData) return;
-                    
+                    if (!this.sessionData?.id) {
+                        console.warn('⚠️ Cannot load entitlements: missing session data');
+                        return;
+                    }
+
                     // Use same clientKey logic as processFreeDownloads to avoid mismatch
                     const clientKey = this.getClientKey();
-                    
-                    console.log(`🔍 Loading entitlements for clientKey: ${clientKey}`);
-                    
-                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/entitlements?sessionId=${this.sessionData.id}&clientKey=${clientKey}`);
+
+                    console.log(`🔍 Loading entitlements for clientKey: ${clientKey} (session: ${this.sessionData.id})`);
+
+                    // Fetch entitlements using the unified API endpoint
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/entitlements?sessionId=${encodeURIComponent(this.sessionData.id)}&clientKey=${encodeURIComponent(clientKey)}`, {
+                        method: 'GET'
+                    });
+
                     const data = await response.json();
-                    
-                    if (data.success) {
+
+                    if (response.ok && data.success) {
                         this.entitlements = data.entitlements || [];
                         console.log(`✅ Loaded ${this.entitlements.length} entitlements for ${clientKey}`);
-                        
+
                         // Update pricing banner for freemium mode
                         await this.updatePricingBanner();
                     } else {
                         console.error('Failed to load entitlements:', data.error);
                         this.entitlements = [];
                     }
-                    
+
                 } catch (error) {
-                    console.error('Error loading entitlements:', error);
+                    console.error('❌ Error loading entitlements:', error);
                     this.entitlements = [];
                 }
             }
-            
-            async downloadPhoto(photoId, photoUrl, filename) {
+
+            async downloadPhoto(photoId, photoUrl, filename, fromCart = false) {
                 try {
-                    console.log(`📥 Processing entitled download for ${filename}`);
-                    
-                    // Use unified API for processing the download
-                    const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, false, null);
-                    
-                    // Fix structural mismatch: handle both token locations
-                    const downloadTokenEntitled = downloadResult?.downloadToken || downloadResult?.data?.downloadToken;
-                    if (downloadResult && downloadResult.success && downloadTokenEntitled) {
-                        // Trigger download using the token
-                        const downloadUrl = `/api/downloads/photo/${downloadTokenEntitled}`;
+                    console.log(`⬇️ Starting download for photo: ${photoId} (policy: ${this.policy?.mode || 'unknown'})`);
+
+                    if (!this.galleryToken || !this.sessionData) {
+                        this.showError('Gallery access not properly initialized');
+                        return;
+                    }
+
+                    // Show download progress
+                    this.showProgress('Preparing download...');
+
+                    const downloadPayload = {
+                        galleryAccessToken: this.galleryToken,
+                        sessionId: this.sessionData.id,
+                        photoId: photoId,
+                        photoUrl: photoUrl,
+                        filename: filename
+                    };
+
+                    console.log(`📡 Sending download request to unified API:`, downloadPayload);
+
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/process`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(downloadPayload)
+                    });
+
+                    const result = await response.json();
+                    this.hideProgress();
+
+                    console.log(`📋 Download response:`, result);
+
+                    if (result.success && result.downloadToken) {
+                        console.log(`✅ Download authorized for photo: ${photoId} (${result.pricing?.model || 'unknown'} mode)`);
+
+                        // Trigger actual download
+                        const downloadUrl = `${this.getApiBaseUrl()}/api/downloads/${result.downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
-                        link.download = filename || 'photo.jpg';
+                        link.download = filename;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        
-                        this.showSuccess(`Downloaded ${filename}!`);
-                        
-                        // Update quota display after successful download
-                        await this.updateQuotaFromUnifiedAPI();
-                        
-                    } else {
-                        const errorMessage = downloadResult.error || 'Download processing failed';
-                        console.error('❌ Download failed:', errorMessage);
-                        
-                        // Handle specific error scenarios
-                        if (downloadResult.code === 'PAYMENT_REQUIRED' && downloadResult.paymentInfo) {
-                            this.handlePaymentRequired(downloadResult.paymentInfo, photoId, photoUrl, filename);
-                        } else if (downloadResult.code === 'RATE_LIMIT_EXCEEDED') {
-                            this.showError(`Rate limit exceeded. Please wait ${downloadResult.retryAfter || 60} seconds before trying again.`);
-                        } else {
-                            this.showError(`Download failed: ${errorMessage}`);
+
+                        // Show success message with pricing context
+                        let successMessage = `Downloaded: ${filename}`;
+                        if (result.pricing?.model === 'free') {
+                            successMessage += ' (Free)';
+                        } else if (result.pricing?.model === 'freemium') {
+                            if (result.pricing?.cost === 0) {
+                                successMessage += ' (Free tier)';
+                            } else {
+                                successMessage += ` (Paid: $${result.pricing.cost})`;
+                            }
+                        } else if (result.pricing?.model === 'paid') {
+                            successMessage += ` (Paid: $${result.pricing.cost})`;
                         }
-                    }
-                } catch (error) {
-                    console.error('❌ Error downloading photo:', error);
-                    this.showError(`Network error during download: ${error.message}`);
-                }
-            }
-            
-            async downloadPhotoImmediately(event, photoId, photoUrl, filename, price) {
-                // Capture original text before try block to ensure it's accessible in finally
-                const button = event?.target;
-                const originalText = button?.textContent || (price === 0 ? '📥 FREE Download' : '📥 Download');
-                
-                try {
-                    console.log(`🚀 Starting immediate download for photo: ${filename} (price: ${price})`);
-                    
-                    // Show loading state on button
-                    if (button) {
-                        button.disabled = true;
-                        button.textContent = 'Processing...';
-                    }
-                    
-                    // Use unified API for immediate download processing
-                    const downloadResult = await this.processUnifiedDownload(photoId, photoUrl, filename, price > 0, null);
-                    
-                    // Fix structural mismatch: handle both token locations
-                    const downloadTokenImmediate = downloadResult?.downloadToken || downloadResult?.data?.downloadToken;
-                    if (downloadResult && downloadResult.success && downloadTokenImmediate) {
-                        // Trigger download using the token
-                        const downloadUrl = `/api/downloads/photo/${downloadTokenImmediate}`;
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = filename || 'photo.jpg';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        // Update UI to reflect the download
-                        await this.loadEntitlements();
-                        this.displayPhotos(); // Refresh UI to show updated state
-                        
-                        // Update quota display
-                        await this.updateQuotaFromUnifiedAPI();
-                        
-                        const successMessage = price === 0 ? 
-                            `Downloaded ${filename} for FREE!` : 
-                            `Downloaded ${filename} for $${price.toFixed(2)}!`;
+
                         this.showSuccess(successMessage);
-                        
-                        // Show pricing info if applicable
-                        if (downloadResult.pricing) {
-                            console.log('💰 Download pricing info:', downloadResult.pricing);
-                            await this.updatePricingBanner();
+
+                        // Update quota display for freemium mode
+                        if (result.pricing?.quota) {
+                            this.updateQuotaDisplay(result.pricing.quota);
                         }
-                        
+
+                        // Reload quota status for accurate display
+                        await this.loadQuotaStatus();
+
+                        // If this was from cart, remove from cart
+                        if (fromCart) {
+                            const itemIndex = this.cart.findIndex(item => item.photoId === photoId);
+                            if (itemIndex !== -1) {
+                                this.removeFromCart(itemIndex);
+                            }
+                        }
+
+                        // Update entitlements to reflect new purchase
+                        await this.loadEntitlements();
+
                     } else {
-                        const errorMessage = downloadResult.error || 'Download processing failed';
-                        console.error('❌ Immediate download failed:', errorMessage);
-                        
-                        // Handle specific error scenarios with better UX
-                        if (downloadResult.code === 'PAYMENT_REQUIRED' && downloadResult.paymentInfo) {
-                            this.handlePaymentRequired(downloadResult.paymentInfo, photoId, photoUrl, filename);
-                        } else if (downloadResult.code === 'RATE_LIMIT_EXCEEDED') {
-                            this.showError(`Too many requests. Please wait ${downloadResult.retryAfter || 60} seconds before trying again.`);
-                        } else if (downloadResult.code === 'QUOTA_EXCEEDED') {
-                            // Auto-add to cart when quota exceeded
-                            console.log('🛒 Free quota exceeded, automatically adding to cart...');
-                            const paidPrice = this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75;
-                            await this.addToCart(photoId, photoUrl, filename, paidPrice);
-                            this.showSuccess(`Free quota exhausted! Added ${filename} to cart for $${paidPrice.toFixed(2)}`);
-                            await this.updatePricingBanner();
-                            this.displayPhotos();
-                            return; // Exit successfully
+                        console.warn(`⚠️ Download failed for photo: ${photoId}`, result);
+
+                        if (result.code === 'PAYMENT_REQUIRED') {
+                            console.log(`💳 Payment required - adding to cart`, result.paymentInfo);
+
+                            let toastMessage = 'Payment required for this download';
+                            if (result.paymentInfo?.amount) {
+                                toastMessage += ` ($${result.paymentInfo.amount})`;
+                            }
+
+                            this.showToast(toastMessage, 'warning');
+
+                            // Add to cart for payment if not already from cart
+                            if (!fromCart) {
+                                const price = result.paymentInfo?.amount || this.policy?.pricePerPhoto || 0;
+                                this.addToCart(photoId, photoUrl, filename, price);
+                            }
+                        } else if (result.code === 'QUOTA_EXCEEDED') {
+                            this.showToast('Free download limit exceeded. Add to cart to purchase.', 'warning');
+
+                            // Add to cart for payment
+                            if (!fromCart) {
+                                const price = this.policy?.pricePerPhoto || 5.00;
+                                this.addToCart(photoId, photoUrl, filename, price);
+                            }
                         } else {
-                            this.showError(`Download failed: ${errorMessage}`);
+                            this.showError(result.error || 'Download failed');
                         }
                     }
+
                 } catch (error) {
-                    console.error('❌ Error in immediate download:', error);
-                    this.showError(`Network error during download: ${error.message}`);
-                } finally {
-                    // Reset button state
-                    if (event && event.target) {
-                        event.target.disabled = false;
-                        event.target.textContent = originalText || (price === 0 ? '📥 FREE Download' : '📥 Download');
-                    }
+                    this.hideProgress();
+                    console.error('❌ Error downloading photo:', error);
+                    this.showError('Download failed. Please try again.');
                 }
             }
-            
+
             // UI Helper Methods
             openCart() {
                 document.getElementById('cartDrawer').classList.add('open');
                 document.getElementById('cartOverlay').classList.add('show');
                 document.body.style.overflow = 'hidden';
             }
-            
+
             closeCart() {
                 document.getElementById('cartDrawer').classList.remove('open');
                 document.getElementById('cartOverlay').classList.remove('show');
                 document.body.style.overflow = '';
             }
-            
+
             showEmailModal() {
                 document.getElementById('emailModal').classList.add('show');
-                
+
                 // Pre-fill if we have saved info
                 if (this.clientEmail) {
                     document.getElementById('clientEmail').value = this.clientEmail;
@@ -3034,45 +2992,45 @@
                     document.getElementById('clientName').value = this.clientName;
                 }
             }
-            
+
             closeEmailModal() {
                 document.getElementById('emailModal').classList.remove('show');
             }
-            
+
             handleEmailSubmit(e) {
                 e.preventDefault();
-                
+
                 this.clientEmail = document.getElementById('clientEmail').value;
                 this.clientName = document.getElementById('clientName').value;
-                
+
                 // Save client info
                 this.saveClientInfo();
-                
+
                 // Close modal and proceed with checkout
                 this.closeEmailModal();
                 this.createCheckoutSession();
             }
-            
+
             showSuccess(message) {
                 const successMessage = document.getElementById('successMessage');
                 const successText = document.getElementById('successText');
-                
+
                 successText.textContent = message;
                 successMessage.classList.add('show');
-                
+
                 setTimeout(() => {
                     successMessage.classList.remove('show');
                 }, 3000);
             }
-            
+
             showError(message, errorType = 'general') {
                 console.error(`🚨 Error [${errorType}]:`, message);
-                
+
                 // Show error in the error container
                 document.getElementById('loadingContainer').style.display = 'none';
                 document.getElementById('errorContainer').style.display = 'block';
                 document.getElementById('errorMessage').textContent = message;
-                
+
                 // Also show as a temporary toast notification
                 this.showToast(message, 'error', errorType);
             }
@@ -3100,9 +3058,9 @@
                     'network-error': '🌐',
                     'quota-exceeded': '📊'
                 };
-                
+
                 const icon = iconMap[type] || iconMap[category] || iconMap['info'];
-                
+
                 const toast = document.createElement('div');
                 toast.id = toastId;
                 toast.className = `toast toast-${type} ${category ? `toast-${category}` : ''}`;
@@ -3111,7 +3069,7 @@
                     <span class="toast-message">${message}</span>
                     <button class="toast-close" onclick="this.parentElement.remove()">×</button>
                 `;
-                
+
                 // Add to toast container or create one
                 let toastContainer = document.getElementById('toastContainer');
                 if (!toastContainer) {
@@ -3120,9 +3078,9 @@
                     toastContainer.className = 'toast-container';
                     document.body.appendChild(toastContainer);
                 }
-                
+
                 toastContainer.appendChild(toast);
-                
+
                 // Auto-remove after delay based on message type
                 const delays = {
                     'success': 3000,
@@ -3131,9 +3089,9 @@
                     'error': 8000,
                     'rate-limit': 10000
                 };
-                
+
                 const delay = delays[type] || delays[category] || 5000;
-                
+
                 setTimeout(() => {
                     const toastEl = document.getElementById(toastId);
                     if (toastEl) {
@@ -3161,7 +3119,7 @@
                 }
 
                 quotaContainer.style.display = 'block';
-                
+
                 const quotaText = document.getElementById('quotaText');
                 const quotaProgress = document.getElementById('quotaProgress');
                 const quotaBar = document.getElementById('quotaBar');
@@ -3171,14 +3129,14 @@
                 const total = quotaInfo.limit || quotaInfo.freeTotal || 0;
                 const used = quotaInfo.used || 0;
                 const reserved = quotaInfo.reserved || quotaInfo.cartReserved || 0;
-                
+
                 // Handle freemium mode differently
                 let quotaMessage = '';
                 if (this.policy?.mode === 'freemium') {
                     const freeRemaining = quotaInfo.freeRemaining || 0;
                     const freeTotal = quotaInfo.freeTotal || this.policy.freeCount || 0;
                     const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
-                    
+
                     if (freeRemaining > 0) {
                         quotaMessage = `🆓 ${freeRemaining} of ${freeTotal} FREE downloads remaining${reservedText}`;
                     } else {
@@ -3189,20 +3147,20 @@
                     const reservedText = reserved > 0 ? ` (${reserved} in cart)` : '';
                     quotaMessage = `${remaining} of ${total} downloads remaining${reservedText}`;
                 }
-                
+
                 // Add rate limiting info if applicable
                 if (quotaInfo.rateLimited) {
                     const retryAfter = quotaInfo.retryAfter || 60;
                     quotaMessage += ` ⚠️ Rate limited (${retryAfter}s)`;
                 }
-                
+
                 quotaText.textContent = quotaMessage;
 
                 // Update progress bar with enhanced visual feedback
                 if (total > 0) {
                     const percentage = Math.max(0, (remaining / total) * 100);
                     quotaBar.style.width = `${percentage}%`;
-                    
+
                     // Enhanced color coding based on remaining quota and mode
                     quotaBar.className = 'quota-bar';
                     if (percentage <= 0) {
@@ -3216,7 +3174,7 @@
                     } else {
                         quotaBar.classList.add('quota-good');
                     }
-                    
+
                     // Add special styling for freemium mode
                     if (this.policy?.mode === 'freemium') {
                         quotaBar.classList.add('quota-freemium');
@@ -3247,7 +3205,7 @@
                                     <p><strong>Your Current Usage:</strong></p>
                                     <ul>
                                         <li>Used: ${quotaInfo.used || 0} downloads</li>
-                                        <li>Limit: ${quotaInfo.total || 0} downloads</li>
+                                        <li>Limit: ${quotaInfo.limit || 0} downloads</li>
                                         <li>Remaining: ${quotaInfo.remaining || 0} downloads</li>
                                     </ul>
                                 </div>
@@ -3284,12 +3242,12 @@
 
                     if (statusResult.success && statusResult.quota) {
                         this.updateQuotaDisplay(statusResult.quota);
-                        
-                        // Also update policy if provided
+
+                        // Also update policy if it has changed
                         if (statusResult.policy) {
                             this.policy = statusResult.policy;
                         }
-                        
+
                         // Update entitlements if provided
                         if (statusResult.entitlements) {
                             this.entitlements = statusResult.entitlements;
@@ -3310,7 +3268,7 @@
                     const statusResult = await this.getUnifiedSessionStatus();
                     if (statusResult.success && statusResult.quota) {
                         this.updateQuotaDisplay(statusResult.quota);
-                        await this.updatePricingBanner();
+                        await this.updatePricingBanner(); // Update banner as well, as policy might change
                     }
                 } catch (error) {
                     console.error('❌ Error updating quota from unified API:', error);
@@ -3327,7 +3285,7 @@
                         if (result.success) {
                             return result;
                         }
-                        
+
                         // Handle specific error codes
                         if (result.code === 'RATE_LIMIT_EXCEEDED' && attempt < retries) {
                             const retryAfter = result.retryAfter || delay;
@@ -3335,20 +3293,20 @@
                             await this.sleep(retryAfter);
                             continue;
                         }
-                        
+
                         return result; // Return the error result if not retryable
-                        
+
                     } catch (error) {
                         console.error(`❌ API call failed (attempt ${attempt}/${retries}):`, error);
-                        
+
                         // Network errors - retry with exponential backoff
-                        if (attempt < retries && (error.name === 'NetworkError' || error.message.includes('fetch'))) {
+                        if (attempt < retries && (error.name === 'NetworkError' || error.message.includes('fetch') || error.message.includes('network'))) {
                             const retryDelay = delay * Math.pow(2, attempt - 1);
                             console.log(`🔄 Network error, retrying after ${retryDelay}ms`);
                             await this.sleep(retryDelay);
                             continue;
                         }
-                        
+
                         return {
                             success: false,
                             error: `Network error: ${error.message}`,
@@ -3356,7 +3314,7 @@
                         };
                     }
                 }
-                
+
                 return {
                     success: false,
                     error: 'Maximum retries exceeded',
@@ -3376,46 +3334,38 @@
              */
             async downloadWithProgress(photoId, photoUrl, filename, isPaid = false, paymentIntentId = null) {
                 const progressIndicator = this.showProgressIndicator(`Processing ${filename}...`);
-                
+
                 try {
                     // Use retry mechanism for download processing
                     const result = await this.makeUnifiedApiCall(() => 
                         this.processUnifiedDownload(photoId, photoUrl, filename, isPaid, paymentIntentId)
                     );
-                    
-                    // Fix structural mismatch: handle both token locations
-                    const downloadToken = result?.downloadToken || result?.data?.downloadToken;
+
+                    const downloadToken = result?.downloadToken; // Use unified token directly
                     if (result && result.success && downloadToken) {
                         this.updateProgress(progressIndicator, 'Downloading file...', 80);
-                        
+
                         // Trigger download
-                        const downloadUrl = `/api/downloads/photo/${downloadToken}`;
+                        const downloadUrl = `${this.getApiBaseUrl()}/api/downloads/${downloadToken}`;
                         const link = document.createElement('a');
                         link.href = downloadUrl;
                         link.download = filename;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        
+
                         this.updateProgress(progressIndicator, 'Download complete!', 100);
                         setTimeout(() => this.hideProgressIndicator(progressIndicator), 1000);
-                        
+
                         // Update quota display
                         await this.updateQuotaFromUnifiedAPI();
-                        
+
                         return { success: true };
-                        
+
                     } else {
                         this.hideProgressIndicator(progressIndicator);
-                        // Add detailed logging to debug what's happening
                         console.error('❌ Download failed with result:', result);
-                        console.error('❌ Success condition failed:', {
-                            hasResult: !!result,
-                            hasSuccess: !!(result && result.success),
-                            hasDownloadToken: !!(result && result.downloadToken),
-                            fullResult: result
-                        });
-                        
+
                         if (result) {
                             this.handleDownloadError(result, photoId, photoUrl, filename);
                         } else {
@@ -3447,7 +3397,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 document.body.insertAdjacentHTML('beforeend', progressHtml);
                 return progressId;
             }
@@ -3481,7 +3431,7 @@
             handleDownloadError(result, photoId, photoUrl, filename) {
                 const errorCode = result.code;
                 const errorMessage = result.error || 'Download failed';
-                
+
                 switch (errorCode) {
                     case 'PAYMENT_REQUIRED':
                         if (result.paymentInfo) {
@@ -3490,28 +3440,28 @@
                             this.showError('Payment required for this download. Please add to cart.');
                         }
                         break;
-                        
+
                     case 'RATE_LIMIT_EXCEEDED':
                         const retryAfter = result.retryAfter || 60;
                         this.showError(`Too many requests. Please wait ${retryAfter} seconds before trying again.`, 'rate-limit');
                         break;
-                        
+
                     case 'QUOTA_EXCEEDED':
                         this.handleQuotaExceeded(photoId, photoUrl, filename);
                         break;
-                        
+
                     case 'NETWORK_ERROR':
                         this.showError('Network connection error. Please check your connection and try again.', 'network-error');
                         break;
-                        
+
                     case 'GALLERY_EXPIRED':
                         this.showError('This gallery has expired and downloads are no longer available.', 'gallery-expired');
                         break;
-                        
+
                     case 'INVALID_SESSION':
                         this.showError('Your session has expired. Please refresh the page.', 'session-expired');
                         break;
-                        
+
                     default:
                         this.showError(`Download failed: ${errorMessage}`, 'general-error');
                 }
@@ -3523,7 +3473,7 @@
             handleQuotaExceeded(photoId, photoUrl, filename) {
                 if (this.policy?.mode === 'freemium') {
                     // Auto-add to cart in freemium mode
-                    const paidPrice = this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75;
+                    const paidPrice = this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 5.00;
                     this.addToCart(photoId, photoUrl, filename, paidPrice);
                     this.showError(`Free quota exhausted! Added ${filename} to cart for $${paidPrice.toFixed(2)}`, 'quota-exceeded');
                     this.updatePricingBanner();
@@ -3539,28 +3489,28 @@
             handlePaymentRequired(paymentInfo, photoId, photoUrl, filename) {
                 try {
                     console.log('💳 Payment required for download:', paymentInfo);
-                    
+
                     // Auto-add to cart for payment processing
-                    const price = paymentInfo.amount || (this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 4.75);
+                    const price = paymentInfo.amount || (this.policy?.pricePerPhoto ? parseFloat(this.policy.pricePerPhoto) : 5.00);
                     this.addToCart(photoId, photoUrl, filename, price);
-                    
+
                     // Show user-friendly message
                     this.showError(`This download requires payment ($${price.toFixed(2)}). Added to cart for checkout.`);
-                    
+
                     // Update UI to show cart
                     this.openCart();
-                    
+
                 } catch (error) {
                     console.error('❌ Error handling payment required:', error);
                     this.showError('Payment required - please add photo to cart');
                 }
             }
-            
+
             // Storage Methods
             saveCart() {
                 localStorage.setItem(`cart_${this.galleryToken}`, JSON.stringify(this.cart));
             }
-            
+
             loadCart() {
                 const saved = localStorage.getItem(`cart_${this.galleryToken}`);
                 if (saved) {
@@ -3573,7 +3523,7 @@
                     }
                 }
             }
-            
+
             /**
              * Validate cart before checkout
              * Ensures backend cart state matches client UI state to prevent payment/entitlement mismatches
@@ -3581,10 +3531,10 @@
             async validateCartBeforeCheckout() {
                 try {
                     console.log('🔍 Validating cart before checkout...');
-                    
+
                     // Fetch current cart status from backend
                     const backendStatus = await this.fetchCartStatus();
-                    
+
                     // Handle network errors - allow proceeding with warning
                     if (backendStatus.networkError || !backendStatus.backendAvailable) {
                         console.warn('⚠️ Network error during validation - allowing checkout with warning');
@@ -3595,7 +3545,7 @@
                             reason: 'network_error'
                         };
                     }
-                    
+
                     // Handle backend errors
                     if (!backendStatus.success) {
                         return {
@@ -3605,29 +3555,29 @@
                             error: backendStatus.error
                         };
                     }
-                    
+
                     // Get backend and local cart items
                     const backendItems = backendStatus.cart?.items || [];
                     const localItems = this.cart || [];
-                    
+
                     // Create maps for efficient comparison
                     const backendMap = new Map();
                     backendItems.forEach(item => {
                         backendMap.set(item.photoId, item);
                     });
-                    
+
                     const localMap = new Map();
                     localItems.forEach(item => {
                         localMap.set(item.photoId, item);
                     });
-                    
+
                     // Check for discrepancies
                     const discrepancies = {
                         missingFromBackend: [],
                         missingFromUI: [],
                         priceChanges: []
                     };
-                    
+
                     // Check items in UI but not on backend (reservation lost)
                     for (const [photoId, localItem] of localMap) {
                         if (!backendMap.has(photoId)) {
@@ -3635,7 +3585,7 @@
                             discrepancies.missingFromBackend.push(localItem);
                         }
                     }
-                    
+
                     // Check items on backend but not in UI (UI out of sync)
                     for (const [photoId, backendItem] of backendMap) {
                         if (!localMap.has(photoId)) {
@@ -3643,14 +3593,14 @@
                             discrepancies.missingFromUI.push(backendItem);
                         }
                     }
-                    
+
                     // Check for price mismatches
                     for (const [photoId, localItem] of localMap) {
                         const backendItem = backendMap.get(photoId);
                         if (backendItem) {
                             const localPrice = parseFloat(localItem.price) || 0;
                             const backendPrice = parseFloat(backendItem.price) || 0;
-                            
+
                             if (Math.abs(localPrice - backendPrice) > 0.01) {
                                 console.warn(`⚠️ Price mismatch for ${localItem.filename}: UI=$${localPrice}, Backend=$${backendPrice}`);
                                 discrepancies.priceChanges.push({
@@ -3662,20 +3612,20 @@
                             }
                         }
                     }
-                    
+
                     // Determine if cart is valid
                     const hasDiscrepancies = 
                         discrepancies.missingFromBackend.length > 0 ||
                         discrepancies.missingFromUI.length > 0 ||
                         discrepancies.priceChanges.length > 0;
-                    
+
                     if (hasDiscrepancies) {
                         console.warn('❌ Cart validation failed - discrepancies found:', discrepancies);
-                        
+
                         // Determine primary reason for failure
                         let reason = 'unknown';
                         let message = 'Cart has changed. Please review your cart.';
-                        
+
                         if (discrepancies.missingFromBackend.length > 0) {
                             reason = 'reservations_lost';
                             message = 'Some items are no longer available. Please review your cart.';
@@ -3686,7 +3636,7 @@
                             reason = 'ui_out_of_sync';
                             message = 'Cart has changed. Refreshing...';
                         }
-                        
+
                         return {
                             isValid: false,
                             message,
@@ -3695,16 +3645,16 @@
                             backendStatus
                         };
                     }
-                    
+
                     console.log('✅ Cart validation successful - all items match');
                     return {
                         isValid: true,
                         message: 'Cart validated successfully'
                     };
-                    
+
                 } catch (error) {
                     console.error('❌ Error validating cart:', error);
-                    
+
                     // Allow proceeding with warning on unexpected errors
                     return {
                         isValid: true,
@@ -3715,14 +3665,14 @@
                     };
                 }
             }
-            
+
             /**
              * Handle cart validation failure
              * Shows user-friendly messages and offers to resync cart
              */
             async handleCartValidationFailure(validation) {
                 const { reason, message, discrepancies } = validation;
-                
+
                 // Show loading state while handling
                 const checkoutBtn = document.getElementById('checkoutBtn');
                 const originalText = checkoutBtn?.textContent || 'Proceed to Checkout';
@@ -3730,7 +3680,7 @@
                     checkoutBtn.disabled = true;
                     checkoutBtn.textContent = 'Validating...';
                 }
-                
+
                 try {
                     switch (reason) {
                         case 'reservations_lost':
@@ -3745,14 +3695,14 @@
                                 this.showError('Please review your cart before checkout.');
                             }
                             break;
-                            
+
                         case 'price_changed':
                             // Prices have changed
                             const priceChanges = discrepancies.priceChanges || [];
                             const changeDetails = priceChanges.map(change => 
                                 `${change.filename}: $${change.oldPrice.toFixed(2)} → $${change.newPrice.toFixed(2)}`
                             ).join('\n');
-                            
+
                             if (confirm(`${message}\n\n${changeDetails}\n\nWould you like to update your cart with the new prices?`)) {
                                 console.log('🔄 User accepted price changes');
                                 await this.reconcileCart();
@@ -3763,25 +3713,25 @@
                                 this.showError('Please review your cart before checkout.');
                             }
                             break;
-                            
+
                         case 'ui_out_of_sync':
                             // Items on backend but not in UI - sync automatically
                             console.log('🔄 Auto-syncing cart - items on backend but not in UI');
                             await this.reconcileCart();
                             this.updateCartUI();
                             this.showSuccess('Cart has changed. Refreshing...');
-                            
+
                             // Auto-retry checkout after sync
                             setTimeout(() => {
                                 this.proceedToCheckout();
                             }, 1500);
                             break;
-                            
+
                         case 'backend_error':
                             // Backend error
                             this.showError(`${message}\n\nPlease try again in a moment.`);
                             break;
-                            
+
                         default:
                             // Unknown error - offer reconciliation
                             if (confirm(`${message}\n\nWould you like to refresh your cart?`)) {
@@ -3799,14 +3749,14 @@
                     }
                 }
             }
-            
+
             /**
              * Fetch cart status from backend
              * Returns current cart reservations and quota information
              */
             async fetchCartStatus() {
                 try {
-                    if (!this.sessionData || !this.sessionData.id) {
+                    if (!this.sessionData?.id) {
                         console.warn('⚠️ Cannot fetch cart status - session data not loaded');
                         return { success: false, error: 'Session data not available', networkError: false };
                     }
@@ -3839,7 +3789,7 @@
                                 cartItems: data.cart?.items?.length || data.cartReservations?.length || 0,
                                 quotaInfo: data.quota || data.quotaInfo
                             });
-                            
+
                             return {
                                 success: true,
                                 backendAvailable: true,
@@ -3859,18 +3809,18 @@
                         }
                     } catch (fetchError) {
                         clearTimeout(timeoutId);
-                        
+
                         // Distinguish between network errors and other errors
                         const isNetworkError = fetchError.name === 'AbortError' || 
                                               fetchError.message.includes('fetch') ||
                                               fetchError.message.includes('network');
-                        
+
                         if (fetchError.name === 'AbortError') {
                             console.error('❌ Cart status fetch timed out after 10 seconds');
                         } else {
                             console.error('❌ Network error fetching cart status:', fetchError);
                         }
-                        
+
                         return { 
                             success: false, 
                             backendAvailable: false,
@@ -3892,16 +3842,16 @@
             /**
              * Reconcile backend cart state with localStorage
              * Ensures consistency between server and client cart states
-             * CRITICAL: Only clears local cart if backend explicitly confirms no reservations
+             * CRITICAL: Only clears cart if backend explicitly confirms no reservations
              * Preserves cart on network errors and failures
              */
             async reconcileCart() {
                 try {
                     console.log('🔄 Starting cart reconciliation...');
-                    
+
                     // Fetch current cart status from backend
                     const backendStatus = await this.fetchCartStatus();
-                    
+
                     // CRITICAL FIX #1: Don't wipe cart on backend failures
                     // Only reconcile if backend is explicitly available and successful
                     if (!backendStatus.success || !backendStatus.backendAvailable) {
@@ -3912,15 +3862,15 @@
                             console.warn('⚠️ CART PRESERVED: Backend returned error - keeping localStorage cart intact');
                             this.showNotification('Cart sync failed - your cart is safe locally', 'warning');
                         }
-                        
+
                         // Update UI with current local cart state
                         this.updateCartUI();
                         this.photos.forEach(photo => {
                             // STANDARDIZED: Use filename as photoId
                             const isInCart = this.cart.some(item => item.photoId === photo.filename);
-                            this.updatePhotoCard(photo.filename, isInCart);
+                            this.updatePhotoCardUI(photo.filename, isInCart);
                         });
-                        
+
                         return { 
                             success: false, 
                             message: 'Backend unavailable - cart preserved locally',
@@ -3934,7 +3884,7 @@
                     // Get backend cart items (handle both enhanced and legacy response formats)
                     const backendItems = backendStatus.cart?.items || [];
                     const localItems = this.cart || [];
-                    
+
                     console.log(`📊 Reconciliation state:`, {
                         backendItemCount: backendItems.length,
                         localItemCount: localItems.length,
@@ -3985,13 +3935,13 @@
                     // Step 2: Handle localStorage items that are missing from backend
                     const newItemsToReserve = [];
                     const itemsToRemove = [];
-                    
+
                     for (const [photoId, localItem] of localMap) {
                         if (!backendMap.has(photoId)) {
                             console.log(`🔍 Local item not on backend: ${localItem.filename}`);
-                            
+
                             // Check if photo still exists in gallery
-                            const photo = this.photos.find(p => p.id === photoId);
+                            const photo = this.photos.find(p => p.filename === photoId || p.id === photoId);
                             if (photo) {
                                 // Queue for reservation attempt
                                 newItemsToReserve.push({ photoId, localItem, photo });
@@ -4007,15 +3957,15 @@
                     // Only remove items if backend explicitly rejects them (not on network errors)
                     if (newItemsToReserve.length > 0) {
                         console.log(`🔄 Attempting to reserve ${newItemsToReserve.length} new items on backend...`);
-                        
+
                         for (const { photoId, localItem, photo } of newItemsToReserve) {
                             try {
                                 console.log(`📤 Reserving: ${localItem.filename}`);
-                                
+
                                 // Add timeout for individual reservation requests
                                 const controller = new AbortController();
                                 const timeoutId = setTimeout(() => controller.abort(), 8000);
-                                
+
                                 const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/cart/add-item`, {
                                     method: 'POST',
                                     headers: {
@@ -4033,7 +3983,7 @@
 
                                 clearTimeout(timeoutId);
                                 const addResult = await response.json();
-                                
+
                                 if (response.ok && addResult.success) {
                                     console.log(`✅ Successfully reserved: ${localItem.filename}`);
                                     // Update local item with reservation ID
@@ -4067,7 +4017,7 @@
 
                     // Step 3: Update localStorage with reconciled state
                     this.saveCart();
-                    
+
                     console.log(`✅ Cart reconciliation complete:`, {
                         itemsAdded,
                         itemsRemoved,
@@ -4086,12 +4036,12 @@
 
                     // Step 4: Update UI to reflect reconciled state
                     this.updateCartUI();
-                    
+
                     // Update all photo cards to reflect in-cart status
-                    this.photos.forEach((photo, index) => {
-                        // STANDARDIZED: Use filename as photoId
-                        const isInCart = this.cart.some(item => item.photoId === photo.filename);
-                        this.updatePhotoCard(photo.filename, isInCart);
+                    this.photos.forEach((photo) => {
+                        const photoId = photo.filename || photo.id;
+                        const isInCart = this.cart.some(item => item.photoId === photoId);
+                        this.updatePhotoCardUI(photoId, isInCart);
                     });
 
                     // Update quota display if available
@@ -4111,10 +4061,10 @@
                 } catch (error) {
                     console.error('❌ Unexpected error during cart reconciliation:', error);
                     console.warn('⚠️ CART PRESERVED: Keeping localStorage cart intact due to unexpected error');
-                    
+
                     // Show notification but don't wipe cart
                     this.showNotification('Cart sync error - your cart is safe', 'error');
-                    
+
                     return { 
                         success: false, 
                         error: error.message,
@@ -4122,17 +4072,17 @@
                     };
                 }
             }
-            
+
             saveClientInfo() {
                 localStorage.setItem('clientEmail', this.clientEmail || '');
                 localStorage.setItem('clientName', this.clientName || '');
             }
-            
+
             loadClientInfo() {
                 this.clientEmail = localStorage.getItem('clientEmail') || null;
                 this.clientName = localStorage.getItem('clientName') || null;
             }
-            
+
             /**
              * Generate or load unique visitor ID for proper quota tracking
              * This ensures each browser tab/visitor gets separate download quotas
@@ -4140,7 +4090,7 @@
             generateUniqueVisitorId() {
                 // Try to load existing visitor ID from localStorage
                 let visitorId = localStorage.getItem('uniqueVisitorId');
-                
+
                 if (!visitorId) {
                     // Generate a new UUID for this visitor
                     visitorId = 'visitor-' + this.generateUUID();
@@ -4149,10 +4099,10 @@
                 } else {
                     console.log(`🆔 Loaded existing visitor ID: ${visitorId}`);
                 }
-                
+
                 this.uniqueVisitorId = visitorId;
             }
-            
+
             /**
              * Generate a random UUID v4
              */
@@ -4163,7 +4113,7 @@
                     return v.toString(16);
                 });
             }
-            
+
             /**
              * Get the unique client key for this visitor
              * For freemium galleries, ALWAYS use gallery-session-based key that matches server logic
@@ -4180,11 +4130,12 @@
                         return 'gallery-emergency-fallback';
                     }
                 }
-                
+
                 // For non-freemium modes (paid downloads), use email if provided, otherwise visitor ID
+                // Ensure a fallback is always provided
                 return this.clientEmail || this.uniqueVisitorId || 'anonymous';
             }
-            
+
             /**
              * UNIFIED API: Validate gallery access and get session data
              * Uses the new /api/downloads/unified/validate-access endpoint
@@ -4199,7 +4150,7 @@
                     }
 
                     console.log('🔐 Validating access using unified API...');
-                    
+
                     const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/validate-access`, {
                         method: 'POST',
                         headers: {
@@ -4215,7 +4166,7 @@
 
                     if (response.ok && data.success) {
                         console.log('✅ Unified access validation successful');
-                        
+
                         // Store the session data and policy from the unified response
                         this.sessionData = {
                             id: data.session.id,
@@ -4223,9 +4174,9 @@
                             downloadEnabled: data.session.downloadEnabled,
                             galleryExpiresAt: data.session.galleryExpiresAt
                         };
-                        
+
                         this.policy = data.policy;
-                        this.cachedGalleryClientKey = data.clientKey;
+                        this.cachedGalleryClientKey = data.clientKey; // Store client key for freemium mode
 
                         return {
                             success: true,
@@ -4234,7 +4185,7 @@
                                 session: this.sessionData,
                                 policy: this.policy,
                                 clientKey: data.clientKey,
-                                photos: data.photos || [] // Fixed: photos are at root level of API response
+                                photos: data.photos || [] // Photos are at the root level of the unified API response
                             }
                         };
                     } else {
@@ -4260,7 +4211,7 @@
             async processUnifiedDownload(photoId, photoUrl, filename, isPaid = false, paymentIntentId = null) {
                 try {
                     console.log(`🎯 Processing unified download for photo ${photoId}`);
-                    
+
                     const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/process`, {
                         method: 'POST',
                         headers: {
@@ -4272,7 +4223,8 @@
                             photoId: photoId,
                             photoUrl: photoUrl,
                             filename: filename,
-                            paymentIntentId: paymentIntentId
+                            paymentIntentId: paymentIntentId, // For paid downloads
+                            clientKey: this.getClientKey() // Crucial for freemium entitlement tracking
                         })
                     });
 
@@ -4284,7 +4236,7 @@
                             success: true,
                             downloadToken: data.downloadToken,
                             expiresIn: data.expiresIn,
-                            pricing: data.pricing,
+                            pricing: data.pricing, // Contains model, cost, quota info
                             watermark: data.watermark
                         };
                     } else {
@@ -4311,10 +4263,13 @@
             async getUnifiedSessionStatus() {
                 try {
                     if (!this.sessionData?.id || !this.galleryToken) {
-                        throw new Error('Missing session ID or gallery token');
+                        throw new Error('Missing session ID or gallery token for unified status check');
                     }
 
-                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/status/${this.sessionData.id}?galleryAccessToken=${encodeURIComponent(this.galleryToken)}&clientKey=${encodeURIComponent(this.cachedGalleryClientKey || '')}`, {
+                    // Pass clientKey for accurate quota and entitlement checks, especially for freemium
+                    const clientKey = this.getClientKey();
+
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/status/${this.sessionData.id}?galleryAccessToken=${encodeURIComponent(this.galleryToken)}&clientKey=${encodeURIComponent(clientKey)}`, {
                         method: 'GET'
                     });
 
@@ -4324,10 +4279,10 @@
                         console.log('✅ Session status retrieved successfully');
                         return {
                             success: true,
-                            quota: data.quota,
-                            policy: data.policy,
-                            entitlements: data.entitlements,
-                            downloads: data.downloads
+                            quota: data.quota, // Current quota details
+                            policy: data.policy, // Updated policy if changed
+                            entitlements: data.entitlements, // Updated entitlements
+                            downloads: data.downloads // List of completed downloads
                         };
                     } else {
                         console.error('❌ Failed to get session status:', data.error);
@@ -4346,6 +4301,18 @@
             }
 
             /**
+             * Helper to update button states (e.g., disabling, changing text)
+             */
+            updateButtonState(photoId, text, disabled = false, inCart = false) {
+                const button = document.querySelector(`.photo-card[data-photo-id="${photoId}"] .add-to-cart-btn`);
+                if (button) {
+                    button.textContent = text;
+                    button.disabled = disabled;
+                    button.classList.toggle('in-cart', inCart);
+                }
+            }
+            
+            /**
              * AUTHORITATIVE CLIENT KEY GENERATION
              * Generate client key using IDENTICAL logic to server
              * CRITICAL: Must match server's generateGalleryClientKey function exactly
@@ -4354,20 +4321,20 @@
                 if (!galleryAccessToken || !sessionId) {
                     throw new Error('Gallery token and session ID are required for client key generation');
                 }
-                
+
                 // CRITICAL: Use ONLY gallery token + session ID (no IP, no user agent, no other identifiers)
                 // This ensures both server and client can generate the exact same key deterministically
                 const baseString = `${galleryAccessToken}-${sessionId}`;
-                
+
                 // Create a SHA-256 hash for the final client key
                 const hashHex = await this.sha256(baseString);
                 const clientKey = `gallery-${hashHex.substring(0, 16)}`;
-                
+
                 console.log(`🔑 Generated authoritative client key: ${clientKey} for gallery token: ${galleryAccessToken.substring(0, 8)}...`);
-                
+
                 return clientKey;
             }
-            
+
             /**
              * Simple SHA-256 implementation for client-side key generation
              */
@@ -4380,11 +4347,11 @@
                 return hashHex;
             }
         }
-        
+
         // Initialize cart when page loads
         let galleryCart;
         console.log('🎯 Setting up DOMContentLoaded listener...');
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             console.log('📄 DOM Content Loaded - Initializing gallery...');
             try {
@@ -4401,14 +4368,14 @@
                 }
             }
         });
-        
+
         // Clean up real-time connections when page unloads
         window.addEventListener('beforeunload', () => {
             if (galleryCart && typeof galleryCart.disconnectRealTimeUpdates === 'function') {
                 galleryCart.disconnectRealTimeUpdates();
             }
         });
-        
+
         console.log('🎯 Gallery JavaScript fully loaded');
     </script>
 </body>

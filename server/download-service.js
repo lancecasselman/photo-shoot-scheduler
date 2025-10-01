@@ -1023,8 +1023,9 @@ class DownloadService {
    */
   async processDownload(params) {
     try {
-      const { galleryAccessToken, sessionId, photoId } = params;
+      const { galleryAccessToken, sessionId, photoId, clientIp, userAgent, paymentIntentId } = params;
       
+      console.log(`🎯 Processing download for photo ${photoId} in session ${sessionId}`);
 
       // Get session policy to determine pricing model
       const authResult = await this.validateGalleryAccess(galleryAccessToken, sessionId);
@@ -1038,21 +1039,57 @@ class DownloadService {
       }
 
       const policy = policyResult.policy;
+      const { session, clientKey } = authResult;
 
+      console.log(`📋 Session policy mode: ${policy.mode} for session ${sessionId}`);
 
-      // Route to appropriate handler
+      // Check if photo already has entitlement
+      const entitlementCheck = await this.commerceManager.verifyEntitlement(sessionId, clientKey, photoId);
+      if (entitlementCheck.success) {
+        console.log(`✅ Existing entitlement found for photo ${photoId}`);
+        
+        // Issue download token for existing entitlement
+        const tokenResult = await this.commerceManager.issueDownloadToken(
+          sessionId,
+          clientKey,
+          photoId,
+          params.photoUrl,
+          params.filename
+        );
+
+        if (tokenResult.success) {
+          return {
+            success: true,
+            downloadToken: tokenResult.token,
+            expiresIn: tokenResult.expiresIn,
+            pricing: {
+              model: policy.mode,
+              cost: 0, // Already paid
+              currency: policy.currency || 'USD',
+              reason: 'existing_entitlement'
+            }
+          };
+        }
+      }
+
+      // Route to appropriate handler based on pricing model
       switch (policy.mode) {
         case 'free':
+          console.log(`🆓 Processing as FREE download`);
           return await this.handleFreeDownload(params);
         
         case 'freemium':
+          console.log(`🎁 Processing as FREEMIUM download`);
           return await this.handleFreemiumDownload(params);
         
         case 'per_photo':
         case 'fixed':
+        case 'paid':
+          console.log(`💰 Processing as PAID download`);
           return await this.handlePaidDownload(params);
         
         default:
+          console.warn(`⚠️ Unsupported pricing model: ${policy.mode}`);
           return {
             success: false,
             error: `Unsupported pricing model: ${policy.mode}`,
