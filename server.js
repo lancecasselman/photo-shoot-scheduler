@@ -823,7 +823,16 @@ process.on('uncaughtException', (error) => {
 
 // ============================================================================
 // CRITICAL: Webhook routes MUST be defined BEFORE any body-parsing middleware
-// This includes compression, body parsers, and any middleware that reads the body
+// ============================================================================
+// Stripe webhook signature verification requires the raw request body as a Buffer.
+// If express.json() or express.urlencoded() runs before webhook routes, they will
+// parse the body and signature verification will FAIL.
+//
+// CORRECT ORDER (current implementation):
+//   1. Webhook routes with express.raw() (lines 831, 1103, 1288, 1495)
+//   2. Global body parsers express.json() and express.urlencoded() (lines 1581+)
+//
+// DO NOT reorder these routes or add body parsing middleware above this section.
 // ============================================================================
 
 
@@ -1102,22 +1111,34 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 // Stripe Connect webhook for connected account events
 app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
+    const isDebugMode = process.env.DEBUG === 'true' || process.env.LOG_LEVEL === 'debug';
     
     // For Connect webhooks, we need to handle both platform-level and account-level webhooks
     // Account-level webhooks come directly from Stripe with the connected account context
     const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
     const platformWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
-    // Debug logging to help identify the issue
-    console.log('🔍 Connect webhook debug:', {
-        hasSignature: !!sig,
-        signaturePrefix: sig ? sig.substring(0, 20) + '...' : 'none',
-        hasConnectSecret: !!connectWebhookSecret,
-        hasPlatformSecret: !!platformWebhookSecret,
-        bodyLength: req.body ? req.body.length : 0,
-        bodyType: typeof req.body,
-        isBuffer: Buffer.isBuffer(req.body)
-    });
+    // DEBUG ONLY: Detailed logging (disabled in production for security and performance)
+    if (isDebugMode) {
+        console.log('🔍 ========== STRIPE CONNECT WEBHOOK RECEIVED ==========');
+        console.log('🔍 Signature Analysis:', {
+            hasSignature: !!sig,
+            signatureLength: sig ? sig.length : 0,
+            signatureComponents: sig ? sig.split(',').length : 0
+        });
+        
+        console.log('🔍 Webhook Secrets Configuration:', {
+            hasConnectSecret: !!connectWebhookSecret,
+            hasPlatformSecret: !!platformWebhookSecret,
+            secretsAvailable: [connectWebhookSecret, platformWebhookSecret].filter(Boolean).length
+        });
+        
+        console.log('🔍 Request Body Analysis:', {
+            bodyLength: req.body ? req.body.length : 0,
+            bodyType: typeof req.body,
+            isBuffer: Buffer.isBuffer(req.body)
+        });
+    }
     
     let event;
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -1127,23 +1148,46 @@ app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}),
     let verificationError = null;
     
     for (const secret of secretsToTry) {
+        const secretType = secret === connectWebhookSecret ? 'STRIPE_CONNECT_WEBHOOK_SECRET' : 'STRIPE_WEBHOOK_SECRET';
+        
         try {
             event = stripe.webhooks.constructEvent(req.body, sig, secret);
-            console.log('✅ Connect webhook verified with:', secret === connectWebhookSecret ? 'CONNECT_SECRET' : 'PLATFORM_SECRET');
-            console.log('🔔 Connect webhook received:', event.type, 'Event ID:', event.id);
-            console.log('🔔 Connect account:', event.account);
+            
+            if (isDebugMode) {
+                console.log(`✅ Webhook verified with ${secretType}`);
+                console.log('🔔 Event Details:', {
+                    type: event.type,
+                    id: event.id,
+                    account: event.account,
+                    created: new Date(event.created * 1000).toISOString()
+                });
+            }
             break; // Success, exit loop
         } catch (err) {
             verificationError = err;
-            console.log(`⚠️ Failed with ${secret === connectWebhookSecret ? 'CONNECT' : 'PLATFORM'} secret:`, err.message);
+            if (isDebugMode) {
+                console.log(`❌ ${secretType} verification failed:`, err.message);
+            }
             continue; // Try next secret
         }
     }
     
     if (!event) {
-        console.log(`❌ Connect webhook signature verification failed with all secrets`);
-        console.log('❌ Last error:', verificationError);
+        // PRODUCTION ERROR: Only log essential error information
+        console.error('❌ Stripe Connect webhook signature verification failed:', verificationError.message);
+        
+        if (isDebugMode) {
+            console.log('❌ Troubleshooting Steps:');
+            console.log('   1. Verify webhook endpoint URL in Stripe Dashboard matches this endpoint');
+            console.log('   2. Ensure STRIPE_CONNECT_WEBHOOK_SECRET environment variable is set correctly');
+            console.log('   3. Check that the webhook secret matches the one shown in Stripe Dashboard');
+            console.log('   4. Verify the webhook is configured for "Connect" events, not standard events');
+        }
         return res.status(400).send(`Webhook Error: ${verificationError.message}`);
+    }
+
+    if (isDebugMode) {
+        console.log(`🎯 Processing event type: ${event.type}`);
     }
 
     try {
@@ -1202,12 +1246,43 @@ app.post('/api/stripe/connect-webhook', express.raw({type: 'application/json'}),
                     console.error('⚠️ Notification failed but payment was processed:', notifyError);
                 }
             }
+        } 
+        // Handle balance.available events (informational only)
+        else if (event.type === 'balance.available') {
+            console.log('💰 Balance available event received:', {
+                account: event.account,
+                balance: event.data.object
+            });
+            console.log('ℹ️  NOTE: balance.available events are informational only.');
+            console.log('ℹ️  These events indicate funds are available for payout.');
+            console.log('ℹ️  No database updates required for this event type.');
+            console.log('ℹ️  Configure payout notifications in Stripe Dashboard > Connect > Settings if needed.');
+        }
+        // Handle other event types that might be received
+        else {
+            console.log(`⚠️ UNHANDLED EVENT TYPE: ${event.type}`);
+            console.log('⚠️ Event Details:', {
+                id: event.id,
+                account: event.account,
+                created: new Date(event.created * 1000).toISOString()
+            });
+            console.log('⚠️ Suggested Actions:');
+            console.log('   1. Review your Stripe webhook configuration in the Dashboard');
+            console.log('   2. Only enable event types that your application handles:');
+            console.log('      - checkout.session.completed (for successful checkouts)');
+            console.log('      - payment_intent.succeeded (for successful payments)');
+            console.log('      - balance.available (informational, optional)');
+            console.log('   3. Remove unnecessary event types to reduce webhook traffic');
+            console.log('   4. If this event type needs handling, add a handler in server.js');
+            console.log(`⚠️ For now, acknowledging ${event.type} without processing.`);
         }
         
+        console.log(`✅ Webhook processed successfully: ${event.type}`);
         res.json({ received: true });
     } catch (error) {
         console.error('❌ Error processing connect webhook:', error);
-        res.status(500).json({ error: 'Webhook processing failed' });
+        console.error('❌ Error stack:', error.stack);
+        res.status(500).json({ error: 'Webhook processing failed', details: error.message });
     }
 });
 

@@ -18019,11 +18019,15 @@ END:VCALENDAR`;
             }
 
             const modal = document.getElementById('downloadControlsModal');
-            const isAuthenticated = window.currentUser && window.currentUser.uid;
+            const isAuthenticated = window.currentUser && (window.currentUser.uid || window.currentUser.id || window.currentUser.email);
             
             console.log('🔍 Initializing download controls:', { 
                 modalExists: !!modal, 
                 isAuthenticated,
+                hasUser: !!window.currentUser,
+                userHasUid: !!(window.currentUser && window.currentUser.uid),
+                userHasId: !!(window.currentUser && window.currentUser.id),
+                userHasEmail: !!(window.currentUser && window.currentUser.email),
                 currentPath: window.location.pathname,
                 readyState: document.readyState,
                 alreadyReady: downloadControlsReady
@@ -18045,7 +18049,8 @@ END:VCALENDAR`;
             } else {
                 console.log('🚫 Download controls not initialized - requirements not met:', {
                     modalExists: !!modal,
-                    isAuthenticated
+                    isAuthenticated,
+                    currentUser: window.currentUser
                 });
                 downloadControlsReady = false;
             }

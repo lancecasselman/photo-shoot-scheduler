@@ -46,6 +46,7 @@ async function checkAuth() {
             await window.nativeAuth.initialize();
             if (window.nativeAuth.isAuthenticated()) {
                 currentUser = window.nativeAuth.getCurrentUser();
+                window.currentUser = currentUser;
                 updateUserUI();
                 console.log('iOS user authenticated successfully:', currentUser.email);
                 return true;
@@ -88,6 +89,7 @@ async function checkAuth() {
             const data = await response.json();
             if (data && data.user) {
                 currentUser = data.user;
+                window.currentUser = data.user;
                 updateUserUI();
                 console.log('User authenticated successfully:', currentUser.email);
                 return true;
@@ -730,6 +732,29 @@ function createSessionCard(session) {
     viewContractsBtn.style.backgroundColor = '#6c757d';
     viewContractsBtn.style.color = 'white';
 
+    // Booking Agreement Button - CRITICAL: Must have booking-agreement-btn class and data-session-id attribute
+    const bookingAgreementBtn = document.createElement('button');
+    bookingAgreementBtn.className = 'btn btn-secondary booking-agreement-btn';
+    bookingAgreementBtn.setAttribute('data-session-id', session.id);
+    bookingAgreementBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof window.openBookingAgreementModal === 'function') {
+            window.openBookingAgreementModal(session.id);
+        } else {
+            console.error('openBookingAgreementModal function not found');
+            showMessage('Booking agreement feature is loading, please try again in a moment.', 'info');
+        }
+    };
+    bookingAgreementBtn.style.backgroundColor = '#6c757d';
+    bookingAgreementBtn.style.color = 'white';
+    bookingAgreementBtn.style.margin = '2px';
+    
+    // Create status span inside the button
+    const agreementStatusSpan = document.createElement('span');
+    agreementStatusSpan.className = 'agreement-status';
+    agreementStatusSpan.textContent = '📋 Booking Agreement';
+    bookingAgreementBtn.appendChild(agreementStatusSpan);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -750,6 +775,7 @@ function createSessionCard(session) {
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(viewContractsBtn);
+    actions.appendChild(bookingAgreementBtn);
     actions.appendChild(deleteBtn);
 
     // Debug: Log all buttons in the actions container
