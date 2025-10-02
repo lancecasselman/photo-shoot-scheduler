@@ -3352,12 +3352,24 @@ async function uploadPhotos(sessionId, files) {
                             });
                         }
                     } else {
-                        console.warn('Failed to get presigned URLs, falling back to server upload');
-                        smallFiles.push(...largeFiles); // Add to server upload queue
+                        console.error('Failed to get presigned URLs - cannot upload large files without direct R2 access');
+                        // Mark large files as failed instead of trying server upload (which has size limits)
+                        largeFiles.forEach((file, idx) => {
+                            const fileIndex = processedFiles.indexOf(file);
+                            updateFileProgress(fileIndex, file.name, 'failed', 0);
+                        });
+                        totalFailed += largeFiles.length;
+                        showMessage('Failed to get upload URLs for large files. Please try again or contact support.', 'error');
                     }
                 } catch (presignedError) {
                     console.error('Presigned URL error:', presignedError);
-                    smallFiles.push(...largeFiles); // Fallback to server upload
+                    // Mark large files as failed instead of trying server upload (which has size limits)
+                    largeFiles.forEach((file, idx) => {
+                        const fileIndex = processedFiles.indexOf(file);
+                        updateFileProgress(fileIndex, file.name, 'failed', 0);
+                    });
+                    totalFailed += largeFiles.length;
+                    showMessage(`Upload error: ${presignedError.message}. Please try again or contact support.`, 'error');
                 }
             }
             

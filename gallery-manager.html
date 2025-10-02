@@ -2612,8 +2612,19 @@
                             })
                         });
                     } else {
-                        console.warn('Direct R2 upload failed, falling back to server upload');
-                        // Fallback to server upload
+                        // Direct R2 upload failed - check if file is too large for server fallback
+                        const MAX_SERVER_UPLOAD_MB = 30;
+                        const fileSizeMB = file.size / (1024 * 1024);
+                        
+                        if (fileSizeMB > MAX_SERVER_UPLOAD_MB) {
+                            const errorMsg = `Direct R2 upload failed and this file (${fileSizeMB.toFixed(1)}MB) is too large for server upload. Please try again or contact support if the issue persists.`;
+                            console.error(errorMsg);
+                            alert(errorMsg);
+                            throw new Error('File too large for server fallback');
+                        }
+                        
+                        console.warn('Direct R2 upload failed, falling back to server upload for small file');
+                        // Fallback to server upload (only for files under 30MB)
                         const formData = new FormData();
                         formData.append('file', file);
 
@@ -2624,8 +2635,19 @@
                         });
                     }
                 } else {
-                    console.warn('Failed to get presigned URL, using server upload');
-                    // Fallback to server upload
+                    // Failed to get presigned URL - check if file is too large for server fallback
+                    const MAX_SERVER_UPLOAD_MB = 30;
+                    const fileSizeMB = file.size / (1024 * 1024);
+                    
+                    if (fileSizeMB > MAX_SERVER_UPLOAD_MB) {
+                        const errorMsg = `Failed to get direct upload URL and this file (${fileSizeMB.toFixed(1)}MB) is too large for server upload. Please try again or contact support if the issue persists.`;
+                        console.error(errorMsg);
+                        alert(errorMsg);
+                        throw new Error('File too large for server fallback');
+                    }
+                    
+                    console.warn('Failed to get presigned URL, using server upload for small file');
+                    // Fallback to server upload (only for files under 30MB)
                     const formData = new FormData();
                     formData.append('file', file);
 
