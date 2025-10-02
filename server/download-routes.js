@@ -1893,11 +1893,11 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       const downloadStats = await db
         .select({
           totalDownloads: sql`COUNT(*)::int`,
-          totalRevenue: sql`COALESCE(SUM(price), 0)::decimal`,
+          totalRevenue: sql`COALESCE(SUM(total_price), 0)::decimal`,
           uniqueClients: sql`COUNT(DISTINCT client_key)::int`
         })
-        .from(downloadTransactions)
-        .where(eq(downloadTransactions.sessionId, sessionId));
+        .from(downloadOrders)
+        .where(eq(downloadOrders.sessionId, sessionId));
 
       const stats = downloadStats[0] || {
         totalDownloads: 0,
@@ -1908,15 +1908,15 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       // Get recent downloads (last 10)
       const recentDownloads = await db
         .select({
-          id: downloadTransactions.id,
-          clientKey: downloadTransactions.clientKey,
-          photoCount: downloadTransactions.photoCount,
-          totalPrice: downloadTransactions.price,
-          createdAt: downloadTransactions.createdAt
+          id: downloadOrders.id,
+          clientKey: downloadOrders.clientKey,
+          photoCount: downloadOrders.photoCount,
+          totalPrice: downloadOrders.totalPrice,
+          createdAt: downloadOrders.createdAt
         })
-        .from(downloadTransactions)
-        .where(eq(downloadTransactions.sessionId, sessionId))
-        .orderBy(sql`${downloadTransactions.createdAt} DESC`)
+        .from(downloadOrders)
+        .where(eq(downloadOrders.sessionId, sessionId))
+        .orderBy(sql`${downloadOrders.createdAt} DESC`)
         .limit(10);
 
       res.json({
