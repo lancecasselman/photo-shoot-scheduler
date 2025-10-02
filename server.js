@@ -3349,7 +3349,9 @@ app.get('/api/admin/r2-investigation', async (req, res) => {
 
 
 
-// Record completed upload after direct R2 upload
+console.log(`☁️ R2 Analysis: ${r2Analysis.totalObjects} objects, ${r2Analysis.totalSizeGB.toFixed(2)} GB`);
+
+// Record completed upload after direct R2 upload - CRITICAL ENDPOINT
 app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
@@ -3421,8 +3423,6 @@ app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, a
         res.status(500).json({ error: 'Failed to record uploads: ' + error.message });
     }
 });
-
-        console.log(`☁️ R2 Analysis: ${r2Analysis.totalObjects} objects, ${r2Analysis.totalSizeGB.toFixed(2)} GB`);
 
         // Step 3: Compare and find orphaned files
         const dbKeyMap = new Map();
