@@ -3245,18 +3245,19 @@ async function uploadPhotos(sessionId, files) {
             showEnhancedUploadProgress(processedFiles.length);
 
             // Separate files by size for optimal upload strategy
-            const DIRECT_UPLOAD_THRESHOLD = 10 * 1024 * 1024; // 10MB - use direct R2 for larger files
+            // Use direct R2 for virtually all files to avoid blocking the server
+            const DIRECT_UPLOAD_THRESHOLD = 512 * 1024; // 512KB - use direct R2 for all but tiny files
             const largeFiles = processedFiles.filter(f => f.size > DIRECT_UPLOAD_THRESHOLD);
             const smallFiles = processedFiles.filter(f => f.size <= DIRECT_UPLOAD_THRESHOLD);
             
-            console.log(`📊 Upload strategy: ${largeFiles.length} large files (direct R2), ${smallFiles.length} small files (server)`);
+            console.log(`📊 Upload strategy: ${largeFiles.length} direct R2 uploads (non-blocking), ${smallFiles.length} server uploads`);
             
             let totalUploaded = 0;
             let totalFailed = 0;
             
-            // FAST PATH: Upload large files directly to R2 using presigned URLs
+            // FAST PATH: Upload files directly to R2 using presigned URLs (non-blocking, scalable)
             if (largeFiles.length > 0) {
-                console.log(`⚡ Using DIRECT R2 multipart upload for ${largeFiles.length} large files...`);
+                console.log(`⚡ Using DIRECT R2 upload for ${largeFiles.length} files (non-blocking)...`);
                 
                 try {
                     // Get presigned URLs for direct R2 upload
@@ -3281,7 +3282,7 @@ async function uploadPhotos(sessionId, files) {
                         
                         if (presignedData.success && presignedData.urls) {
                             // Upload files directly to R2 with intelligent concurrency
-                            const MAX_CONCURRENT = 4; // Optimal for large files
+                            const MAX_CONCURRENT = 8; // Increased concurrency for faster uploads
                             
                             for (let i = 0; i < presignedData.urls.length; i += MAX_CONCURRENT) {
                                 const batch = presignedData.urls.slice(i, i + MAX_CONCURRENT);
@@ -3360,9 +3361,9 @@ async function uploadPhotos(sessionId, files) {
                 }
             }
             
-            // STANDARD PATH: Upload small files through server (already optimized with multipart on server)
+            // STANDARD PATH: Upload tiny files through server (only for files under 512KB)
             if (smallFiles.length > 0) {
-                console.log(`📤 Using server upload for ${smallFiles.length} small files...`);
+                console.log(`📤 Using server upload for ${smallFiles.length} tiny files...`);
                 
                 const BATCH_SIZE = 8; // Increased for small files
                 
