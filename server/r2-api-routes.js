@@ -1054,7 +1054,7 @@ Please check your R2 configuration or contact support.`,
       const presignedUrls = [];
 
       for (const file of files) {
-        const { filename, fileType } = file;
+        const { filename, fileType, size } = file;
 
         if (!filename) {
           console.warn('Skipping file without filename');
@@ -1062,21 +1062,31 @@ Please check your R2 configuration or contact support.`,
         }
 
         try {
-          // Generate presigned URL with extended expiration for large files
+          // Determine MIME type from file extension
+          const ext = filename.toLowerCase().split('.').pop();
+          let contentType = 'application/octet-stream';
+          if (['jpg', 'jpeg'].includes(ext)) contentType = 'image/jpeg';
+          else if (ext === 'png') contentType = 'image/png';
+          else if (ext === 'gif') contentType = 'image/gif';
+          else if (ext === 'webp') contentType = 'image/webp';
+          else if (ext === 'mp4') contentType = 'video/mp4';
+          else if (ext === 'mov') contentType = 'video/quicktime';
+          
+          // Generate presigned URL with correct parameter order
+          // Signature: generateUploadPresignedUrl(userId, sessionId, filename, contentType, fileSize)
           const result = await r2Manager.generateUploadPresignedUrl(
-            filename,
             userId,
             sessionId,
-            fileType || 'gallery',
-            7200 // 2 hours expiration for large file uploads
+            filename,
+            contentType,
+            size || 0
           );
 
           presignedUrls.push({
             filename,
-            url: result.url,
-            r2Key: result.r2Key,
-            fileType: result.fileType,
-            contentType: result.contentType,
+            url: result.presignedUrl,
+            r2Key: result.key,
+            contentType: contentType,
             expiresIn: result.expiresIn
           });
         } catch (urlError) {
