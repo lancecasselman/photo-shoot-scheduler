@@ -7214,7 +7214,7 @@ ${agreement.content || 'No content available'}
                         <div class="session-file-actions">
                             <h4>Files & Storage</h4>
                             <div class="file-action-buttons">
-                                <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
+                                <button onclick="openFileUploader('${sessionId}', 'gallery'); event.stopPropagation();" class="btn btn-primary">📸 Upload to Gallery</button>
                             </div>
                         </div>
 
@@ -7463,19 +7463,15 @@ ${agreement.content || 'No content available'}
                 const quotaValidation = await window.storageQuotaChecker.validateUpload(files);
                 
                 if (!quotaValidation.canUpload) {
-                    // Show quota exceeded modal
                     window.storageQuotaChecker.showQuotaExceededModal(quotaValidation);
                     return;
                 }
                 
                 if (quotaValidation.warning) {
-                    // Show storage warning
                     window.storageQuotaChecker.showStorageWarning(quotaValidation);
-                    // Continue with upload after warning
                 }
             } catch (quotaError) {
                 console.error('Quota check failed, proceeding with upload:', quotaError);
-                // Continue with upload (fail-safe)
             }
             
             const progressBar = document.getElementById('progressBar');
@@ -7483,74 +7479,48 @@ ${agreement.content || 'No content available'}
             const uploadProgress = document.getElementById('uploadProgress');
             
             uploadProgress.style.display = 'block';
+            progressBar.style.width = '0%';
+            uploadStatus.textContent = 'Preparing upload...';
             
             try {
-                let uploadedCount = 0;
-                const totalFiles = files.length;
+                const formData = new FormData();
+                formData.append('sessionId', sessionId);
                 
-                // Process files in batches of 2
-                for (let i = 0; i < files.length; i += 2) {
-                    const batch = files.slice(i, i + 2);
-                    
-                    await Promise.all(batch.map(async (file) => {
-                        try {
-                            // Get upload URL with file size for quota enforcement
-                            const authToken = await getAuthToken();
-                            const uploadResponse = await fetch(`/api/sessions/${sessionId}/files/upload`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                                },
-                                body: JSON.stringify({ 
-                                    folderType, 
-                                    fileName: file.name,
-                                    fileSize: file.size 
-                                })
-                            });
-                            
-                            if (!uploadResponse.ok) {
-                                if (uploadResponse.status === 413) {
-                                    // Handle quota exceeded error
-                                    const errorData = await uploadResponse.json();
-                                    window.storageQuotaChecker.showQuotaExceededModal(errorData);
-                                    throw new Error('Storage quota exceeded');
-                                }
-                                throw new Error('Failed to get upload URL');
-                            }
-                            
-                            const { uploadURL } = await uploadResponse.json();
-                            
-                            // Upload file to signed URL
-                            const putResponse = await fetch(uploadURL, {
-                                method: 'PUT',
-                                body: file,
-                                headers: {
-                                    'Content-Type': file.type || 'application/octet-stream'
-                                }
-                            });
-                            
-                            if (!putResponse.ok) {
-                                throw new Error('Failed to upload file');
-                            }
-                            
-                            uploadedCount++;
-                            const progress = (uploadedCount / totalFiles) * 100;
-                            progressBar.style.width = `${progress}%`;
-                            uploadStatus.textContent = `Uploaded ${uploadedCount} of ${totalFiles} files`;
-                            
-                        } catch (error) {
-                            console.error('Error uploading file:', file.name, error);
-                            showMessage(`Failed to upload ${file.name}`, 'error');
-                        }
-                    }));
-                }
+                files.forEach(file => {
+                    formData.append('files', file);
+                });
                 
-                showMessage(`Successfully uploaded ${uploadedCount} files to ${folderType}!`, 'success');
-                closeFileUploadModal();
+                const xhr = new XMLHttpRequest();
                 
-                // Reload files for this session
-                loadSessionFiles(sessionId, folderType);
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percent + '%';
+                        uploadStatus.textContent = `Uploading... ${Math.round(percent)}%`;
+                    }
+                });
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        showMessage(`Successfully uploaded ${response.successfulUploads} files!`, 'success');
+                        closeFileUploadModal();
+                        updateStorageDisplay();
+                    } else if (xhr.status === 413) {
+                        const error = JSON.parse(xhr.responseText);
+                        window.storageQuotaChecker.showQuotaExceededModal(error);
+                    } else {
+                        throw new Error('Upload failed');
+                    }
+                });
+                
+                xhr.addEventListener('error', () => {
+                    showMessage('Upload failed: Network error', 'error');
+                });
+                
+                xhr.open('POST', '/api/r2/gallery-upload');
+                xhr.withCredentials = true;
+                xhr.send(formData);
                 
             } catch (error) {
                 console.error('Upload error:', error);
