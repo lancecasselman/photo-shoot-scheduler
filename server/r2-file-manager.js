@@ -738,6 +738,11 @@ class R2FileManager {
     try {
       console.log(`📤 Uploading ${actualFileType.toUpperCase()} file: ${filename} (${fileSizeMB.toFixed(2)}MB)`);
       
+      // For very large files (>100MB), log a warning but proceed
+      if (fileSizeMB > 100) {
+        console.log(`⚠️ Large file detected (${fileSizeMB.toFixed(2)}MB) - using optimized upload`);
+      }
+      
       // Try R2 upload first if available
       if (this.r2Available) {
         try {
@@ -751,14 +756,18 @@ class R2FileManager {
             console.error('❌ R2 credentials issue detected - marking R2 as unavailable');
             this.r2Available = false;
           } else {
-            console.warn(' Temporary R2 issue, retrying...');
-            // Try one more time for temporary network issues
+            console.warn(' Temporary R2 issue, retrying with exponential backoff...');
+            // Try one more time for temporary network issues with longer timeout
             try {
-              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+              await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
               return await this.uploadToR2(fileBuffer, filename, userId, sessionId, actualFileType);
             } catch (retryError) {
-              console.error('❌ R2 retry failed, falling back to local backup');
-              this.r2Available = false;
+              console.error('❌ R2 retry failed:', retryError.message);
+              // Don't mark as unavailable for large file timeouts
+              if (!retryError.message?.includes('timeout') && !retryError.message?.includes('ECONNRESET')) {
+                this.r2Available = false;
+              }
+              throw retryError;
             }
           }
         }

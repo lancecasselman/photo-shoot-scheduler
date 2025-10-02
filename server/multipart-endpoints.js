@@ -50,34 +50,44 @@ function createMultipartRoutes(pool) {
         });
       }
 
-      // Validate folderType - raw files are no longer supported
-      if (folderType === 'raw') {
-        return res.status(400).json({ 
-          error: 'Raw file uploads are no longer supported. Please use gallery uploads instead.' 
-        });
+      // Validate folderType - allow all types including gallery
+      const validFolderTypes = ['gallery', 'video', 'document', 'other'];
+      if (!validFolderTypes.includes(folderType)) {
+        console.log(`⚠️ Invalid folder type ${folderType}, defaulting to gallery`);
+        folderType = 'gallery';
       }
 
-      // Storage quota check
+      // Storage quota check with admin bypass
       const StorageSystem = require('./storage-system');
       const storageSystem = new StorageSystem(pool, r2Manager);
       
-      const canUploadResult = await storageSystem.canUpload(userId, fileSize, req.user.email);
-      if (!canUploadResult.canUpload) {
-        // Allow upload if within 120% of base quota (more lenient for multipart uploads)
-        if (canUploadResult.isOverBaseQuota && canUploadResult.currentUsageGB < (canUploadResult.quotaGB * 1.2)) {
-          console.log(`⚠️ Multipart upload over base quota but within tolerance, allowing upload`);
-        } else {
-          return res.status(413).json({
-            error: 'Storage quota exceeded',
-            usage: {
-              currentGB: canUploadResult.currentUsageGB,
-              quotaGB: canUploadResult.quotaGB,
-              effectiveQuotaGB: canUploadResult.effectiveQuotaGB,
-              remainingGB: canUploadResult.remainingGB,
-              requestedGB: (fileSize / (1024 * 1024 * 1024)).toFixed(2)
-            },
-            upgradeRequired: true
-          });
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com'
+      ];
+
+      if (req.user?.email && adminEmails.includes(req.user.email.toLowerCase())) {
+        console.log(`✅ Admin bypass for multipart upload: ${req.user.email} has unlimited storage`);
+      } else {
+        const canUploadResult = await storageSystem.canUpload(userId, fileSize, req.user.email);
+        if (!canUploadResult.canUpload) {
+          // Allow upload if within 150% of base quota (very lenient for multipart uploads)
+          if (canUploadResult.isOverBaseQuota && canUploadResult.currentUsageGB < (canUploadResult.quotaGB * 1.5)) {
+            console.log(`⚠️ Multipart upload over base quota but within tolerance, allowing upload`);
+          } else {
+            return res.status(413).json({
+              error: 'Storage quota exceeded',
+              usage: {
+                currentGB: canUploadResult.currentUsageGB,
+                quotaGB: canUploadResult.quotaGB,
+                effectiveQuotaGB: canUploadResult.effectiveQuotaGB,
+                remainingGB: canUploadResult.remainingGB,
+                requestedGB: (fileSize / (1024 * 1024 * 1024)).toFixed(2)
+              },
+              upgradeRequired: true
+            });
+          }
         }
       }
 

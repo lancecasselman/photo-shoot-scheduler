@@ -1098,19 +1098,35 @@ Please check your R2 configuration or contact support.`,
         }
       }
 
-      // Check storage limits before allowing upload
-      const storageInfo = await storageSystem.getStorageInfo(userId);
+      // Check storage limits before allowing upload (more permissive for large files)
       const totalUploadSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
-      const totalGBAfterUpload = storageInfo.usage.totalGB + (totalUploadSize / (1024 * 1024 * 1024));
+      
+      // Admin bypass check
+      const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com', 
+        'lance@thelegacyphotography.com'
+      ];
 
-      // Check if user has enough storage
-      if (totalGBAfterUpload > storageInfo.quota.totalGB) {
-        return res.status(403).json({
-          error: 'Storage limit exceeded',
-          currentUsageGB: storageInfo.usage.totalGB,
-          quotaGB: storageInfo.quota.totalGB,
-          uploadSizeGB: totalUploadSize / (1024 * 1024 * 1024)
-        });
+      if (req.user?.email && adminEmails.includes(req.user.email.toLowerCase())) {
+        console.log(`✅ Admin bypass for presigned URLs: ${req.user.email} has unlimited storage`);
+      } else {
+        // Use more permissive quota check (150% of quota allowed)
+        const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, req.user?.email);
+        
+        if (!canUploadResult.canUpload) {
+          // Allow upload if within 150% of base quota
+          if (canUploadResult.isOverBaseQuota && canUploadResult.currentUsageGB < (canUploadResult.quotaGB * 1.5)) {
+            console.log(`⚠️ User over base quota but within tolerance, allowing large file upload`);
+          } else {
+            return res.status(413).json({
+              error: 'Storage limit exceeded',
+              currentUsageGB: canUploadResult.currentUsageGB,
+              quotaGB: canUploadResult.quotaGB,
+              uploadSizeGB: totalUploadSize / (1024 * 1024 * 1024)
+            });
+          }
+        }
       }
 
       res.json({

@@ -3335,7 +3335,7 @@ async function uploadPhotos(sessionId, files) {
                             }
                             
                             // Mark upload as complete in database
-                            await fetch('/api/r2/complete-upload', {
+                            const completeResult = await fetch('/api/r2/complete-upload', {
                                 method: 'POST',
                                 headers: {
                                     'Authorization': `Bearer ${authToken}`,
@@ -3350,16 +3350,72 @@ async function uploadPhotos(sessionId, files) {
                                     }))
                                 })
                             });
+                            
+                            if (completeResult.ok) {
+                                console.log('✅ Large file uploads completed and tracked');
+                            } else {
+                                console.warn('⚠️ Failed to complete upload tracking, but files were uploaded');
+                            }
                         }
                     } else {
-                        console.error('Failed to get presigned URLs - cannot upload large files without direct R2 access');
-                        // Mark large files as failed instead of trying server upload (which has size limits)
-                        largeFiles.forEach((file, idx) => {
-                            const fileIndex = processedFiles.indexOf(file);
-                            updateFileProgress(fileIndex, file.name, 'failed', 0);
-                        });
-                        totalFailed += largeFiles.length;
-                        showMessage('Failed to get upload URLs for large files. Please try again or contact support.', 'error');
+                        console.error('Failed to get presigned URLs - retrying with multipart endpoint');
+                        
+                        // Fallback: Try multipart upload endpoint for large files
+                        try {
+                            for (const file of largeFiles) {
+                                const fileIndex = processedFiles.indexOf(file);
+                                console.log(`Attempting multipart upload for: ${file.name}`);
+                                
+                                // Create multipart upload
+                                const createResponse = await fetch('/api/r2/multipart/create', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${authToken}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        fileName: file.name,
+                                        fileSize: file.size,
+                                        contentType: file.type || 'image/jpeg',
+                                        sessionId: sessionId,
+                                        folderType: 'gallery'
+                                    })
+                                });
+                                
+                                if (!createResponse.ok) {
+                                    throw new Error(`Failed to create multipart upload for ${file.name}`);
+                                }
+                                
+                                const uploadData = await createResponse.json();
+                                updateFileProgress(fileIndex, file.name, 'uploading', 0);
+                                
+                                // Upload file using the multipart endpoint
+                                const formData = new FormData();
+                                formData.append('data', await file.arrayBuffer());
+                                
+                                const uploadResponse = await fetch(`/api/r2/multipart/upload/${uploadData.fields.uploadId}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${authToken}`
+                                    },
+                                    body: formData
+                                });
+                                
+                                if (uploadResponse.ok) {
+                                    updateFileProgress(fileIndex, file.name, 'complete', 100);
+                                    totalUploaded++;
+                                } else {
+                                    throw new Error(`Failed to upload ${file.name}`);
+                                }
+                            }
+                        } catch (multipartError) {
+                            console.error('Multipart fallback failed:', multipartError);
+                            largeFiles.forEach((file) => {
+                                const fileIndex = processedFiles.indexOf(file);
+                                updateFileProgress(fileIndex, file.name, 'failed', 0);
+                            });
+                            totalFailed += largeFiles.length;
+                            showMessage('Failed to upload large files. Please try again or contact support.t.', 'error');
                     }
                 } catch (presignedError) {
                     console.error('Presigned URL error:', presignedError);
