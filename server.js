@@ -8088,7 +8088,7 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
         // === STEP 3: R2 HEALTH CHECK ===
         console.log(`\n[${correlationId}] ✓ Step 2: Performing R2 health check...`);
         
-        if (!r2Manager) {
+        if (!r2FileManager) {
             console.error(`[${correlationId}] ❌ R2 manager not initialized`);
             return res.status(500).json({
                 error: 'R2 storage not available',
@@ -8098,11 +8098,11 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
             });
         }
         
-        if (!r2Manager.r2Available) {
+        if (!r2FileManager.r2Available) {
             console.warn(`[${correlationId}] ⚠️ R2 marked as unavailable, testing connection...`);
             
             // Attempt to test connection
-            const connectionTest = await r2Manager.testConnection();
+            const connectionTest = await r2FileManager.testConnection();
             
             if (!connectionTest) {
                 console.error(`[${correlationId}] ❌ R2 connection test failed`);
@@ -8161,12 +8161,12 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
         
         // === STEP 5: GENERATE PRESIGNED URLS ===
         console.log(`\n[${correlationId}] ✓ Step 4: Generating presigned URLs...`);
-        console.log(`   Calling r2Manager.generateBatchUploadUrls()`);
+        console.log(`   Calling r2FileManager.generateBatchUploadUrls()`);
         console.log(`   Parameters: userId=${userId}, sessionId=${sessionId}, fileCount=${files.length}`);
         
         let result;
         try {
-            result = await r2Manager.generateBatchUploadUrls(userId, sessionId, files);
+            result = await r2FileManager.generateBatchUploadUrls(userId, sessionId, files);
             
             console.log(`[${correlationId}] 📤 R2 Manager response:`);
             console.log(`   Success: ${result.success}`);
