@@ -3415,7 +3415,8 @@ async function uploadPhotos(sessionId, files) {
                                 updateFileProgress(fileIndex, file.name, 'failed', 0);
                             });
                             totalFailed += largeFiles.length;
-                            showMessage('Failed to upload large files. Please try again or contact support.t.', 'error');
+                            showMessage('Failed to upload large files. Please try again or contact support.', 'error');
+                        }
                     }
                 } catch (presignedError) {
                     console.error('Presigned URL error:', presignedError);
