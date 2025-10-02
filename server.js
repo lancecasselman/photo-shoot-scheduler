@@ -3356,7 +3356,8 @@ app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, a
     try {
         const { sessionId, folderType } = req.params;
         const { files } = req.body;
-        const userId = req.user.uid;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         if (!files || !Array.isArray(files)) {
             return res.status(400).json({ error: 'Files array is required' });
