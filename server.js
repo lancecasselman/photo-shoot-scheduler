@@ -3447,11 +3447,25 @@ app.get('/api/admin/r2-investigation', async (req, res) => {
 app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
+        
+        console.log(`📝 /record endpoint called`);
+        console.log(`   Session ID: ${sessionId}`);
+        console.log(`   Folder Type: ${folderType}`);
+        console.log(`   Request body:`, req.body);
+        console.log(`   Body type: ${typeof req.body}`);
+        console.log(`   Body keys:`, req.body ? Object.keys(req.body) : 'no body');
+        
         const { files } = req.body;
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
         if (!files || !Array.isArray(files)) {
+            console.error(`❌ /record validation failed:`, {
+                filesExists: !!files,
+                filesType: typeof files,
+                isArray: Array.isArray(files),
+                bodyKeys: req.body ? Object.keys(req.body) : 'no body'
+            });
             return res.status(400).json({ error: 'Files array is required' });
         }
 
