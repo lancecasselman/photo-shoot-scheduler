@@ -10,26 +10,26 @@ const R2FileManager = require('./r2-file-manager');
 
 function createMultipartRoutes(pool) {
   const router = express.Router();
-  
+
   // Initialize R2 and multipart uploader
   const r2Manager = new R2FileManager(null, pool);
-  
+
   // Authentication middleware
   router.use((req, res, next) => {
     const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
     const hasValidSession = req.session && req.session.user && req.session.user.uid;
-    
+
     if (isAuthenticated && req.user && req.user.uid) {
       return next();
     }
-    
+
     if (hasValidSession) {
       req.user = req.session.user;
       if (req.user.uid) {
         return next();
       }
     }
-    
+
     return res.status(401).json({ error: 'Authentication required for multipart uploads' });
   });
 
@@ -41,9 +41,9 @@ function createMultipartRoutes(pool) {
     try {
       const { fileName, fileSize, contentType, sessionId, folderType = 'gallery' } = req.body;
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-      
+
       console.log(`🚀 Creating multipart upload: ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
-      
+
       if (!fileName || !fileSize || !sessionId) {
         return res.status(400).json({ 
           error: 'Missing required parameters: fileName, fileSize, sessionId' 
@@ -60,7 +60,7 @@ function createMultipartRoutes(pool) {
       // Storage quota check with admin bypass
       const StorageSystem = require('./storage-system');
       const storageSystem = new StorageSystem(pool, r2Manager);
-      
+
       const adminEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com', 
@@ -95,17 +95,17 @@ function createMultipartRoutes(pool) {
       const timestamp = Date.now();
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
       const key = `${userId}/${sessionId}/${folderType}/${timestamp}_${sanitizedFileName}`;
-      
+
       // Get multipart uploader instance
       const s3Client = r2Manager.s3Client;
       const bucketName = r2Manager.bucketName;
       const multipartUploader = new MultipartUploader(s3Client, bucketName);
-      
+
       // Calculate optimal chunk configuration
       const chunkSize = multipartUploader.calculateOptimalChunkSize(fileSize);
       const totalParts = Math.ceil(fileSize / chunkSize);
       const concurrency = multipartUploader.calculateOptimalConcurrency(fileSize, totalParts);
-      
+
       // Create multipart upload
       const { CreateMultipartUploadCommand } = require('@aws-sdk/client-s3');
       const createResponse = await s3Client.send(
@@ -122,10 +122,10 @@ function createMultipartRoutes(pool) {
           }
         })
       );
-      
+
       const uploadId = createResponse.UploadId;
       console.log(`✅ Multipart upload created: ${uploadId} (${totalParts} parts)`);
-      
+
       // Store upload metadata in database for tracking
       await pool.query(`
         INSERT INTO multipart_uploads (
@@ -135,7 +135,7 @@ function createMultipartRoutes(pool) {
         ON CONFLICT (upload_id) DO UPDATE SET
           created_at = NOW()
       `, [uploadId, userId, sessionId, folderType, key, fileName, fileSize, totalParts]);
-      
+
       // Return Uppy-compatible response
       res.json({
         method: 'POST',
@@ -155,7 +155,7 @@ function createMultipartRoutes(pool) {
           concurrency: concurrency
         }
       });
-      
+
     } catch (error) {
       console.error('❌ Multipart upload creation failed:', error);
       res.status(500).json({ 
@@ -172,23 +172,23 @@ function createMultipartRoutes(pool) {
   router.post('/upload/:uploadId', async (req, res) => {
     const { uploadId } = req.params;
     const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-    
+
     try {
       console.log(`📤 Processing multipart upload: ${uploadId}`);
-      
+
       // Get upload metadata from database
       const uploadQuery = await pool.query(
         'SELECT * FROM multipart_uploads WHERE upload_id = $1 AND user_id = $2',
         [uploadId, userId]
       );
-      
+
       if (uploadQuery.rows.length === 0) {
         return res.status(404).json({ error: 'Upload session not found' });
       }
-      
+
       const uploadData = uploadQuery.rows[0];
       const { key, file_name, session_id, folder_type } = uploadData;
-      
+
       // Get file buffer from request
       let fileBuffer;
       if (req.body && req.body.data) {
@@ -200,12 +200,12 @@ function createMultipartRoutes(pool) {
       } else {
         return res.status(400).json({ error: 'No file data provided' });
       }
-      
+
       // Use enhanced multipart uploader
       const s3Client = r2Manager.s3Client;
       const bucketName = r2Manager.bucketName;
       const multipartUploader = new MultipartUploader(s3Client, bucketName);
-      
+
       const uploadResult = await multipartUploader.uploadLargeFile(
         fileBuffer, 
         key, 
@@ -217,18 +217,18 @@ function createMultipartRoutes(pool) {
           originalFileName: file_name
         }
       );
-      
+
       // Update database with successful upload
       await pool.query(
         'UPDATE multipart_uploads SET completed_at = NOW(), success = true WHERE upload_id = $1',
         [uploadId]
       );
-      
+
       // Track storage usage
       await r2Manager.trackFileUpload(userId, session_id, folder_type, file_name, fileBuffer.length);
-      
+
       console.log(`✅ Multipart upload completed: ${file_name}`);
-      
+
       res.json({
         success: true,
         key: key,
@@ -237,16 +237,16 @@ function createMultipartRoutes(pool) {
         location: uploadResult.location,
         etag: uploadResult.etag
       });
-      
+
     } catch (error) {
       console.error(`❌ Multipart upload failed: ${uploadId}:`, error);
-      
+
       // Update database with failure
       await pool.query(
         'UPDATE multipart_uploads SET completed_at = NOW(), success = false, error = $2 WHERE upload_id = $1',
         [uploadId, error.message]
       );
-      
+
       res.status(500).json({ 
         error: 'Multipart upload failed',
         details: error.message 
@@ -261,25 +261,25 @@ function createMultipartRoutes(pool) {
   router.delete('/abort/:uploadId', async (req, res) => {
     const { uploadId } = req.params;
     const userId = req.user.normalized_uid || req.user.uid || req.user.id;
-    
+
     try {
       // Get upload metadata
       const uploadResult = await pool.query(
         'SELECT key FROM multipart_uploads WHERE upload_id = $1 AND user_id = $2',
         [uploadId, userId]
       );
-      
+
       if (uploadResult.rows.length === 0) {
         return res.status(404).json({ error: 'Upload session not found' });
       }
-      
+
       const key = uploadResult.rows[0].key;
-      
+
       // Abort multipart upload on R2
       const { AbortMultipartUploadCommand } = require('@aws-sdk/client-s3');
       const s3Client = r2Manager.s3Client;
       const bucketName = r2Manager.bucketName;
-      
+
       await s3Client.send(
         new AbortMultipartUploadCommand({
           Bucket: bucketName,
@@ -287,16 +287,16 @@ function createMultipartRoutes(pool) {
           UploadId: uploadId
         })
       );
-      
+
       // Clean up database
       await pool.query(
         'DELETE FROM multipart_uploads WHERE upload_id = $1',
         [uploadId]
       );
-      
+
       console.log(`🗑️ Multipart upload aborted: ${uploadId}`);
       res.json({ success: true, message: 'Upload aborted successfully' });
-      
+
     } catch (error) {
       console.error('Error aborting multipart upload:', error);
       res.status(500).json({ 

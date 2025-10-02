@@ -1071,7 +1071,7 @@ Please check your R2 configuration or contact support.`,
           else if (ext === 'webp') contentType = 'image/webp';
           else if (ext === 'mp4') contentType = 'video/mp4';
           else if (ext === 'mov') contentType = 'video/quicktime';
-          
+
           // Generate presigned URL with correct parameter order
           // Signature: generateUploadPresignedUrl(userId, sessionId, filename, contentType, fileSize)
           const result = await r2Manager.generateUploadPresignedUrl(
@@ -1100,7 +1100,7 @@ Please check your R2 configuration or contact support.`,
 
       // Check storage limits before allowing upload (more permissive for large files)
       const totalUploadSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
-      
+
       // Admin bypass check
       const adminEmails = [
         'lancecasselman@icloud.com',
@@ -1113,7 +1113,7 @@ Please check your R2 configuration or contact support.`,
       } else {
         // Use more permissive quota check (150% of quota allowed)
         const canUploadResult = await storageSystem.canUpload(userId, totalUploadSize, req.user?.email);
-        
+
         if (!canUploadResult.canUpload) {
           // Allow upload if within 150% of base quota
           if (canUploadResult.isOverBaseQuota && canUploadResult.currentUsageGB < (canUploadResult.quotaGB * 1.5)) {
@@ -1132,11 +1132,8 @@ Please check your R2 configuration or contact support.`,
       res.json({
         success: true,
         urls: presignedUrls,
-        storageInfo: {
-          currentUsageGB: storageInfo.usage.totalGB,
-          quotaGB: storageInfo.quota.totalGB,
-          remainingGB: storageInfo.quota.totalGB - storageInfo.usage.totalGB
-        }
+        // Added storageInfo to response if available, otherwise fetch it
+        storageInfo: await storageSystem.getUserStorageInfo(userId) // Fetch latest storage info
       });
 
     } catch (error) {
