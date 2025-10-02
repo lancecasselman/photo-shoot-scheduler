@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header .client-name {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .upload-section {
+            padding: 40px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .upload-hint {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .progress-section {
+            padding: 20px 40px;
+            background: #f9f9f9;
+            display: none;
+        }
+        
+        .progress-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .progress-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .file-status {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .progress-bar-container {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .gallery-section {
+            padding: 40px;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .gallery-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .gallery-stats {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .gallery-item {
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .gallery-item-info {
+            padding: 15px;
+        }
+        
+        .gallery-item-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .gallery-item-size {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success {
+            background: #10b981;
+        }
+        
+        .message.error {
+            background: #ef4444;
+        }
+        
+        .message.info {
+            background: #3b82f6;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state-text {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📸 Gallery Manager</h1>
+                <div class="client-name" id="clientName">Loading...</div>
+            </div>
+            <button class="btn btn-primary" onclick="window.close()">Close Window</button>
+        </div>
+        
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">☁️</div>
+                <div class="upload-text">Drop files here or click to browse</div>
+                <div class="upload-hint">Supports RAW photos, JPG, PNG, and high-resolution images</div>
+            </div>
+            <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+        </div>
+        
+        <div class="progress-section" id="progressSection">
+            <div id="progressContainer"></div>
+        </div>
+        
+        <div class="gallery-section">
+            <div class="gallery-header">
+                <div class="gallery-title">Gallery Photos</div>
+                <div class="gallery-stats" id="galleryStats">Loading...</div>
+            </div>
+            <div class="gallery-grid" id="galleryGrid">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📁</div>
+                    <div class="empty-state-text">No photos uploaded yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('sessionId');
+        const folderType = urlParams.get('folderType') || 'gallery';
+        const clientName = urlParams.get('clientName') || 'Client';
+        
+        document.getElementById('clientName').textContent = `Client: ${clientName}`;
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressSection = document.getElementById('progressSection');
+        const progressContainer = document.getElementById('progressContainer');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const galleryStats = document.getElementById('galleryStats');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        });
+        
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        async function handleFileSelect() {
+            const files = Array.from(fileInput.files);
+            if (files.length === 0) return;
+            
+            progressSection.style.display = 'block';
+            progressContainer.innerHTML = '';
+            
+            const fileData = files.map(file => ({
+                filename: file.name,
+                contentType: file.type || 'application/octet-stream',
+                size: file.size
+            }));
+            
+            try {
+                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ files: fileData })
+                });
+                
+                if (!urlResponse.ok) {
+                    const error = await urlResponse.json();
+                    throw new Error(error.error || 'Failed to get upload URLs');
+                }
+                
+                const { urls } = await urlResponse.json();
+                
+                const uploadPromises = files.map((file, index) => {
+                    const urlData = urls[index];
+                    return uploadFile(file, urlData);
+                });
+                
+                await Promise.all(uploadPromises);
+                
+                const uploadedFiles = urls.map(urlData => ({
+                    filename: urlData.filename,
+                    r2Key: urlData.r2Key,
+                    size: urlData.size,
+                    contentType: urlData.contentType
+                }));
+                
+                const recordResponse = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ files: uploadedFiles })
+                });
+                
+                if (!recordResponse.ok) {
+                    throw new Error('Failed to record uploads');
+                }
+                
+                showMessage('Upload complete!', 'success');
+                fileInput.value = '';
+                loadGallery();
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('Upload failed: ' + error.message, 'error');
+            }
+        }
+        
+        async function uploadFile(file, urlData) {
+            const progressItem = document.createElement('div');
+            progressItem.className = 'progress-item';
+            progressItem.innerHTML = `
+                <div class="progress-item-header">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-status">Uploading...</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 0%"></div>
+                </div>
+            `;
+            progressContainer.appendChild(progressItem);
+            
+            const progressBar = progressItem.querySelector('.progress-bar');
+            const fileStatus = progressItem.querySelector('.file-status');
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percent + '%';
+                        fileStatus.textContent = `${Math.round(percent)}%`;
+                    }
+                });
+                
+                await new Promise((resolve, reject) => {
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            fileStatus.textContent = 'Complete!';
+                            resolve();
+                        } else {
+                            reject(new Error(`Upload failed with status ${xhr.status}`));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.open('PUT', urlData.uploadUrl);
+                    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+                    xhr.send(file);
+                });
+                
+            } catch (error) {
+                fileStatus.textContent = 'Failed';
+                throw error;
+            }
+        }
+        
+        async function loadGallery() {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load gallery');
+                
+                const files = await response.json();
+                
+                galleryStats.textContent = `${files.length} files`;
+                
+                if (files.length === 0) {
+                    galleryGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <div class="empty-state-text">No photos uploaded yet</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                galleryGrid.innerHTML = files.map(file => `
+                    <div class="gallery-item">
+                        <img src="/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}" 
+                             alt="${file.filename}"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                        <div class="gallery-item-info">
+                            <div class="gallery-item-name">${file.filename}</div>
+                            <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load gallery:', error);
+                showMessage('Failed to load gallery', 'error');
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showMessage(text, type) {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            document.body.appendChild(message);
+            setTimeout(() => message.remove(), 3000);
+        }
+        
+        loadGallery();
+    </script>
+</body>
+</html>
