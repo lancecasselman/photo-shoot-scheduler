@@ -3346,85 +3346,9 @@ app.get('/api/admin/r2-investigation', async (req, res) => {
         
         r2Analysis.totalSizeMB = r2Analysis.totalSizeBytes / (1024 * 1024);
         r2Analysis.totalSizeGB = r2Analysis.totalSizeMB / 1024;
-
-
-
-console.log(`☁️ R2 Analysis: ${r2Analysis.totalObjects} objects, ${r2Analysis.totalSizeGB.toFixed(2)} GB`);
-
-// Record completed upload after direct R2 upload - CRITICAL ENDPOINT
-app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, async (req, res) => {
-    try {
-        const { sessionId, folderType } = req.params;
-        const { files } = req.body;
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
         
-        if (!files || !Array.isArray(files)) {
-            return res.status(400).json({ error: 'Files array is required' });
-        }
-
-        console.log(`📝 Recording ${files.length} completed uploads for session ${sessionId}`);
-
-        let client;
-        try {
-            client = await pool.connect();
-            
-            // Verify session belongs to user
-            const sessionCheck = await client.query(
-                'SELECT user_id FROM photography_sessions WHERE id = $1',
-                [sessionId]
-            );
-            
-            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
-                return res.status(403).json({ error: 'Access denied' });
-            }
-
-            // Record each file in the database
-            for (const file of files) {
-                const { filename, r2Key, size, contentType } = file;
-                const fileSizeMB = size / (1024 * 1024);
-                
-                await client.query(`
-                    INSERT INTO session_files (
-                        session_id, user_id, filename, original_name,
-                        file_size_mb, file_size_bytes, folder_type, r2_key, uploaded_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-                    ON CONFLICT (session_id, folder_type, filename)
-                    DO UPDATE SET
-                        file_size_bytes = EXCLUDED.file_size_bytes,
-                        file_size_mb = EXCLUDED.file_size_mb,
-                        r2_key = EXCLUDED.r2_key,
-                        uploaded_at = NOW()
-                `, [
-                    sessionId,
-                    userId,
-                    filename,
-                    filename,
-                    parseFloat(fileSizeMB.toFixed(2)),
-                    size,
-                    folderType,
-                    r2Key
-                ]);
-                
-                console.log(`✅ Recorded upload: ${filename} (${fileSizeMB.toFixed(2)}MB)`);
-            }
-            
-            res.json({ 
-                success: true,
-                recordedFiles: files.length,
-                message: `Successfully recorded ${files.length} uploads`
-            });
-            
-        } finally {
-            if (client) client.release();
-        }
+        console.log(`☁️ R2 Analysis: ${r2Analysis.totalObjects} objects, ${r2Analysis.totalSizeGB.toFixed(2)} GB`);
         
-    } catch (error) {
-        console.error('Error recording uploads:', error);
-        res.status(500).json({ error: 'Failed to record uploads: ' + error.message });
-    }
-});
-
         // Step 3: Compare and find orphaned files
         const dbKeyMap = new Map();
         dbFiles.forEach(file => {
@@ -3516,6 +3440,80 @@ app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, a
             details: error.message,
             stack: error.stack 
         });
+    }
+});
+
+// Record completed upload after direct R2 upload - CRITICAL ENDPOINT
+app.post('/api/sessions/:sessionId/files/:folderType/record', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId, folderType } = req.params;
+        const { files } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!files || !Array.isArray(files)) {
+            return res.status(400).json({ error: 'Files array is required' });
+        }
+
+        console.log(`📝 Recording ${files.length} completed uploads for session ${sessionId}`);
+
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // Verify session belongs to user
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+
+            // Record each file in the database
+            for (const file of files) {
+                const { filename, r2Key, size, contentType } = file;
+                const fileSizeMB = size / (1024 * 1024);
+                
+                await client.query(`
+                    INSERT INTO session_files (
+                        session_id, user_id, filename, original_name,
+                        file_size_mb, file_size_bytes, folder_type, r2_key, uploaded_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+                    ON CONFLICT (session_id, folder_type, filename)
+                    DO UPDATE SET
+                        file_size_bytes = EXCLUDED.file_size_bytes,
+                        file_size_mb = EXCLUDED.file_size_mb,
+                        r2_key = EXCLUDED.r2_key,
+                        uploaded_at = NOW()
+                `, [
+                    sessionId,
+                    userId,
+                    filename,
+                    filename,
+                    parseFloat(fileSizeMB.toFixed(2)),
+                    size,
+                    folderType,
+                    r2Key
+                ]);
+                
+                console.log(`✅ Recorded upload: ${filename} (${fileSizeMB.toFixed(2)}MB)`);
+            }
+            
+            res.json({ 
+                success: true,
+                recordedFiles: files.length,
+                message: `Successfully recorded ${files.length} uploads`
+            });
+            
+        } finally {
+            if (client) client.release();
+        }
+        
+    } catch (error) {
+        console.error('Error recording uploads:', error);
+        res.status(500).json({ error: 'Failed to record uploads: ' + error.message });
     }
 });
 
