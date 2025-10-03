@@ -8124,7 +8124,20 @@ app.post('/api/sessions/:id/upload-urls', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const normalizedUser = normalizeUserForLance(req.user);
     const userId = normalizedUser.uid;
+    
+    // Debug logging
+    console.log('🔍 Upload request received:');
+    console.log('  Body:', JSON.stringify(req.body));
+    console.log('  Files array:', req.body.files);
+    console.log('  Files is array?:', Array.isArray(req.body.files));
+    
     const { files } = req.body; // Array of {filename, contentType, size}
+    
+    // Validate files array
+    if (!files || !Array.isArray(files) || files.length === 0) {
+        console.error('❌ Invalid files array:', files);
+        return res.status(400).json({ error: 'Files array is required' });
+    }
     
     // Generate correlation ID for tracking this request
     const correlationId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
