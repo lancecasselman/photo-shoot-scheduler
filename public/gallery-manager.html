@@ -508,18 +508,64 @@
                     return;
                 }
                 
-                galleryGrid.innerHTML = files.map(file => `
-                    <div class="gallery-item">
-                        <img src="/api/sessions/${sessionId}/files/${folderType}/preview/${file.filename}?size=thumbnail" 
-                             alt="${file.filename}"
-                             loading="lazy"
-                             onerror="this.onerror=null; this.src='/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}';">
-                        <div class="gallery-item-info">
-                            <div class="gallery-item-name">${file.filename}</div>
-                            <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>
+                galleryGrid.innerHTML = files.map(file => {
+                    // Create a unique ID for each image
+                    const imgId = `img-${sessionId}-${file.filename.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                    return `
+                        <div class="gallery-item">
+                            <img id="${imgId}"
+                                 src="/api/sessions/${sessionId}/files/${folderType}/preview/${file.filename}?size=thumbnail" 
+                                 alt="${file.filename}"
+                                 loading="lazy"
+                                 data-filename="${file.filename}"
+                                 data-session="${sessionId}"
+                                 data-folder="${folderType}"
+                                 style="display: none;">
+                            <div class="image-placeholder" id="placeholder-${imgId}" style="width: 100%; height: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 48px;">
+                                ⏳
+                            </div>
+                            <div class="gallery-item-info">
+                                <div class="gallery-item-name">${file.filename}</div>
+                                <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
+                
+                // Set up image loading handlers after DOM is ready
+                setTimeout(() => {
+                    files.forEach(file => {
+                        const imgId = `img-${sessionId}-${file.filename.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                        const img = document.getElementById(imgId);
+                        const placeholder = document.getElementById(`placeholder-${imgId}`);
+                        
+                        if (img && placeholder) {
+                            // On successful load, show image and hide placeholder
+                            img.onload = function() {
+                                img.style.display = 'block';
+                                placeholder.style.display = 'none';
+                                console.log(`✅ Preview loaded: ${file.filename}`);
+                            };
+                            
+                            // On error, try fallback to download endpoint
+                            img.onerror = function() {
+                                console.log(`⚠️ Preview failed for ${file.filename}, trying download endpoint...`);
+                                
+                                // Try fallback to download endpoint
+                                img.onerror = function() {
+                                    // If both fail, show a photo icon
+                                    console.error(`❌ Both preview and download failed for ${file.filename}`);
+                                    placeholder.innerHTML = '📷';
+                                    placeholder.style.fontSize = '48px';
+                                    placeholder.style.color = '#999';
+                                };
+                                
+                                // Attempt fallback
+                                img.src = `/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}`;
+                            };
+                        }
+                    });
+                }, 100);
                 
             } catch (error) {
                 console.error('Failed to load gallery:', error);

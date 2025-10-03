@@ -4209,6 +4209,8 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthe
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
+        console.log(`📥 Download request: session=${sessionId}, folder=${folderType}, file=${fileName}`);
+        
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
