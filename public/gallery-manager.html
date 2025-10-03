@@ -493,7 +493,8 @@
                 
                 if (!response.ok) throw new Error('Failed to load gallery');
                 
-                const files = await response.json();
+                const data = await response.json();
+                const files = data.files || [];  // Server returns { files: [...] }
                 
                 galleryStats.textContent = `${files.length} files`;
                 
@@ -509,9 +510,10 @@
                 
                 galleryGrid.innerHTML = files.map(file => `
                     <div class="gallery-item">
-                        <img src="/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}" 
+                        <img src="/api/sessions/${sessionId}/files/${folderType}/preview/${file.filename}?size=thumbnail" 
                              alt="${file.filename}"
-                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}';">
                         <div class="gallery-item-info">
                             <div class="gallery-item-name">${file.filename}</div>
                             <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>

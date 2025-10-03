@@ -4265,6 +4265,86 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthe
     }
 });
 
+// Preview session file - generates thumbnail for gallery display  
+app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId, folderType, fileName } = req.params;
+        const { size = 'thumbnail' } = req.query;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!['gallery', 'raw'].includes(folderType)) {
+            return res.status(400).json({ error: 'Invalid folder type' });
+        }
+        
+        // First verify session belongs to user
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // Check session ownership
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
+            const result = await client.query(`
+                SELECT * FROM session_files 
+                WHERE session_id = $1 AND folder_type = $2 AND filename = $3
+            `, [sessionId, folderType, fileName]);
+            
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'File not found' });
+            }
+            
+            const fileInfo = result.rows[0];
+            
+            // For thumbnail, use sharp to resize on-the-fly
+            const sharp = require('sharp');
+            const { GetObjectCommand } = require('@aws-sdk/client-s3');
+            
+            const getCommand = new GetObjectCommand({
+                Bucket: 'photoappr2token',
+                Key: fileInfo.r2_key
+            });
+            
+            const response = await r2FileManager.s3Client.send(getCommand);
+            const chunks = [];
+            for await (const chunk of response.Body) {
+                chunks.push(chunk);
+            }
+            const buffer = Buffer.concat(chunks);
+            
+            // Generate thumbnail
+            const thumbnailSize = size === 'small' ? 200 : 400;
+            const thumbnail = await sharp(buffer)
+                .resize(thumbnailSize, thumbnailSize, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .jpeg({ quality: 80 })
+                .toBuffer();
+            
+            // Set headers for caching
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+            res.send(thumbnail);
+            
+        } finally {
+            if (client) client.release();
+        }
+    } catch (error) {
+        console.error('Error generating preview:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to generate preview' });
+        }
+    }
+});
+
 // Get storage statistics for a specific session from database
 app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) => {
     try {
