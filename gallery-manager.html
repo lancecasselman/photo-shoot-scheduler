@@ -2605,10 +2605,12 @@
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                fileName: uploadData.fileName,
-                                originalName: file.name,
-                                size: file.size,
-                                r2Key: uploadData.r2Key
+                                files: [{
+                                    filename: uploadData.fileName,
+                                    r2Key: uploadData.r2Key,
+                                    size: file.size,
+                                    contentType: file.type || 'image/jpeg'
+                                }]
                             })
                         });
                     } else {
