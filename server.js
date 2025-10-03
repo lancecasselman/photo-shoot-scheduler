@@ -4181,8 +4181,8 @@ app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (re
             
             const fileList = result.rows.map(row => ({
                 name: row.original_name || row.filename,
-                fileName: row.filename,
-                size: row.file_size_bytes || (parseFloat(row.file_size_mb) * 1024 * 1024),
+                filename: row.filename,
+                file_size_bytes: row.file_size_bytes || (parseFloat(row.file_size_mb) * 1024 * 1024),
                 sizeFormatted: `${row.file_size_mb} MB`,
                 contentType: 'image/jpeg', // Default for images
                 timeCreated: row.uploaded_at,
