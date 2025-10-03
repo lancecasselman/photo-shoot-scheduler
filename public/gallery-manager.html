@@ -328,6 +328,22 @@
         const folderType = urlParams.get('folderType') || 'gallery';
         const clientName = urlParams.get('clientName') || 'Client';
         
+        // Check for required parameters
+        if (!sessionId) {
+            document.body.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div style="background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <h2 style="color: #333; margin-bottom: 15px;">Gallery Manager</h2>
+                        <p style="color: #666; margin-bottom: 20px;">Please open this window from the Sessions page<br>by clicking the "📸 Open Gallery" button.</p>
+                        <button onclick="window.close()" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer;">Close Window</button>
+                    </div>
+                </div>
+            `;
+            console.error('Gallery Manager requires sessionId parameter');
+            return;
+        }
+        
         document.getElementById('clientName').textContent = `Client: ${clientName}`;
         
         const uploadArea = document.getElementById('uploadArea');
