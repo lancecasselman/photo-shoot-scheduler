@@ -4273,6 +4273,8 @@ app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthen
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
+        console.log(`📸 Preview request: session=${sessionId}, folder=${folderType}, file=${fileName}, size=${size}`);
+        
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
@@ -4289,6 +4291,7 @@ app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthen
             );
             
             if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                console.error(`Preview denied: session ${sessionId} not owned by user ${userId}`);
                 return res.status(403).json({ error: 'Access denied' });
             }
             
@@ -4298,10 +4301,12 @@ app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthen
             `, [sessionId, folderType, fileName]);
             
             if (result.rows.length === 0) {
+                console.error(`Preview file not found: ${fileName} in session ${sessionId}/${folderType}`);
                 return res.status(404).json({ error: 'File not found' });
             }
             
             const fileInfo = result.rows[0];
+            console.log(`📸 Found file record: r2_key=${fileInfo.r2_key}, size=${fileInfo.file_size_bytes} bytes`);
             
             // For thumbnail, use sharp to resize on-the-fly
             const sharp = require('sharp');
@@ -4312,33 +4317,58 @@ app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthen
                 Key: fileInfo.r2_key
             });
             
+            console.log(`📸 Fetching from R2: ${fileInfo.r2_key}`);
             const response = await r2FileManager.s3Client.send(getCommand);
             const chunks = [];
+            let totalSize = 0;
             for await (const chunk of response.Body) {
                 chunks.push(chunk);
+                totalSize += chunk.length;
             }
             const buffer = Buffer.concat(chunks);
+            console.log(`📸 Downloaded ${totalSize} bytes from R2`);
             
-            // Generate thumbnail
+            // Generate thumbnail - handle different image formats
             const thumbnailSize = size === 'small' ? 200 : 400;
-            const thumbnail = await sharp(buffer)
-                .resize(thumbnailSize, thumbnailSize, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .jpeg({ quality: 80 })
-                .toBuffer();
+            console.log(`📸 Generating ${thumbnailSize}x${thumbnailSize} thumbnail for ${fileName}`);
             
-            // Set headers for caching
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-            res.send(thumbnail);
+            try {
+                // Sharp will auto-detect format and convert to JPEG
+                const thumbnail = await sharp(buffer, { failOnError: false })
+                    .rotate() // Auto-rotate based on EXIF
+                    .resize(thumbnailSize, thumbnailSize, {
+                        fit: 'cover',
+                        position: 'center',
+                        withoutEnlargement: true // Don't upscale smaller images
+                    })
+                    .jpeg({ 
+                        quality: 80,
+                        progressive: true // Better loading experience
+                    })
+                    .toBuffer();
+                
+                console.log(`✅ Thumbnail generated: ${thumbnail.length} bytes for ${fileName}`);
+                
+                // Set headers for caching
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                res.setHeader('X-Original-Filename', fileName);
+                res.send(thumbnail);
+                
+            } catch (sharpError) {
+                console.error(`❌ Sharp processing failed for ${fileName}:`, sharpError.message);
+                // If Sharp fails, try to send the original image
+                console.log(`📸 Falling back to original image for ${fileName}`);
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+                res.send(buffer);
+            }
             
         } finally {
             if (client) client.release();
         }
     } catch (error) {
-        console.error('Error generating preview:', error);
+        console.error('❌ Error generating preview:', error.message, error.stack);
         if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to generate preview' });
         }
