@@ -2595,7 +2595,7 @@
 
                     if (r2Response.ok) {
                         console.log(`FAST direct upload to R2 succeeded for ${file.name}`);
-                        uploadedFileName = uploadData.fileName;
+                        uploadedFileName = uploadData.filename;
 
                         // Step 3: Update database with the uploaded file info
                         response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
@@ -2606,7 +2606,7 @@
                             },
                             body: JSON.stringify({
                                 files: [{
-                                    filename: uploadData.fileName,
+                                    filename: uploadData.filename,
                                     r2Key: uploadData.r2Key,
                                     size: file.size,
                                     contentType: file.type || 'image/jpeg'
