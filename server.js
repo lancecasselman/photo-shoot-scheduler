@@ -34,6 +34,7 @@ const rateLimit = require('express-rate-limit');
 
 // Firebase Admin SDK for server-side authentication
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 
 // SendGrid email service (nodemailer removed - using SendGrid only)
 const sgMail = require('@sendgrid/mail');
@@ -2131,6 +2132,77 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
     } catch (error) {
         console.error('Firebase verification error:', error);
         res.status(500).json({ message: 'Verification failed' });
+    }
+});
+
+// Development Authentication Endpoint (for testing only)
+// This endpoint allows secure authentication in development environment
+app.post('/api/dev-auth/exchange', async (req, res) => {
+    try {
+        // Security: Only allow in development environment
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(403).json({ error: 'Development auth not available in production' });
+        }
+        
+        // Security: Verify request is from localhost
+        const clientIP = req.ip || req.connection.remoteAddress;
+        const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
+        if (!isLocalhost) {
+            console.error('Dev auth attempted from non-localhost:', clientIP);
+            return res.status(403).json({ error: 'Development auth only available from localhost' });
+        }
+        
+        // Security: Verify development secret header
+        const devSecret = process.env.DEV_AUTH_SECRET || 'dev-testing-secret-2024';
+        const providedSecret = req.headers['x-dev-secret'];
+        
+        if (!providedSecret) {
+            return res.status(401).json({ error: 'Missing authentication secret' });
+        }
+        
+        // Hash the provided secret and compare
+        const hashedProvided = crypto.createHash('sha256').update(providedSecret).digest('hex');
+        const hashedExpected = crypto.createHash('sha256').update(devSecret).digest('hex');
+        
+        if (hashedProvided !== hashedExpected) {
+            console.error('Invalid dev auth secret provided');
+            return res.status(401).json({ error: 'Invalid authentication secret' });
+        }
+        
+        // Create a test user for development
+        const testUser = {
+            uid: 'dev-test-user-001',
+            email: 'dev@phototest.local',
+            displayName: 'Development Test User',
+            photoURL: null
+        };
+        
+        // Normalize the user for Lance (system owner)
+        const normalizedUser = normalizeUserForLance(testUser);
+        
+        // Set the user in the session
+        req.session.user = normalizedUser;
+        req.user = normalizedUser;
+        
+        // Save the session
+        req.session.save((err) => {
+            if (err) {
+                console.error('Dev auth session save error:', err);
+                return res.status(500).json({ error: 'Failed to save session' });
+            }
+            
+            console.log('✅ DEV AUTH: Created session for development testing');
+            res.json({
+                success: true,
+                user: normalizedUser,
+                sessionId: req.sessionID,
+                message: 'Development authentication successful'
+            });
+        });
+        
+    } catch (error) {
+        console.error('Development auth error:', error);
+        res.status(500).json({ error: 'Development authentication failed' });
     }
 });
 
