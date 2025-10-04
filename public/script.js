@@ -1941,14 +1941,18 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch(`/api/sessions/${sessionId}/photos`, { headers });
+        // Use the correct endpoint: /api/sessions/:sessionId/files/gallery
+        const response = await fetch(`/api/sessions/${sessionId}/files/gallery`, { 
+            headers,
+            credentials: 'include'
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        const photos = data.photos || [];
+        const photos = data.files || [];
 
         // Update photo count
         if (countElement) {
@@ -1966,7 +1970,7 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             return;
         }
 
-        // Create photo items
+        // Create photo items with proper preview URLs
         photos.forEach((photo, index) => {
             const photoItem = createPhotoItem(photo, index, sessionId);
             container.appendChild(photoItem);
@@ -1985,12 +1989,24 @@ function createPhotoItem(photo, index, sessionId) {
     const photoItem = document.createElement('div');
     photoItem.className = 'gallery-photo-item';
     photoItem.setAttribute('data-photo-index', index);
+    photoItem.setAttribute('data-filename', photo.filename || photo.name);
 
     const img = document.createElement('img');
-    img.src = photo.url;
-    img.alt = photo.fileName || `Photo ${index + 1}`;
+    // Use the preview endpoint for thumbnails
+    const fileName = photo.filename || photo.name;
+    img.src = `/api/sessions/${sessionId}/files/gallery/preview/${encodeURIComponent(fileName)}`;
+    img.alt = fileName || `Photo ${index + 1}`;
     img.loading = 'lazy';
-    img.onclick = () => openPhotoLightbox(photo.url, photo.fileName);
+    
+    // Use download URL for full image in lightbox
+    const fullImageUrl = photo.downloadUrl || `/api/sessions/${sessionId}/files/gallery/download/${encodeURIComponent(fileName)}`;
+    img.onclick = () => openPhotoLightbox(fullImageUrl, fileName);
+    
+    // Add error handling for images
+    img.onerror = function() {
+        // If preview fails, try the download URL
+        this.src = fullImageUrl;
+    };
 
     // Add delete button for admin users
     const deleteBtn = document.createElement('button');
@@ -1999,7 +2015,7 @@ function createPhotoItem(photo, index, sessionId) {
     deleteBtn.title = 'Delete photo';
     deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        deletePhoto(sessionId, index);
+        deletePhoto(sessionId, 'gallery', fileName);
     };
 
     photoItem.appendChild(img);
@@ -3699,7 +3715,7 @@ function openPhotoLightbox(imageUrl, fileName) {
 }
 
 // Delete photo
-async function deletePhoto(sessionId, photoIndex) {
+async function deletePhoto(sessionId, folderType, filename) {
     if (!confirm('Are you sure you want to delete this photo?')) {
         return;
     }
@@ -3711,30 +3727,20 @@ async function deletePhoto(sessionId, photoIndex) {
         }
 
         // Show loading indicator
-        const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
+        const deleteBtn = document.querySelector(`[data-filename="${filename}"] .photo-delete-btn`);
         if (deleteBtn) {
             deleteBtn.innerHTML = '⏳';
             deleteBtn.disabled = true;
         }
 
-        // Get the photo filename first to use unified deletion
-        const session = await fetch(`/api/sessions/${sessionId}`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        }).then(res => res.json());
-
-        const photo = session.photos[photoIndex];
-        if (!photo) {
-            throw new Error('Photo not found');
-        }
-
-        const filename = photo.originalName || photo.filename;
-
         // Use unified deletion endpoint that removes from both storage and database
-        const response = await fetch(`/api/sessions/${sessionId}/files/g/${encodeURIComponent(filename)}`, {
+        const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -3750,7 +3756,12 @@ async function deletePhoto(sessionId, photoIndex) {
 
         const result = await response.json();
         console.log('Photo deleted successfully:', result.message || result);
-        showMessage(`Photo deleted successfully! ${result.reclaimedMB || ''}MB reclaimed`, 'success');
+        
+        // Show success message with storage reclaimed if available
+        const message = result.reclaimedMB 
+            ? `Photo deleted successfully! ${result.reclaimedMB}MB reclaimed`
+            : 'Photo deleted successfully!';
+        showMessage(message, 'success');
 
         // Refresh storage stats immediately to update totals
         if (typeof refreshGlobalStorageStats === 'function') {
@@ -3769,7 +3780,7 @@ async function deletePhoto(sessionId, photoIndex) {
         showMessage(`Delete failed: ${error.message}`, 'error');
 
         // Reset delete button
-        const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
+        const deleteBtn = document.querySelector(`[data-filename="${filename}"] .photo-delete-btn`);
         if (deleteBtn) {
             deleteBtn.innerHTML = '×';
             deleteBtn.disabled = false;
