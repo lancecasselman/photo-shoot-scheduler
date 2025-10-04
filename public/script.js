@@ -164,22 +164,22 @@ function updateUserUI() {
 }
 
 function redirectToAuth() {
-    console.log('🚨 REDIRECT TO AUTH CALLED!');
-    console.log('🚨 Current location:', window.location.href);
-    console.log('🚨 Current pathname:', window.location.pathname);
-    console.log('🚨 Referrer:', document.referrer);
-    console.log('🚨 fromAuth flag:', sessionStorage.getItem('fromAuth'));
-    console.log('🚨 Manual logout flag:', localStorage.getItem('manualLogout'));
-    console.log('🚨 Logging out flag:', sessionStorage.getItem('loggingOut'));
+    console.log('REDIRECT TO AUTH CALLED!');
+    console.log('Current location:', window.location.href);
+    console.log('Current pathname:', window.location.pathname);
+    console.log('Referrer:', document.referrer);
+    console.log('fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log('Logging out flag:', sessionStorage.getItem('loggingOut'));
     
     // Debug stack trace to see who called this function
-    console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
+    console.log('REDIRECT STACK TRACE:', new Error().stack);
     
     if (window.location.pathname !== '/secure-login.html') {
-        console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
+        console.log('PERFORMING REDIRECT TO AUTH.HTML...');
         window.location.href = '/secure-login.html';
     } else {
-        console.log('🚨 Already on auth page, skipping redirect');
+        console.log('Already on auth page, skipping redirect');
     }
 }
 
@@ -490,7 +490,7 @@ async function loadSessions() {
             
             // Debug: Log payment fields for sessions with deposits/invoices sent
             if (session.depositSent || session.invoiceSent || session.deposit_sent || session.invoice_sent) {
-                console.log(`💳 Payment fields for ${transformed.clientName}:`, {
+                console.log(`Payment fields for ${transformed.clientName}:`, {
                     raw_depositSent: session.depositSent,
                     raw_deposit_sent: session.deposit_sent,
                     transformed_depositSent: transformed.depositSent,
@@ -582,16 +582,16 @@ function createSessionCard(session) {
     
     // Check deposit status
     if (session.depositPaid === true) {
-        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Deposit Paid</span>';
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Deposit Paid</span>';
     } else if (session.depositSent === true) {
-        paymentBadgesHTML += '<span style="background: #fb923c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Deposit Sent</span>';
+        paymentBadgesHTML += '<span style="background: #fb923c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Deposit Sent</span>';
     }
     
     // Check invoice status
     if (session.paid === true) {
-        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Fully Paid</span>';
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Fully Paid</span>';
     } else if (session.invoiceSent === true) {
-        paymentBadgesHTML += '<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Invoice Sent</span>';
+        paymentBadgesHTML += '<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Invoice Sent</span>';
     }
     
     // Add price with payment badges
@@ -617,7 +617,7 @@ function createSessionCard(session) {
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-primary';
-    editBtn.textContent = '✏️ Edit';
+    editBtn.textContent = 'Edit';
     editBtn.onclick = () => editSession(session.id);
 
     const uploadBtn = document.createElement('button');
@@ -691,7 +691,7 @@ function createSessionCard(session) {
 
     const depositBtn = document.createElement('button');
     depositBtn.className = 'btn btn-warning';
-    depositBtn.textContent = '💳 Send Deposit';
+    depositBtn.textContent = 'Send Deposit';
     // Capture the session object properly in closure
     depositBtn.onclick = function() {
         sendDepositInvoice(session);

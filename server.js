@@ -15950,13 +15950,19 @@ app.get('/subscription-success.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'subscription-success.html'));
 });
 
+// Dev auth page - for development testing
+app.get('/dev-auth.html', async (req, res) => {
+    console.log('🔧 DEV AUTH: Serving dev authentication page');
+    res.sendFile(path.join(__dirname, 'public', 'dev-auth.html'));
+});
+
 // Secure app - BULLETPROOF authentication required
 app.get('/secure-app.html', async (req, res) => {
     console.log('🔐 SECURE: Access attempt to secure app');
     
     // Don't check session here - let the frontend JavaScript handle all security
     // This ensures the bulletproof client-side security system is always active
-    res.sendFile(path.join(__dirname, 'secure-app.html'));
+    res.sendFile(path.join(__dirname, 'public', 'secure-app.html'));
 });
 
 // Payment Setup page - requires authentication
