@@ -3047,18 +3047,36 @@ function setupUploadModal(sessionId) {
 
         selectedFiles.forEach((file, index) => {
             const previewItem = document.createElement('div');
-            previewItem.className = 'upload-preview-item';
+            previewItem.className = 'file-preview-item';
 
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
             img.alt = file.name;
 
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+
             const fileName = document.createElement('div');
-            fileName.className = 'preview-file-name';
+            fileName.className = 'file-name';
             fileName.textContent = file.name;
 
+            const fileSize = document.createElement('div');
+            fileSize.className = 'file-size';
+            // Format file size properly
+            const formatFileSize = (bytes) => {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+            fileSize.textContent = formatFileSize(file.size);
+
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileSize);
+
             const removeBtn = document.createElement('button');
-            removeBtn.className = 'preview-remove-btn';
+            removeBtn.className = 'remove-file';
             removeBtn.innerHTML = '×';
             removeBtn.onclick = () => {
                 selectedFiles.splice(index, 1);
@@ -3068,7 +3086,7 @@ function setupUploadModal(sessionId) {
             };
 
             previewItem.appendChild(img);
-            previewItem.appendChild(fileName);
+            previewItem.appendChild(fileInfo);
             previewItem.appendChild(removeBtn);
             previewContainer.appendChild(previewItem);
         });
