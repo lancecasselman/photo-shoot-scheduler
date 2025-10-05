@@ -1046,7 +1046,22 @@ Please check your R2 configuration or contact support.`,
       }
 
       if (!files || !Array.isArray(files) || files.length === 0) {
-        return res.status(400).json({ error: 'Files array is required' });
+        console.error('❌ Invalid files array in /generate-presigned-urls endpoint:', {
+          filesExists: !!files,
+          filesType: typeof files,
+          isArray: Array.isArray(files),
+          filesLength: files ? files.length : 'N/A',
+          bodyKeys: Object.keys(req.body),
+          rawBody: JSON.stringify(req.body).substring(0, 200)
+        });
+        return res.status(400).json({ 
+          error: 'Files array is required',
+          debug: {
+            received: typeof files,
+            isArray: Array.isArray(files),
+            bodyKeys: Object.keys(req.body)
+          }
+        });
       }
 
       console.log(`📤 Generating ${files.length} presigned URLs for session ${sessionId}`);
