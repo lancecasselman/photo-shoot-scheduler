@@ -403,23 +403,29 @@
                 
                 const uploadPromises = files.map((file, index) => {
                     const urlData = urls[index];
-                    return uploadFile(file, urlData);
+                    // Map the returned data structure to what uploadFile expects
+                    const mappedUrlData = {
+                        ...urlData,
+                        uploadUrl: urlData.presignedUrl || urlData.url,
+                        r2Key: urlData.key || urlData.r2Key
+                    };
+                    return uploadFile(file, mappedUrlData);
                 });
                 
                 await Promise.all(uploadPromises);
-                
-                const uploadedFiles = urls.map(urlData => ({
-                    filename: urlData.filename,
-                    r2Key: urlData.r2Key,
-                    size: urlData.size,
-                    contentType: urlData.contentType
-                }));
                 
                 const recordResponse = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ files: uploadedFiles })
+                    body: JSON.stringify({ 
+                        files: urls.map((urlData, index) => ({
+                            filename: urlData.filename,
+                            r2Key: urlData.key || urlData.r2Key,
+                            size: files[index].size,
+                            contentType: files[index].type || 'application/octet-stream'
+                        }))
+                    })
                 });
                 
                 if (!recordResponse.ok) {
