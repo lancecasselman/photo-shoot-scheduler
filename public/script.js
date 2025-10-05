@@ -164,22 +164,22 @@ function updateUserUI() {
 }
 
 function redirectToAuth() {
-    console.log('REDIRECT TO AUTH CALLED!');
-    console.log('Current location:', window.location.href);
-    console.log('Current pathname:', window.location.pathname);
-    console.log('Referrer:', document.referrer);
-    console.log('fromAuth flag:', sessionStorage.getItem('fromAuth'));
-    console.log('Manual logout flag:', localStorage.getItem('manualLogout'));
-    console.log('Logging out flag:', sessionStorage.getItem('loggingOut'));
+    console.log('🚨 REDIRECT TO AUTH CALLED!');
+    console.log('🚨 Current location:', window.location.href);
+    console.log('🚨 Current pathname:', window.location.pathname);
+    console.log('🚨 Referrer:', document.referrer);
+    console.log('🚨 fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🚨 Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log('🚨 Logging out flag:', sessionStorage.getItem('loggingOut'));
     
     // Debug stack trace to see who called this function
-    console.log('REDIRECT STACK TRACE:', new Error().stack);
+    console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
     
     if (window.location.pathname !== '/secure-login.html') {
-        console.log('PERFORMING REDIRECT TO AUTH.HTML...');
+        console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
         window.location.href = '/secure-login.html';
     } else {
-        console.log('Already on auth page, skipping redirect');
+        console.log('🚨 Already on auth page, skipping redirect');
     }
 }
 
@@ -490,7 +490,7 @@ async function loadSessions() {
             
             // Debug: Log payment fields for sessions with deposits/invoices sent
             if (session.depositSent || session.invoiceSent || session.deposit_sent || session.invoice_sent) {
-                console.log(`Payment fields for ${transformed.clientName}:`, {
+                console.log(`💳 Payment fields for ${transformed.clientName}:`, {
                     raw_depositSent: session.depositSent,
                     raw_deposit_sent: session.deposit_sent,
                     transformed_depositSent: transformed.depositSent,
@@ -582,16 +582,16 @@ function createSessionCard(session) {
     
     // Check deposit status
     if (session.depositPaid === true) {
-        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Deposit Paid</span>';
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Deposit Paid</span>';
     } else if (session.depositSent === true) {
-        paymentBadgesHTML += '<span style="background: #fb923c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Deposit Sent</span>';
+        paymentBadgesHTML += '<span style="background: #fb923c; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Deposit Sent</span>';
     }
     
     // Check invoice status
     if (session.paid === true) {
-        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Fully Paid</span>';
+        paymentBadgesHTML += '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">✓ Fully Paid</span>';
     } else if (session.invoiceSent === true) {
-        paymentBadgesHTML += '<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">Invoice Sent</span>';
+        paymentBadgesHTML += '<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 10px; margin-left: 10px; display: inline-block; font-weight: 600;">⏳ Invoice Sent</span>';
     }
     
     // Add price with payment badges
@@ -617,7 +617,7 @@ function createSessionCard(session) {
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-primary';
-    editBtn.textContent = 'Edit';
+    editBtn.textContent = '✏️ Edit';
     editBtn.onclick = () => editSession(session.id);
 
     const uploadBtn = document.createElement('button');
@@ -691,7 +691,7 @@ function createSessionCard(session) {
 
     const depositBtn = document.createElement('button');
     depositBtn.className = 'btn btn-warning';
-    depositBtn.textContent = 'Send Deposit';
+    depositBtn.textContent = '💳 Send Deposit';
     // Capture the session object properly in closure
     depositBtn.onclick = function() {
         sendDepositInvoice(session);
@@ -1941,18 +1941,14 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        // Use the correct endpoint: /api/sessions/:sessionId/files/gallery
-        const response = await fetch(`/api/sessions/${sessionId}/files/gallery`, { 
-            headers,
-            credentials: 'include'
-        });
+        const response = await fetch(`/api/sessions/${sessionId}/photos`, { headers });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        const photos = data.files || [];
+        const photos = data.photos || [];
 
         // Update photo count
         if (countElement) {
@@ -1970,7 +1966,7 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             return;
         }
 
-        // Create photo items with proper preview URLs
+        // Create photo items
         photos.forEach((photo, index) => {
             const photoItem = createPhotoItem(photo, index, sessionId);
             container.appendChild(photoItem);
@@ -1989,24 +1985,12 @@ function createPhotoItem(photo, index, sessionId) {
     const photoItem = document.createElement('div');
     photoItem.className = 'gallery-photo-item';
     photoItem.setAttribute('data-photo-index', index);
-    photoItem.setAttribute('data-filename', photo.filename || photo.name);
 
     const img = document.createElement('img');
-    // Use the preview endpoint for thumbnails
-    const fileName = photo.filename || photo.name;
-    img.src = `/api/sessions/${sessionId}/files/gallery/preview/${encodeURIComponent(fileName)}`;
-    img.alt = fileName || `Photo ${index + 1}`;
+    img.src = photo.url;
+    img.alt = photo.fileName || `Photo ${index + 1}`;
     img.loading = 'lazy';
-    
-    // Use download URL for full image in lightbox
-    const fullImageUrl = photo.downloadUrl || `/api/sessions/${sessionId}/files/gallery/download/${encodeURIComponent(fileName)}`;
-    img.onclick = () => openPhotoLightbox(fullImageUrl, fileName);
-    
-    // Add error handling for images
-    img.onerror = function() {
-        // If preview fails, try the download URL
-        this.src = fullImageUrl;
-    };
+    img.onclick = () => openPhotoLightbox(photo.url, photo.fileName);
 
     // Add delete button for admin users
     const deleteBtn = document.createElement('button');
@@ -2015,7 +1999,7 @@ function createPhotoItem(photo, index, sessionId) {
     deleteBtn.title = 'Delete photo';
     deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        deletePhoto(sessionId, 'gallery', fileName);
+        deletePhoto(sessionId, index);
     };
 
     photoItem.appendChild(img);
@@ -3063,36 +3047,18 @@ function setupUploadModal(sessionId) {
 
         selectedFiles.forEach((file, index) => {
             const previewItem = document.createElement('div');
-            previewItem.className = 'file-preview-item';
+            previewItem.className = 'upload-preview-item';
 
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
             img.alt = file.name;
 
-            const fileInfo = document.createElement('div');
-            fileInfo.className = 'file-info';
-
             const fileName = document.createElement('div');
-            fileName.className = 'file-name';
+            fileName.className = 'preview-file-name';
             fileName.textContent = file.name;
 
-            const fileSize = document.createElement('div');
-            fileSize.className = 'file-size';
-            // Format file size properly
-            const formatFileSize = (bytes) => {
-                if (bytes === 0) return '0 B';
-                const k = 1024;
-                const sizes = ['B', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            };
-            fileSize.textContent = formatFileSize(file.size);
-
-            fileInfo.appendChild(fileName);
-            fileInfo.appendChild(fileSize);
-
             const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-file';
+            removeBtn.className = 'preview-remove-btn';
             removeBtn.innerHTML = '×';
             removeBtn.onclick = () => {
                 selectedFiles.splice(index, 1);
@@ -3102,7 +3068,7 @@ function setupUploadModal(sessionId) {
             };
 
             previewItem.appendChild(img);
-            previewItem.appendChild(fileInfo);
+            previewItem.appendChild(fileName);
             previewItem.appendChild(removeBtn);
             previewContainer.appendChild(previewItem);
         });
@@ -3715,7 +3681,7 @@ function openPhotoLightbox(imageUrl, fileName) {
 }
 
 // Delete photo
-async function deletePhoto(sessionId, folderType, filename) {
+async function deletePhoto(sessionId, photoIndex) {
     if (!confirm('Are you sure you want to delete this photo?')) {
         return;
     }
@@ -3727,20 +3693,30 @@ async function deletePhoto(sessionId, folderType, filename) {
         }
 
         // Show loading indicator
-        const deleteBtn = document.querySelector(`[data-filename="${filename}"] .photo-delete-btn`);
+        const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
         if (deleteBtn) {
             deleteBtn.innerHTML = '⏳';
             deleteBtn.disabled = true;
         }
 
+        // Get the photo filename first to use unified deletion
+        const session = await fetch(`/api/sessions/${sessionId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        }).then(res => res.json());
+
+        const photo = session.photos[photoIndex];
+        if (!photo) {
+            throw new Error('Photo not found');
+        }
+
+        const filename = photo.originalName || photo.filename;
+
         // Use unified deletion endpoint that removes from both storage and database
-        const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(filename)}`, {
+        const response = await fetch(`/api/sessions/${sessionId}/files/g/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
+                'Authorization': `Bearer ${authToken}`
+            }
         });
 
         if (!response.ok) {
@@ -3756,12 +3732,7 @@ async function deletePhoto(sessionId, folderType, filename) {
 
         const result = await response.json();
         console.log('Photo deleted successfully:', result.message || result);
-        
-        // Show success message with storage reclaimed if available
-        const message = result.reclaimedMB 
-            ? `Photo deleted successfully! ${result.reclaimedMB}MB reclaimed`
-            : 'Photo deleted successfully!';
-        showMessage(message, 'success');
+        showMessage(`Photo deleted successfully! ${result.reclaimedMB || ''}MB reclaimed`, 'success');
 
         // Refresh storage stats immediately to update totals
         if (typeof refreshGlobalStorageStats === 'function') {
@@ -3780,7 +3751,7 @@ async function deletePhoto(sessionId, folderType, filename) {
         showMessage(`Delete failed: ${error.message}`, 'error');
 
         // Reset delete button
-        const deleteBtn = document.querySelector(`[data-filename="${filename}"] .photo-delete-btn`);
+        const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
         if (deleteBtn) {
             deleteBtn.innerHTML = '×';
             deleteBtn.disabled = false;

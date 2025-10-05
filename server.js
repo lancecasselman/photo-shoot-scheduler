@@ -34,7 +34,6 @@ const rateLimit = require('express-rate-limit');
 
 // Firebase Admin SDK for server-side authentication
 const admin = require('firebase-admin');
-const crypto = require('crypto');
 
 // SendGrid email service (nodemailer removed - using SendGrid only)
 const sgMail = require('@sendgrid/mail');
@@ -2135,77 +2134,6 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
     }
 });
 
-// Development Authentication Endpoint (for testing only)
-// This endpoint allows secure authentication in development environment
-app.post('/api/dev-auth/exchange', async (req, res) => {
-    try {
-        // Security: Only allow in development environment
-        if (process.env.NODE_ENV === 'production') {
-            return res.status(403).json({ error: 'Development auth not available in production' });
-        }
-        
-        // Security: Verify request is from localhost
-        const clientIP = req.ip || req.connection.remoteAddress;
-        const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
-        if (!isLocalhost) {
-            console.error('Dev auth attempted from non-localhost:', clientIP);
-            return res.status(403).json({ error: 'Development auth only available from localhost' });
-        }
-        
-        // Security: Verify development secret header
-        const devSecret = process.env.DEV_AUTH_SECRET || 'dev-testing-secret-2024';
-        const providedSecret = req.headers['x-dev-secret'];
-        
-        if (!providedSecret) {
-            return res.status(401).json({ error: 'Missing authentication secret' });
-        }
-        
-        // Hash the provided secret and compare
-        const hashedProvided = crypto.createHash('sha256').update(providedSecret).digest('hex');
-        const hashedExpected = crypto.createHash('sha256').update(devSecret).digest('hex');
-        
-        if (hashedProvided !== hashedExpected) {
-            console.error('Invalid dev auth secret provided');
-            return res.status(401).json({ error: 'Invalid authentication secret' });
-        }
-        
-        // Create a test user for development
-        const testUser = {
-            uid: 'dev-test-user-001',
-            email: 'dev@phototest.local',
-            displayName: 'Development Test User',
-            photoURL: null
-        };
-        
-        // Normalize the user for Lance (system owner)
-        const normalizedUser = normalizeUserForLance(testUser);
-        
-        // Set the user in the session
-        req.session.user = normalizedUser;
-        req.user = normalizedUser;
-        
-        // Save the session
-        req.session.save((err) => {
-            if (err) {
-                console.error('Dev auth session save error:', err);
-                return res.status(500).json({ error: 'Failed to save session' });
-            }
-            
-            console.log('✅ DEV AUTH: Created session for development testing');
-            res.json({
-                success: true,
-                user: normalizedUser,
-                sessionId: req.sessionID,
-                message: 'Development authentication successful'
-            });
-        });
-        
-    } catch (error) {
-        console.error('Development auth error:', error);
-        res.status(500).json({ error: 'Development authentication failed' });
-    }
-});
-
 // DUPLICATE ENDPOINT REMOVED - Using the better implementation at line 1769 instead
 // The second /api/verify-auth endpoint below handles this functionality
 
@@ -4253,8 +4181,8 @@ app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (re
             
             const fileList = result.rows.map(row => ({
                 name: row.original_name || row.filename,
-                filename: row.filename,
-                file_size_bytes: row.file_size_bytes || (parseFloat(row.file_size_mb) * 1024 * 1024),
+                fileName: row.filename,
+                size: row.file_size_bytes || (parseFloat(row.file_size_mb) * 1024 * 1024),
                 sizeFormatted: `${row.file_size_mb} MB`,
                 contentType: 'image/jpeg', // Default for images
                 timeCreated: row.uploaded_at,
@@ -4280,8 +4208,6 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthe
         const { sessionId, folderType, fileName } = req.params;
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
-        
-        console.log(`📥 Download request: session=${sessionId}, folder=${folderType}, file=${fileName}`);
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
@@ -4335,116 +4261,6 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthe
         console.error('Error downloading file:', error);
         if (!res.headersSent) {
             res.status(500).json({ error: 'Failed to download file' });
-        }
-    }
-});
-
-// Preview session file - generates thumbnail for gallery display  
-app.get('/api/sessions/:sessionId/files/:folderType/preview/:fileName', isAuthenticated, async (req, res) => {
-    try {
-        const { sessionId, folderType, fileName } = req.params;
-        const { size = 'thumbnail' } = req.query;
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
-        
-        console.log(`📸 Preview request: session=${sessionId}, folder=${folderType}, file=${fileName}, size=${size}`);
-        
-        if (!['gallery', 'raw'].includes(folderType)) {
-            return res.status(400).json({ error: 'Invalid folder type' });
-        }
-        
-        // First verify session belongs to user
-        let client;
-        try {
-            client = await pool.connect();
-            
-            // Check session ownership
-            const sessionCheck = await client.query(
-                'SELECT user_id FROM photography_sessions WHERE id = $1',
-                [sessionId]
-            );
-            
-            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
-                console.error(`Preview denied: session ${sessionId} not owned by user ${userId}`);
-                return res.status(403).json({ error: 'Access denied' });
-            }
-            
-            const result = await client.query(`
-                SELECT * FROM session_files 
-                WHERE session_id = $1 AND folder_type = $2 AND filename = $3
-            `, [sessionId, folderType, fileName]);
-            
-            if (result.rows.length === 0) {
-                console.error(`Preview file not found: ${fileName} in session ${sessionId}/${folderType}`);
-                return res.status(404).json({ error: 'File not found' });
-            }
-            
-            const fileInfo = result.rows[0];
-            console.log(`📸 Found file record: r2_key=${fileInfo.r2_key}, size=${fileInfo.file_size_bytes} bytes`);
-            
-            // For thumbnail, use sharp to resize on-the-fly
-            const sharp = require('sharp');
-            const { GetObjectCommand } = require('@aws-sdk/client-s3');
-            
-            const getCommand = new GetObjectCommand({
-                Bucket: 'photoappr2token',
-                Key: fileInfo.r2_key
-            });
-            
-            console.log(`📸 Fetching from R2: ${fileInfo.r2_key}`);
-            const response = await r2FileManager.s3Client.send(getCommand);
-            const chunks = [];
-            let totalSize = 0;
-            for await (const chunk of response.Body) {
-                chunks.push(chunk);
-                totalSize += chunk.length;
-            }
-            const buffer = Buffer.concat(chunks);
-            console.log(`📸 Downloaded ${totalSize} bytes from R2`);
-            
-            // Generate thumbnail - handle different image formats
-            const thumbnailSize = size === 'small' ? 200 : 400;
-            console.log(`📸 Generating ${thumbnailSize}x${thumbnailSize} thumbnail for ${fileName}`);
-            
-            try {
-                // Sharp will auto-detect format and convert to JPEG
-                const thumbnail = await sharp(buffer, { failOnError: false })
-                    .rotate() // Auto-rotate based on EXIF
-                    .resize(thumbnailSize, thumbnailSize, {
-                        fit: 'cover',
-                        position: 'center',
-                        withoutEnlargement: true // Don't upscale smaller images
-                    })
-                    .jpeg({ 
-                        quality: 80,
-                        progressive: true // Better loading experience
-                    })
-                    .toBuffer();
-                
-                console.log(`✅ Thumbnail generated: ${thumbnail.length} bytes for ${fileName}`);
-                
-                // Set headers for caching
-                res.setHeader('Content-Type', 'image/jpeg');
-                res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-                res.setHeader('X-Original-Filename', fileName);
-                res.send(thumbnail);
-                
-            } catch (sharpError) {
-                console.error(`❌ Sharp processing failed for ${fileName}:`, sharpError.message);
-                // If Sharp fails, try to send the original image
-                console.log(`📸 Falling back to original image for ${fileName}`);
-                res.setHeader('Content-Type', 'image/jpeg');
-                res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-                res.send(buffer);
-            }
-            
-        } finally {
-            if (client) client.release();
-        }
-    } catch (error) {
-        console.error('❌ Error generating preview:', error.message, error.stack);
-        if (!res.headersSent) {
-            res.status(500).json({ error: 'Failed to generate preview' });
         }
     }
 });
@@ -15950,19 +15766,13 @@ app.get('/subscription-success.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'subscription-success.html'));
 });
 
-// Dev auth page - for development testing
-app.get('/dev-auth.html', async (req, res) => {
-    console.log('🔧 DEV AUTH: Serving dev authentication page');
-    res.sendFile(path.join(__dirname, 'public', 'dev-auth.html'));
-});
-
 // Secure app - BULLETPROOF authentication required
 app.get('/secure-app.html', async (req, res) => {
     console.log('🔐 SECURE: Access attempt to secure app');
     
     // Don't check session here - let the frontend JavaScript handle all security
     // This ensures the bulletproof client-side security system is always active
-    res.sendFile(path.join(__dirname, 'public', 'secure-app.html'));
+    res.sendFile(path.join(__dirname, 'secure-app.html'));
 });
 
 // Payment Setup page - requires authentication

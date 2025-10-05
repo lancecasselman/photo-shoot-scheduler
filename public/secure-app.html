@@ -5549,7 +5549,7 @@
                 <!-- Stripe Connect Complete -->
                 <div id="businessSetupStripeConnectComplete" class="payment-complete" style="display: none;">
                     <div class="success-card">
-                        <div class="success-icon">Success</div>
+                        <div class="success-icon">✅</div>
                         <h3>Payment Processing Active</h3>
                         <p>Your Stripe Express account is set up and ready to receive payments!</p>
                         
@@ -5578,7 +5578,7 @@
 
                 <!-- Payment Settings Help -->
                 <div class="help-section">
-                    <h4>How Payment Processing Works</h4>
+                    <h4>ℹ️ How Payment Processing Works</h4>
                     <div class="help-grid">
                         <div class="help-item">
                             <h5>Secure Processing</h5>
@@ -5599,7 +5599,7 @@
             <!-- Business Profile Section -->
             <div id="businessSetupBusinessProfile" class="business-section" style="display: none;">
                 <div class="profile-header">
-                    <h2>Business Profile</h2>
+                    <h2>🏢 Business Profile</h2>
                     <p>Manage your business information and branding</p>
                 </div>
                 
@@ -5611,7 +5611,7 @@
             <!-- Preferences Section -->
             <div id="businessSetupPreferences" class="business-section" style="display: none;">
                 <div class="preferences-header">
-                    <h2>Business Preferences</h2>
+                    <h2>⚙️ Business Preferences</h2>
                     <p>Configure your workflow and notification preferences</p>
                 </div>
                 
@@ -5993,7 +5993,7 @@
                             
                             <button onclick="sendViaText('${contractId}', '${contractData.signingUrl}', '${contractData.contract?.client_name}', '${contractData.contract?.client_phone}', event)" 
                                     class="btn btn-success" style="width: 100%; margin-bottom: 15px; padding: 15px; font-size: 16px;">
-                                Send via Text Message
+                                💬 Send via Text Message
                             </button>
                             
                         </div>
@@ -6096,7 +6096,7 @@ The Legacy Photography`);
                     
                     ${contract.signature_data ? `
                         <div style="background:#e8f5e8;padding:15px;border-radius:8px;margin-bottom:20px">
-                            <h3 style="color:#28a745">Signed</h3>
+                            <h3 style="color:#28a745">✅ Signed</h3>
                             <p>Client: ${contract.session_client_name || 'N/A'}</p>
                             <p>Date: ${contract.signed_at ? new Date(contract.signed_at).toLocaleDateString() : 'N/A'}</p>
                             <div style="margin-top:10px">
@@ -6138,12 +6138,12 @@ The Legacy Photography`);
                 <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Signed Contract - ${clientName}</h2>
+                            <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${clientName}</h2>
                             <button onclick="closeModal('signedContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
                         <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3 style="color: #28a745; margin: 0 0 15px 0;">Contract Signed</h3>
+                            <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                                 <div><strong>Client:</strong> ${clientName}</div>
                                 <div><strong>Email:</strong> ${clientEmail}</div>
@@ -6166,10 +6166,10 @@ ${agreement.content || 'No content available'}
                         <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
                             <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is a digitally signed copy stored for your records</p>
                             <button onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')" class="btn btn-success" style="margin-right: 10px;">
-                                Download Contract
+                                📄 Download Contract
                             </button>
                             <button onclick="printSignedContract('${agreement.id}')" class="btn btn-secondary" style="margin-right: 10px;">
-                                Print Contract
+                                🖨️ Print Contract
                             </button>
                             <button onclick="closeModal('signedContractModal')" class="btn btn-secondary">
                                 Close
@@ -6223,12 +6223,12 @@ ${agreement.content || 'No content available'}
         async function sendViaText(contractId, signingUrl, clientName, clientPhone, event) {
             // Declare button variables at function scope
             const smsBtn = event ? event.target : document.querySelector('button[onclick*="sendViaText"]');
-            const originalText = smsBtn ? smsBtn.innerHTML : 'Send via Text Message';
+            const originalText = smsBtn ? smsBtn.innerHTML : '💬 Send via Text Message';
             
             try {
                 // Show loading state
                 if (smsBtn) {
-                    smsBtn.innerHTML = 'Sending SMS...';
+                    smsBtn.innerHTML = '💬 Sending SMS...';
                     smsBtn.disabled = true;
                 }
                 
@@ -6481,7 +6481,7 @@ ${agreement.content || 'No content available'}
             }
             
             if (endDate <= startDate) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">Warning: End date must be after start date</p>';
+                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">⚠️ End date must be after start date</p>';
                 calculationDiv.style.display = 'block';
                 return;
             }
@@ -6523,7 +6523,7 @@ ${agreement.content || 'No content available'}
             
             // Ensure at least one payment
             if (totalPayments === 0) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">Warning: No valid payment dates could be calculated</p>';
+                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">⚠️ No valid payment dates could be calculated</p>';
                 calculationDiv.style.display = 'block';
                 return;
             }
@@ -6547,13 +6547,13 @@ ${agreement.content || 'No content available'}
             
             resultsDiv.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;text-align:left;color:#f5f5f5;">
-                    <div><strong style="color: #d4af37;">Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
-                    <div><strong style="color: #d4af37;">Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
-                    <div><strong style="color: #d4af37;">Number of Payments:</strong> ${totalPayments}</div>
-                    <div><strong style="color: #d4af37;">Each Payment:</strong> $${paymentAmount}</div>
+                    <div><strong style="color: #d4af37;">💰 Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
+                    <div><strong style="color: #d4af37;">📅 Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
+                    <div><strong style="color: #d4af37;">🔢 Number of Payments:</strong> ${totalPayments}</div>
+                    <div><strong style="color: #d4af37;">💵 Each Payment:</strong> $${paymentAmount}</div>
                 </div>
                 <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
-                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;font-weight:700;">Payment Schedule:</h6>
+                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;font-weight:700;">📋 Payment Schedule:</h6>
                     ${scheduleHTML}
                     <div style="text-align:center;margin-top:15px;padding-top:15px;border-top:2px solid rgba(212,175,55,0.3);color:#d4af37;font-weight:700;font-size:1.1rem;">
                         Total: ${totalPayments} × $${paymentAmount} = $${totalAmount.toFixed(2)}
@@ -6562,7 +6562,7 @@ ${agreement.content || 'No content available'}
             `;
             
             calculationDiv.style.display = 'block';
-            console.log('Payment calculation completed:', { totalPayments, paymentAmount, frequency, totalAmount: totalAmount.toFixed(2) });
+            console.log('✅ Payment calculation completed:', { totalPayments, paymentAmount, frequency, totalAmount: totalAmount.toFixed(2) });
         };
         
         // Payment plan helper functions
@@ -6998,7 +6998,7 @@ ${agreement.content || 'No content available'}
         
         // Function to trigger immediate payment status refresh
         window.triggerImmediatePaymentRefresh = async function() {
-            console.log('Triggering immediate payment status refresh...');
+            console.log('⚡ Triggering immediate payment status refresh...');
             try {
                 const response = await fetch('/api/sessions');
                 if (response.ok) {
@@ -7034,9 +7034,9 @@ ${agreement.content || 'No content available'}
                     // Re-render sessions immediately
                     if (typeof window.renderSessions === 'function') {
                         window.renderSessions();
-                        showMessage('Payment status updated!', 'success');
+                        showMessage('✅ Payment status updated!', 'success');
                     }
-                    console.log('Immediate payment status refresh complete!');
+                    console.log('⚡ Immediate payment status refresh complete!');
                 }
             } catch (error) {
                 console.error('Error in immediate payment refresh:', error);
@@ -7082,10 +7082,10 @@ ${agreement.content || 'No content available'}
                         <div class="session-info">
                             <h3 class="client-name">${session.clientName}</h3>
                             <div class="session-meta">
-                                <span class="session-date">${formatDateTime(session.dateTime)}</span>
-                                <span class="session-location">${session.location}</span>
-                                <span class="session-duration">${formatDuration(session.duration)}</span>
-                                <span class="session-price">$${session.price}</span>
+                                <span class="session-date">Calendar ${formatDateTime(session.dateTime)}</span>
+                                <span class="session-location"> ${session.location}</span>
+                                <span class="session-duration"> ${formatDuration(session.duration)}</span>
+                                <span class="session-price">Money $${session.price}</span>
                                 ${(session.depositAmount && session.depositAmount > 0) ? 
                                     `<span class="session-deposit" style="color: #28a745; font-weight: 600;">Deposit: $${session.depositAmount.toFixed(2)}</span>` : 
                                     ''}
@@ -7101,19 +7101,19 @@ ${agreement.content || 'No content available'}
                     <div class="session-details" id="details-${sessionId}" style="display: none;">
                         <div class="detail-grid">
                             <div class="detail-section">
-                                <h4>Contact Info</h4>
+                                <h4>Phone Contact Info</h4>
                                 <div class="detail-item">
                                     <strong>Email:</strong> <a href="mailto:${session.email}" style="color: #d4af37;">${session.email}</a>
                                 </div>
                                 <div class="detail-item">
                                     <strong>Phone:</strong> <span style="color: #d4af37;">${session.phoneNumber}</span>
-                                    <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="btn btn-secondary">Call</button>
-                                    <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Text</button>
+                                    <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="btn btn-secondary">Phone</button>
+                                    <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Message</button>
                                 </div>
                             </div>
                             
                             <div class="detail-section">
-                                <h4>Session Details</h4>
+                                <h4>Calendar Session Details</h4>
                                 <div class="detail-item">
                                     <strong>Date & Time:</strong> ${formatDateTime(session.dateTime)}
                                 </div>
@@ -7174,18 +7174,18 @@ ${agreement.content || 'No content available'}
                         <div class="session-actions">
                             <div class="action-buttons">
                                 <button onclick="openUpdateSessionModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Update Session</button>
-                                <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Add to Calendar</button>
-                                <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Send Email</button>
+                                <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
+                                <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
                                 <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary booking-agreement-btn" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
-                                <button onclick="openDownloadControls('${sessionId}'); event.stopPropagation();" class="btn btn-info" style="background: #3b82f6; color: white;">Download Controls</button>
+                                <button onclick="openDownloadControls('${sessionId}'); event.stopPropagation();" class="btn btn-info" style="background: #3b82f6; color: white;">📥 Download Controls</button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
-                                    <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Send Invoice</button>
-                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important;">Send Deposit</button>
+                                    <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
+                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important;"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
@@ -7214,15 +7214,14 @@ ${agreement.content || 'No content available'}
                         <div class="session-file-actions">
                             <h4>Files & Storage</h4>
                             <div class="file-action-buttons">
-                                <button onclick="openUploadDialog('${sessionId}'); event.stopPropagation();" class="btn btn-primary">Upload Files</button>
-                                <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">Open Gallery</button>
+                                <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
                             </div>
                         </div>
 
                         <!-- Enhanced Tip Panel for Delivered Sessions -->
                         ${session.delivered ? `
                             <div class="tip-panel" style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
-                                <h4 style="margin-top: 0; color: #28a745;">Session Delivered</h4>
+                                <h4 style="margin-top: 0; color: #28a745;"> Session Delivered</h4>
                                 <p style="margin-bottom: 10px;">This session has been marked as delivered. Consider:</p>
                                 <ul style="margin: 0; padding-left: 20px;">
                                     <li>Following up for feedback</li>
@@ -7241,7 +7240,7 @@ ${agreement.content || 'No content available'}
             container.innerHTML = sessionElements.join('');
             
             // No longer loading files for all sessions - simplified interface
-            console.log('DOWNLOAD CONTROLS BUTTONS CREATED for', visibleSessions.length, 'sessions');
+            console.log('✅ DOWNLOAD CONTROLS BUTTONS CREATED for', visibleSessions.length, 'sessions');
 
         }
 
@@ -7340,7 +7339,7 @@ ${agreement.content || 'No content available'}
                         
                         const downloadBtn = document.createElement('button');
                         downloadBtn.className = 'btn btn-secondary';
-                        downloadBtn.textContent = 'Download';
+                        downloadBtn.textContent = '📥 Download';
                         downloadBtn.onclick = (e) => {
                             downloadFile(sessionId, folderType, file.name);
                             e.stopPropagation();
@@ -7759,18 +7758,6 @@ lance@thelegacyphotography.com`;
         }
 
         window.isSessionVisible = function(session) {
-            // Clear all filters on initial load to show all sessions
-            if (!window.filtersInitialized) {
-                const filterElements = ['filterContractSigned', 'filterPaid', 'filterDelivered'];
-                filterElements.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) element.checked = false;
-                });
-                const searchInput = document.getElementById('clientSearch');
-                if (searchInput) searchInput.value = '';
-                window.filtersInitialized = true;
-            }
-            
             const searchTerm = document.getElementById('clientSearch')?.value.toLowerCase() || '';
             const contractFilter = document.getElementById('filterContractSigned')?.checked || false;
             const paidFilter = document.getElementById('filterPaid')?.checked || false;
@@ -8681,7 +8668,7 @@ lance@thelegacyphotography.com`;
                         </p>
                         ${contract.signed_at ? `
                             <p style="margin: 5px 0; color: #28a745; font-size: 14px;">
-                                <strong>Signed: ${new Date(contract.signed_at).toLocaleDateString()}</strong>
+                                <strong>✅ Signed: ${new Date(contract.signed_at).toLocaleDateString()}</strong>
                             </p>
                         ` : ''}
                         <div style="margin-top: 15px;">
@@ -8700,7 +8687,7 @@ lance@thelegacyphotography.com`;
                             ` : ''}
                             ${contract.status === 'signed' ? `
                                 <button onclick="downloadSignedContract('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                    Download Signed View Signed Copy
+                                    📥 Download Signed️ View Signed Copy
                                 </button>
                             ` : ''}
                         </div>
@@ -9358,7 +9345,7 @@ lance@thelegacyphotography.com`;
                     throw new Error('Contract not found');
                 }
                 
-                console.log('Found contract:', foundContract);
+                console.log('📝 Found contract:', foundContract);
                 showContractDetailsModal(foundContract);
                 
             } catch (error) {
@@ -9410,7 +9397,7 @@ ${contract.content || 'No content available'}
                             ` : ''}
                             ${contract.status === 'signed' ? `
                                 <button onclick="downloadSignedContract('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                     Download Signedy
+                                     📥 Download Signedy
                                 </button>
                             ` : ''}
                         </div>
@@ -10266,7 +10253,7 @@ END:VCALENDAR`;
                                 </button>
                                 
                                 <button class="btn btn-success btn-block mb-3" onclick="openMessagingApp('${contractData.signingUrl}', '${contractData.contract.client_name}')">
-                                    Open Messaging App
+                                    💬 Open Messaging App
                                 </button>
 
                                 <div class="manual-options mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
@@ -11614,7 +11601,7 @@ END:VCALENDAR`;
                         <div class="suggestion-detail">${helpText}</div>
                     </div>
                     <div class="address-suggestion manual-input" data-address="${escapeHtml(input.value)}" style="border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
-                        <div class="suggestion-main">Use address as typed</div>
+                        <div class="suggestion-main">✓ Use address as typed</div>
                         <div class="suggestion-detail">Continue with: "${escapeHtml(input.value)}"</div>
                     </div>
                 `;
@@ -12634,10 +12621,10 @@ END:VCALENDAR`;
                             <h4>Monthly</h4>
                             <div class="price">$25<span>/month</span></div>
                             <ul>
-                                <li>Full platform access</li>
-                                <li>Unlimited sessions</li>
-                                <li>Client galleries</li>
-                                <li>Professional tools</li>
+                                <li>✓ Full platform access</li>
+                                <li>✓ Unlimited sessions</li>
+                                <li>✓ Client galleries</li>
+                                <li>✓ Professional tools</li>
                             </ul>
                         </div>
                         
@@ -12647,9 +12634,9 @@ END:VCALENDAR`;
                             <div class="price">$125<span>/6 months</span></div>
                             <div class="savings">Save $25 (1 month free!)</div>
                             <ul>
-                                <li>Everything in Monthly</li>
-                                <li>Priority support</li>
-                                <li>Advanced features</li>
+                                <li>✓ Everything in Monthly</li>
+                                <li>✓ Priority support</li>
+                                <li>✓ Advanced features</li>
                             </ul>
                         </div>
                         
@@ -12658,9 +12645,9 @@ END:VCALENDAR`;
                             <div class="price">$200<span>/year</span></div>
                             <div class="savings">Save $100 (2 months free!)</div>
                             <ul>
-                                <li>Everything in 6 Months</li>
-                                <li>Custom branding</li>
-                                <li>Premium features</li>
+                                <li>✓ Everything in 6 Months</li>
+                                <li>✓ Custom branding</li>
+                                <li>✓ Premium features</li>
                             </ul>
                         </div>
                     </div>
@@ -13062,7 +13049,7 @@ END:VCALENDAR`;
                                 <p>Deep blue sky creates dramatic contrast. Best for: architectural photos, cityscapes, creative portraits with artificial lighting.</p>
                             </div>
                             <div class="tip-card">
-                                <strong>Planning Tip</strong>
+                                <strong>⏰ Planning Tip</strong>
                                 <p>Arrive 30 minutes before golden hour starts to set up and catch the light transition.</p>
                             </div>
                         </div>
@@ -13662,7 +13649,7 @@ END:VCALENDAR`;
     <script>
         // Initialize authentication for secure app - use existing checkAuth from script.js
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('SECURE APP: Starting authentication system...');
+            console.log('🔐 SECURE APP: Starting authentication system...');
             
             // Wait for script.js to be fully loaded
             await new Promise(resolve => {
@@ -13683,16 +13670,16 @@ END:VCALENDAR`;
                 const isAuthenticated = await checkAuth();
                 
                 if (isAuthenticated) {
-                    console.log('SECURE APP: User authenticated, initializing app...');
+                    console.log('✅ SECURE APP: User authenticated, initializing app...');
                     if (typeof initializeAppContent === 'function') {
                         initializeAppContent();
                     }
                 } else {
-                    console.log('SECURE APP: No authenticated user, showing login options...');
+                    console.log('❌ SECURE APP: No authenticated user, showing login options...');
                     showLoginOptions();
                 }
             } catch (error) {
-                console.error('SECURE APP: Authentication check failed:', error);
+                console.error('❌ SECURE APP: Authentication check failed:', error);
                 showLoginOptions();
             }
         });
@@ -13722,7 +13709,7 @@ END:VCALENDAR`;
                         width: 90%;
                         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
                     ">
-                        <h2 style="color: #d4af37; margin-bottom: 1rem; font-size: 2rem;">Welcome Back</h2>
+                        <h2 style="color: #d4af37; margin-bottom: 1rem; font-size: 2rem;">📸 Welcome Back</h2>
                         <p style="color: #cccccc; margin-bottom: 2rem;">Sign in to access your photography management platform</p>
                         
                         <button id="googleSignInBtn" style="
@@ -13746,7 +13733,7 @@ END:VCALENDAR`;
                         </div>
                         
                         <div id="loginError" style="display: none; color: #dc3545; margin: 1rem 0; padding: 0.8rem; background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-                            Authentication failed. Please try again.
+                            ❌ Authentication failed. Please try again.
                         </div>
                     </div>
                 </div>
@@ -13783,7 +13770,7 @@ END:VCALENDAR`;
                     const user = result.user;
                     const idToken = await user.getIdToken();
                     
-                    console.log('DESKTOP: Google authentication successful, creating session...');
+                    console.log('🖥️ DESKTOP: Google authentication successful, creating session...');
                     
                     // Create session with backend using the proper endpoint
                     const response = await fetch('/auth/session', {
@@ -13798,7 +13785,7 @@ END:VCALENDAR`;
                     });
                     
                     if (response.ok) {
-                        console.log('DESKTOP: Session created successfully');
+                        console.log('🖥️ DESKTOP: Session created successfully');
                         // Remove login overlay and refresh page to trigger proper auth flow
                         removeLoginOverlay();
                         window.location.reload();
@@ -13829,7 +13816,7 @@ END:VCALENDAR`;
         }
         
         function showLoginError(message) {
-            document.getElementById('loginError').innerHTML = `${message}`;
+            document.getElementById('loginError').innerHTML = `❌ ${message}`;
             document.getElementById('loginError').style.display = 'block';
             hideLoginLoading();
         }
@@ -17346,20 +17333,20 @@ END:VCALENDAR`;
                             </div>
                             
                             <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin-top: 30px;">
-                                <h4 style="margin-bottom: 15px; color: #2d3748;">SEO Score Preview</h4>
+                                <h4 style="margin-bottom: 15px; color: #2d3748;">🎯 SEO Score Preview</h4>
                                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                                     <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">Success</div>
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
                                         <div style="font-weight: 600; color: #38a169;">Schema Markup</div>
                                         <small style="color: #718096;">Auto-generated</small>
                                     </div>
                                     <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">Success</div>
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
                                         <div style="font-weight: 600; color: #38a169;">Mobile Optimized</div>
                                         <small style="color: #718096;">Responsive design</small>
                                     </div>
                                     <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">Success</div>
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">✅</div>
                                         <div style="font-weight: 600; color: #38a169;">Fast Loading</div>
                                         <small style="color: #718096;">Optimized images</small>
                                     </div>

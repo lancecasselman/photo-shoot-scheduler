@@ -493,8 +493,7 @@
                 
                 if (!response.ok) throw new Error('Failed to load gallery');
                 
-                const data = await response.json();
-                const files = data.files || [];  // Server returns { files: [...] }
+                const files = await response.json();
                 
                 galleryStats.textContent = `${files.length} files`;
                 
@@ -508,64 +507,17 @@
                     return;
                 }
                 
-                galleryGrid.innerHTML = files.map(file => {
-                    // Create a unique ID for each image
-                    const imgId = `img-${sessionId}-${file.filename.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                    return `
-                        <div class="gallery-item">
-                            <img id="${imgId}"
-                                 src="/api/sessions/${sessionId}/files/${folderType}/preview/${file.filename}?size=thumbnail" 
-                                 alt="${file.filename}"
-                                 loading="lazy"
-                                 data-filename="${file.filename}"
-                                 data-session="${sessionId}"
-                                 data-folder="${folderType}"
-                                 style="display: none;">
-                            <div class="image-placeholder" id="placeholder-${imgId}" style="width: 100%; height: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666; font-size: 48px;">
-                                ⏳
-                            </div>
-                            <div class="gallery-item-info">
-                                <div class="gallery-item-name">${file.filename}</div>
-                                <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>
-                            </div>
+                galleryGrid.innerHTML = files.map(file => `
+                    <div class="gallery-item">
+                        <img src="/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}" 
+                             alt="${file.filename}"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                        <div class="gallery-item-info">
+                            <div class="gallery-item-name">${file.filename}</div>
+                            <div class="gallery-item-size">${formatFileSize(file.file_size_bytes)}</div>
                         </div>
-                    `;
-                }).join('');
-                
-                // Set up image loading handlers after DOM is ready
-                setTimeout(() => {
-                    files.forEach(file => {
-                        const imgId = `img-${sessionId}-${file.filename.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                        const img = document.getElementById(imgId);
-                        const placeholder = document.getElementById(`placeholder-${imgId}`);
-                        
-                        if (img && placeholder) {
-                            // On successful load, show image and hide placeholder
-                            img.onload = function() {
-                                img.style.display = 'block';
-                                placeholder.style.display = 'none';
-                                console.log(`✅ Preview loaded: ${file.filename}`);
-                            };
-                            
-                            // On error, try fallback to download endpoint
-                            img.onerror = function() {
-                                console.log(`⚠️ Preview failed for ${file.filename}, trying download endpoint...`);
-                                
-                                // Try fallback to download endpoint
-                                img.onerror = function() {
-                                    // If both fail, show a photo icon
-                                    console.error(`❌ Both preview and download failed for ${file.filename}`);
-                                    placeholder.innerHTML = '📷';
-                                    placeholder.style.fontSize = '48px';
-                                    placeholder.style.color = '#999';
-                                };
-                                
-                                // Attempt fallback
-                                img.src = `/api/sessions/${sessionId}/files/${folderType}/download/${file.filename}`;
-                            };
-                        }
-                    });
-                }, 100);
+                    </div>
+                `).join('');
                 
             } catch (error) {
                 console.error('Failed to load gallery:', error);

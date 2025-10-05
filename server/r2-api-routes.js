@@ -93,18 +93,15 @@ function createR2Routes(realTimeGalleryUpdates = null) {
       const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
 
       // Method 1: Session-based authentication (existing method)
-      // First, if session exists but req.user is not set, set it from session
-      // This is common when using development authentication or session-based auth
+      if (isAuthenticated && req.user && req.user.uid) {
+        return next();
+      }
+
       if (hasValidSession) {
         req.user = req.session.user;
         if (req.user.uid) {
-          console.log('✅ R2 API: Session authentication successful for', req.user.email);
           return next();
         }
-      }
-
-      if (isAuthenticated && req.user && req.user.uid) {
-        return next();
       }
 
       // Method 2: Bearer token authentication (new method for frontend uploads)

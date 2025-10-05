@@ -42,7 +42,7 @@ let agreementTemplates = [];
 // View agreement details
 async function viewAgreementDetails(agreementId, sessionId) {
     try {
-        console.log('Fetching agreement details:', agreementId, 'for session:', sessionId);
+        console.log('📄 Fetching agreement details:', agreementId, 'for session:', sessionId);
         
         // Use the session-specific endpoint to get signature data
         const response = await fetch(`/api/booking/agreements/session/${sessionId}/all`);
@@ -57,7 +57,7 @@ async function viewAgreementDetails(agreementId, sessionId) {
             throw new Error('Agreement not found');
         }
         
-        console.log('Agreement found with signature data:', !!agreement.signature_data);
+        console.log('📝 Agreement found with signature data:', !!agreement.signature_data);
         
         // Close current modal and open agreement modal with the details
         
@@ -94,7 +94,7 @@ async function showAgreementDetailsModal(agreement) {
                     
                     ${agreement.status === 'signed' ? `
                         <div id="signatureSection" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 5px;">
-                            <h4 style="margin-bottom: 15px; color: #28a745;">Electronic Signature</h4>
+                            <h4 style="margin-bottom: 15px; color: #28a745;">📝 Electronic Signature</h4>
                             <div id="signatureContent">
                                 <p style="margin: 5px 0; color: #666;">Loading signature...</p>
                             </div>
@@ -136,17 +136,17 @@ function displaySignatureData(agreement) {
             </div>
             <div style="margin-top: 15px; text-align: center;">
                 <button class="btn btn-success" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')" style="margin-right: 10px;">
-                    Download Signed Contract
+                    📄 Download Signed Contract
                 </button>
                 <button class="btn btn-info" onclick="viewSignedCopyModal('${agreement.id}')">
-                    View Signed Copy
+                    👁️ View Signed Copy
                 </button>
             </div>
         `;
     } else if (agreement.status === 'signed') {
         signatureContent.innerHTML = `
             <div style="padding: 20px; text-align: center; color: #28a745;">
-                <p style="margin: 0; font-size: 16px;"><strong>Contract Signed</strong></p>
+                <p style="margin: 0; font-size: 16px;"><strong>✓ Contract Signed</strong></p>
                 <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Signature data is being processed</p>
             </div>
         `;
@@ -198,12 +198,12 @@ async function viewSignedCopyModal(agreementId) {
             <div id="signedCopyModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002;">
                 <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 95vh; overflow-y: auto;">
                     <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                        <h2 style="color: #8b7355; margin: 0;">Signed Contract Copy - ${foundAgreement.session_client_name || 'Client'}</h2>
+                        <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract Copy - ${foundAgreement.session_client_name || 'Client'}</h2>
                         <button onclick="closeModal('signedCopyModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
                     
                     <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <h3 style="color: #28a745; margin: 0 0 15px 0;">Contract Signed & Verified</h3>
+                        <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed & Verified</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                             <div><strong>Client:</strong> ${foundAgreement.session_client_name || 'Unknown'}</div>
                             <div><strong>Signer:</strong> ${foundAgreement.signer_name || 'Unknown'}</div>
@@ -226,10 +226,10 @@ ${foundAgreement.content || 'No content available'}
                     <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
                         <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is an official digitally signed copy with electronic signature verification</p>
                         <button onclick="downloadSignedContract('${foundAgreement.id}', '${foundAgreement.session_client_name || 'client'}')" class="btn btn-success" style="margin-right: 10px;">
-                            Download Contract
+                            📄 Download Contract
                         </button>
                         <button onclick="window.print()" class="btn btn-secondary" style="margin-right: 10px;">
-                            Print Contract
+                            🖨️ Print Contract
                         </button>
                         <button onclick="closeModal('signedCopyModal')" class="btn btn-secondary">
                             Close
@@ -258,7 +258,7 @@ function closeModal(modalId) {
 // Download signed contract as PDF
 async function downloadSignedContract(agreementId, clientName) {
     try {
-        console.log('Downloading signed contract:', agreementId);
+        console.log('📄 Downloading signed contract:', agreementId);
         
         const response = await fetch(`/api/booking/agreements/${agreementId}/download`);
         if (!response.ok) {
@@ -276,10 +276,10 @@ async function downloadSignedContract(agreementId, clientName) {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
-        showMessage('Signed contract downloaded successfully!', 'success');
+        showMessage('✅ Signed contract downloaded successfully!', 'success');
     } catch (error) {
         console.error('Error downloading signed contract:', error);
-        showMessage('Failed to download contract: ' + error.message, 'error');
+        showMessage('❌ Failed to download contract: ' + error.message, 'error');
     }
 }
 
@@ -588,7 +588,7 @@ async function showSignedContractsViewer(sessionId) {
         // Create signed contracts list
         const viewerContent = document.getElementById('agreementViewContent');
         viewerContent.innerHTML = `
-            <h3 style="color: #28a745; margin-bottom: 20px;">Signed Contracts</h3>
+            <h3 style="color: #28a745; margin-bottom: 20px;">📝 Signed Contracts</h3>
             <div class="signed-contracts-list">
                 ${signedAgreements.map(agreement => `
                     <div class="signed-contract-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: #f8f9fa;">
@@ -600,10 +600,10 @@ async function showSignedContractsViewer(sessionId) {
                             </div>
                             <div style="text-align: right;">
                                 <button class="btn btn-primary btn-sm" onclick="viewAgreementDetails('${agreement.id}', '${sessionId}')" style="margin-right: 5px;">
-                                    View Contract
+                                    👁️ View Contract
                                 </button>
                                 <button class="btn btn-success btn-sm" onclick="downloadSignedContract('${agreement.id}', '${agreement.session_client_name || 'client'}')">
-                                    Download
+                                    📄 Download
                                 </button>
                             </div>
                         </div>
@@ -763,7 +763,7 @@ async function sendForSignature() {
     // Get the current session
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) {
-        console.log('No session found, creating basic session');
+        console.log('❌ No session found, creating basic session');
         // Try to get session info from the modal title
         const modalTitle = document.getElementById('agreementModalTitle');
         const clientName = modalTitle ? modalTitle.textContent.replace('Booking Agreement for ', '') : 'Client';
@@ -1103,7 +1103,7 @@ function showSendOptionsModal(session) {
     document.head.appendChild(style);
     document.body.appendChild(modal);
     
-    console.log('Modal added to DOM');
+    console.log('✅ Modal added to DOM');
     console.log('Modal element:', modal);
     console.log('Modal visible:', modal.style.display);
     
@@ -1111,10 +1111,10 @@ function showSendOptionsModal(session) {
     setTimeout(() => {
         const addedModal = document.querySelector('.send-options-modal');
         if (addedModal) {
-            console.log('Modal found in DOM after adding');
+            console.log('✅ Modal found in DOM after adding');
             addedModal.style.display = 'flex !important';
         } else {
-            console.log('Modal NOT found in DOM after adding');
+            console.log('❌ Modal NOT found in DOM after adding');
         }
     }, 100);
 }
@@ -1419,7 +1419,7 @@ function getStatusText(status) {
         'draft': 'Draft Agreement',
         'sent': 'Pending Signature',
         'viewed': 'Viewed by Client',
-        'signed': 'Signed',
+        'signed': 'Signed ✓',
         'none': 'Create Agreement'
     };
     return statusTexts[status] || 'Create Agreement';
@@ -1757,10 +1757,10 @@ window.sendForSignature = sendForSignature;
 
 // FORCE OVERRIDE THE FUNCTION TO MAKE SURE IT WORKS
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('FORCING sendForSignature override');
+    console.log('🔧 FORCING sendForSignature override');
     
     window.sendForSignature = async function() {
-        console.log('OVERRIDE FUNCTION CALLED!!!');
+        console.log('🚨🚨🚨 OVERRIDE FUNCTION CALLED!!!');
         alert('OVERRIDE: Choose how to send the contract!');
         
         // Create a super simple modal

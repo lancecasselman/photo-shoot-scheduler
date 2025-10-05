@@ -1,75 +1,109 @@
 # Photography Management System
 
 ## Overview
-A comprehensive Photography Management System that enables photographers to upload, manage, and share photos with clients. The system uses Cloudflare R2 for storage, supports large file uploads (up to 5GB per file), and generates optimized previews/thumbnails for efficient gallery viewing.
-
-## Recent Changes (October 4, 2025)
-
-### Fixed JavaScript Syntax Errors Preventing Session Display
-**Problem**: Sessions were not displaying in the UI due to JavaScript "SyntaxError: Invalid or unexpected token" errors.
-
-**Root Cause**: Emoji characters (📄, 📝, 🚨, 🔧, ✅, ❌, ✓, etc.) in JavaScript template literals and innerHTML assignments were causing syntax parsing errors.
-
-**Resolution**: Systematically removed all emoji characters from:
-- `public/secure-app.html` - Removed emojis from template literals, innerHTML assignments, and UI elements
-- `public/booking-agreements-modal.js` - Cleaned up emojis in console.log statements and template strings
-- `public/script.js` - Fixed emojis in payment status badges and console messages
-
-**Additional Fixes**:
-- Fixed server routing to properly serve HTML files from the `public` directory
-- Added route for `/dev-auth.html` to enable development authentication
-- Corrected path for `/secure-app.html` to serve from `public` folder
-
-## Current Status
-- ✅ Authentication system working correctly with dev user (dev@phototest.local)
-- ✅ Backend API endpoints functioning properly
-- ✅ Sessions being fetched from database successfully  
-- ✅ All JavaScript syntax errors resolved
-- ⚠️ Browser caching may require hard refresh to load updated JavaScript files
-
-## Test Infrastructure
-- **Development User**: dev@phototest.local (password: devtest123)
-- **Test Session**: ID `6fc2ee67-9455-4115-bd43-1102569080e6` with sample client data
-- **Authentication Flow**: `/dev-auth.html` → `/api/dev-auth/exchange` → `/secure-app.html`
-
-## Project Architecture
-
-### Frontend
-- **Landing Page**: `/index.html` - Public-facing website
-- **Secure App**: `/secure-app.html` - Authenticated photography management interface
-- **Dev Auth**: `/dev-auth.html` - Development authentication page for testing
-
-### Backend
-- **Server**: Node.js with Express (`server.js`)
-- **Database**: PostgreSQL with Drizzle ORM
-- **Storage**: Cloudflare R2 for photo storage
-- **Authentication**: Session-based with PostgreSQL session store
-
-### Key Components
-1. **Session Management**: Create, view, edit photography sessions
-2. **File Upload**: Direct R2 uploads with progress tracking
-3. **Gallery Manager**: Modal-based photo management interface
-4. **Payment Processing**: Stripe integration for deposits and invoices
-5. **Booking Agreements**: Contract management system
+A streamlined photography business management platform designed for professional photographers. Its purpose is to provide essential workflow management tools, including session scheduling, client management, invoicing, and contract signing. The platform operates on a subscription model, offering a Professional plan with 100GB storage, and additional 1TB storage add-ons backed up to Cloudflare R2. The business vision is to empower photographers with tools to efficiently manage their operations, enhancing productivity and client satisfaction.
 
 ## User Preferences
-- Clean, modern UI with dark theme
-- Modal-based interactions for gallery management
-- Session cards with "Upload Files" buttons for direct access
-- No emoji characters in JavaScript code to prevent syntax errors
+Preferred communication style: Simple, everyday language.
+Website Builder Interface: CapCut-style with full-screen preview and bottom toolbar with horizontal scrolling tools.
 
-## Known Issues & Solutions
-1. **Browser Cache**: If old JavaScript with emojis is cached, perform a hard refresh (Ctrl+Shift+R / Cmd+Shift+R)
-2. **404 for native-auth.js**: Expected - this file is for mobile app integration only
+## System Architecture
 
-## Development Workflow
-1. Start server: `node server.js`
-2. Navigate to `/dev-auth.html`
-3. Click "Authenticate as Test User"
-4. System redirects to `/secure-app.html` with active session
-5. Sessions should display in the UI
+### Frontend Architecture
+The system utilizes a static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, employing a responsive, mobile-first design. It incorporates PWA capabilities via a service worker for offline functionality and a component-based UI with tabbed navigation. The CapCut-style Website Builder features full-screen preview, drag-and-drop functionality, editable components, and includes 21 professional fonts. The platform focuses on a web-app only strategy for all devices.
 
-## Next Steps
-- Consider adding cache-busting query parameters to JavaScript files
-- Implement automated testing to catch syntax errors early
-- Add ESLint rule to prevent emoji usage in JavaScript strings
+### Backend Architecture
+The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level.
+
+### Authentication & Authorization
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication.
+
+### Database Architecture
+The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
+
+### File Storage Strategy
+Cloudflare R2 serves as the primary cloud storage with human-readable file organization including photographer and session names for easier tracking in the R2 dashboard. The system uses dual-path support with automatic fallback to legacy UUID-based paths for backward compatibility. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation with performance-optimized caching and single-download operations.
+
+### Photography Delivery System
+A comprehensive download-based delivery system with flexible pricing models (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration for payment processing. It includes per-client quota tracking and robust entitlement management with photo-level purchase tracking.
+
+**FREEMIUM Model Features:**
+- Clients get X free downloads (photographer configurable)
+- After free quota exhausted, clients can purchase unlimited additional photos
+- Once a photo is purchased, it's permanently unlocked with unlimited re-downloads
+- No paid quotas or limits - each photo only needs to be purchased once
+- Purchases tracked at photo-level in entitlements system
+
+**Cart System Features (Updated September 2025):**
+- **Automatic Cart Synchronization:** Cart state syncs with backend on page load, reconciling localStorage with server reservations
+- **Cart Preservation:** Network failures don't wipe cart; local state preserved with user notifications during backend unavailability
+- **Pre-Checkout Validation:** Server-side cart validation before payment prevents entitlement mismatches; detects expired reservations and price changes
+- **Performance Optimized:** Only reserves NEW items not already on backend; includes timeouts and error differentiation
+- **Comprehensive Error Handling:** All cart operations include user-friendly notifications for failures with automatic retry logic
+- **Secure Payment Flow:** Authenticated order confirmation page with redirect to gallery for download access
+- **Enhanced Cart Manager:** Backend quota enforcement, reservation expiry (30-minute TTL), and conflict resolution
+
+### Photography Community Platform
+A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features, user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction.
+
+### Core Features & System Design
+The system supports chronological session sorting, an integrated deposit system, a comprehensive storage quota and billing system, and a robust unified file deletion system. It includes prebuilt customizable pages, advanced subpage functionality, a full booking agreement system with e-signature capabilities, and Stripe Connect Express for multi-photographer payment routing.
+
+### AI-Powered Blog Generator
+Integrated OpenAI-powered blog post generation into the website builder, featuring customizable blog creation with topic, style, tone, and length options, SEO keyword optimization, and automatic metadata generation.
+
+### Website Publishing System
+Allows photographers to publish their created websites to subdomains with real-time availability checking, one-click publishing, a cost-efficient architecture, published websites database, live preview, and update capability. This is a professional plan feature.
+
+### Onboarding System
+A 5-step wizard guides new users through setup, including username selection, business information, photography specialty, and subscription integration.
+
+### Unified Subscription Management System
+A comprehensive system supporting multiple platforms and billing models, including a Professional Plan and storage add-ons. It integrates Stripe for web payments, handles webhooks for payment events, and provides multi-platform customer tracking and automatic storage quota management.
+
+### Subscription Cancellation & Access Control
+Provides complete cancellation functionality with platform-specific handling and enforces subscription requirements through subscription-aware authentication middleware, frontend guards, automatic redirection to checkout, and grace period access.
+
+### Production Deployment Infrastructure
+Includes production-ready configuration with security hardening (Helmet.js, CORS, rate limiting, secure session management), comprehensive health monitoring, structured JSON logging, database optimization, performance enhancements, and robust error handling.
+
+### Platform Analytics & Business Intelligence
+A comprehensive analytics dashboard for monitoring SaaS platform performance, covering revenue analytics, user engagement, platform health, support analytics, and business metrics.
+
+### Data Export & GDPR Compliance System
+Enterprise-grade data portability and privacy compliance with complete data export in multiple formats, GDPR Article 20 compliance for data portability, Right to be Forgotten functionality, export management, and audit logging.
+
+### Automated Backup & Disaster Recovery
+A production-grade backup system with automated daily database backups, weekly full system backups, integrity checking, encrypted cloud storage in Cloudflare R2, point-in-time recovery, and monitoring.
+
+### Advanced User Management System
+Comprehensive photographer account management for platform administrators, offering a dashboard with filtering, search, bulk operations, account controls, usage analytics, and export tools.
+
+### Enterprise Support System
+Professional-grade client support infrastructure with automatic issue resolution, multi-channel support, a help center, ticket management, support analytics, and client communication.
+
+## External Dependencies
+
+### Core Services
+- **Firebase**: Authentication, Firestore, Storage, Hosting.
+- **PostgreSQL**: Primary relational database (via Neon serverless).
+- **Stripe**: Payment processing, subscription management, Stripe Connect.
+- **SendGrid**: Email delivery service.
+- **Cloudflare R2**: Primary cloud storage.
+- **WHCC**: Print fulfillment service.
+- **OpenAI**: AI-powered blog generation.
+
+### Development & Deployment
+- **Drizzle ORM**: Type-safe database operations.
+- **Express.js**: Web application framework.
+- **Multer**: File upload handling.
+- **Archiver**: ZIP file generation.
+- **Sharp**: Image processing.
+- **AWS SDK**: S3-compatible interface for R2 storage.
+- **JSZip**: Client-side ZIP file creation.
+- **Uppy**: Advanced file upload interface.
+
+### APIs
+- **Google Distance Matrix API**: For mileage tracking.
+- **OpenWeatherMap Geocoding API**: For location-based services.
+- **Sunrise-Sunset API**: For astronomical calculations.
