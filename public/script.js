@@ -3222,7 +3222,17 @@ async function compressImage(file, options = {}) {
 
 // Enhanced upload function with MULTIPART optimization for 2-4x faster uploads
 async function uploadPhotos(sessionId, files) {
-        if (files.length === 0) return;
+        // Defensive checks for files parameter
+        if (!files || !Array.isArray(files)) {
+            console.error('uploadPhotos called with invalid files parameter:', files);
+            showMessage('No files selected for upload', 'error');
+            return;
+        }
+        
+        if (files.length === 0) {
+            console.log('uploadPhotos called with empty files array');
+            return;
+        }
 
         try {
             console.log(`🚀 Starting OPTIMIZED MULTIPART upload of ${files.length} files...`);
@@ -3260,6 +3270,18 @@ async function uploadPhotos(sessionId, files) {
                 console.log(`⚡ Using DIRECT R2 upload for ${largeFiles.length} files (non-blocking)...`);
                 
                 try {
+                    // Validate files array before making the API call
+                    const filesPayload = largeFiles.map(f => ({
+                        filename: f.name,
+                        size: f.size,
+                        fileType: 'gallery'
+                    }));
+                    
+                    if (!filesPayload || filesPayload.length === 0) {
+                        console.error('Files payload is empty or invalid, skipping presigned URL request');
+                        throw new Error('Invalid files data for upload');
+                    }
+                    
                     // Get presigned URLs for direct R2 upload
                     const presignedResponse = await fetch('/api/r2/generate-presigned-urls', {
                         method: 'POST',
@@ -3269,11 +3291,7 @@ async function uploadPhotos(sessionId, files) {
                         },
                         body: JSON.stringify({
                             sessionId,
-                            files: largeFiles.map(f => ({
-                                filename: f.name,
-                                size: f.size,
-                                fileType: 'gallery'
-                            }))
+                            files: filesPayload
                         })
                     });
                     
