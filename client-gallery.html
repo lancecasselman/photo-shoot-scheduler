@@ -1288,6 +1288,174 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             margin: 40px 0;
         }
+
+        /* Credit Status Banner */
+        .credit-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .credit-banner.show {
+            display: flex;
+            animation: slideDown 0.5s ease;
+        }
+
+        .credit-banner.unlimited {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(22, 163, 74, 0.95) 100%);
+        }
+
+        .credit-banner.low-credits {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+        }
+
+        .credit-banner.no-credits {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+        }
+
+        .credit-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Unlock All Photos Button */
+        .unlock-all-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+            margin-left: auto;
+        }
+
+        .unlock-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Unlock Modal */
+        .unlock-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .unlock-modal.show {
+            display: flex;
+        }
+
+        .unlock-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .unlock-modal h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 2rem;
+        }
+
+        .unlock-modal p {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .unlock-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .unlock-modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .unlock-confirm-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .unlock-cancel-btn {
+            flex: 1;
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 2px solid #dc2626;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-cancel-btn:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        /* Hide cart UI elements for simple credit system */
+        .floating-cart,
+        .cart-drawer,
+        .cart-overlay,
+        .add-to-cart-btn,
+        .select-all-btn {
+            display: none !important;
+        }
+
+        /* Ensure download buttons are full width when cart is hidden */
+        .photo-actions {
+            display: block;
+        }
+
+        .download-btn {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -1301,6 +1469,15 @@
         <!-- Pricing Banner -->
         <div id="pricingBanner" class="pricing-banner">
             <span id="pricingInfo">Loading pricing information...</span>
+        </div>
+
+        <!-- Credit Status Banner -->
+        <div id="creditBanner" class="credit-banner">
+            <span class="credit-icon">💳</span>
+            <span id="creditText">Loading credit status...</span>
+            <button id="unlockAllBtn" class="unlock-all-btn" style="display: none;">
+                Unlock All Photos
+            </button>
         </div>
 
         <!-- Loading State -->
@@ -1404,6 +1581,24 @@
                     <button type="button" class="cancel-email" id="cancelEmail">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Unlock All Photos Modal -->
+    <div class="unlock-modal" id="unlockModal">
+        <div class="unlock-modal-content">
+            <h2>Unlock All Photos</h2>
+            <p>Get unlimited downloads for all photos in this gallery</p>
+            <div class="unlock-price" id="unlockPrice">$0.00</div>
+            <p>One-time payment • Instant access • Download unlimited times</p>
+            <div class="unlock-modal-actions">
+                <button class="unlock-confirm-btn" id="unlockConfirmBtn">
+                    Unlock Now
+                </button>
+                <button class="unlock-cancel-btn" id="unlockCancelBtn">
+                    Cancel
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1569,6 +1764,9 @@
 
                 // Load initial quota status
                 await this.loadQuotaStatus();
+
+                // Load simple credit status for simple credit system
+                await this.fetchCreditStatus();
 
                 // Synchronize cart state with backend after session is fully loaded
                 // This ensures cart consistency between localStorage and server
@@ -1793,6 +1991,11 @@
                 // Email modal
                 document.getElementById('emailForm')?.addEventListener('submit', (e) => this.handleEmailSubmit(e));
                 document.getElementById('cancelEmail')?.addEventListener('click', () => this.closeEmailModal());
+
+                // Unlock All Photos modal
+                document.getElementById('unlockAllBtn')?.addEventListener('click', () => this.showUnlockModal());
+                document.getElementById('unlockConfirmBtn')?.addEventListener('click', () => this.unlockAllPhotos());
+                document.getElementById('unlockCancelBtn')?.addEventListener('click', () => this.hideUnlockModal());
 
                 // Mobile swipe to close cart
                 let startX = 0;
@@ -2852,7 +3055,7 @@
 
             async downloadPhoto(photoId, photoUrl, filename, fromCart = false) {
                 try {
-                    console.log(`⬇️ Starting download for photo: ${photoId} (policy: ${this.policy?.mode || 'unknown'})`);
+                    console.log(`⬇️ [SIMPLE] Starting download for photo: ${photoId}`);
 
                     if (!this.galleryToken || !this.sessionData) {
                         this.showError('Gallery access not properly initialized');
@@ -2870,9 +3073,9 @@
                         filename: filename
                     };
 
-                    console.log(`📡 Sending download request to unified API:`, downloadPayload);
+                    console.log(`📡 [SIMPLE] Sending download request:`, downloadPayload);
 
-                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/unified/process`, {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/simple/download`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(downloadPayload)
@@ -2881,89 +3084,48 @@
                     const result = await response.json();
                     this.hideProgress();
 
-                    console.log(`📋 Download response:`, result);
+                    console.log(`📋 [SIMPLE] Download response:`, result);
 
-                    if (result.success && result.downloadToken) {
-                        console.log(`✅ Download authorized for photo: ${photoId} (${result.pricing?.model || 'unknown'} mode)`);
+                    if (result.success && result.downloadUrl) {
+                        console.log(`✅ [SIMPLE] Download authorized for photo: ${photoId}`);
 
                         // Trigger actual download
-                        const downloadUrl = `${this.getApiBaseUrl()}/api/downloads/${result.downloadToken}`;
                         const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = filename;
+                        link.href = result.downloadUrl;
+                        link.download = result.filename || filename;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
 
-                        // Show success message with pricing context
-                        let successMessage = `Downloaded: ${filename}`;
-                        if (result.pricing?.model === 'free') {
-                            successMessage += ' (Free)';
-                        } else if (result.pricing?.model === 'freemium') {
-                            if (result.pricing?.cost === 0) {
-                                successMessage += ' (Free tier)';
-                            } else {
-                                successMessage += ` (Paid: $${result.pricing.cost})`;
+                        // Show success message
+                        const downloadType = result.downloadType === 'unlimited' ? 'Unlimited' : 'Free';
+                        this.showSuccess(`Downloaded: ${filename} (${downloadType})`);
+
+                        // Update credit status display
+                        if (this.creditStatus) {
+                            if (result.downloadType !== 'unlimited') {
+                                this.creditStatus.freeDownloadsRemaining = result.remainingDownloads;
                             }
-                        } else if (result.pricing?.model === 'paid') {
-                            successMessage += ` (Paid: $${result.pricing.cost})`;
+                            this.updateCreditDisplay();
                         }
 
-                        this.showSuccess(successMessage);
+                        // Refresh credit status from server
+                        await this.fetchCreditStatus();
 
-                        // Update quota display for freemium mode
-                        if (result.pricing?.quota) {
-                            this.updateQuotaDisplay(result.pricing.quota);
-                        }
-
-                        // Reload quota status for accurate display
-                        await this.loadQuotaStatus();
-
-                        // If this was from cart, remove from cart
-                        if (fromCart) {
-                            const itemIndex = this.cart.findIndex(item => item.photoId === photoId);
-                            if (itemIndex !== -1) {
-                                this.removeFromCart(itemIndex);
-                            }
-                        }
-
-                        // Update entitlements to reflect new purchase
-                        await this.loadEntitlements();
+                    } else if (response.status === 402 && result.code === 'PAYMENT_REQUIRED') {
+                        console.log(`💳 [SIMPLE] Payment required - showing unlock modal`);
+                        
+                        // Show unlock modal
+                        this.showUnlockModal(result.unlimitedAccessPrice);
 
                     } else {
-                        console.warn(`⚠️ Download failed for photo: ${photoId}`, result);
-
-                        if (result.code === 'PAYMENT_REQUIRED') {
-                            console.log(`💳 Payment required - adding to cart`, result.paymentInfo);
-
-                            let toastMessage = 'Payment required for this download';
-                            if (result.paymentInfo?.amount) {
-                                toastMessage += ` ($${result.paymentInfo.amount})`;
-                            }
-
-                            this.showToast(toastMessage, 'warning');
-
-                            // Add to cart for payment if not already from cart
-                            if (!fromCart) {
-                                const price = result.paymentInfo?.amount || this.policy?.pricePerPhoto || 0;
-                                this.addToCart(photoId, photoUrl, filename, price);
-                            }
-                        } else if (result.code === 'QUOTA_EXCEEDED') {
-                            this.showToast('Free download limit exceeded. Add to cart to purchase.', 'warning');
-
-                            // Add to cart for payment
-                            if (!fromCart) {
-                                const price = this.policy?.pricePerPhoto || 5.00;
-                                this.addToCart(photoId, photoUrl, filename, price);
-                            }
-                        } else {
-                            this.showError(result.error || 'Download failed');
-                        }
+                        console.warn(`⚠️ [SIMPLE] Download failed for photo: ${photoId}`, result);
+                        this.showError(result.error || 'Download failed');
                     }
 
                 } catch (error) {
                     this.hideProgress();
-                    console.error('❌ Error downloading photo:', error);
+                    console.error('❌ [SIMPLE] Error downloading photo:', error);
                     this.showError('Download failed. Please try again.');
                 }
             }
@@ -3042,6 +3204,43 @@
             showNotification(message, type = 'info') {
                 console.log(`📢 User Notification [${type}]:`, message);
                 this.showToast(message, type, 'cart-sync');
+            }
+
+            showUnlockModal(price = null) {
+                const modal = document.getElementById('unlockModal');
+                const priceElement = document.getElementById('unlockPrice');
+                
+                if (price !== null && price !== undefined) {
+                    priceElement.textContent = `$${price.toFixed(2)}`;
+                } else if (this.creditStatus && this.creditStatus.unlimitedAccessPrice) {
+                    priceElement.textContent = `$${this.creditStatus.unlimitedAccessPrice.toFixed(2)}`;
+                } else {
+                    priceElement.textContent = '$0.00';
+                }
+
+                modal.classList.add('show');
+                console.log('📸 [SIMPLE] Showing unlock all photos modal');
+            }
+
+            hideUnlockModal() {
+                const modal = document.getElementById('unlockModal');
+                modal.classList.remove('show');
+            }
+
+            async unlockAllPhotos() {
+                try {
+                    console.log('🔓 [SIMPLE] Initiating unlock all photos purchase...');
+                    this.hideUnlockModal();
+                    this.showProgress('Processing payment...');
+
+                    this.showToast('Unlock All Photos feature coming soon! This will integrate with Stripe checkout.', 'info');
+                    this.hideProgress();
+
+                } catch (error) {
+                    this.hideProgress();
+                    console.error('❌ [SIMPLE] Error unlocking photos:', error);
+                    this.showError('Failed to process payment. Please try again.');
+                }
             }
 
             /**
@@ -3258,6 +3457,87 @@
                 } catch (error) {
                     console.error('❌ Error loading quota status:', error);
                 }
+            }
+
+            async fetchCreditStatus() {
+                try {
+                    if (!this.sessionData?.id || !this.galleryToken) {
+                        console.warn('⚠️ Cannot fetch credit status: missing session data or gallery token');
+                        return;
+                    }
+
+                    console.log(`📊 [SIMPLE] Fetching credit status for session: ${this.sessionData.id}`);
+
+                    const response = await fetch(
+                        `${this.getApiBaseUrl()}/api/downloads/simple/status/${this.sessionData.id}?galleryAccessToken=${this.galleryToken}`,
+                        {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        console.log('✅ [SIMPLE] Credit status loaded:', data);
+                        
+                        this.creditStatus = {
+                            freeDownloadsRemaining: data.freeDownloadsRemaining || 0,
+                            unlimitedAccess: data.unlimitedAccess || false,
+                            unlimitedAccessPrice: data.unlimitedAccessPrice || null,
+                            totalPhotos: data.totalPhotos || 0,
+                            pricingModel: data.pricingModel || 'free'
+                        };
+
+                        this.updateCreditDisplay();
+                    } else {
+                        console.error('❌ [SIMPLE] Failed to fetch credit status:', data.error);
+                        this.showError('Failed to load credit status');
+                    }
+                } catch (error) {
+                    console.error('❌ [SIMPLE] Error fetching credit status:', error);
+                    this.showError('Network error loading credit status');
+                }
+            }
+
+            updateCreditDisplay() {
+                const banner = document.getElementById('creditBanner');
+                const creditText = document.getElementById('creditText');
+                const unlockBtn = document.getElementById('unlockAllBtn');
+
+                if (!banner || !creditText || !unlockBtn || !this.creditStatus) {
+                    return;
+                }
+
+                banner.classList.remove('unlimited', 'low-credits', 'no-credits');
+                banner.classList.add('show');
+
+                if (this.creditStatus.unlimitedAccess) {
+                    banner.classList.add('unlimited');
+                    creditText.textContent = 'Unlimited downloads unlocked ✓';
+                    unlockBtn.style.display = 'none';
+                } else if (this.creditStatus.freeDownloadsRemaining > 0) {
+                    const remaining = this.creditStatus.freeDownloadsRemaining;
+                    if (remaining <= 2) {
+                        banner.classList.add('low-credits');
+                    }
+                    creditText.textContent = `You have ${remaining} free download${remaining !== 1 ? 's' : ''} remaining`;
+                    
+                    if (this.creditStatus.unlimitedAccessPrice) {
+                        unlockBtn.style.display = 'block';
+                        unlockBtn.textContent = `Unlock All for $${this.creditStatus.unlimitedAccessPrice.toFixed(2)}`;
+                    }
+                } else {
+                    banner.classList.add('no-credits');
+                    creditText.textContent = 'No free downloads remaining';
+                    
+                    if (this.creditStatus.unlimitedAccessPrice) {
+                        unlockBtn.style.display = 'block';
+                        unlockBtn.textContent = `Unlock All Photos for $${this.creditStatus.unlimitedAccessPrice.toFixed(2)}`;
+                    }
+                }
+
+                console.log('✅ [SIMPLE] Credit display updated');
             }
 
             /**

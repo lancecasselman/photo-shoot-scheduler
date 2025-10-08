@@ -5376,6 +5376,248 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
 
+  // ==================== SIMPLE CREDIT-BASED DOWNLOAD API ====================
+  
+  /**
+   * POST /api/downloads/simple/download
+   * Simple credit-based download endpoint with direct eligibility checking
+   * No cart, no reservations - just check credits and download
+   */
+  router.post('/simple/download', downloadRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId || uuidv4();
+    
+    try {
+      const { galleryAccessToken, sessionId, photoId, photoUrl, filename } = req.body;
+
+      console.log(`📥 [SIMPLE] Download request - Session: ${sessionId}, Photo: ${photoId}`);
+
+      // Validate required fields
+      if (!galleryAccessToken || !sessionId || !photoId) {
+        const missingFields = [];
+        if (!galleryAccessToken) missingFields.push('galleryAccessToken');
+        if (!sessionId) missingFields.push('sessionId');
+        if (!photoId) missingFields.push('photoId');
+        
+        return res.status(400).json({
+          success: false,
+          code: 'MISSING_REQUIRED_FIELDS',
+          error: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+
+      // Get session and validate gallery access token
+      const sessionResult = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, sessionId))
+        .limit(1);
+
+      if (sessionResult.length === 0) {
+        console.warn(`⚠️ [SIMPLE] Session not found: ${sessionId}`);
+        return res.status(404).json({
+          success: false,
+          code: 'SESSION_NOT_FOUND',
+          error: 'Session not found'
+        });
+      }
+
+      const session = sessionResult[0];
+
+      // Validate gallery access token matches session
+      if (session.galleryAccessToken !== galleryAccessToken) {
+        console.warn(`⚠️ [SIMPLE] Invalid gallery access token for session: ${sessionId}`);
+        return res.status(401).json({
+          success: false,
+          code: 'INVALID_TOKEN',
+          error: 'Invalid gallery access token'
+        });
+      }
+
+      // Check download eligibility with simple logic
+      let canDownload = false;
+      let needsDecrement = false;
+
+      if (session.unlimitedAccess === true) {
+        canDownload = true;
+        console.log(`✅ [SIMPLE] Unlimited access enabled for session: ${sessionId}`);
+      } else if (session.freeDownloadsRemaining > 0) {
+        canDownload = true;
+        needsDecrement = true;
+        console.log(`✅ [SIMPLE] Free downloads remaining: ${session.freeDownloadsRemaining}`);
+      } else {
+        console.log(`❌ [SIMPLE] No downloads remaining for session: ${sessionId}`);
+        return res.status(402).json({
+          success: false,
+          code: 'PAYMENT_REQUIRED',
+          error: 'No downloads remaining. Please purchase unlimited access.',
+          unlimitedAccessPrice: session.unlimitedAccessPrice ? parseFloat(session.unlimitedAccessPrice) : null
+        });
+      }
+
+      // Get download URL from R2FileManager
+      let downloadUrl = null;
+      if (photoUrl) {
+        try {
+          const presignedUrl = await r2Manager.getPresignedDownloadUrl(photoUrl, filename || photoId);
+          if (presignedUrl) {
+            downloadUrl = presignedUrl;
+            console.log(`📦 [SIMPLE] Generated download URL for photo: ${photoId}`);
+          }
+        } catch (urlError) {
+          console.error(`❌ [SIMPLE] Failed to generate download URL:`, urlError);
+        }
+      }
+
+      // If download URL generation failed, try to construct from photoUrl
+      if (!downloadUrl && photoUrl) {
+        downloadUrl = photoUrl;
+        console.log(`📦 [SIMPLE] Using direct photo URL: ${photoId}`);
+      }
+
+      if (!downloadUrl) {
+        return res.status(404).json({
+          success: false,
+          code: 'PHOTO_NOT_FOUND',
+          error: 'Photo download URL could not be generated'
+        });
+      }
+
+      // Decrement free downloads counter if needed (atomic operation)
+      if (needsDecrement) {
+        await db
+          .update(photographySessions)
+          .set({
+            freeDownloadsRemaining: sql`${photographySessions.freeDownloadsRemaining} - 1`,
+            updatedAt: new Date()
+          })
+          .where(eq(photographySessions.id, sessionId));
+        
+        console.log(`📉 [SIMPLE] Decremented free downloads for session: ${sessionId}`);
+      }
+
+      // Track download in database for analytics
+      const downloadId = uuidv4();
+      const clientKey = generateGalleryClientKey(galleryAccessToken, sessionId);
+      
+      try {
+        await db.insert(galleryDownloads).values({
+          id: downloadId,
+          sessionId: sessionId,
+          userId: session.userId,
+          clientKey: clientKey,
+          downloadToken: correlationId,
+          photoId: photoId,
+          photoUrl: photoUrl || downloadUrl,
+          filename: filename || photoId,
+          downloadType: session.unlimitedAccess ? 'unlimited' : 'free',
+          status: 'completed',
+          createdAt: new Date()
+        });
+        
+        console.log(`📊 [SIMPLE] Download tracked: ${downloadId}`);
+      } catch (trackingError) {
+        console.warn(`⚠️ [SIMPLE] Failed to track download (non-critical):`, trackingError.message);
+      }
+
+      // Return success response with download URL
+      const processingTime = Date.now() - startTime;
+      console.log(`✅ [SIMPLE] Download processed successfully in ${processingTime}ms`);
+      
+      res.json({
+        success: true,
+        downloadUrl: downloadUrl,
+        filename: filename || photoId,
+        downloadType: session.unlimitedAccess ? 'unlimited' : 'free',
+        remainingDownloads: needsDecrement ? session.freeDownloadsRemaining - 1 : session.freeDownloadsRemaining,
+        processingTime: processingTime,
+        correlationId: correlationId
+      });
+
+    } catch (error) {
+      console.error('❌ [SIMPLE] Download processing error:', error);
+      res.status(500).json({
+        success: false,
+        code: 'PROCESSING_ERROR',
+        error: 'Download processing failed'
+      });
+    }
+  });
+
+  /**
+   * GET /api/downloads/simple/status/:sessionId
+   * Get download status for a session (requires galleryAccessToken query param)
+   */
+  router.get('/simple/status/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { galleryAccessToken } = req.query;
+
+      console.log(`📊 [SIMPLE] Status request for session: ${sessionId}`);
+
+      // Validate required parameters
+      if (!galleryAccessToken) {
+        return res.status(400).json({
+          success: false,
+          code: 'MISSING_TOKEN',
+          error: 'Gallery access token required'
+        });
+      }
+
+      // Get session
+      const sessionResult = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, sessionId))
+        .limit(1);
+
+      if (sessionResult.length === 0) {
+        console.warn(`⚠️ [SIMPLE] Session not found for status: ${sessionId}`);
+        return res.status(404).json({
+          success: false,
+          code: 'SESSION_NOT_FOUND',
+          error: 'Session not found'
+        });
+      }
+
+      const session = sessionResult[0];
+
+      // Validate gallery access token
+      if (session.galleryAccessToken !== galleryAccessToken) {
+        console.warn(`⚠️ [SIMPLE] Invalid token for status check: ${sessionId}`);
+        return res.status(401).json({
+          success: false,
+          code: 'INVALID_TOKEN',
+          error: 'Invalid gallery access token'
+        });
+      }
+
+      // Count total photos in session
+      const totalPhotos = Array.isArray(session.photos) ? session.photos.length : 0;
+
+      console.log(`✅ [SIMPLE] Status retrieved for session: ${sessionId}`);
+
+      // Return status
+      res.json({
+        success: true,
+        pricingModel: session.pricingModel || 'free',
+        freeDownloadsRemaining: session.freeDownloadsRemaining || 0,
+        unlimitedAccess: session.unlimitedAccess || false,
+        unlimitedAccessPrice: session.unlimitedAccessPrice ? parseFloat(session.unlimitedAccessPrice) : null,
+        totalPhotos: totalPhotos,
+        sessionId: sessionId
+      });
+
+    } catch (error) {
+      console.error('❌ [SIMPLE] Status check error:', error);
+      res.status(500).json({
+        success: false,
+        code: 'STATUS_ERROR',
+        error: 'Failed to retrieve download status'
+      });
+    }
+  });
+
   return router;
 }
 
