@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Gallery Manager</title>
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -497,9 +500,14 @@
             }
         }
         
-        // Gallery Manager - Restructured Upload System
+        // Gallery Manager - Restructured Upload System v2.0
+        console.log('Gallery Manager Version 2.0 - Restructured with Authentication Fix');
+        
         class GalleryUploadManager {
             constructor(authManager) {
+                this.version = '2.0-auth-fix';
+                console.log(`Initializing GalleryUploadManager ${this.version}`);
+                
                 this.authManager = authManager;
                 this.sessionId = this.getSessionId();
                 this.folderType = 'gallery';
@@ -835,15 +843,40 @@
             
             async recordUploads(files) {
                 try {
+                    // Ensure files is always an array
+                    if (!Array.isArray(files)) {
+                        console.error('recordUploads: files must be an array, got:', typeof files, files);
+                        return;
+                    }
+                    
+                    console.log('Recording uploads:', {
+                        count: files.length,
+                        files: files,
+                        sessionId: this.sessionId,
+                        folderType: this.folderType
+                    });
+                    
+                    // Create the request body with files array
+                    const requestBody = {
+                        files: files
+                    };
+                    
                     const response = await fetch(`/api/sessions/${this.sessionId}/files/${this.folderType}/record`, {
                         method: 'POST',
                         headers: this.authManager.getHeaders(),
                         credentials: 'include',
-                        body: JSON.stringify({ files })
+                        body: JSON.stringify(requestBody)
                     });
                     
                     if (!response.ok) {
-                        console.error('Failed to record uploads');
+                        const errorData = await response.text();
+                        console.error('Failed to record uploads:', {
+                            status: response.status,
+                            error: errorData,
+                            requestBody: requestBody
+                        });
+                    } else {
+                        console.log('Successfully recorded uploads');
                     }
                 } catch (error) {
                     console.error('Error recording uploads:', error);
