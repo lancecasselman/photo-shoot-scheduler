@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery Manager</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl8XWvEGkqGsWgE0C5CeJP1hNBJxaBppY",
+            authDomain: "photoscheduleapp.firebaseapp.com",
+            projectId: "photoscheduleapp",
+            storageBucket: "photoscheduleapp.appspot.com",
+            messagingSenderId: "741457250736",
+            appId: "1:741457250736:web:a8de96e8efd019d82c5dca",
+            measurementId: "G-T5P5DCC5KY"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
     <style>
         * {
             margin: 0;
@@ -395,9 +413,94 @@
     </div>
     
     <script>
+        // Authentication Helper
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.authToken = null;
+                this.tokenRefreshInterval = null;
+            }
+            
+            async initialize() {
+                return new Promise((resolve) => {
+                    // Set persistence to ensure auth state is maintained
+                    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                        .then(() => {
+                            firebase.auth().onAuthStateChanged(async (user) => {
+                                if (user) {
+                                    this.currentUser = user;
+                                    await this.refreshToken();
+                                    this.startTokenRefresh();
+                                    
+                                    // Ensure we have a valid token
+                                    if (this.authToken) {
+                                        resolve(true);
+                                    } else {
+                                        console.error('Failed to get auth token despite having user');
+                                        resolve(false);
+                                    }
+                                } else {
+                                    // No Firebase user - authentication required
+                                    console.log('No Firebase user found, authentication required');
+                                    resolve(false);
+                                }
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('Error setting persistence:', error);
+                            resolve(false);
+                        });
+                });
+            }
+            
+            
+            async refreshToken() {
+                if (this.currentUser) {
+                    try {
+                        this.authToken = await this.currentUser.getIdToken();
+                        console.log('Auth token refreshed successfully');
+                    } catch (error) {
+                        console.error('Error refreshing token:', error);
+                        this.authToken = null;
+                    }
+                }
+            }
+            
+            startTokenRefresh() {
+                // Refresh token every 30 minutes
+                this.tokenRefreshInterval = setInterval(() => {
+                    this.refreshToken();
+                }, 30 * 60 * 1000);
+            }
+            
+            stopTokenRefresh() {
+                if (this.tokenRefreshInterval) {
+                    clearInterval(this.tokenRefreshInterval);
+                    this.tokenRefreshInterval = null;
+                }
+            }
+            
+            getToken() {
+                return this.authToken;
+            }
+            
+            getHeaders() {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (this.authToken) {
+                    headers['Authorization'] = `Bearer ${this.authToken}`;
+                }
+                
+                return headers;
+            }
+        }
+        
         // Gallery Manager - Restructured Upload System
         class GalleryUploadManager {
-            constructor() {
+            constructor(authManager) {
+                this.authManager = authManager;
                 this.sessionId = this.getSessionId();
                 this.folderType = 'gallery';
                 this.activeUploads = new Map();
@@ -467,7 +570,8 @@
             async loadSession() {
                 try {
                     const response = await fetch(`/api/sessions/${this.sessionId}`, {
-                        credentials: 'include'
+                        credentials: 'include',
+                        headers: this.authManager.getHeaders()
                     });
                     
                     if (response.ok) {
@@ -664,7 +768,7 @@
                     
                     const response = await fetch(`/api/sessions/${this.sessionId}/upload-urls`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: this.authManager.getHeaders(),
                         credentials: 'include',
                         body: JSON.stringify({ files: fileData })
                     });
@@ -733,7 +837,7 @@
                 try {
                     const response = await fetch(`/api/sessions/${this.sessionId}/files/${this.folderType}/record`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: this.authManager.getHeaders(),
                         credentials: 'include',
                         body: JSON.stringify({ files })
                     });
@@ -828,7 +932,8 @@
             async loadGallery() {
                 try {
                     const response = await fetch(`/api/sessions/${this.sessionId}/files/${this.folderType}`, {
-                        credentials: 'include'
+                        credentials: 'include',
+                        headers: this.authManager.getToken() ? { 'Authorization': `Bearer ${this.authManager.getToken()}` } : {}
                     });
                     
                     if (!response.ok) {
@@ -906,8 +1011,21 @@
         
         // Initialize gallery manager
         let galleryManager;
-        document.addEventListener('DOMContentLoaded', () => {
-            galleryManager = new GalleryUploadManager();
+        let authManager;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize authentication manager
+            authManager = new AuthManager();
+            const isAuthenticated = await authManager.initialize();
+            
+            if (isAuthenticated) {
+                console.log('User authenticated, initializing gallery manager...');
+                galleryManager = new GalleryUploadManager(authManager);
+            } else {
+                console.log('No authentication found, redirecting to login...');
+                // Redirect to login if not authenticated
+                window.location.href = '/secure-login.html?redirect=' + encodeURIComponent(window.location.href);
+            }
         });
     </script>
 </body>
