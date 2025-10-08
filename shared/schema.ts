@@ -139,6 +139,11 @@ export const photographySessions = pgTable("photography_sessions", {
   downloadPolicyId: varchar("download_policy_id"),
   totalDownloadRevenue: decimal("total_download_revenue", { precision: 10, scale: 2 }).default("0.00"),
   lastDownloadActivity: timestamp("last_download_activity"),
+  // Simple Credit System fields
+  freeDownloadsRemaining: integer("free_downloads_remaining"), // Tracks remaining free downloads
+  unlimitedAccess: boolean("unlimited_access").default(false), // True when client has paid for unlimited access
+  unlimitedAccessPrice: decimal("unlimited_access_price", { precision: 10, scale: 2 }), // Price for unlimited access
+  unlimitedAccessPurchasedAt: timestamp("unlimited_access_purchased_at"), // When unlimited was purchased
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
