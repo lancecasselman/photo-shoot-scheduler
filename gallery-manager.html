@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>File Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -2537,7 +2540,7 @@
         // Upload single file using DIRECT R2 presigned URLs for maximum speed
         async function uploadFile(file) {
             try {
-                console.log(`Starting FAST direct upload for ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+                console.log(`[v2.1-FIX] Starting FAST direct upload for ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
                 console.log(`Session ID: ${sessionId}, Folder Type: ${folderType}`);
 
                 // Mark upload as starting
@@ -2605,10 +2608,12 @@
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                fileName: uploadData.fileName,
-                                originalName: file.name,
-                                size: file.size,
-                                r2Key: uploadData.r2Key
+                                files: [{
+                                    filename: uploadData.fileName || file.name,
+                                    r2Key: uploadData.r2Key,
+                                    size: file.size,
+                                    contentType: file.type || 'application/octet-stream'
+                                }]
                             })
                         });
                     } else {
