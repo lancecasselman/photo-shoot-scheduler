@@ -1796,10 +1796,30 @@ class R2FileManager {
         throw new Error('R2 storage is not available');
       }
 
-      // Generate unique key for the file
-      const timestamp = Date.now();
+      // Look up photographer name and session name from database
+      const sessionQuery = await this.pool.query(
+        `SELECT s.session_name, u.photographer_name 
+         FROM sessions s 
+         JOIN users u ON s.user_id = u.id 
+         WHERE s.id = $1 AND s.user_id = $2`,
+        [sessionId, userId]
+      );
+
+      if (sessionQuery.rows.length === 0) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
+
+      const { session_name, photographer_name } = sessionQuery.rows[0];
+      
+      // Slugify names for R2 paths (replace spaces with underscores, lowercase)
+      const slugifiedPhotographer = (photographer_name || userId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const slugifiedSession = (session_name || sessionId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      // Generate R2 key using photographer and session names
       const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      const key = `photographer-${userId}/session-${sessionId}/gallery/${timestamp}-${sanitizedFilename}`;
+      const key = `photographer-${slugifiedPhotographer}/session-${slugifiedSession}/gallery/${sanitizedFilename}`;
+      
+      console.log(`📤 R2 path: ${key}`);
       
       // Create the PutObjectCommand
       const putCommand = new PutObjectCommand({
@@ -1811,6 +1831,8 @@ class R2FileManager {
           'original-filename': filename,
           'session-id': sessionId,
           'user-id': userId,
+          'photographer-name': slugifiedPhotographer,
+          'session-name': slugifiedSession,
           'upload-timestamp': new Date().toISOString()
         }
       });

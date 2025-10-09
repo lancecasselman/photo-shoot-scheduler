@@ -8750,7 +8750,7 @@ app.post('/api/gallery/batch-presigned-urls', isAuthenticated, async (req, res) 
                     presignedUrls.push({
                         filename: file.filename,
                         presignedUrl: presignedData.presignedUrl,
-                        r2Key: presignedData.key,
+                        key: presignedData.key,
                         fileSize: file.fileSize,
                         expiresIn: presignedData.expiresIn
                     });
