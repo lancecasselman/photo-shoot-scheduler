@@ -6115,7 +6115,15 @@ async function updateSession(id, updates, userId) {
             'edited', 'delivered', 'send_reminder', 'notify_gallery_ready', 
             'photos', 'gallery_access_token', 'gallery_created_at', 
             'gallery_expires_at', 'gallery_ready_notified', 'has_payment_plan',
-            'payment_plan_id', 'session_notes', 'reminder_enabled', 'reminder_sent'
+            'payment_plan_id', 'session_notes', 'reminder_enabled', 'reminder_sent',
+            // Download and pricing fields
+            'download_enabled', 'download_max', 'pricing_model', 'free_downloads', 
+            'price_per_download', 'watermark_enabled', 'watermark_type', 
+            'watermark_logo_url', 'watermark_text', 'watermark_opacity', 
+            'watermark_position', 'watermark_scale',
+            // Simple credit system fields
+            'free_downloads_remaining', 'unlimited_access', 'unlimited_access_price', 
+            'unlimited_access_purchased_at'
         ];
 
         Object.keys(updates).forEach(key => {
