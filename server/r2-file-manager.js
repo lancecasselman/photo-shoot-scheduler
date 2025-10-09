@@ -862,7 +862,7 @@ class R2FileManager {
           await this.pool.query(`
             INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (session_id, filename) 
+            ON CONFLICT (session_id, folder_type, filename) 
             DO UPDATE SET 
               file_size_bytes = EXCLUDED.file_size_bytes,
               file_size_mb = EXCLUDED.file_size_mb,
@@ -1087,7 +1087,7 @@ class R2FileManager {
           const insertResult = await this.pool.query(`
             INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (session_id, filename) 
+            ON CONFLICT (session_id, folder_type, filename) 
             DO UPDATE SET 
               file_size_bytes = EXCLUDED.file_size_bytes,
               file_size_mb = EXCLUDED.file_size_mb,
