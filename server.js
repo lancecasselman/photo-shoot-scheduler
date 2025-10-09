@@ -682,6 +682,34 @@ const isAuthenticated = async (req, res, next) => {
         const isAndroid = userAgent.includes('Android');
         const isCapacitor = userAgent.includes('CapacitorHttp');
         
+        // Check for Bearer token authentication FIRST
+        const authHeader = req.headers.authorization;
+        const hasBearerToken = authHeader && authHeader.startsWith('Bearer ');
+        
+        if (hasBearerToken) {
+            const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+            try {
+                const decodedToken = await admin.auth().verifyIdToken(token);
+                const normalizedUser = normalizeUserForLance({
+                    uid: decodedToken.uid,
+                    email: decodedToken.email,
+                    displayName: decodedToken.name || decodedToken.email,
+                    photoURL: decodedToken.picture
+                });
+                req.user = normalizedUser;
+                req.session.user = normalizedUser; // Also set in session for compatibility
+                console.log('✅ Bearer token authentication successful for', decodedToken.email);
+                next();
+                return;
+            } catch (tokenError) {
+                console.error('❌ Bearer token verification failed:', tokenError.message);
+                return res.status(401).json({ 
+                    error: 'Invalid Bearer token',
+                    redirectTo: '/secure-login.html'
+                });
+            }
+        }
+        
         console.log('🔍 AUTH MIDDLEWARE DEBUG:', { 
             path: req.path,
             isAndroid,
@@ -6876,50 +6904,9 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
     }
 });
 
-// Create new session
-app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
-    const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes, pricingModel, freeDownloads, pricePerDownload } = req.body;
-
-    // Validate required fields
-    if (!clientName || !sessionType || !dateTime || !location || !phoneNumber || !email || !price || !duration) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    try {
-        const newSession = {
-            id: uuidv4(),
-            clientName,
-            sessionType,
-            dateTime,
-            location,
-            phoneNumber,
-            email,
-            price: parseFloat(price),
-            duration: parseInt(duration),
-            notes: notes || '',
-            contractSigned: false,
-            paid: false,
-            edited: false,
-            delivered: false,
-            sendReminder: false,
-            notifyGalleryReady: false,
-            galleryReadyNotified: false,
-            pricingModel: pricingModel || 'free',
-            freeDownloads: freeDownloads || 0,
-            pricePerDownload: pricePerDownload || '0.00'
-        };
-
-        // Normalize user for Lance's multiple emails
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
-        const savedSession = await createSession(newSession, userId);
-        console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id}) for user: ${userId}`);
-        res.status(201).json(savedSession);
-    } catch (error) {
-        console.error('Error creating session:', error);
-        res.status(500).json({ error: 'Failed to create session' });
-    }
-});
+// DUPLICATE ROUTE REMOVED - Using the correct POST /api/sessions route at line 2303
+// This duplicate was overriding the proper route and causing session creation issues
+// The correct route has better freemium logic and doesn't block admin access with requireSubscription
 
 // Update session
 app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {

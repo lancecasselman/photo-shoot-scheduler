@@ -16,7 +16,7 @@ The system utilizes a static HTML/CSS/JavaScript multi-page application with van
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level.
 
 ### Authentication & Authorization
-Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication.
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication. The authentication middleware supports both session-based and Bearer token authentication for frontend API calls (October 2025 fix: Added Bearer token support to isAuthenticated middleware for production compatibility).
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
