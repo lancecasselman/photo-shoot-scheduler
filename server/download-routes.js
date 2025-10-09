@@ -5618,6 +5618,194 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
     }
   });
 
+  /**
+   * POST /api/downloads/simple/create-checkout
+   * Create Stripe checkout session for unlimited access purchase
+   */
+  router.post('/simple/create-checkout', async (req, res) => {
+    try {
+      const { sessionId, galleryAccessToken } = req.body;
+
+      console.log(`💳 [SIMPLE] Creating checkout for unlimited access: ${sessionId}`);
+
+      // Validate required parameters
+      if (!sessionId || !galleryAccessToken) {
+        return res.status(400).json({
+          success: false,
+          error: 'Session ID and gallery access token required'
+        });
+      }
+
+      // Get session
+      const sessionResult = await db
+        .select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, sessionId))
+        .limit(1);
+
+      if (sessionResult.length === 0) {
+        console.warn(`⚠️ [SIMPLE] Session not found: ${sessionId}`);
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
+        });
+      }
+
+      const session = sessionResult[0];
+
+      // Validate gallery access token
+      if (session.galleryAccessToken !== galleryAccessToken) {
+        console.warn(`⚠️ [SIMPLE] Invalid token for checkout: ${sessionId}`);
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid gallery access token'
+        });
+      }
+
+      // Check if already purchased
+      if (session.unlimitedAccess) {
+        console.log(`ℹ️ [SIMPLE] Unlimited access already purchased: ${sessionId}`);
+        return res.status(400).json({
+          success: false,
+          error: 'Unlimited access already purchased'
+        });
+      }
+
+      // Get unlimited access price
+      const price = parseFloat(session.unlimitedAccessPrice || 0);
+      
+      if (!price || price <= 0) {
+        console.warn(`⚠️ [SIMPLE] Invalid unlimited access price: ${price}`);
+        return res.status(400).json({
+          success: false,
+          error: 'Unlimited access not available for this gallery'
+        });
+      }
+
+      // Get base URL for redirect
+      const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
+      const successUrl = `${baseUrl}/client-gallery.html?sessionId=${sessionId}&token=${galleryAccessToken}&purchase=success`;
+      const cancelUrl = `${baseUrl}/client-gallery.html?sessionId=${sessionId}&token=${galleryAccessToken}&purchase=cancelled`;
+
+      // Create Stripe checkout session
+      const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Unlimited Gallery Access',
+              description: `Unlimited downloads for all photos in ${session.clientName}'s gallery`
+            },
+            unit_amount: Math.round(price * 100) // Convert to cents
+          },
+          quantity: 1
+        }],
+        metadata: {
+          sessionId: sessionId,
+          type: 'unlimited_access',
+          galleryAccessToken: galleryAccessToken
+        },
+        success_url: successUrl,
+        cancel_url: cancelUrl
+      });
+
+      console.log(`✅ [SIMPLE] Checkout session created: ${checkoutSession.id} for ${sessionId}`);
+
+      res.json({
+        success: true,
+        checkoutUrl: checkoutSession.url
+      });
+
+    } catch (error) {
+      console.error('❌ [SIMPLE] Checkout creation error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create checkout session'
+      });
+    }
+  });
+
+  /**
+   * POST /api/downloads/simple/webhook
+   * Handle Stripe webhook events for unlimited access purchases
+   */
+  router.post('/simple/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      // Verify webhook signature if secret is configured
+      if (process.env.STRIPE_WEBHOOK_SECRET) {
+        try {
+          event = stripe.webhooks.constructEvent(
+            req.body,
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+          );
+          console.log(`✅ [WEBHOOK] Signature verified for event: ${event.type}`);
+        } catch (err) {
+          console.error('⚠️ [WEBHOOK] Signature verification failed:', err.message);
+          return res.status(400).json({ error: 'Webhook signature verification failed' });
+        }
+      } else {
+        // Parse event directly if no webhook secret (development)
+        event = JSON.parse(req.body);
+        console.log(`⚠️ [WEBHOOK] Processing without signature verification: ${event.type}`);
+      }
+
+      // Handle checkout.session.completed event
+      if (event.type === 'checkout.session.completed') {
+        const checkoutSession = event.data.object;
+        const metadata = checkoutSession.metadata || {};
+        
+        console.log(`🎉 [WEBHOOK] Checkout completed:`, {
+          sessionId: metadata.sessionId,
+          type: metadata.type,
+          amount: checkoutSession.amount_total / 100
+        });
+
+        // Verify this is an unlimited access purchase
+        if (metadata.type === 'unlimited_access' && metadata.sessionId) {
+          const sessionId = metadata.sessionId;
+          
+          // Update session to grant unlimited access
+          const updateResult = await db
+            .update(photographySessions)
+            .set({
+              unlimitedAccess: true,
+              unlimitedAccessPurchasedAt: new Date()
+            })
+            .where(eq(photographySessions.id, sessionId))
+            .returning();
+
+          if (updateResult.length > 0) {
+            console.log(`✅ [WEBHOOK] Unlimited access granted for session: ${sessionId}`);
+            
+            // Log analytics
+            console.log(`📊 [ANALYTICS] Unlimited access purchase:`, {
+              sessionId: sessionId,
+              clientName: updateResult[0].clientName,
+              amount: checkoutSession.amount_total / 100,
+              purchasedAt: new Date().toISOString(),
+              stripeSessionId: checkoutSession.id
+            });
+          } else {
+            console.warn(`⚠️ [WEBHOOK] Session not found for update: ${sessionId}`);
+          }
+        }
+      }
+
+      // Acknowledge receipt
+      res.json({ received: true });
+
+    } catch (error) {
+      console.error('❌ [WEBHOOK] Processing error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
   return router;
 }
 

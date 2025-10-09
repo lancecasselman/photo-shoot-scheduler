@@ -2288,12 +2288,52 @@ app.post('/api/sessions', isAuthenticated, async (req, res) => {
             price,
             depositAmount,
             duration,
-            notes
+            notes,
+            pricingModel,
+            freeDownloads,
+            pricePerDownload,
+            unlimitedAccessPrice: providedUnlimitedAccessPrice
         } = req.body;
         
         // Validate required fields
         if (!clientName || !sessionType || !dateTime) {
             return res.status(400).json({ error: 'Missing required fields: clientName, sessionType, dateTime' });
+        }
+        
+        // Initialize simple credit system fields based on pricing model
+        const model = pricingModel || 'free';
+        let freeDownloadsRemaining = null;
+        let unlimitedAccess = false;
+        let unlimitedAccessPrice = null;
+        
+        if (model === 'freemium') {
+            freeDownloadsRemaining = freeDownloads || 0;
+            unlimitedAccess = false;
+            
+            // Calculate unlimited access price: use provided value, or calculate default
+            if (providedUnlimitedAccessPrice !== undefined && providedUnlimitedAccessPrice !== null) {
+                unlimitedAccessPrice = parseFloat(providedUnlimitedAccessPrice);
+            } else {
+                // Default: pricePerDownload * 20 photos, with minimum of 10.00
+                const perPhotoPrice = parseFloat(pricePerDownload) || 0;
+                unlimitedAccessPrice = Math.max(perPhotoPrice * 20, 10.00);
+            }
+        } else if (model === 'free') {
+            freeDownloadsRemaining = null;
+            unlimitedAccess = true;
+            unlimitedAccessPrice = null;
+        } else if (model === 'paid') {
+            freeDownloadsRemaining = 0;
+            unlimitedAccess = false;
+            
+            // Calculate unlimited access price: use provided value, or calculate default
+            if (providedUnlimitedAccessPrice !== undefined && providedUnlimitedAccessPrice !== null) {
+                unlimitedAccessPrice = parseFloat(providedUnlimitedAccessPrice);
+            } else {
+                // Default: pricePerDownload * 20 photos, with minimum of 10.00
+                const perPhotoPrice = parseFloat(pricePerDownload) || 0;
+                unlimitedAccessPrice = Math.max(perPhotoPrice * 20, 10.00);
+            }
         }
         
         let client;
@@ -2304,16 +2344,19 @@ app.post('/api/sessions', isAuthenticated, async (req, res) => {
                 INSERT INTO photography_sessions (
                     id, user_id, client_name, session_type, date_time,
                     location, phone_number, email, price, deposit_amount,
-                    duration, notes, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+                    duration, notes, pricing_model, free_downloads, price_per_download,
+                    free_downloads_remaining, unlimited_access, unlimited_access_price,
+                    created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
                 RETURNING *
             `, [
                 sessionId, userId, clientName, sessionType, dateTime,
                 location, phoneNumber, email, price || 0, depositAmount || 0,
-                duration || 60, notes || ''
+                duration || 60, notes || '', model, freeDownloads || 0, pricePerDownload || '0.00',
+                freeDownloadsRemaining, unlimitedAccess, unlimitedAccessPrice
             ]);
             
-            console.log(`✅ Session created: ${clientName} (${sessionId})`);
+            console.log(`✅ Session created: ${clientName} (${sessionId}) with pricing model: ${model}`);
             res.json({ success: true, session: result.rows[0] });
             
         } finally {
@@ -5868,13 +5911,51 @@ async function getAllSessions(userId) {
 
 async function createSession(sessionData, userId) {
     try {
+        // Initialize simple credit system fields based on pricing model
+        const model = sessionData.pricingModel || 'free';
+        let freeDownloadsRemaining = null;
+        let unlimitedAccess = false;
+        let unlimitedAccessPrice = null;
+        
+        if (model === 'freemium') {
+            freeDownloadsRemaining = sessionData.freeDownloads || 0;
+            unlimitedAccess = false;
+            
+            // Calculate unlimited access price: use provided value, or calculate default
+            if (sessionData.unlimitedAccessPrice !== undefined && sessionData.unlimitedAccessPrice !== null) {
+                unlimitedAccessPrice = parseFloat(sessionData.unlimitedAccessPrice);
+            } else {
+                // Default: pricePerDownload * 20 photos, with minimum of 10.00
+                const perPhotoPrice = parseFloat(sessionData.pricePerDownload) || 0;
+                unlimitedAccessPrice = Math.max(perPhotoPrice * 20, 10.00);
+            }
+        } else if (model === 'free') {
+            freeDownloadsRemaining = null;
+            unlimitedAccess = true;
+            unlimitedAccessPrice = null;
+        } else if (model === 'paid') {
+            freeDownloadsRemaining = 0;
+            unlimitedAccess = false;
+            
+            // Calculate unlimited access price: use provided value, or calculate default
+            if (sessionData.unlimitedAccessPrice !== undefined && sessionData.unlimitedAccessPrice !== null) {
+                unlimitedAccessPrice = parseFloat(sessionData.unlimitedAccessPrice);
+            } else {
+                // Default: pricePerDownload * 20 photos, with minimum of 10.00
+                const perPhotoPrice = parseFloat(sessionData.pricePerDownload) || 0;
+                unlimitedAccessPrice = Math.max(perPhotoPrice * 20, 10.00);
+            }
+        }
+        
         const result = await pool.query(`
             INSERT INTO photography_sessions (
                 id, user_id, client_name, session_type, date_time, location, 
                 phone_number, email, price, duration, notes,
                 contract_signed, paid, edited, delivered, 
-                send_reminder, notify_gallery_ready
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                send_reminder, notify_gallery_ready,
+                pricing_model, free_downloads, price_per_download,
+                free_downloads_remaining, unlimited_access, unlimited_access_price
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
             RETURNING *
         `, [
             sessionData.id,
@@ -5893,7 +5974,13 @@ async function createSession(sessionData, userId) {
             sessionData.edited || false,
             sessionData.delivered || false,
             sessionData.sendReminder || false,
-            sessionData.notifyGalleryReady || false
+            sessionData.notifyGalleryReady || false,
+            model,
+            sessionData.freeDownloads || 0,
+            sessionData.pricePerDownload || '0.00',
+            freeDownloadsRemaining,
+            unlimitedAccess,
+            unlimitedAccessPrice
         ]);
 
         // Automatically add client to client database if they don't exist
@@ -6783,7 +6870,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
 
 // Create new session
 app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
-    const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes } = req.body;
+    const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes, pricingModel, freeDownloads, pricePerDownload } = req.body;
 
     // Validate required fields
     if (!clientName || !sessionType || !dateTime || !location || !phoneNumber || !email || !price || !duration) {
@@ -6808,7 +6895,10 @@ app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res)
             delivered: false,
             sendReminder: false,
             notifyGalleryReady: false,
-            galleryReadyNotified: false
+            galleryReadyNotified: false,
+            pricingModel: pricingModel || 'free',
+            freeDownloads: freeDownloads || 0,
+            pricePerDownload: pricePerDownload || '0.00'
         };
 
         // Normalize user for Lance's multiple emails

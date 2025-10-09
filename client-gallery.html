@@ -1680,6 +1680,9 @@
                 // Check for success/cancel from Stripe
                 this.checkoutStatus = urlParams.get('status');
                 this.sessionId = urlParams.get('session_id');
+                
+                // Check for unlimited access purchase status
+                this.purchaseStatus = urlParams.get('purchase');
 
                 // Bind methods
                 this.init = this.init.bind(this);
@@ -1693,6 +1696,7 @@
                 this.loadEntitlements = this.loadEntitlements.bind(this);
                 this.downloadPhoto = this.downloadPhoto.bind(this);
                 this.handleCheckoutReturn = this.handleCheckoutReturn.bind(this);
+                this.handleUnlimitedAccessReturn = this.handleUnlimitedAccessReturn.bind(this);
                 this.updatePricingBanner = this.updatePricingBanner.bind(this);
                 this.calculatePrice = this.calculatePrice.bind(this);
                 this.renderPhotoCard = this.renderPhotoCard.bind(this);
@@ -1755,6 +1759,11 @@
                 // Handle checkout return
                 if (this.checkoutStatus) {
                     await this.handleCheckoutReturn();
+                }
+
+                // Handle unlimited access purchase return
+                if (this.purchaseStatus) {
+                    await this.handleUnlimitedAccessReturn();
                 }
 
                 // Load entitlements to check for already purchased photos
@@ -3017,6 +3026,34 @@
                 }
             }
 
+            async handleUnlimitedAccessReturn() {
+                if (this.purchaseStatus === 'success') {
+                    console.log('🎉 [SIMPLE] Unlimited access purchase successful!');
+                    
+                    // Refresh credit status to show unlimited access
+                    await this.fetchCreditStatus();
+                    
+                    // Show success message
+                    this.showSuccess('🎉 Unlimited access activated! You can now download all photos without limits.');
+                    
+                    // Clean up URL parameters
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('purchase');
+                    window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search);
+                    
+                } else if (this.purchaseStatus === 'cancelled') {
+                    console.log('ℹ️ [SIMPLE] Unlimited access purchase cancelled');
+                    
+                    // Show cancellation message
+                    this.showToast('Purchase cancelled. You can unlock unlimited access anytime.', 'info');
+                    
+                    // Clean up URL parameters
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('purchase');
+                    window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search);
+                }
+            }
+
             async loadEntitlements() {
                 try {
                     if (!this.sessionData?.id) {
@@ -3231,10 +3268,29 @@
                 try {
                     console.log('🔓 [SIMPLE] Initiating unlock all photos purchase...');
                     this.hideUnlockModal();
-                    this.showProgress('Processing payment...');
+                    this.showProgress('Redirecting to checkout...');
 
-                    this.showToast('Unlock All Photos feature coming soon! This will integrate with Stripe checkout.', 'info');
-                    this.hideProgress();
+                    const response = await fetch('/api/downloads/simple/create-checkout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sessionId: this.sessionId,
+                            galleryAccessToken: this.galleryAccessToken
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success && result.checkoutUrl) {
+                        console.log('✅ [SIMPLE] Redirecting to Stripe checkout...');
+                        window.location.href = result.checkoutUrl;
+                    } else {
+                        this.hideProgress();
+                        console.error('❌ [SIMPLE] Checkout creation failed:', result);
+                        this.showError(result.error || 'Failed to create checkout session');
+                    }
 
                 } catch (error) {
                     this.hideProgress();
