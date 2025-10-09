@@ -4,7 +4,7 @@ npm-debug.log
 yarn-error.log
 .npm/
 .yarn/
-package-lock.json
+# package-lock.json - Keep this for deployment consistency
 
 # Environment and secrets
 .env.local
