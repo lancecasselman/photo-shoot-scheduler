@@ -1024,12 +1024,18 @@ class R2FileManager {
    */
   async processUploadedFile(r2Key, filename, userId, sessionId, fileSizeBytes = null) {
     try {
-      console.log(`🔄 Processing uploaded file: ${filename}`);
+      console.log(`\n🔄 R2FileManager.processUploadedFile() called:`);
+      console.log(`   Filename: ${filename}`);
+      console.log(`   R2 Key: ${r2Key}`);
+      console.log(`   User ID: ${userId}`);
+      console.log(`   Session ID: ${sessionId}`);
+      console.log(`   File Size: ${fileSizeBytes} bytes`);
       
       let contentType = 'application/octet-stream';
       
       // Get file metadata from R2 if not provided
       if (!fileSizeBytes) {
+        console.log(`   📡 Fetching file metadata from R2...`);
         const { HeadObjectCommand } = require('@aws-sdk/client-s3');
         const headCommand = new HeadObjectCommand({
           Bucket: this.bucketName,
@@ -1038,10 +1044,14 @@ class R2FileManager {
         const response = await this.s3Client.send(headCommand);
         fileSizeBytes = response.ContentLength;
         contentType = response.ContentType || 'application/octet-stream';
+        console.log(`   ✅ Metadata fetched: ${fileSizeBytes} bytes, ${contentType}`);
       }
       
       const fileSizeMB = (fileSizeBytes / (1024 * 1024));
       const fileType = this.getFileTypeCategory(filename);
+      
+      console.log(`   📁 File type category: ${fileType}`);
+      console.log(`   📊 File size: ${fileSizeMB.toFixed(2)} MB`);
       
       // Update backup index
       const fileInfo = {
@@ -1054,12 +1064,27 @@ class R2FileManager {
         contentType
       };
       
+      console.log(`   💾 Updating backup index...`);
       await this.updateBackupIndex(userId, sessionId, fileInfo, 'add');
+      console.log(`   ✅ Backup index updated`);
       
       // Update database record
       if (this.pool) {
         try {
-          await this.pool.query(`
+          console.log(`   🗄️ Inserting into session_files table...`);
+          console.log(`   SQL Parameters:`, {
+            userId,
+            sessionId,
+            folderType: fileType,
+            filename,
+            fileSizeBytes,
+            fileSizeMB,
+            r2Key,
+            uploadedAt: new Date(),
+            originalName: filename
+          });
+          
+          const insertResult = await this.pool.query(`
             INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (session_id, filename) 
@@ -1068,12 +1093,18 @@ class R2FileManager {
               file_size_mb = EXCLUDED.file_size_mb,
               r2_key = EXCLUDED.r2_key,
               uploaded_at = EXCLUDED.uploaded_at
+            RETURNING *
           `, [userId, sessionId, fileType, filename, fileSizeBytes, fileSizeMB, r2Key, new Date(), filename]);
           
-          console.log(`✅ Database record updated for file: ${filename}`);
+          console.log(`   ✅ Database record saved successfully:`, insertResult.rows[0]);
         } catch (dbError) {
-          console.warn('⚠️ Failed to update database record:', dbError.message);
+          console.error(`   ❌ Database insertion failed:`, dbError);
+          console.error(`   Error message:`, dbError.message);
+          console.error(`   Error code:`, dbError.code);
+          throw dbError; // Re-throw to ensure the error is visible
         }
+      } else {
+        console.warn(`   ⚠️ No database pool available - skipping database insertion`);
       }
       
       // Generate thumbnail for image files

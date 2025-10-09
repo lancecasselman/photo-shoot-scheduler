@@ -1889,11 +1889,11 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         return res.status(404).json({ error: 'Session not found or access denied' });
       }
 
-      // Get download stats from the database
+      // Get download stats from the database - using correct column names
       const downloadStats = await db
         .select({
           totalDownloads: sql`COUNT(*)::int`,
-          totalRevenue: sql`COALESCE(SUM(total_price), 0)::decimal`,
+          totalRevenue: sql`COALESCE(SUM(COALESCE(total_amount, amount)), 0)::decimal`,
           uniqueClients: sql`COUNT(DISTINCT client_key)::int`
         })
         .from(downloadOrders)
@@ -1905,13 +1905,14 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         uniqueClients: 0
       };
 
-      // Get recent downloads (last 10)
+      // Get recent downloads (last 10) - calculate photo count from items array
       const recentDownloads = await db
         .select({
           id: downloadOrders.id,
           clientKey: downloadOrders.clientKey,
-          photoCount: downloadOrders.photoCount,
-          totalPrice: downloadOrders.totalPrice,
+          items: downloadOrders.items,
+          amount: downloadOrders.amount,
+          totalAmount: sql`total_amount`,
           createdAt: downloadOrders.createdAt
         })
         .from(downloadOrders)
@@ -1919,13 +1920,22 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         .orderBy(sql`${downloadOrders.createdAt} DESC`)
         .limit(10);
 
+      // Transform recent downloads to include photo count and total price
+      const transformedRecentDownloads = recentDownloads.map(download => ({
+        id: download.id,
+        clientKey: download.clientKey,
+        photoCount: Array.isArray(download.items) ? download.items.length : 0,
+        totalPrice: download.totalAmount || download.amount,
+        createdAt: download.createdAt
+      }));
+
       res.json({
         success: true,
         analytics: {
           totalDownloads: stats.totalDownloads,
           totalRevenue: stats.totalRevenue,
           uniqueClients: stats.uniqueClients,
-          recentDownloads: recentDownloads
+          recentDownloads: transformedRecentDownloads
         }
       });
 

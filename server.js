@@ -8794,7 +8794,15 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
     const userId = normalizedUser.uid;
     const { sessionId, uploadedFiles } = req.body; // uploadedFiles: Array of {r2Key, filename, fileSize}
     
+    console.log(`📥 PROCESS UPLOADED FILES REQUEST:`, {
+        userId,
+        sessionId,
+        fileCount: uploadedFiles?.length,
+        files: uploadedFiles
+    });
+    
     if (!sessionId || !uploadedFiles || !Array.isArray(uploadedFiles)) {
+        console.error('❌ Invalid request parameters:', { sessionId, uploadedFiles });
         return res.status(400).json({ error: 'Invalid request parameters' });
     }
     
@@ -8805,6 +8813,10 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
     try {
         // Process each uploaded file
         for (const file of uploadedFiles) {
+            console.log(`\n📁 Processing file: ${file.filename}`);
+            console.log(`   R2 Key: ${file.r2Key}`);
+            console.log(`   Size: ${file.fileSize} bytes`);
+            
             try {
                 const result = await r2FileManager.processUploadedFile(
                     file.r2Key,
@@ -8814,14 +8826,18 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
                     file.fileSize
                 );
                 
+                console.log(`✅ Processed successfully: ${file.filename}`);
+                console.log(`   Database record created with R2 key: ${result.r2Key}`);
+                
                 processResults.push({
                     ...result,
                     thumbnailGenerated: true
                 });
                 
-                console.log(`✅ Processed: ${file.filename}`);
             } catch (error) {
                 console.error(`❌ Failed to process ${file.filename}:`, error);
+                console.error(`   Error details:`, error.message);
+                console.error(`   Stack trace:`, error.stack);
                 processResults.push({
                     filename: file.filename,
                     success: false,
@@ -8829,6 +8845,12 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
                 });
             }
         }
+        
+        console.log(`\n📊 Processing complete:`, {
+            total: uploadedFiles.length,
+            successful: processResults.filter(r => r.success).length,
+            failed: processResults.filter(r => !r.success).length
+        });
         
         // Return processing results
         res.json({
@@ -8839,7 +8861,8 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
         });
         
     } catch (error) {
-        console.error('Error processing uploaded files:', error);
+        console.error('❌ Error processing uploaded files:', error);
+        console.error('   Error details:', error.message);
         res.status(500).json({
             error: 'Failed to process uploaded files',
             details: error.message
