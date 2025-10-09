@@ -87,7 +87,7 @@ externalPort = 3001
 
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "cloudrun"
 run = ["node", "server.js"]
 
 [objectStorage]
