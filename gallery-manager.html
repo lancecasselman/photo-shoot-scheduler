@@ -2217,8 +2217,8 @@
         // Handle file selection
         function handleFileSelection(selectedFiles) {
             if (!selectedFiles.length) return;
-            uploadQueue = [...selectedFiles];
-            processUploadQueue();
+            // Use the new batch upload system
+            addFilesToBatchQueue(selectedFiles);
         }
 
         // Add files to batch queue and start processing
