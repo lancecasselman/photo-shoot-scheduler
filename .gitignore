@@ -4,21 +4,7 @@ npm-debug.log
 yarn-error.log
 .npm/
 .yarn/
-# package-lock.json (commented out - keeping in git for dependency consistency)
-
-# Capacitor build artifacts
-# android/ (commented out to allow Android folder in git)
-!ios/App/
-!ios/App/App.xcodeproj
-!ios/App/App.xcworkspace
-ios/App/Pods/
-ios/App/DerivedData/
-ios/App/build/
-
-# Xcode junk
-*.xcuserstate
-*.xcuserdata
-.DS_Store
+package-lock.json
 
 # Environment and secrets
 .env.local
@@ -40,7 +26,7 @@ logs/
 .tmp/
 tmp/
 
-# Large asset directories (use Git LFS)
+# Large asset directories
 attached_assets/
 uploads/
 local-backups/
@@ -50,7 +36,20 @@ local-backups/
 .upm/
 .config/
 
+# Android/iOS build artifacts
+.android_backup/
+android/
+ios/
+capacitor/
+
 # Runtime files
 *.pid
 *.lock
 uv.lock
+
+# Static site builds
+static-sites/
+
+# Database dumps
+*.sql
+*.dump
