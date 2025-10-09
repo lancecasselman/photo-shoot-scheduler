@@ -25,23 +25,33 @@ The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is
 Cloudflare R2 serves as the primary cloud storage with human-readable file organization including photographer and session names for easier tracking in the R2 dashboard. The system uses dual-path support with automatic fallback to legacy UUID-based paths for backward compatibility. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation with performance-optimized caching and single-download operations.
 
 ### Photography Delivery System
-A comprehensive download-based delivery system with flexible pricing models (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration for payment processing. It includes per-client quota tracking and robust entitlement management with photo-level purchase tracking.
+A comprehensive download-based delivery system with flexible pricing models (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration for payment processing.
 
-**FREEMIUM Model Features:**
-- Clients get X free downloads (photographer configurable)
-- After free quota exhausted, clients can purchase unlimited additional photos
-- Once a photo is purchased, it's permanently unlocked with unlimited re-downloads
-- No paid quotas or limits - each photo only needs to be purchased once
-- Purchases tracked at photo-level in entitlements system
+**Simple Credit System (October 2025):**
+The system has been rebuilt with a streamlined credit-based approach for maximum reliability and simplicity:
 
-**Cart System Features (Updated September 2025):**
-- **Automatic Cart Synchronization:** Cart state syncs with backend on page load, reconciling localStorage with server reservations
-- **Cart Preservation:** Network failures don't wipe cart; local state preserved with user notifications during backend unavailability
-- **Pre-Checkout Validation:** Server-side cart validation before payment prevents entitlement mismatches; detects expired reservations and price changes
-- **Performance Optimized:** Only reserves NEW items not already on backend; includes timeouts and error differentiation
-- **Comprehensive Error Handling:** All cart operations include user-friendly notifications for failures with automatic retry logic
-- **Secure Payment Flow:** Authenticated order confirmation page with redirect to gallery for download access
-- **Enhanced Cart Manager:** Backend quota enforcement, reservation expiry (30-minute TTL), and conflict resolution
+**Database Schema:**
+- `free_downloads_remaining` - Tracks remaining free download credits per session
+- `unlimited_access` - Boolean flag indicating client has purchased unlimited access
+- `unlimited_access_price` - Price for one-time unlimited access purchase (defaults to 20x per-photo price, min $10)
+- `unlimited_access_purchased_at` - Timestamp of unlimited access purchase
+
+**Download Flow:**
+- Clients with `unlimited_access = true` can download all photos without limits
+- Clients with `free_downloads_remaining > 0` can download photos, decrementing credits atomically with each download
+- When credits exhausted, clients see "Unlock All Photos" button for one-time unlimited access purchase
+- Simple API endpoints at `/api/downloads/simple/*` handle all credit checking and downloads
+
+**Pricing Models:**
+1. **FREE**: unlimited_access = true, free_downloads_remaining = null (all downloads free)
+2. **PAID**: unlimited_access = false, free_downloads_remaining = 0 (purchase required immediately)
+3. **FREEMIUM**: unlimited_access = false, free_downloads_remaining = X (photographer configured), unlock price auto-calculated
+
+**Payment Integration:**
+- Direct Stripe checkout for unlimited access purchase (no cart complexity)
+- Webhook automatically sets `unlimited_access = true` on successful payment
+- Clean success/cancel redirect flow back to gallery
+- No reservation system, no expiring tokens - just simple credit tracking
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features, user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction.
