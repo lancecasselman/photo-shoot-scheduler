@@ -2363,9 +2363,10 @@
                 uploadResults.forEach((result, index) => {
                     if (result.status === 'fulfilled' && result.value.success) {
                         const presignedData = urlData.presignedUrls[index];
-                        if (presignedData && presignedData.r2Key) {
+                        // Server returns 'key' field, not 'r2Key'
+                        if (presignedData && presignedData.key) {
                             successfulUploads.push({
-                                r2Key: presignedData.r2Key,
+                                r2Key: presignedData.key,
                                 filename: files[index].name,
                                 fileSize: files[index].size
                             });
