@@ -1798,7 +1798,7 @@ class R2FileManager {
 
       // Look up photographer name and session name from database
       const sessionQuery = await this.pool.query(
-        `SELECT s.client_name, u.photographer_name 
+        `SELECT s.client_name, u.display_name 
          FROM photography_sessions s 
          JOIN users u ON s.user_id = u.id 
          WHERE s.id = $1 AND s.user_id = $2`,
@@ -1809,10 +1809,10 @@ class R2FileManager {
         throw new Error(`Session not found: ${sessionId}`);
       }
 
-      const { client_name, photographer_name } = sessionQuery.rows[0];
+      const { client_name, display_name } = sessionQuery.rows[0];
       
       // Slugify names for R2 paths (replace spaces with underscores, lowercase)
-      const slugifiedPhotographer = (photographer_name || userId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const slugifiedPhotographer = (display_name || userId).toLowerCase().replace(/[^a-z0-9]/g, '_');
       const slugifiedSession = (client_name || sessionId).toLowerCase().replace(/[^a-z0-9]/g, '_');
 
       // Generate R2 key using photographer and session names
