@@ -77,6 +77,13 @@ Provides complete cancellation functionality with platform-specific handling and
 ### Production Deployment Infrastructure
 Includes production-ready configuration with security hardening (Helmet.js, CORS, rate limiting, secure session management), comprehensive health monitoring, structured JSON logging, database optimization, performance enhancements, and robust error handling.
 
+**Deployment Type:** Reserved VM (October 2025)
+- Changed from Autoscale to Reserved VM for reliable 24/7 operation
+- Ensures scheduled background jobs run consistently (payment processing, trial checks, backups)
+- Guarantees webhook availability for Stripe payment processing
+- Provides predictable costs and no cold starts for better user experience
+- Suitable for multi-tenant SaaS platform serving hundreds of photographers
+
 ### Platform Analytics & Business Intelligence
 A comprehensive analytics dashboard for monitoring SaaS platform performance, covering revenue analytics, user engagement, platform health, support analytics, and business metrics.
 
