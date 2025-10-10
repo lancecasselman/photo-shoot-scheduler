@@ -1402,6 +1402,18 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
 // Replit always runs behind a proxy, so this must be set for rate limiting to work
 app.set('trust proxy', 1);
 
+// CORS for all environments (required for session cookies to work)
+if (process.env.NODE_ENV === 'production') {
+    app.use(cors(PRODUCTION_CONFIG.cors));
+} else {
+    // Development CORS - allow all origins with credentials
+    app.use(cors({
+        origin: true, // Allow all origins in development
+        credentials: true,
+        optionsSuccessStatus: 200
+    }));
+}
+
 // Production Security Middleware (AFTER webhooks to preserve raw body)
 if (process.env.NODE_ENV === 'production') {
     
@@ -1430,9 +1442,6 @@ if (process.env.NODE_ENV === 'production') {
         res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
         next();
     });
-    
-    // CORS for production
-    app.use(cors(PRODUCTION_CONFIG.cors));
     
     
     // Rate limiting - EXCLUDE webhooks and uploads
@@ -1551,9 +1560,9 @@ app.use(session({
     rolling: true,
     cookie: {
         httpOnly: false,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production', // HTTPS in production
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax', // Changed from 'none' to fix cookie issues
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for production iframe, 'lax' for dev
         path: '/',
         domain: undefined
     },
