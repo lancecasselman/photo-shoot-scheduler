@@ -41,16 +41,8 @@ task = "shell.exec"
 args = "node --max-old-space-size=512 server.js"
 
 [[workflows.workflow]]
-name = "Project"
+name = "Stable Server"
 mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Server"
-
-[[workflows.workflow]]
-name = "Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -64,10 +56,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 34913
-externalPort = 3000
 
 [[ports]]
 localPort = 39515
