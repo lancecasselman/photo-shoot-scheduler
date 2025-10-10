@@ -1803,6 +1803,13 @@ app.post('/auth/session', async (req, res) => {
             }
 
                 console.log('✅ AUTH SESSION: Created session for', normalizedUser.email);
+                console.log('📋 SESSION DEBUG:', {
+                    sessionId: req.session.id,
+                    hasUser: !!req.session.user,
+                    userEmail: req.session.user?.email,
+                    cookie: req.session.cookie
+                });
+                
                 res.json({
                     success: true,
                     user: {
