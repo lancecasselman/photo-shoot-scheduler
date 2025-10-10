@@ -16,7 +16,28 @@ The system utilizes a static HTML/CSS/JavaScript multi-page application with van
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level.
 
 ### Authentication & Authorization
-Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication. The authentication middleware supports both session-based and Bearer token authentication for frontend API calls (October 2025 fix: Added Bearer token support to isAuthenticated middleware for production compatibility).
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access. All session management routes require proper Firebase authentication. The authentication middleware supports both session-based and Bearer token authentication for frontend API calls.
+
+**Critical Session Safety Pattern (October 2025):**
+All session property assignments use defensive checks to prevent crashes when sessions don't exist:
+```javascript
+// CRITICAL: Always check if session exists before setting properties
+if (req.session) {
+    req.session.user = normalizedUser;
+    req.session.androidAuth = { ... };
+}
+```
+
+This pattern is applied across:
+- Bearer token authentication (line 704)
+- Android fallback auth (line 756)
+- All auth endpoints (/auth/session, /api/auth/login, /api/verify-auth, etc.)
+- Mobile session endpoints
+
+**Why This Matters:**
+- Bearer tokens work without sessions in production environments
+- Setting `req.session.user` when `req.session` is undefined causes 500 errors
+- Safety checks prevent crashes while maintaining backward compatibility
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.

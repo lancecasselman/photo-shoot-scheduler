@@ -749,7 +749,10 @@ const isAuthenticated = async (req, res, next) => {
                             displayName: decodedToken.name || decodedToken.email,
                             photoURL: decodedToken.picture
                         });
-                        req.session.user = normalizedUser;
+                        // Safety check: only set session.user if session exists
+                        if (req.session) {
+                            req.session.user = normalizedUser;
+                        }
                         req.user = normalizedUser;
                         console.log('✅ ANDROID: Token fallback authentication successful');
                         next();
@@ -1764,8 +1767,10 @@ app.post('/auth/session', async (req, res) => {
             photoURL: decodedToken.picture
         });
 
-        // Set the user in the session
-        req.session.user = normalizedUser;
+        // Set the user in the session (safety check for session existence)
+        if (req.session) {
+            req.session.user = normalizedUser;
+        }
         req.user = normalizedUser;
 
         // Store Android auth info for mobile compatibility
@@ -1773,31 +1778,35 @@ app.post('/auth/session', async (req, res) => {
         const isAndroid = userAgent.includes('Android');
         const isCapacitor = userAgent.includes('CapacitorHttp');
         
-        if (isAndroid || isCapacitor) {
+        if ((isAndroid || isCapacitor) && req.session) {
             req.session.androidAuth = {
                 idToken,
                 timestamp: Date.now()
             };
         }
 
-        // Save the session
-        req.session.save((err) => {
+        // Save the session (with safety check)
+        if (req.session) {
+            req.session.save((err) => {
             if (err) {
                 console.error('Session save error:', err);
                 return res.status(500).json({ error: 'Failed to save session' });
             }
 
-            console.log('✅ AUTH SESSION: Created session for', normalizedUser.email);
-            res.json({
-                success: true,
-                user: {
-                    uid: normalizedUser.uid,
-                    email: normalizedUser.email,
-                    displayName: normalizedUser.displayName,
-                    photoURL: normalizedUser.photoURL
-                }
+                console.log('✅ AUTH SESSION: Created session for', normalizedUser.email);
+                res.json({
+                    success: true,
+                    user: {
+                        uid: normalizedUser.uid,
+                        email: normalizedUser.email,
+                        displayName: normalizedUser.displayName,
+                        photoURL: normalizedUser.photoURL
+                    }
+                });
             });
-        });
+        } else {
+            res.status(500).json({ error: 'Session not available' });
+        }
 
     } catch (error) {
         console.error('Authentication error:', error);
@@ -2036,12 +2045,14 @@ app.post('/api/auth/login', async (req, res) => {
             photoURL: decodedToken.picture
         });
         
-        // Create session
-        req.session.user = normalizedUser;
+        // Create session (safety check for session existence)
+        if (req.session) {
+            req.session.user = normalizedUser;
+        }
         req.user = normalizedUser;
         
         // Store Android auth token for fallback
-        if (isAndroid || isCapacitor) {
+        if ((isAndroid || isCapacitor) && req.session) {
             req.session.androidAuth = {
                 idToken: idToken,
                 timestamp: Date.now(),
@@ -2050,21 +2061,25 @@ app.post('/api/auth/login', async (req, res) => {
             console.log('📱 ANDROID: Stored authentication token for fallback');
         }
         
-        // Save session
-        req.session.save((err) => {
+        // Save session (with safety check)
+        if (req.session) {
+            req.session.save((err) => {
             if (err) {
                 console.error('❌ SESSION SAVE ERROR:', err);
                 return res.status(500).json({ error: 'Session creation failed' });
             }
             
-            console.log('✅ ANDROID LOGIN SUCCESS:', normalizedUser.email, 'Session ID:', req.session.id);
-            res.json({ 
-                success: true, 
-                message: 'Authentication successful',
-                sessionId: req.session.id,
-                user: normalizedUser
+                console.log('✅ ANDROID LOGIN SUCCESS:', normalizedUser.email, 'Session ID:', req.session.id);
+                res.json({ 
+                    success: true, 
+                    message: 'Authentication successful',
+                    sessionId: req.session.id,
+                    user: normalizedUser
+                });
             });
-        });
+        } else {
+            res.status(500).json({ error: 'Session not available' });
+        }
         
     } catch (error) {
         console.error('❌ ANDROID LOGIN ERROR:', error);
@@ -2117,17 +2132,22 @@ app.post('/api/auth/firebase-login', async (req, res) => {
 
         // Store user in session with proper error handling
         try {
-            req.session.user = { uid, email, displayName, photoURL };
-            
-            // Save session explicitly to ensure persistence
-            req.session.save((err) => {
-                if (err) {
-                    console.error('Session save error:', err);
-                    return res.status(500).json({ message: 'Session error' });
-                }
+            // Safety check for session existence
+            if (req.session) {
+                req.session.user = { uid, email, displayName, photoURL };
                 
-                res.json({ success: true, message: 'Authentication successful' });
-            });
+                // Save session explicitly to ensure persistence
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('Session save error:', err);
+                        return res.status(500).json({ message: 'Session error' });
+                    }
+                    
+                    res.json({ success: true, message: 'Authentication successful' });
+                });
+            } else {
+                res.status(500).json({ message: 'Session not available' });
+            }
         } catch (sessionError) {
             console.error('Session error:', sessionError);
             res.status(500).json({ message: 'Session creation failed' });
@@ -2146,7 +2166,10 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
             return res.status(400).json({ message: 'Missing user information' });
         }
 
-        // Verify user exists and update session
+        // Verify user exists and update session (safety check for session existence)
+        if (!req.session) {
+            return res.status(500).json({ message: 'Session not available' });
+        }
         req.session.user = { uid, email, displayName };
         
         // Force session save with promise wrapper
@@ -2774,10 +2797,13 @@ app.post('/api/verify-auth', async (req, res) => {
             photoURL: picture
         });
         
-        req.session.user = normalizedUser;
+        // Safety check for session existence
+        if (req.session) {
+            req.session.user = normalizedUser;
+        }
         
         // For Android apps, also store authentication token for fallback
-        if (isAndroidApp) {
+        if (isAndroidApp && req.session) {
             req.session.androidAuth = {
                 idToken: idToken,
                 timestamp: Date.now(),
@@ -2786,17 +2812,18 @@ app.post('/api/verify-auth', async (req, res) => {
             console.log('📱 ANDROID: Stored authentication token for fallback');
         }
         
-        console.log('📱 SESSION: Created session for user:', { 
-            email: normalizedUser.email, 
-            uid: normalizedUser.uid,
-            canonical_email: normalizedUser.canonical_email,
-            sessionId: req.session.id,
-            isAndroid: isAndroidApp,
-            isCapacitor: detectedCapacitor
-        });
+        if (req.session) {
+            console.log('📱 SESSION: Created session for user:', { 
+                email: normalizedUser.email, 
+                uid: normalizedUser.uid,
+                canonical_email: normalizedUser.canonical_email,
+                sessionId: req.session.id,
+                isAndroid: isAndroidApp,
+                isCapacitor: detectedCapacitor
+            });
 
-        // Save session with enhanced debugging
-        req.session.save((err) => {
+            // Save session with enhanced debugging
+            req.session.save((err) => {
             if (err) {
                 console.error('❌ SESSION SAVE ERROR:', err);
                 return res.status(500).json({ 
@@ -2805,14 +2832,17 @@ app.post('/api/verify-auth', async (req, res) => {
                 });
             }
             
-            console.log('✅ SECURE: Session saved successfully for', email, 'Session ID:', req.session.id);
-            res.json({ 
-                success: true, 
-                message: 'Authentication successful',
-                sessionId: req.session.id,
-                debug: { isAndroid: isAndroidApp, isCapacitor: detectedCapacitor, sessionId: req.session.id }
+                console.log('✅ SECURE: Session saved successfully for', email, 'Session ID:', req.session.id);
+                res.json({ 
+                    success: true, 
+                    message: 'Authentication successful',
+                    sessionId: req.session.id,
+                    debug: { isAndroid: isAndroidApp, isCapacitor: detectedCapacitor, sessionId: req.session.id }
+                });
             });
-        });
+        } else {
+            res.status(500).json({ error: 'Session not available' });
+        }
 
     } catch (error) {
         console.error('🚨 SECURE: Token verification failed:', error);
@@ -2955,7 +2985,10 @@ app.post('/api/auth/mobile-session', async (req, res) => {
             // Get normalized user ID
             const normalizedUser = normalizeUserForLance({ uid, email });
             
-            // Create or update session
+            // Create or update session (safety check for session existence)
+            if (!req.session) {
+                return res.status(500).json({ error: 'Session not available' });
+            }
             req.session.user = {
                 uid: normalizedUser.uid,
                 email: email,
