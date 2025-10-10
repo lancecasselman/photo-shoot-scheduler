@@ -29,7 +29,16 @@ packages = [
 ]
 
 [workflows]
-runButton = "Stable Server"
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Stable Server"
+author = 44735007
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node --max-old-space-size=512 server.js"
 
 [[workflows.workflow]]
 name = "Project"
@@ -46,28 +55,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server.js"
+args = "node --max-old-space-size=512 server.js"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[[workflows.workflow]]
-name = "Stable Server"
-author = 44735007
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node --max-old-space-size=512 server.js"
-
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 34875
-externalPort = 4200
 
 [[ports]]
 localPort = 34913
@@ -76,10 +72,6 @@ externalPort = 3000
 [[ports]]
 localPort = 39515
 externalPort = 3002
-
-[[ports]]
-localPort = 42387
-externalPort = 5000
 
 [[ports]]
 localPort = 43021
