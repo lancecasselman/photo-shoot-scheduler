@@ -20,7 +20,25 @@ module.exports = {
 
   // CORS Configuration
   cors: {
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['https://yourdomain.com'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      // List of trusted domains (including production deployment URLs)
+      const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+        'https://photo-shoot-scheduler-lancecasselman.replit.app',
+        'https://yourdomain.com'
+      ];
+      
+      // Check if origin is in the allowed list or is a Replit dev URL
+      if (allowedOrigins.includes(origin) || 
+          origin.includes('.replit.dev') || 
+          origin.includes('replit.app')) {
+        callback(null, origin); // Echo back the requesting origin
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     optionsSuccessStatus: 200
   },
