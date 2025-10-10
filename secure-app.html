@@ -14157,14 +14157,9 @@ END:VCALENDAR`;
     <!-- Avatar Utilities to prevent Gravatar 404s -->
     <script src="client/avatar-utils.js"></script>
     
-    <!-- Firebase SDK for consistent loading across all pages -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- Firebase storage removed - using R2 cloud storage exclusively -->
-    <!-- Firebase config removed -->
-    
+    <!-- Firebase SDK removed - using session-based authentication exclusively -->
     <!-- Mobile authentication handler for iOS/Safari compatibility -->
-    <script src="/mobile-auth.js"></script>
+    <script src="/public/mobile-auth.js"></script>
     
     <!-- Storage Quota Checker -->
     <script src="/static/js/storage-quota-checker.js"></script>

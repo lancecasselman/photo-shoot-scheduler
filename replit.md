@@ -39,6 +39,28 @@ This pattern is applied across:
 - Setting `req.session.user` when `req.session` is undefined causes 500 errors
 - Safety checks prevent crashes while maintaining backward compatibility
 
+**Critical CORS Configuration (October 2025):**
+Production CORS must use dynamic origin callback to allow session cookies with credentials:
+```javascript
+cors: {
+  origin: (origin, callback) => {
+    // Echo back the requesting origin for trusted domains
+    if (allowedOrigins.includes(origin) || 
+        origin.includes('.replit.dev') || 
+        origin.includes('replit.app')) {
+      callback(null, origin); // ✅ Browsers accept cookies
+    }
+  },
+  credentials: true
+}
+```
+
+**Why This Matters:**
+- Browsers block cookies when `Access-Control-Allow-Origin: *` is combined with `credentials: true`
+- Production deployment was sending wildcard (*) causing frontend to show `hasUser: false` even though backend created sessions successfully
+- Dynamic origin callback echoes the requesting origin, allowing browsers to accept session cookies
+- Applied in `production.config.js` for Cloud Run deployment
+
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
 
