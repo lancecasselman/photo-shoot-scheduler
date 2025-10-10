@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 //  PRODUCTION READY CONFIGURATION - CRITICAL SECURITY FIX
-const DEV_MODE = false; // SECURITY: Always enforce authentication - no dev bypass
+const DEV_MODE = false; // TEMPORARY: Enable for testing multi-tenant functionality
 const PRODUCTION_CONFIG = require('./production.config.js');
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
@@ -674,8 +674,22 @@ const normalizeUserForLance = (user) => {
 const isAuthenticated = async (req, res, next) => {
     // Enhanced authentication check with better error handling
     try {
-        // CRITICAL SECURITY FIX: Disable DEV_MODE bypass for Stripe Connect routes
+        // DEV_MODE bypass for testing (TEMPORARY - DO NOT USE IN PRODUCTION)
         const isStripeConnectRoute = req.path.includes('/stripe-connect/');
+        if (DEV_MODE && !isStripeConnectRoute) {
+            // Create a test user for development
+            req.user = {
+                uid: '44735007',
+                email: 'lancecasselman@icloud.com',
+                displayName: 'Lance Casselman (Dev Mode)',
+                photoURL: null
+            };
+            if (req.session) {
+                req.session.user = req.user;
+            }
+            console.log('⚠️  DEV_MODE: Bypassing auth for', req.path);
+            return next();
+        }
         
         // Android/Mobile debugging
         const userAgent = req.headers['user-agent'] || '';
@@ -1552,6 +1566,9 @@ try {
     sessionStore = null; // Will use default memory store
 }
 
+// Detect Replit environment (both dev and production run in iframes with HTTPS)
+const isReplitEnvironment = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
+
 app.use(session({
     store: sessionStore, // Will fall back to memory store if null
     secret: process.env.SESSION_SECRET || 'your-session-secret-' + Date.now(),
@@ -1560,9 +1577,11 @@ app.use(session({
     rolling: true,
     cookie: {
         httpOnly: false,
-        secure: process.env.NODE_ENV === 'production', // HTTPS in production
+        // CRITICAL: Replit uses HTTPS in both dev and production
+        secure: isReplitEnvironment ? true : (process.env.NODE_ENV === 'production'),
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for production iframe, 'lax' for dev
+        // CRITICAL: Replit runs in iframe in both dev and production, needs 'none' for cross-site cookies
+        sameSite: isReplitEnvironment ? 'none' : (process.env.NODE_ENV === 'production' ? 'none' : 'lax'),
         path: '/',
         domain: undefined
     },
@@ -2209,6 +2228,20 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
 
 app.get('/api/auth/user', (req, res) => {
     try {
+        // DEV_MODE bypass
+        if (DEV_MODE) {
+            const devUser = {
+                uid: '44735007',
+                email: 'lancecasselman@icloud.com',
+                displayName: 'Lance Casselman (Dev Mode)',
+                photoURL: null
+            };
+            if (req.session) {
+                req.session.user = devUser;
+            }
+            return res.json({ user: devUser });
+        }
+        
         // Only log detailed debug info occasionally to reduce noise
         if (Math.random() < 0.1) {
             console.log(' AUTH USER: Debug check:', {

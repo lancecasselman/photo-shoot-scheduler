@@ -61,6 +61,30 @@ cors: {
 - Dynamic origin callback echoes the requesting origin, allowing browsers to accept session cookies
 - Applied in `production.config.js` for Cloud Run deployment
 
+**✅ RESOLVED: Session Persistence Fix (October 2025):**
+Session cookies now work correctly in Replit's iframe environment by detecting Replit and using proper cookie settings:
+
+```javascript
+// Detect Replit environment (both dev and production run in iframes with HTTPS)
+const isReplitEnvironment = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
+
+cookie: {
+    httpOnly: false,
+    secure: isReplitEnvironment ? true : (process.env.NODE_ENV === 'production'),
+    sameSite: isReplitEnvironment ? 'none' : (process.env.NODE_ENV === 'production' ? 'none' : 'lax'),
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+    path: '/',
+    domain: undefined
+}
+```
+
+**Why This Matters:**
+- Replit uses HTTPS in both dev and production (`.replit.dev` domains)
+- Replit runs in iframe in both environments, requiring `sameSite: 'none'` for cross-site cookies
+- Previous configuration only applied these settings when `NODE_ENV === 'production'`
+- Now properly detects Replit environment and applies correct settings in all cases
+- Sessions persist correctly across requests with isolated multi-tenant support
+
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
 
