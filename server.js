@@ -697,8 +697,11 @@ const isAuthenticated = async (req, res, next) => {
                     photoURL: decodedToken.picture
                 });
                 req.user = normalizedUser;
-                req.session.user = normalizedUser; // Also set in session for compatibility
-                console.log('✅ Bearer token authentication successful for', decodedToken.email);
+                // Only set session.user if session exists (Bearer tokens may not have sessions)
+                if (req.session) {
+                    req.session.user = normalizedUser;
+                }
+                console.log('✅ Bearer token authentication successful for', decodedToken.email, 'uid:', normalizedUser.uid);
                 next();
                 return;
             } catch (tokenError) {
