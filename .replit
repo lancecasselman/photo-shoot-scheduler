@@ -2,31 +2,7 @@ modules = ["nodejs-20", "python-3.11", "postgresql-16", "python3"]
 
 [nix]
 channel = "stable-24_05"
-packages = [
-  "android-tools",
-  "firebase-tools",
-  "freetype",
-  "git-lfs",
-  "gitFull",
-  "imagemagick",
-  "lcms2",
-  "libimagequant",
-  "libjpeg",
-  "libtiff",
-  "libwebp",
-  "libxcrypt",
-  "openjdk17",
-  "openjpeg",
-  "openssh",
-  "playwright",
-  "playwright-driver",
-  "postgresql",
-  "tcl",
-  "tk",
-  "unzip",
-  "wget",
-  "zlib",
-]
+packages = ["android-tools", "firebase-tools", "freetype", "git-lfs", "gitFull", "imagemagick", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjdk17", "openjpeg", "openssh", "playwright", "playwright-driver", "postgresql", "tcl", "tk", "unzip", "wget", "zlib"]
 
 [workflows]
 runButton = "Project"
