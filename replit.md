@@ -85,12 +85,19 @@ cookie: {
 - Now properly detects Replit environment and applies correct settings in all cases
 - Sessions persist correctly across requests with isolated multi-tenant support
 
-**Session Consolidation (October 2025):**
+**Session Consolidation & Admin Access (October 2025):**
 All sessions are consolidated to a single unified account per photographer using the `normalizeUserForLance` function. This ensures:
 - **Lance's Unified Account (44735007):** All sessions created with any Lance email (`lancecasselman@icloud.com`, `lancecasselman2011@gmail.com`, `lance@thelegacyphotography.com`) are consolidated to user ID `44735007`
 - **Consistent Access:** Logging in with any registered email provides access to all sessions under that photographer's unified account
 - **Multi-Platform Support:** Sessions are accessible consistently across development, production, and all devices
 - **Database Migration:** Sessions created before normalization are automatically migrated to the correct unified account
+
+**Critical API Endpoint Fix (October 2025):**
+The `/api/sessions` endpoint had a blocking issue where `requireSubscription` middleware prevented admin access before admin bypass logic could execute. Fixed by:
+- **Removed duplicate endpoint** at line 2610 that was overriding the correct implementation
+- **Admin check now executes FIRST** before any subscription validation
+- **Subscription middleware only applies to non-admin users** ensuring admin always has full access
+- **Cross-platform consistency** verified on development, production, and all authentication methods
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy.
