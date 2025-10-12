@@ -5983,7 +5983,10 @@
                 if (clients.length === 0) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #666;">
-                            <p>No clients found. Add your first client or import from sessions.</p>
+                            <p style="margin-bottom: 20px;">No clients found in your database.</p>
+                            <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 12px 24px; font-size: 16px;">
+                                📥 Import Clients from Sessions
+                            </button>
                         </div>
                     `;
                     return;
@@ -6023,6 +6026,46 @@
         
         // Make it globally available
         window.loadClientDatabase = loadClientDatabase;
+
+        // IMPORT CLIENTS FROM SESSIONS
+        async function importClientsFromSessions() {
+            try {
+                console.log('📥 Starting client migration from sessions...');
+                
+                // Show loading message
+                showMessage('Importing clients from sessions...', 'info');
+                
+                // Call the auto-populate endpoint with credentials
+                const response = await fetch('/api/clients/auto-populate', {
+                    method: 'POST',
+                    credentials: 'include', // CRITICAL: Required for session cookies
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `Failed with status ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Migration complete:', result);
+                
+                // Show success message
+                showMessage(result.message || 'Clients imported successfully!', 'success');
+                
+                // Reload the client database to show new clients
+                await loadClientDatabase();
+                
+            } catch (error) {
+                console.error('❌ Error importing clients:', error);
+                showMessage(`Failed to import clients: ${error.message}`, 'error');
+            }
+        }
+        
+        // Make it globally available
+        window.importClientsFromSessions = importClientsFromSessions;
 
         function showContractSendingModal(contractId, contractData) {
             const isResend = contractData.contract?.status === 'sent' || contractData.contract?.status === 'signed';
@@ -10832,6 +10875,13 @@ END:VCALENDAR`;
             // Initialize section-specific data
             if (sectionName === 'dashboard') {
                 updateDashboard();
+            } else if (sectionName === 'clientDatabase') {
+                // Load client database when switching to client database section
+                setTimeout(() => {
+                    if (typeof loadClientDatabase === 'function') {
+                        loadClientDatabase();
+                    }
+                }, 100);
             } else if (sectionName === 'expenses') {
                 // Load expenses table when switching to expense section
                 setTimeout(() => {
@@ -13157,6 +13207,7 @@ END:VCALENDAR`;
             <!-- Business Management Navigation -->
             <div class="business-nav">
                 <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')"> Dashboard</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('clientDatabase')">👥 Client Database</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">AI Assistant</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('expenses')"> Expense Tracker</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('mileage')">Mileage Tracker</button>
@@ -13230,6 +13281,22 @@ END:VCALENDAR`;
                 <!-- Chart sections removed as requested -->
             </div>
 
+            <!-- Client Database Section -->
+            <div id="clientDatabaseSection" class="business-section">
+                <div class="client-database-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <div>
+                        <h2>👥 Client Database</h2>
+                        <p>Manage all your photography clients in one place</p>
+                    </div>
+                    <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 12px 24px;">
+                        📥 Import from Sessions
+                    </button>
+                </div>
+                
+                <div id="clientDatabaseList" style="margin-top: 20px;">
+                    <!-- Clients will be loaded here by loadClientDatabase() -->
+                </div>
+            </div>
 
             <!-- AI Assistant Section -->
             <div id="aiAssistantSection" class="business-section">
