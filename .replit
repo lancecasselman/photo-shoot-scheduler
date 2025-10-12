@@ -45,10 +45,6 @@ externalPort = 3003
 localPort = 43061
 externalPort = 3001
 
-[[ports]]
-localPort = 45243
-externalPort = 3000
-
 
 [deployment]
 deploymentTarget = "gce"
