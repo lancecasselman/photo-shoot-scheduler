@@ -6939,7 +6939,9 @@ ${agreement.content || 'No content available'}
 
         window.loadSessions = async function() {
             try {
-                const response = await fetch('/api/sessions');
+                const response = await fetch('/api/sessions', {
+                    credentials: 'include' // Required for session cookies
+                });
                 if (response.ok) {
                     const rawData = await response.json();
                     console.log('Data type:', typeof rawData, 'Array:', Array.isArray(rawData));
@@ -7000,7 +7002,9 @@ ${agreement.content || 'No content available'}
         window.triggerImmediatePaymentRefresh = async function() {
             console.log('⚡ Triggering immediate payment status refresh...');
             try {
-                const response = await fetch('/api/sessions');
+                const response = await fetch('/api/sessions', {
+                    credentials: 'include' // Required for session cookies
+                });
                 if (response.ok) {
                     const updatedSessions = await response.json();
                     
@@ -12086,7 +12090,9 @@ END:VCALENDAR`;
                     return filteredSessions.reduce((sum, session) => sum + (session.price || 0), 0);
                 } else {
                     // Fallback to API call if sessions not available
-                    const response = await fetch('/api/sessions');
+                    const response = await fetch('/api/sessions', {
+                        credentials: 'include' // Required for session cookies
+                    });
                     if (response.ok) {
                         const apiSessions = await response.json();
                         const filteredSessions = apiSessions.filter(session => {
