@@ -1,8 +1,53 @@
+# Dependencies (will be reinstalled)
 node_modules
+package-lock.json
+
+# Git and version control
 .git
 .gitignore
+
+# Documentation
 README.md
+*.md
+
+# Environment files
 .env
 .env.local
+.env.production
+
+# Build and cache directories
+.cache/
+.local/
+.pythonlibs/
+.config/
+.upm/
+dist/
+build/
+
+# Asset directories (use R2 cloud storage)
+attached_assets/
 uploads/
+local-backups/
+
+# Android backup (not needed in production)
+.android_backup/
+
+# Logs
 *.log
+logs/
+
+# Temporary files
+.tmp/
+tmp/
+*.pid
+*.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
