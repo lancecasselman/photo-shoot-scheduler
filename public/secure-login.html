@@ -165,7 +165,7 @@
                 console.log('🖥️ Google authentication successful, creating session...');
                 
                 // Create session with backend
-                const response = await fetch('/auth/session', {
+                const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

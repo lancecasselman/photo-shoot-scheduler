@@ -13647,42 +13647,8 @@ END:VCALENDAR`;
     <script src="script.js?v=1756841800&customizable=deposit"></script>
     
     <script>
-        // Initialize authentication for secure app - use existing checkAuth from script.js
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🔐 SECURE APP: Starting authentication system...');
-            
-            // Wait for script.js to be fully loaded
-            await new Promise(resolve => {
-                if (typeof checkAuth === 'function') {
-                    resolve();
-                } else {
-                    const interval = setInterval(() => {
-                        if (typeof checkAuth === 'function') {
-                            clearInterval(interval);
-                            resolve();
-                        }
-                    }, 100);
-                }
-            });
-            
-            try {
-                // Use the existing checkAuth function from script.js
-                const isAuthenticated = await checkAuth();
-                
-                if (isAuthenticated) {
-                    console.log('✅ SECURE APP: User authenticated, initializing app...');
-                    if (typeof initializeAppContent === 'function') {
-                        initializeAppContent();
-                    }
-                } else {
-                    console.log('❌ SECURE APP: No authenticated user, showing login options...');
-                    showLoginOptions();
-                }
-            } catch (error) {
-                console.error('❌ SECURE APP: Authentication check failed:', error);
-                showLoginOptions();
-            }
-        });
+        // Authentication is now handled by initializePage() in script.js on window.load event
+        // This ensures proper auth check and redirect flow without race conditions
         
         // Show login options for desktop users
         function showLoginOptions() {
@@ -13773,7 +13739,7 @@ END:VCALENDAR`;
                     console.log('🖥️ DESKTOP: Google authentication successful, creating session...');
                     
                     // Create session with backend using the proper endpoint
-                    const response = await fetch('/auth/session', {
+                    const response = await fetch('/api/auth/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

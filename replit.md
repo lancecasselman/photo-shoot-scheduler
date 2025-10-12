@@ -18,6 +18,37 @@ Built on a Node.js/Express server for API routes and business logic. Authenticat
 ### Authentication & Authorization
 Firebase Authentication supports email/password and Google OAuth with role-based access. Server-side session management incorporates critical safety checks to prevent crashes and dynamic CORS configuration for secure session cookie handling in production. Session consolidation unifies user accounts, particularly for administrators, ensuring consistent access across platforms.
 
+**Critical Authentication Bug Fixes (October 2025):**
+Fixed fundamental authentication flow issues causing 401 errors and preventing user access:
+
+1. **Wrong Login Endpoint:** All login flows (secure-login.html, secure-app.html, native-auth.js) were calling `/auth/session` but backend expected `/api/auth/login`
+   - Fixed: Updated all Firebase auth handlers to POST to `/api/auth/login` with credentials: 'include'
+
+2. **Premature Session Loading:** DOMContentLoaded handler in script.js (line 1861) was calling `loadSessions()` before authentication completed
+   - Fixed: Removed unconditional loadSessions() call, now only called after successful authentication in initializePage()
+
+3. **Duplicate Auth Logic:** secure-app.html had its own DOMContentLoaded auth check that raced with script.js's initializePage()
+   - Fixed: Removed duplicate auth system, unified all auth through initializePage() on window.load event
+
+4. **Missing Login Redirect:** When authentication failed, users saw blank page instead of login screen
+   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails (script.js line 3884)
+
+5. **Session Persistence Issues:** Iframe environment blocking session cookies
+   - Verified: Session middleware configured with `secure: true`, `sameSite: 'none'`, dynamic CORS origin callback
+   - Verified: All fetch calls include `credentials: 'include'`
+
+**Authentication Flow (Corrected):**
+1. User accesses /secure-app.html
+2. window.load event fires → initializePage() runs
+3. checkAuth() verifies session with /api/auth/user
+4. If not authenticated → redirect to /secure-login.html
+5. User logs in with Google → Firebase token sent to /api/auth/login
+6. Backend creates session with normalized user data (all Lance emails → uid 44735007)
+7. User redirected to /secure-app.html
+8. checkAuth() succeeds → loadSessions() loads all sessions
+
+**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails (line 169-179 in subscription-auth-middleware.js)
+
 ### Database Architecture
 Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firestore for real-time synchronization.
 

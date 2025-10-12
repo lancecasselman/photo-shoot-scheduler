@@ -136,7 +136,7 @@ class NativeAuthHandler {
             const idToken = await firebaseUser.getIdToken();
             
             // Create session on backend
-            const response = await fetch('/auth/session', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

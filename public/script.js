@@ -1857,8 +1857,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load sessions on page load
-    loadSessions();
+    // Session loading is handled by initializePage() after authentication
+    // loadSessions() is called after auth check succeeds
 });
 
 // Update session via API
