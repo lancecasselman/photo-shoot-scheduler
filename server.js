@@ -1757,6 +1757,16 @@ app.use((req, res, next) => {
     }
 });
 
+// FORCE NO-CACHE for HTML and JS files to prevent stale code
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html') || req.path.endsWith('.js')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    next();
+});
+
 // Kill-switch for removed WHCC routes - return 410 Gone (applies to all environments)
 app.all(['/api/print', '/api/print/*', '/api/whcc', '/api/whcc/*', '/api/gallery-print', '/api/gallery-print/*'], (req, res) => {
     res.status(410).json({
