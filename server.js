@@ -1,8 +1,8 @@
 // Load environment variables from .env file
 require('dotenv').config();
 
-//  PRODUCTION READY CONFIGURATION - CRITICAL SECURITY FIX
-const DEV_MODE = true; // TEMPORARY: Enable for testing multi-tenant functionality
+//  PRODUCTION READY CONFIGURATION - CRITICAL SECURITY FIX  
+const DEV_MODE = false; // Production mode - authentication required
 const PRODUCTION_CONFIG = require('./production.config.js');
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION

@@ -3879,8 +3879,10 @@ async function initializePage() {
     }
     
     if (!isAuthenticated) {
-        console.log(' INIT PAGE: User not authenticated after retries - returning early');
-        return; // Don't load app content if not authenticated
+        console.log(' INIT PAGE: User not authenticated after retries - redirecting to login');
+        // Redirect to login page if not authenticated
+        window.location.href = '/secure-login.html';
+        return;
     }
     
     console.log(' INIT PAGE: Authentication successful, proceeding with app initialization...');
