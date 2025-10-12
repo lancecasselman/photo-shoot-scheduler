@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Clear Cache</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .instructions h3 {
+            color: #3b82f6;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .instructions kbd {
+            background: #334155;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .success {
+            display: none;
+            color: #10b981;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Cache Clear Required</h1>
+        <p>Your browser has cached an old version of the JavaScript. Please follow these steps to clear it:</p>
+        
+        <div class="instructions">
+            <h3>🪟 Windows / Linux:</h3>
+            <p>Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd></p>
+            <p>OR <kbd>Ctrl</kbd> + <kbd>F5</kbd></p>
+            
+            <h3>🍎 Mac:</h3>
+            <p>Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd></p>
+            
+            <h3>Alternative Method:</h3>
+            <p>1. Open DevTools (F12)</p>
+            <p>2. Right-click the refresh button</p>
+            <p>3. Select "Empty Cache and Hard Reload"</p>
+        </div>
+        
+        <button onclick="clearAndRedirect()">✅ I've Cleared My Cache - Go to App</button>
+        
+        <div class="success" id="success">
+            ✅ Redirecting to app...
+        </div>
+    </div>
+    
+    <script>
+        function clearAndRedirect() {
+            // Clear session/local storage
+            sessionStorage.clear();
+            localStorage.removeItem('fromAuth');
+            localStorage.removeItem('manualLogout');
+            
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+            
+            // Redirect with cache-busting parameter
+            setTimeout(() => {
+                window.location.href = '/secure-app.html?cache=' + Date.now();
+            }, 1000);
+        }
+        
+        // Auto-clear storage on page load
+        sessionStorage.clear();
+        localStorage.removeItem('fromAuth');
+        localStorage.removeItem('manualLogout');
+    </script>
+</body>
+</html>
