@@ -2606,66 +2606,8 @@ app.get('/api/current-user', (req, res) => {
     }
 });
 
-// Get user sessions
-app.get('/api/sessions', isAuthenticated, async (req, res) => {
-    try {
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
-        
-        let client;
-        try {
-            client = await pool.connect();
-            
-            const result = await client.query(`
-                SELECT 
-                    id,
-                    client_name as "clientName",
-                    session_type as "sessionType", 
-                    date_time as "dateTime",
-                    location,
-                    phone_number as "phoneNumber",
-                    email,
-                    price,
-                    deposit_amount as "depositAmount",
-                    deposit_paid as "depositPaid",
-                    deposit_sent as "depositSent",
-                    invoice_sent as "invoiceSent",
-                    deposit_paid_at as "depositPaidAt",
-                    invoice_paid_at as "invoicePaidAt",
-                    duration,
-                    notes,
-                    contract_signed as "contractSigned",
-                    paid,
-                    edited,
-                    delivered,
-                    send_reminder as "sendReminder",
-                    notify_gallery_ready as "notifyGalleryReady",
-                    photos,
-                    gallery_access_token as "galleryAccessToken",
-                    gallery_created_at as "galleryCreatedAt",
-                    gallery_expires_at as "galleryExpiresAt",
-                    gallery_ready_notified as "galleryReadyNotified",
-                    has_payment_plan as "hasPaymentPlan",
-                    payment_plan_id as "paymentPlanId",
-                    created_at as "createdAt",
-                    updated_at as "updatedAt",
-                    stripe_invoice as "stripeInvoice"
-                FROM photography_sessions 
-                WHERE user_id = $1 
-                ORDER BY date_time DESC
-            `, [userId]);
-            
-            res.json(result.rows);
-            
-        } finally {
-            if (client) client.release();
-        }
-        
-    } catch (error) {
-        console.error('Error loading sessions:', error);
-        res.status(500).json({ error: 'Failed to load sessions' });
-    }
-});
+// REMOVED DUPLICATE: This endpoint was overriding the correct /api/sessions at line 6919
+// The correct endpoint includes admin logic and consolidated session access for Lance's accounts
 
 // Status endpoint for health checks and authentication status
 app.get('/api/status', (req, res) => {
