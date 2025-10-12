@@ -440,7 +440,10 @@ async function loadSessions() {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch('/api/sessions', { headers });
+        const response = await fetch('/api/sessions', { 
+            headers,
+            credentials: 'include' // CRITICAL: Required for session cookies in iframe
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 //  PRODUCTION READY CONFIGURATION - CRITICAL SECURITY FIX
-const DEV_MODE = false; // TEMPORARY: Enable for testing multi-tenant functionality
+const DEV_MODE = true; // TEMPORARY: Enable for testing multi-tenant functionality
 const PRODUCTION_CONFIG = require('./production.config.js');
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
@@ -6858,41 +6858,30 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-app.get('/api/sessions', isAuthenticated, async (req, res) => {
+app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
-        const userEmail = req.user.email?.toLowerCase();
 
         // Debug logging to see what user is requesting sessions
         console.log('📋 Sessions requested by user:', {
             original_uid: req.user.uid,
             normalized_uid: userId,
             email: req.user.email,
-            displayName: req.user.displayName
+            displayName: req.user.displayName,
+            isAdmin: req.subscriptionStatus?.isAdmin
         });
-
-        // ADMIN BYPASS: Check admin status FIRST before any subscription checks
-        const isAdmin = userEmail === 'lancecasselman@icloud.com' || 
-                       userEmail === 'lancecasselman2011@gmail.com' || 
-                       userEmail === 'lance@thelegacyphotography.com';
-
-        // Apply subscription check ONLY for non-admin users
-        if (!isAdmin) {
-            // Check subscription status for regular users
-            const subscriptionCheck = await requireSubscription(req, res, () => {});
-            if (subscriptionCheck === false) {
-                return; // Subscription middleware already sent response
-            }
-        } else {
-            console.log('✅ ADMIN ACCESS: Bypassing subscription check for', userEmail);
-        }
 
         let sessions = await getAllSessions(userId);
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
         // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)  
+        const userEmail = req.user.email?.toLowerCase();
+        const isAdmin = userEmail === 'lancecasselman@icloud.com' || 
+                       userEmail === 'lancecasselman2011@gmail.com' || 
+                       userEmail === 'lance@thelegacyphotography.com';
+        
         if (isAdmin) {
             console.log('🔓 UNIFIED LANCE ACCOUNT: Loading all sessions for unified Lance account');
 
