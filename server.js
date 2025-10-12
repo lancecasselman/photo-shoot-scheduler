@@ -251,8 +251,14 @@ async function updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBy
 
 
 // PostgreSQL database connection - Initialize first with improved stability
+// FORCE SAME DATABASE FOR DEV AND PRODUCTION
+const SHARED_DATABASE_URL = "postgresql://neondb_owner:npg_0japMVAEZcF8@ep-flat-thunder-adxhx3pb.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
+
+console.log('🔗 Database: Using shared dev/prod database (server.js)');
+console.log('📍 Environment:', process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT');
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: SHARED_DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     // Optimized configuration to prevent idle-in-transaction timeouts
     max: process.env.NODE_ENV === 'production' ? 20 : 10, // Reduced to prevent connection exhaustion

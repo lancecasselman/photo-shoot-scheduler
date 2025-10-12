@@ -11,8 +11,15 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// FORCE SAME DATABASE FOR DEV AND PRODUCTION
+// Use the development database URL for both environments
+const SHARED_DATABASE_URL = "postgresql://neondb_owner:npg_0japMVAEZcF8@ep-flat-thunder-adxhx3pb.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
+
+console.log('🔗 Database: Using shared dev/prod database');
+console.log('📍 REPLIT_DEPLOYMENT:', process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT');
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: SHARED_DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,  // Increased timeout
