@@ -8849,10 +8849,10 @@ lance@thelegacyphotography.com`;
                         </div>
                         
                         <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-                            <button onclick="openContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-secondary">
+                            <button onclick="openContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-primary">
                                 Create New Contract
                             </button>
-                            <button onclick="openCustomContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-secondary" style="margin-left: 10px;">
+                            <button onclick="openCustomContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-primary" style="margin-left: 10px;">
                                 Create Custom Contract
                             </button>
                         </div>
@@ -9683,7 +9683,7 @@ ${contract.content || 'No content available'}
                             </div>
                             
                             <div style="text-align: center;">
-                                <button type="button" onclick="createCustomContract('${sessionId}')" class="btn btn-secondary" style="margin-right: 10px;">
+                                <button type="button" onclick="createCustomContract('${sessionId}')" class="btn btn-primary" style="margin-right: 10px;">
                                     Create Contract
                                 </button>
                                 <button type="button" onclick="closeModal('customContractModal')" class="btn btn-secondary">
@@ -12536,7 +12536,7 @@ END:VCALENDAR`;
                         <textarea id="contractContentInput" rows="15" placeholder="Enter your contract terms and conditions here..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; color: #000000; resize: vertical;"></textarea>
                     </div>
                     
-                    <button onclick="createContract()" style="background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Create Contract</button>
+                    <button onclick="createContract()" class="btn btn-primary">Create Contract</button>
                 </div>
                 
                 <div id="existingContractTab" class="contract-tab-content" style="display: none;">
