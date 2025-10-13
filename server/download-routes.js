@@ -32,7 +32,8 @@ const {
   photographySessions, 
   digitalTransactions,
   downloadEntitlements,
-  downloadOrders
+  downloadOrders,
+  downloadPolicies
 } = schema;
 const { eq, and, desc, count, sum, gte, lte, sql } = require('drizzle-orm');
 
