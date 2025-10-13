@@ -201,6 +201,19 @@
             box-sizing: border-box;
         }
         
+        /* Global text visibility - ensure all text in buttons/containers is visible */
+        button, .btn, [class*="btn-"], input[type="button"], input[type="submit"] {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            overflow: visible !important;
+            min-width: fit-content !important;
+            text-overflow: clip !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+        
         /* Dark Modern Photography Platform Design System */
         :root {
             /* Dark Modern Color Palette */
@@ -798,7 +811,14 @@
             margin: var(--spacing-xs);
             box-shadow: var(--shadow-soft);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 40px;
         }
         
         .btn-primary {
@@ -810,6 +830,10 @@
             box-shadow: var(--shadow-accent);
             letter-spacing: 0.02em;
             font-size: 0.95rem;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
+            min-width: fit-content;
         }
         
         .btn-primary:hover {
@@ -828,6 +852,10 @@
             background: var(--bg-elevated);
             color: var(--text-primary);
             border: 1px solid var(--border-secondary);
+            white-space: normal;
+            word-wrap: break-word;
+            overflow: visible;
+            min-width: fit-content;
         }
         
         .btn-secondary:hover {
