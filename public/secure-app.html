@@ -7314,16 +7314,16 @@ ${agreement.content || 'No content available'}
                                 <button onclick="openUpdateSessionModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Update Session</button>
                                 <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
-                                <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary booking-agreement-btn" data-session-id="${sessionId}">
+                                <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-primary booking-agreement-btn" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
-                                <button onclick="openDownloadControls('${sessionId}'); event.stopPropagation();" class="btn btn-info" style="background: #3b82f6; color: white;">📥 Download Controls</button>
+                                <button onclick="openDownloadControls('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📥 Download Controls</button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
                                     <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
-                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important;"> Send Deposit</button>
+                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
