@@ -1716,7 +1716,7 @@
 
             async loadPolicy() {
                 try {
-                    const response = await fetch(`${window.location.origin}/api/downloads/sessions/${this.sessionId}/policy`, {
+                    const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${this.sessionId}/policy`, {
                         credentials: 'include'
                     });
 
@@ -2012,7 +2012,7 @@
                     }
 
                     // Send update request
-                    const response = await fetch(`${window.location.origin}/api/downloads/sessions/${this.sessionId}/policy`, {
+                    const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${this.sessionId}/policy`, {
                         method: 'PUT',
                         credentials: 'include',
                         body: formData
@@ -2044,7 +2044,7 @@
                 if (!otherSessionId) return;
 
                 try {
-                    const response = await fetch(`${window.location.origin}/api/downloads/sessions/${otherSessionId}/policy`, {
+                    const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${otherSessionId}/policy`, {
                         credentials: 'include'
                     });
 
@@ -2065,7 +2065,7 @@
             async loadAnalytics() {
                 try {
                     // Fetch analytics data
-                    const response = await fetch(`${window.location.origin}/api/downloads/sessions/${this.sessionId}/analytics`, {
+                    const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${this.sessionId}/analytics`, {
                         credentials: 'include'
                     });
 
@@ -2122,6 +2122,15 @@
             }
         }
 
+        // Helper function to get the authenticated origin for API calls
+        // This ensures API calls work even when page is loaded from custom domain
+        function getApiOrigin() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authOrigin = urlParams.get('authOrigin');
+            // Use passed authOrigin if available, otherwise use current origin
+            return authOrigin ? decodeURIComponent(authOrigin) : window.location.origin;
+        }
+
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -2130,6 +2139,7 @@
             clientName = urlParams.get('clientName') || 'Client';
 
             console.log('URL Parameters:', { sessionId, folderType, clientName });
+            console.log('API Origin:', getApiOrigin());
 
             // Update UI
             document.getElementById('folderTitle').textContent = 'Gallery Manager';
@@ -3463,7 +3473,7 @@ Lance - The Legacy Photography`;
         async function quickToggleDownloads() {
             try {
                 // Get current policy first
-                const response = await fetch(`${window.location.origin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
 
@@ -3478,7 +3488,7 @@ Lance - The Legacy Photography`;
                 const formData = new FormData();
                 formData.append('downloadEnabled', newStatus.toString());
 
-                const updateResponse = await fetch(`${window.location.origin}/api/downloads/sessions/${sessionId}/policy`, {
+                const updateResponse = await fetch(`${getApiOrigin()}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -3535,7 +3545,7 @@ Lance - The Legacy Photography`;
                     }
                 }
 
-                const response = await fetch(`${window.location.origin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -3555,7 +3565,7 @@ Lance - The Legacy Photography`;
         async function quickWatermarkToggle() {
             try {
                 // Get current policy
-                const response = await fetch(`${window.location.origin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`${getApiOrigin()}/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
 
@@ -3577,7 +3587,7 @@ Lance - The Legacy Photography`;
                     formData.append('watermarkOpacity', '60');
                 }
 
-                const updateResponse = await fetch(`${window.location.origin}/api/downloads/sessions/${sessionId}/policy`, {
+                const updateResponse = await fetch(`${getApiOrigin()}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData

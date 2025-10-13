@@ -7743,9 +7743,10 @@ ${agreement.content || 'No content available'}
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            // Add cache-busting version parameter to force fresh load
+            // Add cache-busting version parameter AND authenticated origin to force fresh load and maintain auth
             const cacheBuster = Date.now();
-            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}&v=${cacheBuster}`;
+            const authOrigin = encodeURIComponent(window.location.origin);
+            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}&v=${cacheBuster}&authOrigin=${authOrigin}`;
             const windowName = `gallery_${sessionId}`;
             const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no';
             
