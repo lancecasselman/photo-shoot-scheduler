@@ -15957,7 +15957,7 @@ app.get('/secure-app.html', async (req, res) => {
     
     // Don't check session here - let the frontend JavaScript handle all security
     // This ensures the bulletproof client-side security system is always active
-    res.sendFile(path.join(__dirname, 'secure-app.html'));
+    res.sendFile(path.join(__dirname, 'public', 'secure-app.html'));
 });
 
 // Payment Setup page - requires authentication
