@@ -1706,20 +1706,15 @@
             }
 
             /**
-             * Get the correct API base URL for both localhost development and production
-             * For localhost development: use current origin (e.g., http://localhost:5000)
-             * For production published galleries: use main domain (https://photomanagementsystem.com)
+             * Get the correct API base URL for all environments
+             * Always uses the current origin to ensure API calls route to the correct server
+             * This works in localhost, Replit, and custom domain deployments
              */
             getApiBaseUrl() {
-                const hostname = window.location.hostname;
-
-                // For localhost development, use current origin
-                if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('replit')) {
-                    return window.location.origin;
-                }
-
-                // For production published galleries on subdomains, use main domain
-                return 'https://photomanagementsystem.com';
+                // CRITICAL FIX: Always use current origin for API calls
+                // This ensures API requests go to the same server that served the gallery
+                // Works correctly in all environments: localhost, Replit, custom domains
+                return window.location.origin;
             }
 
             async init() {
