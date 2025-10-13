@@ -1549,6 +1549,12 @@ if (ENABLE_SUBDOMAIN_ROUTING) {
     console.log('📁 Path-based routing active (default)');
 }
 
+// CRITICAL: Trust proxy for custom domain support
+// This allows Express to recognize HTTPS requests when behind Replit's proxy
+// Without this, session cookies won't be set on custom domains (photomanagementsystem.com)
+app.set('trust proxy', 1);
+console.log('✅ Proxy trust enabled for custom domain cookie support');
+
 // Session configuration with fallback mechanism
 const pgSession = connectPg(session);
 
