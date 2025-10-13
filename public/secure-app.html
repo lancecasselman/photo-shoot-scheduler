@@ -214,6 +214,18 @@
             text-align: center !important;
         }
         
+        /* Ensure labels and text elements are fully visible */
+        label, span, p, div, h1, h2, h3, h4, h5, h6 {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* Prevent text truncation in containers */
+        .session-list-item *, .action-buttons *, .form-group * {
+            text-overflow: clip;
+            white-space: normal;
+        }
+        
         /* Dark Modern Photography Platform Design System */
         :root {
             /* Dark Modern Color Palette */
