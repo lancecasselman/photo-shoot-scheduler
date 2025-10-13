@@ -1524,7 +1524,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         protectionLevel: session.protectionLevel || 'medium' // low, medium, high
       };
 
-      res.json({ success: true, policy });
+      res.json(policy);
     } catch (error) {
       console.error('Error getting download policy:', error);
       res.status(500).json({ error: 'Failed to get download policy' });
