@@ -7743,7 +7743,9 @@ ${agreement.content || 'No content available'}
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}`;
+            // Add cache-busting version parameter to force fresh load
+            const cacheBuster = Date.now();
+            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}&v=${cacheBuster}`;
             const windowName = `gallery_${sessionId}`;
             const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no';
             

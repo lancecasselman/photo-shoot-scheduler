@@ -12036,6 +12036,18 @@ app.get('/client-gallery.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'client-gallery.html'));
 });
 
+// EXPLICIT ROUTE for gallery-manager.html with aggressive cache-busting
+app.get('/gallery-manager.html', (req, res) => {
+    // ULTRA-AGGRESSIVE cache busting for gallery manager
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Accel-Expires', '0'); // For nginx proxies
+    res.setHeader('Last-Modified', new Date().toUTCString()); // Always mark as just modified
+    res.sendFile(path.join(__dirname, 'gallery-manager.html'));
+});
+
 // BULLETPROOF CLIENT GALLERY SYSTEM - Updated to use /g/:token pattern to avoid conflicts
 app.get('/g/:token([A-Za-z0-9_-]{20,})', async (req, res) => {
     const galleryToken = req.params.token;
