@@ -454,7 +454,7 @@
 
 /* Booking Agreement Button Styles */
 .booking-agreement-btn {
-    background-color: #9b59b6 !important;
+    background-color: #10b981 !important;
     color: white !important;
     border: none;
     border-radius: 4px;
@@ -467,28 +467,28 @@
 }
 
 .booking-agreement-btn:hover {
-    background-color: #8e44ad !important;
+    background-color: #059669 !important;
     transform: translateY(-1px);
 }
 
 .btn-agreement-none {
-    background-color: #9b59b6 !important;
+    background-color: #10b981 !important;
 }
 
 .btn-agreement-draft {
-    background-color: #f39c12 !important;
+    background-color: #10b981 !important;
 }
 
 .btn-agreement-sent {
-    background-color: #3498db !important;
+    background-color: #10b981 !important;
 }
 
 .btn-agreement-viewed {
-    background-color: #e67e22 !important;
+    background-color: #10b981 !important;
 }
 
 .btn-agreement-signed {
-    background-color: #27ae60 !important;
+    background-color: #22c55e !important;
 }
 
 /* Modal Animations */
