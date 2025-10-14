@@ -62,7 +62,8 @@ class ScreenshotProtection {
             
             // CRITICAL FIX: Use the correct policy endpoint that includes pricing model
             try {
-                const policyResponse = await fetch(`/api/downloads/policies/${sessionId}`);
+                const apiOrigin = window.location.origin;
+                const policyResponse = await fetch(`${apiOrigin}/api/downloads/policies/${sessionId}`);
                 if (policyResponse.ok) {
                     const policyData = await policyResponse.json();
                     
@@ -110,7 +111,8 @@ class ScreenshotProtection {
             }
             
             // Fallback: Try orchestrator health endpoint
-            const healthResponse = await fetch('/api/downloads/orchestrator/health');
+            const apiOrigin = window.location.origin;
+            const healthResponse = await fetch(`${apiOrigin}/api/downloads/orchestrator/health`);
             if (healthResponse.ok) {
                 const healthData = await healthResponse.json();
                 this.log('Orchestrator health check:', healthData);
@@ -118,7 +120,7 @@ class ScreenshotProtection {
                 // Try to get session-specific policy via debug endpoint (if debug mode enabled)
                 if (window.location.search.includes('debug')) {
                     try {
-                        const debugResponse = await fetch(`/api/downloads/orchestrator/debug/session/${sessionId}`);
+                        const debugResponse = await fetch(`${apiOrigin}/api/downloads/orchestrator/debug/session/${sessionId}`);
                         if (debugResponse.ok) {
                             const debugData = await debugResponse.json();
                             this.sessionPolicy = debugData.debug.policy;
