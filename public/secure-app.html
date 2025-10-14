@@ -5936,7 +5936,8 @@
                 
                 showMessage('Preparing contract for sending...', 'info');
 
-                const response = await fetch(`/api/contracts/${contractId}/send`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -6208,7 +6209,8 @@ The Legacy Photography`);
             console.log('Loading contract:', contractId);
             
             // Fetch the contract
-            const response = await fetch(`/api/booking/agreements/${contractId}/signed`);
+            const apiOrigin = window.location.origin;
+            const response = await fetch(`${apiOrigin}/api/booking/agreements/${contractId}/signed`);
             if (!response.ok) {
                 showMessage('Failed to load contract', 'error');
                 return;
@@ -6420,7 +6422,8 @@ ${agreement.content || 'No content available'}
                 console.log('Viewing signed contract for session:', sessionId);
                 
                 // Check if there are any signed contracts for this session
-                const response = await fetch(`/api/booking-agreements/session/${sessionId}/signed`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/booking-agreements/session/${sessionId}/signed`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -7406,7 +7409,8 @@ ${agreement.content || 'No content available'}
 
             try {
                 const authToken = await getAuthToken();
-                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}`, {
                     headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
                 });
 
@@ -7634,7 +7638,7 @@ ${agreement.content || 'No content available'}
                         try {
                             // Get upload URL with file size for quota enforcement
                             const authToken = await getAuthToken();
-                            const uploadResponse = await fetch(`/api/sessions/${sessionId}/files/upload`, {
+                            const uploadResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/upload`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -8106,7 +8110,8 @@ lance@thelegacyphotography.com`;
 
                 session[field] = value;
                 
-                const response = await fetch(`/api/sessions/${sessionId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(session)
@@ -8381,7 +8386,8 @@ lance@thelegacyphotography.com`;
                 session.tipAmount = amount;
                 session.tipDate = new Date().toISOString();
                 
-                const response = await fetch(`/api/sessions/${sessionId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(session)
@@ -8735,7 +8741,8 @@ lance@thelegacyphotography.com`;
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({ contractType })
@@ -9468,7 +9475,8 @@ lance@thelegacyphotography.com`;
                 // Find the contract from all sessions
                 let foundContract = null;
                 for (const session of sessions) {
-                    const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
+                    const apiOrigin = window.location.origin;
+                    const response = await fetch(`${apiOrigin}/api/booking/agreements/session/${session.id}/all`);
                     if (response.ok) {
                         const agreements = await response.json();
                         const agreement = agreements.find(a => a.id === contractId);
@@ -9558,7 +9566,8 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/contracts/${contractId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
                     method: 'GET',
                     headers
                 });
@@ -9632,7 +9641,8 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/contracts/${contractId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
                     method: 'PUT',
                     headers,
                     body: JSON.stringify({
@@ -9720,7 +9730,8 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/sessions/${sessionId}/contracts/custom`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts/custom`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -9854,7 +9865,8 @@ ${contract.content || 'No content available'}
             };
             
             try {
-                const response = await fetch(`/api/sessions/${sessionId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sessionData)
@@ -10207,7 +10219,8 @@ END:VCALENDAR`;
         
         window.viewPaymentPlan = async function(sessionId) {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/payment-plan`);
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/payment-plan`);
                 
                 if (!response.ok) {
                     throw new Error('Payment plan not found');
@@ -10276,7 +10289,8 @@ END:VCALENDAR`;
         
         async function markPaymentPaid(paymentId) {
             try {
-                const response = await fetch(`/api/payments/${paymentId}/mark-paid`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/payments/${paymentId}/mark-paid`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -10311,7 +10325,8 @@ END:VCALENDAR`;
         
         async function sendPaymentInvoice(paymentId) {
             try {
-                const response = await fetch(`/api/payments/${paymentId}/send-invoice`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/payments/${paymentId}/send-invoice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -10475,7 +10490,8 @@ END:VCALENDAR`;
                 
                 showMessage('Saving changes...', 'info');
                 
-                const response = await fetch(`/api/contracts/${contractId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -10559,7 +10575,8 @@ END:VCALENDAR`;
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`, { headers });
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, { headers });
                 if (!response.ok) {
                     throw new Error('Failed to load contracts');
                 }
@@ -10617,7 +10634,8 @@ END:VCALENDAR`;
             try {
                 showMessage('Creating contract...', 'info');
                 
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -10651,7 +10669,8 @@ END:VCALENDAR`;
             try {
                 showMessage('Preparing contract email...', 'info');
                 
-                const response = await fetch(`/api/contracts/${contractId}/send`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -10701,7 +10720,8 @@ END:VCALENDAR`;
                 currentEditContractId = contractId;
                 
                 // Fetch contract details
-                const response = await fetch(`/api/contracts/${contractId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
                     headers: {
                         'Authorization': `Bearer ${await getAuthToken()}`
                     }
@@ -10753,7 +10773,8 @@ END:VCALENDAR`;
                     return;
                 }
 
-                const response = await fetch(`/api/contracts/${currentEditContractId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/contracts/${currentEditContractId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -14776,7 +14797,8 @@ END:VCALENDAR`;
             }
 
             try {
-                const response = await fetch(`/api/expenses/${expenseId}`, {
+                const apiOrigin = window.location.origin;
+                const response = await fetch(`${apiOrigin}/api/expenses/${expenseId}`, {
                     method: 'DELETE'
                 });
 

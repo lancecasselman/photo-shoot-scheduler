@@ -1375,13 +1375,15 @@ P.S. I'd love to hear how your photos have been bringing joy to your life! `;
 // Function to view signed contract details
 window.viewSignedContract = async function viewSignedContract(sessionId, clientName) {
     try {
-        const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/booking/agreements/session/${sessionId}`);
         if (response.ok) {
             const agreement = await response.json();
             
             if (agreement && agreement.status === 'signed') {
                 // Get signature details
-                const sigResponse = await fetch(`/api/booking/agreements/${agreement.id}/signatures`);
+                const apiOrigin = window.location.origin;
+                const sigResponse = await fetch(`${apiOrigin}/api/booking/agreements/${agreement.id}/signatures`);
                 if (sigResponse.ok) {
                     const signatures = await sigResponse.json();
                     showSignedContractModal(agreement, signatures, clientName);
@@ -1456,7 +1458,8 @@ async function copyGalleryUrl(sessionId) {
         showMessage('Generating gallery URL...', 'info');
 
         // Generate gallery access if not already done
-        const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/send-gallery-notification`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1499,7 +1502,8 @@ async function sendGalleryNotification(sessionId) {
     try {
         showMessage('Sending gallery notification...', 'info');
 
-        const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/send-gallery-notification`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1999,7 +2003,8 @@ async function updateAPISession(sessionId, sessionData) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
             method: 'PUT',
             headers,
             body: JSON.stringify(sessionData)
@@ -2073,7 +2078,8 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch(`/api/sessions/${sessionId}/photos`, { headers });
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/photos`, { headers });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -2301,7 +2307,8 @@ function createDownloadControlsSection(session) {
 // Load and display current download policy
 async function loadDownloadPolicy(sessionId) {
     try {
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include' // Use session-based auth
         });
         
@@ -2372,7 +2379,8 @@ function showDownloadPolicyFallback(sessionId) {
 // Load and display download analytics
 async function loadDownloadAnalytics(sessionId) {
     try {
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/analytics`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/analytics`, {
             credentials: 'include' // Use session-based auth
         });
         
@@ -2597,7 +2605,8 @@ function openDownloadPolicyModal(sessionId) {
 async function loadPolicyDataIntoForm(sessionId) {
     try {
 
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, { 
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, { 
             credentials: 'include' // Use session-based auth
         });
         if (!response.ok) return;
@@ -2633,7 +2642,8 @@ async function saveDownloadPolicy(sessionId) {
             watermarkEnabled: document.getElementById('watermarkEnabled').checked
         };
 
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             method: 'PUT',
             headers,
             credentials: 'include', // Use session-based auth
@@ -2668,7 +2678,8 @@ async function generateDownloadToken(sessionId) {
     try {
         const headers = { 'Content-Type': 'application/json' };
 
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/generate-token`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/generate-token`, {
             method: 'POST',
             headers,
             credentials: 'include', // Use session-based auth
@@ -2750,7 +2761,8 @@ async function generateDownloadToken(sessionId) {
 // Show download analytics modal
 async function showDownloadAnalytics(sessionId) {
     try {
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/analytics`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/analytics`, {
             credentials: 'include' // Use session-based auth
         });
         if (!response.ok) throw new Error('Failed to load analytics');
@@ -3071,7 +3083,8 @@ function setupUploadModal(sessionId) {
                 size: file.size
             }));
 
-            const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
+            const apiOrigin = window.location.origin;
+            const urlResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}/upload-urls`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -3143,7 +3156,7 @@ function setupUploadModal(sessionId) {
             
             // Step 3: Notify server of completed uploads
             console.log(`📝 Confirming ${successfulUploads.length} uploads with server...`);
-            const confirmResponse = await fetch(`/api/sessions/${sessionId}/confirm-uploads`, {
+            const confirmResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}/confirm-uploads`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -3190,7 +3203,7 @@ function setupUploadModal(sessionId) {
 
             console.log('Uploading photos through server...');
 
-            const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
+            const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/upload-photos`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -3316,7 +3329,8 @@ async function deletePhoto(sessionId, photoIndex) {
         }
 
         // Get the photo filename first to use unified deletion
-        const session = await fetch(`/api/sessions/${sessionId}`, {
+        const apiOrigin = window.location.origin;
+        const session = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         }).then(res => res.json());
 
@@ -3328,7 +3342,7 @@ async function deletePhoto(sessionId, photoIndex) {
         const filename = photo.originalName || photo.filename;
 
         // Use unified deletion endpoint that removes from both storage and database
-        const response = await fetch(`/api/sessions/${sessionId}/files/gallery/${encodeURIComponent(filename)}`, {
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/gallery/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`
@@ -3517,7 +3531,8 @@ window.addEventListener('load', function() {
 async function triggerWorkflow(sessionId) {
     try {
         // Get session data first
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
@@ -3576,7 +3591,8 @@ async function triggerWorkflow(sessionId) {
 async function executeWorkflow(sessionId, workflowType) {
     try {
         // Get session data for workflow
-        const sessionResponse = await fetch(`/api/sessions/${sessionId}`, {
+        const apiOrigin = window.location.origin;
+        const sessionResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
@@ -3979,7 +3995,8 @@ async function viewSessionContractsPDF(sessionId, clientName) {
         }
 
         // Fetch contracts for this session
-        const response = await fetch(`/api/booking/agreements/session/${sessionId}`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/booking/agreements/session/${sessionId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -3997,7 +4014,8 @@ async function viewSessionContractsPDF(sessionId, clientName) {
         for (let contract of contracts) {
             if (contract.status === 'signed') {
                 try {
-                    const sigResponse = await fetch(`/api/booking/agreements/${contract.id}/signatures`, {
+                    const apiOrigin = window.location.origin;
+                    const sigResponse = await fetch(`${apiOrigin}/api/booking/agreements/${contract.id}/signatures`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -4236,7 +4254,8 @@ async function openDownloadControls(sessionId) {
         console.log('📥 Opening download controls for session:', sessionId);
         
         // Get current download policy
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include'
         });
         
@@ -4402,7 +4421,8 @@ async function openDownloadControls(sessionId) {
                 
                 console.log('📤 Saving policy for session:', sessionId);
                 
-                const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                const apiOrigin = window.location.origin;
+                const saveResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
