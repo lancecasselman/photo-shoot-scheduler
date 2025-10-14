@@ -27,15 +27,13 @@ module.exports = {
       // List of trusted domains (including production deployment URLs)
       const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
         'https://photo-shoot-scheduler-lancecasselman.replit.app',
-        'https://photomanagementsystem.com',
-        'http://photomanagementsystem.com'
+        'https://yourdomain.com'
       ];
       
       // Check if origin is in the allowed list or is a Replit dev URL
       if (allowedOrigins.includes(origin) || 
           origin.includes('.replit.dev') || 
-          origin.includes('replit.app') ||
-          origin.includes('photomanagementsystem.com')) {
+          origin.includes('replit.app')) {
         callback(null, origin); // Echo back the requesting origin
       } else {
         callback(new Error('Not allowed by CORS'));

@@ -30,9 +30,8 @@ function initializeCommunityServices(pool, r2Config) {
         publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
     });
 
-    // Initialize database tables - DISABLED to prevent parallel initialization
-    // Tables will be initialized sequentially by server.js initializeDatabase()
-    // db.initializeTables().catch(console.error);
+    // Initialize database tables
+    db.initializeTables().catch(console.error);
 
     return router;
 }

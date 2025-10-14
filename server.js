@@ -261,11 +261,11 @@ const pool = new Pool({
     connectionString: SHARED_DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     // Optimized configuration to prevent idle-in-transaction timeouts
-    max: process.env.NODE_ENV === 'production' ? 30 : 25, // Increased to handle parallel initialization
-    min: process.env.NODE_ENV === 'production' ? 5 : 3,   // Higher minimum for stability during startup
+    max: process.env.NODE_ENV === 'production' ? 20 : 10, // Reduced to prevent connection exhaustion
+    min: process.env.NODE_ENV === 'production' ? 2 : 1,   // Lower minimum for stability
     idleTimeoutMillis: 30000, // 30 seconds - shorter to prevent idle timeouts
-    connectionTimeoutMillis: 15000, // 15 seconds connection timeout (increased)
-    acquireTimeoutMillis: 90000, // 90 seconds acquire timeout (increased for startup)
+    connectionTimeoutMillis: 10000, // 10 seconds connection timeout
+    acquireTimeoutMillis: 60000, // 60 seconds acquire timeout
     maxUses: 7500, // Lower max uses for better connection recycling
     keepAlive: true,
     keepAliveInitialDelayMillis: 10000, // 10 second initial delay
@@ -281,9 +281,25 @@ const healthCheck = new HealthCheck(pool);
 
 // Initialize support system
 const supportSystem = new SupportSystem(pool);
+(async () => {
+    try {
+        await supportSystem.initializeTables();
+        console.log('✅ Support system initialized');
+    } catch (error) {
+        console.warn('Support system initialization skipped:', error.message);
+    }
+})();
 
 // Initialize analytics system
 const analyticsSystem = new AnalyticsSystem(pool);
+(async () => {
+    try {
+        await analyticsSystem.initializeTables();
+        console.log('✅ Analytics system initialized');
+    } catch (error) {
+        console.warn('Analytics system initialization skipped:', error.message);
+    }
+})();
 
 // Initialize real-time gallery updates system
 const realTimeGalleryUpdates = new RealTimeGalleryUpdates(pool);
@@ -344,12 +360,39 @@ const storageSystem = new StorageSystem(pool, r2FileManager);
 
 // Initialize data export system (after r2FileManager is available)
 const dataExportSystem = new DataExportSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await dataExportSystem.initializeTables();
+        console.log('✅ Data export system initialized');
+    } catch (error) {
+        console.warn('Data export system initialization skipped:', error.message);
+    }
+})();
 
 // Initialize backup system (after r2FileManager is available)
 const backupSystem = new BackupSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await backupSystem.initialize();
+        console.log('✅ Backup system initialized with automated schedules');
+    } catch (error) {
+        console.warn('Backup system initialization skipped:', error.message);
+    }
+})();
 
 // Initialize Community Platform - will be initialized after Firebase admin is ready
 let communityRoutes = null;
+
+// Initialize storage system database tables with improved error handling
+(async () => {
+    try {
+        await storageSystem.initializeTables();
+        console.log(' Storage tables initialized successfully');
+    } catch (error) {
+        console.warn('Storage tables initialization skipped:', error.message);
+        // Don't fail server startup for non-critical table initialization
+    }
+})();
 
 // Services initialized
 
@@ -1380,37 +1423,16 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
 app.set('trust proxy', 1);
 
 // CORS for all environments (required for session cookies to work)
-// Use production CORS config with custom domain support for both dev and production
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-        
-        // List of trusted domains
-        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-            'https://photo-shoot-scheduler-lancecasselman.replit.app',
-            'https://photomanagementsystem.com',
-            'http://photomanagementsystem.com'
-        ];
-        
-        // Check if origin is in the allowed list or is a Replit dev/app URL
-        if (allowedOrigins.includes(origin) || 
-            origin.includes('.replit.dev') || 
-            origin.includes('.replit.app') ||
-            origin.includes('photomanagementsystem.com')) {
-            callback(null, origin); // Echo back the requesting origin
-        } else {
-            // In development, be more permissive
-            if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
-                callback(null, origin);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 200
-}));
+if (process.env.NODE_ENV === 'production') {
+    app.use(cors(PRODUCTION_CONFIG.cors));
+} else {
+    // Development CORS - allow all origins with credentials
+    app.use(cors({
+        origin: true, // Allow all origins in development
+        credentials: true,
+        optionsSuccessStatus: 200
+    }));
+}
 
 // Production Security Middleware (AFTER webhooks to preserve raw body)
 if (process.env.NODE_ENV === 'production') {
@@ -5897,207 +5919,6 @@ async function initializeDatabase(retryCount = 0) {
             )
         `);
         console.log(' Website publishing system tables initialized');
-
-        // Create booking agreement tables
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS booking_agreement_templates (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                name VARCHAR(255) NOT NULL,
-                category VARCHAR(100),
-                content TEXT NOT NULL,
-                is_default BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS booking_agreements (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                session_id UUID NOT NULL,
-                user_id VARCHAR(255) NOT NULL,
-                template_id UUID REFERENCES booking_agreement_templates(id),
-                content TEXT NOT NULL,
-                status VARCHAR(50) DEFAULT 'draft',
-                access_token VARCHAR(255) UNIQUE,
-                created_at TIMESTAMP DEFAULT NOW(),
-                sent_at TIMESTAMP,
-                viewed_at TIMESTAMP,
-                signed_at TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS booking_agreement_signatures (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                agreement_id UUID REFERENCES booking_agreements(id),
-                signer_name VARCHAR(255),
-                signer_email VARCHAR(255),
-                signature_data TEXT,
-                signature_type VARCHAR(50),
-                signed_at TIMESTAMP DEFAULT NOW(),
-                ip_address VARCHAR(45),
-                user_agent TEXT
-            )
-        `);
-
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_agreements_session ON booking_agreements(session_id)');
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_agreements_user ON booking_agreements(user_id)');
-        await pool.query('CREATE INDEX IF NOT EXISTS idx_agreements_token ON booking_agreements(access_token)');
-        console.log('✅ Booking agreement tables initialized');
-
-        // Create community platform tables
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_posts (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL,
-                user_name VARCHAR(255),
-                user_avatar TEXT,
-                type VARCHAR(50) CHECK (type IN ('photo', 'video', 'text', 'help', 'tip', 'marketplace', 'before_after', 'event', 'mentor')),
-                title TEXT,
-                content TEXT,
-                image_urls JSONB,
-                video_url TEXT,
-                camera_settings JSONB,
-                location TEXT,
-                price DECIMAL(10, 2),
-                tags TEXT[],
-                likes_count INT DEFAULT 0,
-                comments_count INT DEFAULT 0,
-                saves_count INT DEFAULT 0,
-                views_count INT DEFAULT 0,
-                is_featured BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_comments (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
-                user_id VARCHAR(255) NOT NULL,
-                user_name VARCHAR(255),
-                user_avatar TEXT,
-                parent_comment_id UUID REFERENCES community_comments(id) ON DELETE CASCADE,
-                content TEXT NOT NULL,
-                likes_count INT DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_messages (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                sender_id VARCHAR(255) NOT NULL,
-                sender_name VARCHAR(255),
-                receiver_id VARCHAR(255) NOT NULL,
-                receiver_name VARCHAR(255),
-                message TEXT NOT NULL,
-                is_read BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_notifications (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL,
-                type VARCHAR(50) CHECK (type IN ('like', 'comment', 'follow', 'mention', 'message')),
-                title TEXT NOT NULL,
-                message TEXT NOT NULL,
-                related_id VARCHAR(255),
-                related_type VARCHAR(50),
-                is_read BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_likes (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL,
-                post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, post_id)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_saves (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL,
-                post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, post_id)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_follows (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                follower_id VARCHAR(255) NOT NULL,
-                following_id VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(follower_id, following_id)
-            )
-        `);
-
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS community_profiles (
-                user_id VARCHAR(255) PRIMARY KEY,
-                display_name VARCHAR(255),
-                bio TEXT,
-                avatar_url TEXT,
-                skill_badges TEXT[],
-                reputation_points INT DEFAULT 0,
-                portfolio_link TEXT,
-                followers_count INT DEFAULT 0,
-                following_count INT DEFAULT 0,
-                posts_count INT DEFAULT 0,
-                is_mentor BOOLEAN DEFAULT false,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        console.log('✅ Community platform tables initialized');
-
-        // Sequential initialization of all system tables to prevent connection pool exhaustion
-        try {
-            await supportSystem.initializeTables();
-            console.log('✅ Support system initialized');
-        } catch (error) {
-            console.warn('Error initializing support tables:', error.message);
-        }
-
-        try {
-            await analyticsSystem.initializeTables();
-            console.log('✅ Analytics system initialized');
-        } catch (error) {
-            console.warn('Error initializing analytics tables:', error.message);
-        }
-
-        try {
-            await dataExportSystem.initializeTables();
-            console.log('✅ Data export system initialized');
-        } catch (error) {
-            console.warn('Error initializing data export tables:', error.message);
-        }
-
-        try {
-            await backupSystem.initialize();
-            console.log('✅ Backup system initialized with automated schedules');
-        } catch (error) {
-            console.warn('Error initializing backup tables:', error.message);
-        }
-
-        try {
-            await storageSystem.initializeTables();
-            console.log('✅ Storage tables initialized successfully');
-        } catch (error) {
-            console.warn('Error initializing storage tables:', error.message);
-        }
 
         console.log('Database tables initialized successfully');
     } catch (error) {

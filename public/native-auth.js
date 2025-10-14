@@ -99,8 +99,7 @@ class NativeAuthHandler {
     async initializeWebAuth() {
         try {
             // Check for existing session via API
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/auth/session`, {
+            const response = await fetch('/api/auth/session', {
                 credentials: 'include',
                 headers: {
                     'Accept': 'application/json',
@@ -137,8 +136,7 @@ class NativeAuthHandler {
             const idToken = await firebaseUser.getIdToken();
             
             // Create session on backend
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/auth/login`, {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -269,8 +267,7 @@ class NativeAuthHandler {
             }
             
             // Clear backend session
-            const apiOrigin = window.location.origin;
-            await fetch(`${apiOrigin}/api/auth/logout`, {
+            await fetch('/api/auth/logout', {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -354,8 +351,7 @@ class NativeAuthHandler {
                     }
                 } else {
                     // Check web session
-                    const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/auth/session`, {
+                    const response = await fetch('/api/auth/session', {
                         credentials: 'include'
                     });
                     
