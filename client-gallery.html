@@ -2456,10 +2456,13 @@
                     </button>
                 `;
 
+                // Construct absolute URL for cross-domain compatibility
+                const photoUrl = photo.url.startsWith('http') ? photo.url : `${this.getApiBaseUrl()}${photo.url}`;
+                
                 return `
                     <div class="${cardClass}" data-photo-id="${photoIdToCheck}">
                         <div class="photo-wrapper">
-                            <img src="${photo.url}" alt="Gallery photo" loading="lazy" 
+                            <img src="${photoUrl}" alt="Gallery photo" loading="lazy" 
                                  data-photo-id="${photoIdToCheck}" 
                                  data-entitled="${isEntitled}"
                                  onerror="console.error('❌ Failed to load image:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"
@@ -2791,7 +2794,12 @@
                     cartItemsContainer.innerHTML = this.cart.map((item, index) => {
                         // Find photo details for image URL
                         const photo = this.photos.find(p => p.filename === item.photoId || p.id === item.photoId);
-                        const imageUrl = photo?.url || item.photoUrl || '/static/img/placeholder.png'; // Fallback image
+                        let imageUrl = photo?.url || item.photoUrl || '/static/img/placeholder.png'; // Fallback image
+                        
+                        // Construct absolute URL for cross-domain compatibility
+                        if (imageUrl && !imageUrl.startsWith('http')) {
+                            imageUrl = `${this.getApiBaseUrl()}${imageUrl}`;
+                        }
 
                         return `
                             <div class="cart-item" data-photo-id="${item.photoId}">
