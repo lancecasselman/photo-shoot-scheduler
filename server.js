@@ -5790,7 +5790,73 @@ async function initializeDatabase(retryCount = 0) {
         // Test database connection first with a simple query
         const result = await pool.query('SELECT NOW()');
         console.log('Database connection established successfully at:', result.rows[0].now);
-        // This table already exists, just ensure it's ready
+        
+        // Create photography_sessions table first (CRITICAL FOR PRODUCTION)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS photography_sessions (
+                id VARCHAR PRIMARY KEY NOT NULL,
+                user_id VARCHAR NOT NULL,
+                client_name VARCHAR NOT NULL,
+                session_type VARCHAR NOT NULL,
+                date_time TIMESTAMP NOT NULL,
+                location VARCHAR NOT NULL,
+                phone_number VARCHAR NOT NULL,
+                email VARCHAR NOT NULL,
+                price NUMERIC(10, 2) NOT NULL,
+                deposit_amount NUMERIC(10, 2) DEFAULT 0.00,
+                duration INTEGER NOT NULL,
+                notes TEXT DEFAULT '',
+                contract_signed BOOLEAN DEFAULT false,
+                paid BOOLEAN DEFAULT false,
+                edited BOOLEAN DEFAULT false,
+                delivered BOOLEAN DEFAULT false,
+                send_reminder BOOLEAN DEFAULT false,
+                notify_gallery_ready BOOLEAN DEFAULT false,
+                photos JSONB DEFAULT '[]'::jsonb,
+                gallery_access_token VARCHAR,
+                gallery_created_at TIMESTAMP,
+                gallery_expires_at TIMESTAMP,
+                gallery_ready_notified BOOLEAN DEFAULT false,
+                last_gallery_notification JSONB,
+                stripe_invoice JSONB,
+                has_payment_plan BOOLEAN DEFAULT false,
+                payment_plan_id VARCHAR,
+                total_amount NUMERIC(10, 2),
+                payment_plan_start_date TIMESTAMP,
+                payment_plan_end_date TIMESTAMP,
+                monthly_payment NUMERIC(10, 2),
+                payments_remaining INTEGER DEFAULT 0,
+                next_payment_date TIMESTAMP,
+                download_enabled BOOLEAN DEFAULT true,
+                download_max INTEGER,
+                pricing_model VARCHAR DEFAULT 'free',
+                free_downloads INTEGER DEFAULT 0,
+                price_per_download NUMERIC(10, 2) DEFAULT 0.00,
+                watermark_enabled BOOLEAN DEFAULT false,
+                watermark_type VARCHAR DEFAULT 'text',
+                watermark_logo_url VARCHAR,
+                watermark_text VARCHAR DEFAULT '© Photography',
+                watermark_opacity INTEGER DEFAULT 60,
+                watermark_position VARCHAR DEFAULT 'bottom-right',
+                watermark_scale INTEGER DEFAULT 20,
+                watermark_updated_at TIMESTAMP DEFAULT NOW(),
+                download_policy_id VARCHAR,
+                total_download_revenue NUMERIC(10, 2) DEFAULT 0.00,
+                last_download_activity TIMESTAMP,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                deposit_paid BOOLEAN DEFAULT false,
+                deposit_sent BOOLEAN DEFAULT false,
+                invoice_sent BOOLEAN DEFAULT false,
+                deposit_paid_at TIMESTAMP,
+                invoice_paid_at TIMESTAMP,
+                free_downloads_remaining INTEGER,
+                unlimited_access BOOLEAN DEFAULT false,
+                unlimited_access_price NUMERIC(10, 2)
+            )
+        `);
+        console.log('✅ photography_sessions table ready');
+        
         // Add subscribers table for multi-user management
         await pool.query(`
             CREATE TABLE IF NOT EXISTS subscribers (
