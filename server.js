@@ -6880,11 +6880,15 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-app.get('/api/sessions', requireSubscription, async (req, res) => {
+app.get('/api/sessions', isAuthenticated, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
+        
+        // Check if user has admin credentials using the shared admin config
+        const userEmail = req.user.email?.toLowerCase();
+        const isAdmin = isAdminEmail(userEmail);
 
         // Debug logging to see what user is requesting sessions
         console.log('📋 Sessions requested by user:', {
@@ -6892,15 +6896,13 @@ app.get('/api/sessions', requireSubscription, async (req, res) => {
             normalized_uid: userId,
             email: req.user.email,
             displayName: req.user.displayName,
-            isAdmin: req.subscriptionStatus?.isAdmin
+            isAdmin: isAdmin
         });
 
         let sessions = await getAllSessions(userId);
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
-        // SPECIAL ACCESS: If admin credentials are passed through subscription middleware
-        const isAdmin = req.subscriptionStatus?.isAdmin || false;
-        
+        // SPECIAL ACCESS: If admin credentials are verified
         if (isAdmin) {
             console.log('🔓 ADMIN ACCESS: Loading all sessions for admin account');
 
