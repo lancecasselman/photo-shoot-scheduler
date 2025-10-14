@@ -2513,7 +2513,8 @@ window.refreshGallery = async function(sessionId) {
 window.quickToggleDownloads = async function(sessionId) {
     try {
         // Get current policy first
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include'
         });
         
@@ -2528,7 +2529,7 @@ window.quickToggleDownloads = async function(sessionId) {
         const formData = new FormData();
         formData.append('downloadEnabled', newStatus.toString());
         
-        const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const updateResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             method: 'PUT',
             credentials: 'include',
             body: formData
@@ -2585,7 +2586,8 @@ window.quickSetPricing = async function(sessionId) {
             }
         }
         
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             method: 'PUT',
             credentials: 'include',
             body: formData
@@ -2605,7 +2607,8 @@ window.quickSetPricing = async function(sessionId) {
 window.quickWatermarkToggle = async function(sessionId) {
     try {
         // Get current policy
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include'
         });
         
@@ -2627,7 +2630,7 @@ window.quickWatermarkToggle = async function(sessionId) {
             formData.append('watermarkOpacity', '60');
         }
         
-        const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const updateResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             method: 'PUT',
             credentials: 'include',
             body: formData
@@ -2703,7 +2706,8 @@ async function loadDownloadControls(sessionId) {
         container.innerHTML = 'Loading download settings...';
         
         // Get current download policy
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include'
         });
         
@@ -2875,7 +2879,9 @@ function setupDownloadControlsHandlers(sessionId) {
                     formData.append('logo', logoFile);
                 }
                 
-                const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                // Use absolute URL for cross-domain compatibility
+                const apiOrigin = window.location.origin;
+                const saveResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -4796,7 +4802,8 @@ async function openDownloadControls(sessionId) {
         console.log('📥 Opening download controls for session:', sessionId);
         
         // Get current download policy
-        const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+        const apiOrigin = window.location.origin;
+        const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
             credentials: 'include'
         });
         
@@ -4960,7 +4967,9 @@ async function openDownloadControls(sessionId) {
                     formData.append('logo', logoFile);
                 }
                 
-                const saveResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
+                // Use absolute URL for cross-domain compatibility
+                const apiOrigin = window.location.origin;
+                const saveResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
