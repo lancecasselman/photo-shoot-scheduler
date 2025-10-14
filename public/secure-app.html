@@ -18080,12 +18080,12 @@ END:VCALENDAR`;
                 } else if (stripeData.hasAccount) {
                     // Account exists but onboarding not complete
                     statusText.textContent = 'Complete your payment setup';
-                    statusDetails.innerHTML = \`
+                    statusDetails.innerHTML = `
                         <p>Your Stripe Express account has been created but setup is not complete.</p>
                         <button onclick="continueBusinessSetupStripeOnboarding()" class="primary-btn" style="margin-top: 15px;">
                             Continue Setup
                         </button>
-                    \`;
+                    `;
                     setupForm.style.display = 'none';
                     completeSection.style.display = 'none';
                     
