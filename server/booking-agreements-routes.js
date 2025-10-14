@@ -68,8 +68,9 @@ function createBookingAgreementRoutes(pool) {
         }
     }
 
-    // Initialize tables on startup
-    initializeTables();
+    // Initialize tables on startup - DISABLED to prevent parallel initialization
+    // Tables will be initialized sequentially by server.js initializeDatabase()
+    // initializeTables();
 
     // Get all templates
     router.get('/templates', async (req, res) => {
