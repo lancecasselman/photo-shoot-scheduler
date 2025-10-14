@@ -6880,7 +6880,7 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-app.get('/api/sessions', isAuthenticated, async (req, res) => {
+app.get('/api/sessions', requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
         const normalizedUser = normalizeUserForLance(req.user);
@@ -6898,14 +6898,11 @@ app.get('/api/sessions', isAuthenticated, async (req, res) => {
         let sessions = await getAllSessions(userId);
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
-        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)  
-        const userEmail = req.user.email?.toLowerCase();
-        const isAdmin = userEmail === 'lancecasselman@icloud.com' || 
-                       userEmail === 'lancecasselman2011@gmail.com' || 
-                       userEmail === 'lance@thelegacyphotography.com';
+        // SPECIAL ACCESS: If admin credentials are passed through subscription middleware
+        const isAdmin = req.subscriptionStatus?.isAdmin || false;
         
         if (isAdmin) {
-            console.log('🔓 UNIFIED LANCE ACCOUNT: Loading all sessions for unified Lance account');
+            console.log('🔓 ADMIN ACCESS: Loading all sessions for admin account');
 
             // Get sessions for the unified Lance account
             const lanceSessionsResult = await pool.query(`
