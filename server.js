@@ -6880,7 +6880,7 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
+app.get('/api/sessions', isAuthenticated, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
         const normalizedUser = normalizeUserForLance(req.user);
