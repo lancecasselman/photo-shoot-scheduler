@@ -2131,6 +2131,29 @@
             return authOrigin ? decodeURIComponent(authOrigin) : window.location.origin;
         }
 
+        // Fetch thumbnail with credentials and convert to blob URL
+        // This ensures session cookies are properly sent even in popup windows
+        async function buildThumbnailBlob(sessionId, fileName, size = 'medium') {
+            try {
+                const thumbnailUrl = `${getApiOrigin()}/api/r2/thumbnail/${sessionId}/${encodeURIComponent(fileName)}?size=${size}`;
+                
+                const response = await fetch(thumbnailUrl, {
+                    credentials: 'include', // Include session cookies
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Thumbnail fetch failed: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                return URL.createObjectURL(blob);
+            } catch (error) {
+                console.error('Failed to load thumbnail:', error);
+                return null; // Return null to trigger fallback
+            }
+        }
+
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -2952,16 +2975,25 @@
             if (isImage) {
                 const img = document.createElement('img');
                 const thumbnailFileName = file.fileName || file.name;
-                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
-
-                img.src = thumbnailUrl;
+                
                 img.alt = file.name;
                 img.loading = 'lazy';
                 img.onclick = () => openLightbox(file.downloadUrl);
-                img.onerror = () => {
+                
+                // Load thumbnail using fetch-to-blob to properly send credentials
+                buildThumbnailBlob(sessionId, thumbnailFileName, 'medium').then(blobUrl => {
+                    if (blobUrl) {
+                        img.src = blobUrl;
+                    } else {
+                        // Fallback to icon if thumbnail fails
+                        img.style.display = 'none';
+                        filePreview.innerHTML = '<div class="file-icon">IMG</div>';
+                    }
+                }).catch(error => {
+                    console.error('Thumbnail load error:', error);
                     img.style.display = 'none';
                     filePreview.innerHTML = '<div class="file-icon">IMG</div>';
-                };
+                });
 
                 filePreview.appendChild(img);
             } else {
