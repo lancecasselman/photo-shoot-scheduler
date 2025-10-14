@@ -1423,37 +1423,16 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
 app.set('trust proxy', 1);
 
 // CORS for all environments (required for session cookies to work)
-// Use production CORS config with custom domain support for both dev and production
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-        
-        // List of trusted domains
-        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-            'https://photo-shoot-scheduler-lancecasselman.replit.app',
-            'https://photomanagementsystem.com',
-            'http://photomanagementsystem.com'
-        ];
-        
-        // Check if origin is in the allowed list or is a Replit dev/app URL
-        if (allowedOrigins.includes(origin) || 
-            origin.includes('.replit.dev') || 
-            origin.includes('.replit.app') ||
-            origin.includes('photomanagementsystem.com')) {
-            callback(null, origin); // Echo back the requesting origin
-        } else {
-            // In development, be more permissive
-            if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
-                callback(null, origin);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 200
-}));
+if (process.env.NODE_ENV === 'production') {
+    app.use(cors(PRODUCTION_CONFIG.cors));
+} else {
+    // Development CORS - allow all origins with credentials
+    app.use(cors({
+        origin: true, // Allow all origins in development
+        credentials: true,
+        optionsSuccessStatus: 200
+    }));
+}
 
 // Production Security Middleware (AFTER webhooks to preserve raw body)
 if (process.env.NODE_ENV === 'production') {
