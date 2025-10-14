@@ -2692,7 +2692,7 @@
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                    response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                         method: 'POST',
                         credentials: 'include',
                         body: formData
