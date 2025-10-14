@@ -117,16 +117,14 @@ function generateGalleryClientKey(galleryAccessToken, sessionId) {
 // REMOVED: Deprecated generateUniqueClientKey function
 // All client key generation now uses generateGalleryClientKey for consistency
 
-function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
+function createDownloadRoutes(pool, isAuthenticated, downloadCommerceManager) {
+  if (!pool) {
+    throw new Error('createDownloadRoutes requires a shared database pool parameter');
+  }
+  
   const router = express.Router();
   
-  // Database connection for API routes
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-  });
-  
-  // Create Drizzle db instance with full schema
+  // Create Drizzle db instance with full schema (using shared pool)
   const db = drizzle(pool, { schema });
   const r2Manager = new R2FileManager(null, pool);
   

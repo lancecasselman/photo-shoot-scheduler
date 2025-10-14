@@ -250,30 +250,30 @@ async function updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBy
 }
 
 
-// PostgreSQL database connection - Initialize first with improved stability
-// FORCE SAME DATABASE FOR DEV AND PRODUCTION
-const SHARED_DATABASE_URL = "postgresql://neondb_owner:npg_0japMVAEZcF8@ep-flat-thunder-adxhx3pb.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
+// PostgreSQL database connection - Validate and create SHARED pool
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required but not set!');
+}
 
-console.log('🔗 Database: Using shared dev/prod database (server.js)');
+console.log('🔗 Database: Using DATABASE_URL from environment (SHARED POOL)');
 console.log('📍 Environment:', process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT');
 
 const pool = new Pool({
-    connectionString: SHARED_DATABASE_URL,
+    connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Optimized configuration to prevent idle-in-transaction timeouts
-    max: process.env.NODE_ENV === 'production' ? 20 : 10, // Reduced to prevent connection exhaustion
-    min: process.env.NODE_ENV === 'production' ? 2 : 1,   // Lower minimum for stability
-    idleTimeoutMillis: 30000, // 30 seconds - shorter to prevent idle timeouts
-    connectionTimeoutMillis: 10000, // 10 seconds connection timeout
-    acquireTimeoutMillis: 60000, // 60 seconds acquire timeout
-    maxUses: 7500, // Lower max uses for better connection recycling
+    // SHARED POOL: Replit database limits (max 5 total), min: 0 so idle modules don't reserve connections
+    max: 3,
+    min: 0,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 60000,
+    maxUses: 7500,
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000, // 10 second initial delay
-    allowExitOnIdle: false, // Prevent pool from exiting
-    // Critical timeout settings to prevent idle-in-transaction errors
-    statement_timeout: 30000, // 30 second statement timeout
-    query_timeout: 25000,     // 25 second query timeout
-    idle_in_transaction_session_timeout: 20000, // 20 second idle-in-transaction timeout
+    keepAliveInitialDelayMillis: 10000,
+    allowExitOnIdle: false,
+    statement_timeout: 30000,
+    query_timeout: 25000,
+    idle_in_transaction_session_timeout: 20000,
 });
 
 // Initialize health check system
@@ -340,14 +340,14 @@ const localBackup = new LocalBackupFallback();
 
 // Initialize services with proper dependencies (single instance)
 const r2FileManager = new R2FileManager(localBackup, pool);
-const paymentPlanManager = new PaymentPlanManager();
-const paymentScheduler = new PaymentScheduler();
+const paymentPlanManager = new PaymentPlanManager(pool);
+const paymentScheduler = new PaymentScheduler(pool);
 
 // Ensure R2 is properly initialized before other services use it
 console.log('✅ Core services initialized: R2FileManager, PaymentPlanManager, PaymentScheduler');
 
 // Initialize Download Commerce Manager for advanced pricing and entitlement management
-const downloadCommerceManager = new DownloadCommerceManager();
+const downloadCommerceManager = new DownloadCommerceManager(pool);
 
 // Import and initialize multipart uploader for FAST uploads
 const MultipartUploader = require('./server/multipart-upload');
@@ -3082,7 +3082,7 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 });
 
 // R2 Storage API Routes - Complete file management system
-app.use('/api/r2', createR2Routes(realTimeGalleryUpdates));
+app.use('/api/r2', createR2Routes(pool, realTimeGalleryUpdates));
 
 // Unified Download Orchestrator Routes - Modern download handling (takes priority)
 app.use('/api/downloads/orchestrator', createDownloadOrchestratorRoutes({
@@ -3093,7 +3093,7 @@ app.use('/api/downloads/orchestrator', createDownloadOrchestratorRoutes({
 }));
 
 // Download Control API Routes - Photo delivery with pricing and watermarks (legacy)
-app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
+app.use('/api/downloads', createDownloadRoutes(pool, isAuthenticated, downloadCommerceManager));
 
 // Preview Generation API Routes - Watermarked previews for gallery viewing
 const createPreviewApiRoutes = require('./server/preview-api-routes');
@@ -4047,7 +4047,7 @@ app.get('/api/r2-investigation-simple', async (req, res) => {
 });
 
 // Object Storage Routes for Gallery and Raw Storage
-const objectStorageService = new ObjectStorageService();
+const objectStorageService = new ObjectStorageService(pool);
 
 // Get upload URL for session files (WITH STORAGE QUOTA ENFORCEMENT) - Using R2
 app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, res) => {
@@ -10090,7 +10090,7 @@ app.post('/api/payment-records/:paymentId/tip', async (req, res) => {
         }
         
         // Update tip amount in the database
-        const paymentManager = new PaymentPlanManager();
+        const paymentManager = new PaymentPlanManager(pool);
         await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
         
         res.json({
@@ -10112,7 +10112,7 @@ app.post('/api/payment-records/:paymentId/tip', async (req, res) => {
 app.get('/api/public/invoice/:paymentId', async (req, res) => {
     try {
         const { paymentId } = req.params;
-        const paymentManager = new PaymentPlanManager();
+        const paymentManager = new PaymentPlanManager(pool);
         const invoiceDetails = await paymentManager.getPublicInvoiceDetails(paymentId);
         
         if (!invoiceDetails) {
@@ -10150,7 +10150,7 @@ app.post('/api/public/invoice/:paymentId/tip', async (req, res) => {
         }
         
         // Update tip amount in the database
-        const paymentManager = new PaymentPlanManager();
+        const paymentManager = new PaymentPlanManager(pool);
         await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
         
         res.json({
@@ -10240,7 +10240,7 @@ app.post('/api/public/invoice/:paymentId/send-with-tip', async (req, res) => {
         const { paymentId } = req.params;
         const { tipAmount } = req.body;
         
-        const paymentManager = new PaymentPlanManager();
+        const paymentManager = new PaymentPlanManager(pool);
         
         // Update tip amount first
         if (tipAmount && parseFloat(tipAmount) > 0) {

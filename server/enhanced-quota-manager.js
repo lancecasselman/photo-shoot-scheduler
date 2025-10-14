@@ -16,12 +16,12 @@ const {
 } = require('../shared/schema');
 
 class EnhancedQuotaManager {
-    constructor(pool = null, monitoringSystem = null) {
-        this.pool = pool || new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-        });
+    constructor(pool, monitoringSystem = null) {
+        if (!pool) {
+            throw new Error('EnhancedQuotaManager requires a shared database pool parameter');
+        }
         
+        this.pool = pool;
         this.db = drizzle(this.pool);
         this.monitoringSystem = monitoringSystem;
         

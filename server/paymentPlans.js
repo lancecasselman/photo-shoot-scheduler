@@ -1,10 +1,17 @@
 const { v4: uuidv4 } = require('uuid');
-const { db } = require('./db.ts');
+const { createDb } = require('./db.ts');
 const { paymentPlans, paymentRecords, photographySessions, users } = require('../shared/schema');
 const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 class PaymentPlanManager {
+  constructor(pool) {
+    if (!pool) {
+      throw new Error('PaymentPlanManager requires a shared database pool parameter');
+    }
+    this.db = createDb(pool);
+  }
+
   // Create a payment plan for a session
   async createPaymentPlan(sessionId, userId, totalAmount, startDate, endDate, frequency = 'monthly', reminderDays = 3) {
     try {
@@ -19,7 +26,7 @@ class PaymentPlanManager {
       const planId = uuidv4();
 
       // Create payment plan
-      const [plan] = await db.insert(paymentPlans).values({
+      const [plan] = await this.db.insert(paymentPlans).values({
         id: planId,
         sessionId,
         userId,
@@ -48,10 +55,10 @@ class PaymentPlanManager {
         });
       }
 
-      await db.insert(paymentRecords).values(paymentRecordsList);
+      await this.db.insert(paymentRecords).values(paymentRecordsList);
 
       // Update session with payment plan info
-      await db.update(photographySessions)
+      await this.db.update(photographySessions)
         .set({
           hasPaymentPlan: true,
           paymentPlanId: planId,
@@ -129,13 +136,13 @@ class PaymentPlanManager {
   // Get payment plan for a session
   async getPaymentPlan(sessionId) {
     try {
-      const [plan] = await db.select()
+      const [plan] = await this.db.select()
         .from(paymentPlans)
         .where(eq(paymentPlans.sessionId, sessionId));
 
       if (!plan) return null;
 
-      const payments = await db.select()
+      const payments = await this.db.select()
         .from(paymentRecords)
         .where(eq(paymentRecords.planId, plan.id))
         .orderBy(paymentRecords.paymentNumber);
@@ -151,7 +158,7 @@ class PaymentPlanManager {
   async markPaymentReceived(paymentId, paymentMethod = 'stripe', notes = '') {
     try {
       // Use direct SQL to avoid Drizzle timestamp issues
-      const result = await db.execute(sql`
+      const result = await this.db.execute(sql`
         UPDATE payment_records
         SET status = 'paid',
             paid_date = CURRENT_TIMESTAMP,
@@ -168,7 +175,7 @@ class PaymentPlanManager {
       if (!payment) throw new Error('Payment record not found');
 
       // Update payment plan
-      const [plan] = await db.select()
+      const [plan] = await this.db.select()
         .from(paymentPlans)
         .where(eq(paymentPlans.id, payment.planId));
 
@@ -183,7 +190,7 @@ class PaymentPlanManager {
         // Get next payment date if not completed
         const nextPaymentDate = isCompleted ? null : await this.getNextPaymentDate(payment.planId);
 
-        await db.update(paymentPlans)
+        await this.db.update(paymentPlans)
           .set({
             paymentsCompleted: newPaymentsCompleted,
             amountPaid: newAmountPaid.toFixed(2),
@@ -194,7 +201,7 @@ class PaymentPlanManager {
           .where(eq(paymentPlans.id, payment.planId));
 
         // Update session (temporarily disabled timestamp update to debug)
-        await db.update(photographySessions)
+        await this.db.update(photographySessions)
           .set({
             paymentsRemaining: Math.max(0, plan.totalPayments - newPaymentsCompleted),
             paid: isCompleted
@@ -214,7 +221,7 @@ class PaymentPlanManager {
   // Get next payment date for a plan
   async getNextPaymentDate(planId) {
     try {
-      const [nextPayment] = await db.select()
+      const [nextPayment] = await this.db.select()
         .from(paymentRecords)
         .where(and(
           eq(paymentRecords.planId, planId),
@@ -237,7 +244,7 @@ class PaymentPlanManager {
   // Send invoice for payment
   async sendPaymentInvoice(paymentId, forceResend = false) {
     try {
-      const [payment] = await db.select()
+      const [payment] = await this.db.select()
         .from(paymentRecords)
         .where(eq(paymentRecords.id, paymentId));
 
@@ -249,14 +256,14 @@ class PaymentPlanManager {
       }
 
       // Get session details
-      const [session] = await db.select()
+      const [session] = await this.db.select()
         .from(photographySessions)
         .where(eq(photographySessions.id, payment.sessionId));
 
       if (!session) throw new Error('Session not found');
 
       // Get photographer's business information
-      const [photographer] = await db.select()
+      const [photographer] = await this.db.select()
         .from(users)
         .where(eq(users.id, session.userId));
 
@@ -378,7 +385,7 @@ class PaymentPlanManager {
 
       // Only update payment record if invoice was successfully sent
       if (invoiceSuccessfullySent && stripeInvoice) {
-        await db.update(paymentRecords)
+        await this.db.update(paymentRecords)
           .set({
             invoiceSent: true,
             invoiceSentAt: new Date(),
@@ -403,7 +410,7 @@ class PaymentPlanManager {
   async getOverduePayments() {
     try {
       const today = new Date();
-      const overduePayments = await db.select()
+      const overduePayments = await this.db.select()
         .from(paymentRecords)
         .where(and(
           eq(paymentRecords.status, 'pending'),
@@ -424,7 +431,7 @@ class PaymentPlanManager {
       const reminderDate = new Date();
       reminderDate.setDate(today.getDate() + daysBefore);
 
-      const upcomingPayments = await db.select()
+      const upcomingPayments = await this.db.select()
         .from(paymentRecords)
         .where(and(
           eq(paymentRecords.status, 'pending'),
@@ -447,7 +454,7 @@ class PaymentPlanManager {
     try {
       // Send invoices for payments due today
       const today = new Date();
-      const paymentsDueToday = await db.select()
+      const paymentsDueToday = await this.db.select()
         .from(paymentRecords)
         .where(and(
           eq(paymentRecords.status, 'pending'),
@@ -473,7 +480,7 @@ class PaymentPlanManager {
       for (const payment of upcomingPayments) {
         try {
           // Mark reminder as sent
-          await db.update(paymentRecords)
+          await this.db.update(paymentRecords)
             .set({
               reminderSent: true,
               reminderSentAt: new Date()
@@ -492,7 +499,7 @@ class PaymentPlanManager {
         console.log(`WARNING: Found ${overduePayments.length} overdue payments`);
 
         for (const payment of overduePayments) {
-          await db.update(paymentRecords)
+          await this.db.update(paymentRecords)
             .set({ status: 'overdue' })
             .where(eq(paymentRecords.id, payment.id));
         }
@@ -513,32 +520,16 @@ class PaymentPlanManager {
 
   // Update tip amount for a payment record
   async updateTipAmount(paymentId, tipAmount) {
-    const { Pool } = require('pg');
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-
-    let client;
     try {
-      client = await pool.connect();
-
-      await client.query(`
-        UPDATE payment_records
-        SET tip_amount = $1
-        WHERE id = $2
-      `, [tipAmount.toString(), paymentId]);
+      await this.db.update(paymentRecords)
+        .set({ tipAmount: tipAmount.toString() })
+        .where(eq(paymentRecords.id, paymentId));
 
       console.log(`SUCCESS: Tip amount updated for payment ${paymentId}: $${tipAmount}`);
       return true;
     } catch (error) {
       console.error('Error updating tip amount:', error);
       throw error;
-    } finally {
-      if (client) {
-        client.release();
-      }
-      await pool.end();
     }
   }
 

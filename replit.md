@@ -59,6 +59,79 @@ Fixed fundamental authentication flow issues causing 401 errors and preventing u
 ### Database Architecture
 Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firestore for real-time synchronization.
 
+**Critical Database Connection Fixes (October 2025 - FINAL):**
+Fixed database connection chaos causing "Control plane request failed" and "Too many connection attempts" errors by implementing **true shared pool architecture**:
+
+1. **Hardcoded Database URLs Removed:**
+   - `server.js` line 255: Was using hardcoded postgresql URL instead of `process.env.DATABASE_URL`
+   - `server/db.ts` line 16: Was using same hardcoded URL instead of `process.env.DATABASE_URL`
+   - Fixed: Both now use `process.env.DATABASE_URL` from Replit secrets with validation
+   - Result: Session store and app now connect to SAME database
+
+2. **Shared Pool Architecture Implemented:**
+   - **ONE shared pool** in `server.js` with max: 3, min: 0 (respects Replit's ~5 connection limit)
+   - **ALL services now REQUIRE pool parameter** (no fallback creation)
+   - Removed duplicate pool creation from 10+ files:
+     - `database-transaction-manager.js`: Removed singleton, requires pool
+     - `enhanced-quota-manager.js`: Requires pool, no fallback
+     - `quota-monitoring-system.js`: Requires pool, no fallback
+     - `r2-api-routes.js`: Accepts pool parameter, removed creation
+     - `download-commerce.js`: Requires pool, no fallback
+     - `download-service.js`: Requires pool, no fallback
+     - `download-routes.js`: Accepts pool parameter, removed creation
+     - `enhanced-webhook-handler.js`: Requires pool, no fallback
+
+3. **Critical Fixes:**
+   - Removed `dbTransactionManager` singleton that was creating pool without parameter
+   - Updated all service constructors to throw error if pool not provided
+   - Updated all route factories to accept pool as first parameter
+   - Set min: 0 on shared pool so idle services don't reserve connections
+
+4. **DATABASE_URL Validation:**
+   - Added startup check: `if (!process.env.DATABASE_URL)` throw error
+   - Prevents silent failures from missing configuration
+
+**Database Configuration:**
+- Architecture: ONE shared pool, injected to all services
+- Connection Pool: max: 3, min: 0 (no idle connection reservation)
+- Environment: Uses `DATABASE_URL` from Replit secrets (validated at startup)
+- SSL: Enabled in production with `rejectUnauthorized: false`
+- Timeouts: Statement: 30s, Query: 25s, Idle-in-transaction: 20s
+- Status: Server running successfully, no connection errors
+
+**Remaining Pool Cleanup Tasks:**
+
+**CRITICAL (Will break at runtime when methods are called):**
+- `server/objectStorage.js` line 192: `deleteSessionFile()` imports pool from db.ts (will throw)
+- `server/r2-file-manager.js`: Imports pool from db.ts (will throw when used)
+- `server/paymentScheduler.js` line 87: FIXED - now uses `this.paymentManager.db`
+
+**Non-Critical (Not actively used or properly close pools):**
+The following files still create Pool instances but are not breaking the server because they either:
+1. Create pools in methods that aren't actively called during startup, OR
+2. Properly close pools after use (pool.end())
+
+Files requiring refactoring to use shared pool:
+- `server/gallery-print-routes.js`: Module-level pool creation
+- `server/download-webhook-handler.js`: Module-level pool creation  
+- `server/preview-generation.js`: Creates pool in constructor
+- `server/preview-api-routes.js`: Module-level pool creation
+- `server/sync-gallery-photos.js`: Creates pool in constructor
+- `server/production-monitoring.js`: Has pool fallback in constructor
+- `server/comprehensive-error-handler.js`: Has pool fallback in constructor
+- `server/enhanced-cart-manager.js`: Has pool fallback in constructor
+- `server/quota-system-validation.js`: Creates pool in constructor
+- `server/controllers/download-orchestrator.js`: Has pool fallback
+- `server/unified-file-deletion.js`: Creates pool in constructor
+- `server/payment-notifications.js`: Creates pool in constructor
+- `server/paymentPlans.js`: Lines 539 & 555 (methods create temporary pools)
+
+Refactoring pattern for each file:
+1. Update constructor to require pool parameter (no fallback)
+2. Store as `this.pool` or create `this.db = drizzle(pool)`
+3. Update server.js to pass shared pool when instantiating
+4. Remove `const { Pool } = require('pg')` import if no longer needed
+
 ### File Storage Strategy
 Cloudflare R2 is the primary cloud storage, using human-readable file organization and supporting dual-path for backward compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
 

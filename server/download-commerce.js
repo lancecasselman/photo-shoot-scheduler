@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const sgMail = require('@sendgrid/mail');
 const { drizzle } = require('drizzle-orm/node-postgres');
-const { dbTransactionManager } = require('./database-transaction-manager');
+const { DatabaseTransactionManager } = require('./database-transaction-manager');
 const { 
     downloadPolicies, 
     downloadOrders, 
@@ -31,14 +31,18 @@ if (process.env.SENDGRID_API_KEY) {
 const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE) || 5; // 5% default
 
 class DownloadCommerceManager {
-    constructor() {
-        this.pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-        });
+    constructor(pool) {
+        if (!pool) {
+            throw new Error('DownloadCommerceManager requires a shared database pool parameter');
+        }
+        
+        this.pool = pool;
         
         // Initialize drizzle with the pool
         this.db = drizzle(this.pool);
+        
+        // Initialize transaction manager with shared pool
+        this.dbTransactionManager = new DatabaseTransactionManager(pool);
         
         this.stripe = stripe;
         this.stripeEnabled = !!process.env.STRIPE_SECRET_KEY;
@@ -119,7 +123,7 @@ class DownloadCommerceManager {
     // Update pricing policy with validation using transaction manager
     async updatePolicy(sessionId, userId, policyData) {
         try {
-            const result = await dbTransactionManager.executeTransaction(
+            const result = await this.dbTransactionManager.executeTransaction(
                 async (client, db, transactionId) => {
                     console.log(`📋 [${transactionId}] Updating policy for session ${sessionId}`);
                     
