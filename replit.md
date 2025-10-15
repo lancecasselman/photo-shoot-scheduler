@@ -64,6 +64,14 @@ Fixed fundamental authentication flow issues causing 401 errors and preventing u
 9. User redirected to /secure-app.html
 10. checkAuth() succeeds → loadSessions() loads all sessions ✅
 
+**Browser Caching Fix (October 2025):**
+Fixed critical production issue where published app showed old code due to browser caching:
+- **Problem:** Static files had no cache-control headers, browsers cached old JavaScript for days
+- **Impact:** Published app appeared broken while preview worked (both same server, different cache state)
+- **Solution:** Added `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` headers to all HTML/JS/CSS files
+- **Result:** Browsers always fetch latest code, no more stale file issues
+- **Implementation:** `setHeaders` callback in `express.static()` middleware (server.js lines 16964-16986)
+
 **Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails
 
 ### Database Architecture

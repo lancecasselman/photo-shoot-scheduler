@@ -16953,18 +16953,34 @@ app.get('/auth-diagnostic.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'auth-diagnostic.html'));
 });
 
-// Serve static files from public directory
+// Serve static files from public directory with NO CACHING for HTML/JS/CSS
 app.use(express.static(path.join(__dirname, 'public'), {
     index: false, // Never serve index.html automatically
     etag: false,
-    lastModified: false
+    lastModified: false,
+    setHeaders: (res, filePath) => {
+        // Force no-cache for HTML, JavaScript, and CSS files to prevent stale code
+        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
 }));
 
 // Also serve from root for backward compatibility with manifest.json, etc
 app.use(express.static(path.join(__dirname), {
     index: false,
     etag: false,
-    lastModified: false
+    lastModified: false,
+    setHeaders: (res, filePath) => {
+        // Force no-cache for HTML, JavaScript, and CSS files
+        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
 }));
 
 // SECURITY: Static serving moved to end to prevent route bypass
