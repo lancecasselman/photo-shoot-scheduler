@@ -2186,6 +2186,9 @@ app.post('/api/auth/login', async (req, res) => {
         }
         req.user = normalizedUser;
         
+        // Ensure user exists in database
+        await ensureUserInDatabase(normalizedUser);
+        
         // Store Android auth token for fallback
         if ((isAndroid || isCapacitor) && req.session) {
             req.session.androidAuth = {
