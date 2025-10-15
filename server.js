@@ -676,6 +676,46 @@ const normalizeUserForLance = (user) => {
     return user;
 };
 
+// Helper function to ensure user exists in database
+async function ensureUserInDatabase(user) {
+    if (!user || !user.uid || !user.email) {
+        console.warn('⚠️ Cannot upsert user: missing uid or email');
+        return;
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(`
+            INSERT INTO users (
+                id, email, display_name, 
+                subscription_status, subscription_plan,
+                onboarding_completed, stripe_onboarding_complete,
+                ai_credits, platform_fee_percentage,
+                created_at, updated_at
+            )
+            VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
+            ON CONFLICT (id) DO UPDATE SET
+                email = EXCLUDED.email,
+                display_name = EXCLUDED.display_name,
+                updated_at = NOW()
+        `, [user.uid, user.email, user.displayName || user.email]);
+        
+        console.log(`✅ User ensured in database: ${user.email} (ID: ${user.uid})`);
+    } catch (dbError) {
+        console.error('❌ Database error ensuring user exists:', dbError);
+        // Don't throw - authentication can work without DB
+    } finally {
+        if (client) {
+            try {
+                client.release();
+            } catch (releaseError) {
+                console.error('Error releasing database client:', releaseError);
+            }
+        }
+    }
+}
+
 // Enhanced authentication middleware with strict security
 const isAuthenticated = async (req, res, next) => {
     // Enhanced authentication check with better error handling
@@ -722,6 +762,10 @@ const isAuthenticated = async (req, res, next) => {
                     req.session.user = normalizedUser;
                 }
                 console.log('✅ Bearer token authentication successful for', decodedToken.email, 'uid:', normalizedUser.uid);
+                
+                // Ensure user exists in database
+                await ensureUserInDatabase(normalizedUser);
+                
                 next();
                 return;
             } catch (tokenError) {
@@ -775,6 +819,10 @@ const isAuthenticated = async (req, res, next) => {
                         }
                         req.user = normalizedUser;
                         console.log('✅ ANDROID: Token fallback authentication successful');
+                        
+                        // Ensure user exists in database
+                        await ensureUserInDatabase(normalizedUser);
+                        
                         next();
                         return;
                     }
@@ -810,6 +858,9 @@ const isAuthenticated = async (req, res, next) => {
 
         // Set req.user for downstream middleware - use real session user
         req.user = user;
+        
+        // Ensure user exists in database
+        await ensureUserInDatabase(user);
         
         // Enhanced logging for Stripe Connect routes
         if (isStripeConnectRoute) {
