@@ -17991,7 +17991,7 @@ END:VCALENDAR`;
         });
 
         // Global currentUser variable for Business Setup
-        let currentUser = null;
+        window.currentUser = window.currentUser || null;
         
         // Business Setup Section Functions
         function showSection(sectionId) {
