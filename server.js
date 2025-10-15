@@ -1635,6 +1635,7 @@ const pgSession = connectPg(session);
 
 // Create session store with fallback to memory store
 let sessionStore;
+let sessionStoreType = 'unknown';
 try {
     sessionStore = new pgSession({
         conString: process.env.DATABASE_URL,
@@ -1647,10 +1648,12 @@ try {
         console.error('Session store error:', error.message);
     });
     
+    sessionStoreType = 'postgresql';
     console.log('✅ PostgreSQL session store initialized');
 } catch (error) {
     console.warn('⚠️ PostgreSQL session store failed, using memory store:', error.message);
     sessionStore = null; // Will use default memory store
+    sessionStoreType = 'memory';
 }
 
 // Detect Replit environment (both dev and production run in iframes with HTTPS)
@@ -5739,9 +5742,14 @@ app.get('/health', async (req, res) => {
     const healthCheck = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '1.0.0',
+        version: '2.0.1', // Incremented to track deployment
         uptime: Math.floor(process.uptime()),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        sessionStore: sessionStoreType,
+        hasSession: !!req.session,
+        sessionId: req.session?.id || 'none',
+        hasUser: !!(req.session && req.session.user),
+        userEmail: req.session?.user?.email || 'none'
     };
 
     // Quick basic health check - responds immediately for load balancer
