@@ -16949,9 +16949,20 @@ app.get('/hero-background.jpg', (req, res) => {
 app.get('/test-android-auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
 });
+app.get('/auth-diagnostic.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auth-diagnostic.html'));
+});
 
-app.use(express.static(path.join(__dirname), {
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public'), {
     index: false, // Never serve index.html automatically
+    etag: false,
+    lastModified: false
+}));
+
+// Also serve from root for backward compatibility with manifest.json, etc
+app.use(express.static(path.join(__dirname), {
+    index: false,
     etag: false,
     lastModified: false
 }));
