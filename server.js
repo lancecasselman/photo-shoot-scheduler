@@ -1898,6 +1898,9 @@ app.post('/auth/session', async (req, res) => {
         }
         req.user = normalizedUser;
 
+        // Ensure user exists in database
+        await ensureUserInDatabase(normalizedUser);
+
         // Store Android auth info for mobile compatibility
         const userAgent = req.headers['user-agent'] || '';
         const isAndroid = userAgent.includes('Android');
@@ -2889,6 +2892,9 @@ app.post('/api/verify-auth', async (req, res) => {
         if (req.session) {
             req.session.user = normalizedUser;
         }
+        
+        // Ensure user exists in database
+        await ensureUserInDatabase(normalizedUser);
         
         // For Android apps, also store authentication token for fallback
         if (isAndroidApp && req.session) {
