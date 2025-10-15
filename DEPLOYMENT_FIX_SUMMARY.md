@@ -73,10 +73,11 @@ Expires: 0
 ## 🚀 **How to Access Your Fixed App**
 
 ### **Your Domains:**
-- **Published:** https://workspace.lancecasselman.repl.co
+- **Published (Replit):** https://photo-management.replit.app
+- **Published (Custom):** https://photomanagementsystem.com
 - **Dev Preview:** https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev
 
-**Both point to the same server!** The fix applies to both.
+**All point to the same Reserved VM server!** The cache fix applies to all domains.
 
 ### **For New Users:**
 ✅ They will automatically get the latest code (cache headers prevent caching)
@@ -141,4 +142,6 @@ Expires: 0
 
 Your app is now **production-ready** with proper cache control. Users will always see the latest version!
 
-**Published App:** https://workspace.lancecasselman.repl.co
+**Published App:** 
+- https://photo-management.replit.app
+- https://photomanagementsystem.com (custom domain)
