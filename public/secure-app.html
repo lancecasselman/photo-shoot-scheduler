@@ -7075,66 +7075,8 @@ ${agreement.content || 'No content available'}
             setMinDateTime();
         }
 
-        window.loadSessions = async function() {
-            try {
-                const response = await fetch('/api/sessions', {
-                    credentials: 'include' // Required for session cookies
-                });
-                if (response.ok) {
-                    const rawData = await response.json();
-                    console.log('Data type:', typeof rawData, 'Array:', Array.isArray(rawData));
-                    console.log('Raw API response:', rawData);
-                    
-                    // Debug deposit amount for Testing dammit session
-                    const testingSession = rawData.find(s => s.clientName === 'Testing dammit');
-                    console.log('Testing session deposit_amount from API:', testingSession?.depositAmount || 'NOT FOUND');
-                    
-                    // Transform and ensure deposit amounts are properly included
-                    sessions = rawData.map(session => ({
-                        ...session,
-                        depositAmount: session.depositAmount || session.deposit_amount || 0,
-                        reminderEnabled: session.sendReminder || false,
-                        reminderSent: session.reminderSent || false
-                    }));
-                    
-                    console.log('Transformed sessions:', sessions);
-                    console.log(`Successfully loaded ${sessions.length} sessions`);
-                    
-
-                    
-
-                    
-                    // Store sessions globally and render
-                    window.sessions = sessions;
-                    console.log('About to render sorted sessions...');
-                    if (typeof window.renderSessions === 'function') {
-                        window.renderSessions();
-                        console.log(' Sorted sessions rendered successfully');
-                        
-                    }
-                    
-                    // Remove any existing storage display elements from session cards
-                    setTimeout(() => {
-                        document.querySelectorAll('.session-total-storage').forEach(element => {
-                            element.remove();
-                        });
-                    }, 150);
-                    
-                    // Load global storage statistics after sessions are loaded
-                    console.log('Loading global storage statistics...');
-                    setTimeout(() => {
-                        loadGlobalStorageStats();
-                    }, 200);
-                } else if (response.status === 403) {
-                    const data = await response.json();
-                    if (data.requiresSubscription) {
-                        showSubscriptionModal(data.message);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading sessions:', error);
-            }
-        }
+        // REMOVED: Duplicate loadSessions function - now using the comprehensive version from script.js
+        // The script.js version includes all features: subscription handling, storage stats, and proper field transformation
         
         // Function to trigger immediate payment status refresh
         window.triggerImmediatePaymentRefresh = async function() {
