@@ -17175,12 +17175,22 @@ async function startServer() {
             console.log('AUTH: Authentication required for all access - no anonymous mode');
         }
         
-        // Initialize database asynchronously after server starts
+        // Initialize database - CRITICAL FOR PRODUCTION - Must succeed before accepting requests
         initializeDatabase().then(() => {
-            console.log('Database connected and ready');
+            console.log('✅ Database connected and ready - server is operational');
         }).catch(error => {
-            console.error('Database initialization failed, but server is running:', error.message);
-            console.log('Server will continue running. Database will retry connection on next request.');
+            console.error('❌ CRITICAL: Database initialization failed!', error);
+            console.error('Stack trace:', error.stack);
+            console.error('Server cannot operate without database - will retry initialization');
+            // Retry after 5 seconds
+            setTimeout(() => {
+                initializeDatabase().then(() => {
+                    console.log('✅ Database initialized successfully on retry');
+                }).catch(retryError => {
+                    console.error('❌ Database initialization failed on retry:', retryError.message);
+                    process.exit(1); // Exit if can't initialize database
+                });
+            }, 5000);
         });
     });
 
