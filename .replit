@@ -8,7 +8,7 @@ packages = ["android-tools", "firebase-tools", "freetype", "git-lfs", "gitFull",
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Stable Server"
+name = "Stable Server1"
 author = 44735007
 mode = "sequential"
 
@@ -17,7 +17,7 @@ task = "shell.exec"
 args = "node --max-old-space-size=512 server.js"
 
 [[workflows.workflow]]
-name = "Stable Server"
+name = "Stable Server2"
 mode = "parallel"
 author = "agent"
 
