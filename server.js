@@ -686,22 +686,46 @@ async function ensureUserInDatabase(user) {
     let client;
     try {
         client = await pool.connect();
-        await client.query(`
-            INSERT INTO users (
-                id, email, display_name, 
-                subscription_status, subscription_plan,
-                onboarding_completed, stripe_onboarding_complete,
-                ai_credits, platform_fee_percentage,
-                created_at, updated_at
-            )
-            VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
-            ON CONFLICT (id) DO UPDATE SET
-                email = EXCLUDED.email,
-                display_name = EXCLUDED.display_name,
-                updated_at = NOW()
-        `, [user.uid, user.email, user.displayName || user.email]);
         
-        console.log(`✅ User ensured in database: ${user.email} (ID: ${user.uid})`);
+        // First, check if user exists by ID
+        const existingUser = await client.query('SELECT id, email FROM users WHERE id = $1', [user.uid]);
+        
+        if (existingUser.rows.length > 0) {
+            // User exists by ID - update if needed
+            await client.query(`
+                UPDATE users 
+                SET email = $2, display_name = $3, updated_at = NOW()
+                WHERE id = $1
+            `, [user.uid, user.email, user.displayName || user.email]);
+            console.log(`✅ User updated in database: ${user.email} (ID: ${user.uid})`);
+        } else {
+            // User doesn't exist - try to insert, handling email conflicts
+            try {
+                await client.query(`
+                    INSERT INTO users (
+                        id, email, display_name, 
+                        subscription_status, subscription_plan,
+                        onboarding_completed, stripe_onboarding_complete,
+                        ai_credits, platform_fee_percentage,
+                        created_at, updated_at
+                    )
+                    VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
+                `, [user.uid, user.email, user.displayName || user.email]);
+                console.log(`✅ User created in database: ${user.email} (ID: ${user.uid})`);
+            } catch (insertError) {
+                // If email conflict, update the existing record to use the new ID
+                if (insertError.code === '23505' && insertError.constraint === 'users_email_unique') {
+                    await client.query(`
+                        UPDATE users 
+                        SET id = $1, display_name = $3, updated_at = NOW()
+                        WHERE email = $2
+                    `, [user.uid, user.email, user.displayName || user.email]);
+                    console.log(`✅ User merged in database (email existed): ${user.email} (ID: ${user.uid})`);
+                } else {
+                    throw insertError;
+                }
+            }
+        }
     } catch (dbError) {
         console.error('❌ Database error ensuring user exists:', dbError);
         // Don't throw - authentication can work without DB
