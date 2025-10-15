@@ -8,15 +8,6 @@ packages = ["android-tools", "firebase-tools", "freetype", "git-lfs", "gitFull",
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Stable Server"
-
-[[workflows.workflow]]
 name = "Stable Server"
 author = "agent"
 
