@@ -400,6 +400,7 @@ async function createAPISession(sessionData) {
         const response = await fetch('/api/sessions', {
             method: 'POST',
             headers,
+            credentials: 'include', // CRITICAL: Required for session cookies in published app
             body: JSON.stringify(sessionData)
         });
 
