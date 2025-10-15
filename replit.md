@@ -25,22 +25,30 @@ Built on a Node.js/Express server for API routes and business logic. Authenticat
 ### Authentication & Authorization
 Firebase Authentication supports email/password and Google OAuth with role-based access. Server-side session management incorporates critical safety checks to prevent crashes and dynamic CORS configuration for secure session cookie handling in production. Session consolidation unifies user accounts, particularly for administrators, ensuring consistent access across platforms.
 
+**Firebase Integration (October 2025):**
+Unified Firebase configuration across all frontend and backend components:
+- **Project:** photoshcheduleapp
+- **Auth Domain:** photoshcheduleapp.firebaseapp.com
+- **Backend:** Firebase Admin SDK with service account authentication
+- **Frontend:** Firebase SDK v10.7.1 (modular) and v9.0.0 (compat)
+- **Centralized Config:** `public/firebase-config.js` for consistency
+
 **Critical Authentication Bug Fixes (October 2025):**
 Fixed fundamental authentication flow issues causing 401 errors and preventing user access:
 
-1. **Wrong Login Endpoint:** All login flows (secure-login.html, secure-app.html, native-auth.js) were calling `/auth/session` but backend expected `/api/auth/login`
-   - Fixed: Updated all Firebase auth handlers to POST to `/api/auth/login` with credentials: 'include'
+1. **Duplicate Script.js File:** Root-level `script.js` (outdated) was being served instead of `public/script.js`
+   - Fixed: Removed duplicate, configured static file serving to prioritize `public/` directory
+   - Fixed: Updated redirect code to properly send users to `/secure-login.html` when not authenticated
 
-2. **Premature Session Loading:** DOMContentLoaded handler in script.js (line 1861) was calling `loadSessions()` before authentication completed
-   - Fixed: Removed unconditional loadSessions() call, now only called after successful authentication in initializePage()
+2. **Inconsistent Firebase Configs:** Some files used wrong Firebase project (photoappstorage)
+   - Fixed: Updated all files to use correct project (photoshcheduleapp)
+   - Fixed: Created centralized `firebase-config.js` for future consistency
 
-3. **Duplicate Auth Logic:** secure-app.html had its own DOMContentLoaded auth check that raced with script.js's initializePage()
-   - Fixed: Removed duplicate auth system, unified all auth through initializePage() on window.load event
+3. **Missing Login Redirect:** When authentication failed, users saw blank page with 401 errors
+   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails
+   - Fixed: Removed outdated script.js that had `return;` instead of redirect
 
-4. **Missing Login Redirect:** When authentication failed, users saw blank page instead of login screen
-   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails (script.js line 3884)
-
-5. **Session Persistence Issues:** Iframe environment blocking session cookies
+4. **Session Persistence Issues:** Iframe environment blocking session cookies
    - Verified: Session middleware configured with `secure: true`, `sameSite: 'none'`, dynamic CORS origin callback
    - Verified: All fetch calls include `credentials: 'include'`
 
@@ -50,11 +58,13 @@ Fixed fundamental authentication flow issues causing 401 errors and preventing u
 3. checkAuth() verifies session with /api/auth/user
 4. If not authenticated → redirect to /secure-login.html
 5. User logs in with Google → Firebase token sent to /api/auth/login
-6. Backend creates session with normalized user data (all Lance emails → uid 44735007)
-7. User redirected to /secure-app.html
-8. checkAuth() succeeds → loadSessions() loads all sessions
+6. Backend verifies token with Firebase Admin SDK
+7. Backend creates session with normalized user data (all Lance emails → uid 44735007)
+8. Backend stores session in PostgreSQL
+9. User redirected to /secure-app.html
+10. checkAuth() succeeds → loadSessions() loads all sessions ✅
 
-**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails (line 169-179 in subscription-auth-middleware.js)
+**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails
 
 ### Database Architecture
 Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firestore for real-time synchronization.
