@@ -8,17 +8,16 @@ packages = ["android-tools", "firebase-tools", "freetype", "git-lfs", "gitFull",
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Stable Server1"
-author = 44735007
-mode = "sequential"
+name = "Project"
+mode = "parallel"
+author = "agent"
 
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node --max-old-space-size=512 server.js"
+task = "workflow.run"
+args = "Stable Server"
 
 [[workflows.workflow]]
-name = "Stable Server2"
-mode = "parallel"
+name = "Stable Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -32,10 +31,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33485
-externalPort = 5000
 
 [[ports]]
 localPort = 36409
@@ -60,6 +55,10 @@ externalPort = 3001
 [[ports]]
 localPort = 44247
 externalPort = 4200
+
+[[ports]]
+localPort = 44375
+externalPort = 5000
 
 
 [deployment]
