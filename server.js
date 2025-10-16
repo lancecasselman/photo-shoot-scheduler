@@ -9053,7 +9053,7 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                 console.log(`✅ Free download allowed (${downloadCount + 1}/${freeDownloadLimit})`);
                 
                 // Generate download token
-                const token = crypto.randomBytes(32).toString('hex');
+                const token = require('crypto').randomBytes(32).toString('hex');
                 const tokenId = uuidv4();
                 const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
                 
@@ -9130,8 +9130,7 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                             currency: 'usd',
                             product_data: {
                                 name: `Photo Download - ${filename}`,
-                                description: 'High-resolution digital photo download',
-                                images: photoUrl ? [photoUrl] : []
+                                description: 'High-resolution digital photo download'
                             },
                             unit_amount: amountInCents
                         },

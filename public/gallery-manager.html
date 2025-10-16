@@ -1247,9 +1247,8 @@
                 modal.innerHTML = `
                     <div class="preview-modal-content">
                         <button class="preview-close" onclick="this.closest('.preview-modal').remove()">✕</button>
-                        <img src="/api/sessions/${this.sessionId}/files/${this.folderType}/full/${encodeURIComponent(filename)}" 
-                             alt="${this.escapeHtml(filename)}"
-                             onerror="this.src='/api/sessions/${this.sessionId}/files/${this.folderType}/thumbnail/${encodeURIComponent(filename)}'">
+                        <img src="/api/sessions/${this.sessionId}/files/${this.folderType}/thumbnail/${encodeURIComponent(filename)}" 
+                             alt="${this.escapeHtml(filename)}">
                         <div class="preview-filename">${this.escapeHtml(filename)}</div>
                     </div>
                 `;
