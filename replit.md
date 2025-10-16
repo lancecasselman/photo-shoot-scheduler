@@ -66,10 +66,14 @@ Cloudflare R2 is the primary cloud storage, using human-readable file organizati
 **R2 Download Path Fix (October 2025):**
 Fixed critical issue where photo downloads failed due to R2 path mismatch:
 - **Problem**: Download system was regenerating R2 paths instead of using stored `r2_key` from database, causing "specified key does not exist" errors
-- **Root Cause**: Files stored at human-readable paths like `photographer-lance_casselman/session-lance/gallery/` were being looked up at incorrect regenerated paths
-- **Solution**: Updated thumbnail endpoint (server.js line 4736) to use `downloadFileBuffer(r2_key)` directly from session_files table
-- **Fallback**: R2FileManager.downloadFile() now includes database-lookup fallback for files with stored r2_keys
+- **Root Cause**: Files stored at human-readable paths like `photographer-lance_casselman/session-lance/gallery/` were being looked up at incorrect regenerated paths like `photographer-44735007/session-{uuid}/gallery/`
+- **Solution**: 
+  - Updated thumbnail endpoint (server.js line 4736) to use `downloadFileBuffer(r2_key)` directly from session_files table
+  - Fixed download endpoint for re-downloads (server.js line 9196-9222) to query r2_key from session_files instead of reconstructing paths
+  - Fixed download endpoint for free downloads (server.js line 9281-9300) to query r2_key from session_files instead of reconstructing paths
+- **Fallback**: R2FileManager.downloadFile() includes database-lookup fallback for files with stored r2_keys
 - **Result**: Gallery downloads now working correctly for files with proper R2 keys (verified with 28-38MB photo downloads)
+- **Payment Logic**: All payment checks preserved - re-downloads are free, first-time downloads check free limit, paid downloads redirect to Stripe
 
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
