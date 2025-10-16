@@ -36,6 +36,22 @@
             color: #2d3748;
             margin-bottom: 10px;
         }
+
+        /* Download Counter Display */
+        .download-counter {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .download-counter.paid {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
         
         .session-info {
             background: white;
@@ -124,41 +140,30 @@
             transform: scale(1.08);
             filter: brightness(1.1) contrast(1.05);
         }
-        
-        /* Photo Overlay with Quick Order Button */
-        .photo-overlay {
+
+        /* Downloaded Badge */
+        .downloaded-badge {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            padding: 15px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .photo-item:hover .photo-overlay {
-            transform: translateY(0);
-        }
-        
-        .quick-order-btn {
+            top: 10px;
+            right: 10px;
             background: #48bb78;
             color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
             font-weight: 600;
-            width: 100%;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 1;
+        }
+
+        .downloaded-badge::before {
+            content: '✓';
+            font-size: 1.2rem;
         }
         
-        .quick-order-btn:hover {
-            background: #38a169;
-            transform: scale(1.05);
-        }
-        
-        /* Lightbox Modal - PROVEN STRUCTURE */
+        /* Lightbox Modal */
         .lightbox-modal {
             display: none;
             position: fixed;
@@ -178,7 +183,6 @@
             display: flex;
         }
 
-        /* Image takes most space but leaves room for controls */
         .lightbox-image {
             max-width: 90%;
             max-height: 70vh;
@@ -188,7 +192,6 @@
             flex-shrink: 1;
         }
 
-        /* Controls below image - always visible */
         .lightbox-controls {
             position: relative;
             display: flex;
@@ -202,34 +205,6 @@
             margin-top: 20px;
             justify-content: center;
             align-items: center;
-        }
-
-        /* Order Print button - guaranteed visible */
-        .order-print-btn {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: relative;
-            padding: 12px 24px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            min-height: 44px;
-            min-width: 140px;
-            transition: all 0.3s ease;
-        }
-
-        .order-print-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-        }
-
-        .order-print-btn:active {
-            transform: translateY(0);
         }
 
         .download-btn {
@@ -250,6 +225,35 @@
         .download-btn:hover {
             background: #1976D2;
             transform: translateY(-2px);
+        }
+
+        .download-btn.free {
+            background: #48bb78;
+        }
+
+        .download-btn.free:hover {
+            background: #38a169;
+        }
+
+        .download-btn.paid {
+            background: #f59e0b;
+        }
+
+        .download-btn.paid:hover {
+            background: #d97706;
+        }
+
+        .download-btn.redownload {
+            background: #10b981;
+        }
+
+        .download-btn.redownload:hover {
+            background: #059669;
+        }
+
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .close-lightbox {
@@ -275,202 +279,6 @@
             transform: scale(1.1);
         }
         
-        /* Print Options Modal */
-        .print-options-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 11000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .print-options-modal.active {
-            display: flex;
-        }
-        
-        .print-options-content {
-            background: white;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 15px;
-            padding: 30px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .size-options {
-            display: grid;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        
-        .size-option {
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .size-option:hover {
-            border-color: #667eea;
-            background: #f7fafc;
-        }
-        
-        .size-option.selected {
-            border-color: #4CAF50;
-            background: #f0fdf4;
-        }
-        
-        .finish-options {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f7fafc;
-            border-radius: 10px;
-        }
-        
-        .finish-options label {
-            display: block;
-            padding: 10px;
-            cursor: pointer;
-        }
-        
-        .finish-options input[type="radio"] {
-            margin-right: 10px;
-        }
-        
-        .add-to-cart-btn {
-            width: 100%;
-            padding: 15px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .add-to-cart-btn:hover {
-            background: #45a049;
-        }
-        
-        /* Shopping Cart */
-        .cart-icon {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #667eea;
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .cart-icon.visible {
-            display: flex;
-        }
-        
-        .cart-icon:hover {
-            transform: scale(1.1);
-            background: #5a67d8;
-        }
-        
-        .cart-count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #f56565;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        /* Cart Modal */
-        .cart-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 11000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .cart-modal.active {
-            display: flex;
-        }
-        
-        .cart-content {
-            background: white;
-            width: 90%;
-            max-width: 800px;
-            border-radius: 15px;
-            padding: 30px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .cart-item {
-            display: flex;
-            gap: 20px;
-            padding: 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .cart-item img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        
-        .checkout-btn {
-            background: #48bb78;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        .checkout-btn:hover {
-            background: #38a169;
-        }
-        
         .back-btn {
             background: #667eea;
             color: white;
@@ -494,7 +302,6 @@
             color: #718096;
         }
         
-        /* Success Toast */
         .toast {
             position: fixed;
             bottom: 100px;
@@ -508,6 +315,10 @@
             z-index: 12000;
             animation: slideUp 0.3s ease;
         }
+
+        .toast.error {
+            background: #f56565;
+        }
         
         @keyframes slideUp {
             from {
@@ -518,6 +329,12 @@
                 transform: translateX(-50%) translateY(0);
                 opacity: 1;
             }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #4a5568;
         }
         
         @media (max-width: 768px) {
@@ -535,7 +352,6 @@
                 gap: 10px;
             }
             
-            .order-print-btn,
             .download-btn {
                 width: 100%;
             }
@@ -546,209 +362,179 @@
     <div class="container">
         <div class="header">
             <h1 id="galleryTitle">Photo Gallery</h1>
-            <button class="back-btn" onclick="goBack()">← Back to Sessions</button>
-        </div>
-        
-        <div class="session-info" id="sessionInfo">
-            <!-- Session details will be loaded here -->
+            <div id="downloadCounter" class="download-counter" style="display: none;"></div>
         </div>
         
         <div class="gallery-container">
             <div class="gallery-header">
                 <h2>Gallery Photos</h2>
-                <span class="photo-count" id="photoCount">0 photos</span>
+                <span class="photo-count" id="photoCount">Loading...</span>
             </div>
             <div class="photo-grid" id="galleryGrid">
-                <!-- Photos will be loaded here -->
+                <div class="loading">Loading gallery...</div>
             </div>
         </div>
     </div>
     
-    <!-- Lightbox Modal - Restructured for Visibility -->
+    <!-- Lightbox Modal -->
     <div class="lightbox-modal" id="lightbox">
         <span class="close-lightbox" onclick="closeLightbox()">×</span>
         <img class="lightbox-image" id="lightbox-img" src="" alt="Full size image">
         <div class="lightbox-controls">
-            <button onclick="orderPrintFromLightbox()" class="order-print-btn">🛒 Order Print</button>
-            <button onclick="downloadImage()" class="download-btn">📥 Download</button>
-        </div>
-    </div>
-    
-    <!-- Print Options Modal -->
-    <div class="print-options-modal" id="printModal">
-        <div class="print-options-content">
-            <h2>Select Print Options</h2>
-            <img id="printPreview" style="width: 100%; max-height: 200px; object-fit: contain; margin: 20px 0; border-radius: 10px;">
-            
-            <h3>Size</h3>
-            <div class="size-options">
-                <div class="size-option" data-size="4x6" data-price="12.00">
-                    <span>4x6" - Perfect for albums</span>
-                    <strong>$12.00</strong>
-                </div>
-                <div class="size-option" data-size="5x7" data-price="15.00">
-                    <span>5x7" - Great for desk displays</span>
-                    <strong>$15.00</strong>
-                </div>
-                <div class="size-option" data-size="8x10" data-price="25.00">
-                    <span>8x10" - Ideal for wall display</span>
-                    <strong>$25.00</strong>
-                </div>
-                <div class="size-option" data-size="11x14" data-price="35.00">
-                    <span>11x14" - Statement piece</span>
-                    <strong>$35.00</strong>
-                </div>
-                <div class="size-option" data-size="16x20" data-price="55.00">
-                    <span>16x20" - Gallery-worthy</span>
-                    <strong>$55.00</strong>
-                </div>
-                <div class="size-option" data-size="20x30" data-price="95.00">
-                    <span>20x30" - Large format</span>
-                    <strong>$95.00</strong>
-                </div>
-            </div>
-            
-            <h3>Finish</h3>
-            <div class="finish-options">
-                <label>
-                    <input type="radio" name="finish" value="lustre" checked>
-                    <strong>Lustre</strong> - Most popular, fingerprint resistant
-                </label>
-                <label>
-                    <input type="radio" name="finish" value="glossy">
-                    <strong>Glossy</strong> - Vibrant colors, high shine
-                </label>
-                <label>
-                    <input type="radio" name="finish" value="matte">
-                    <strong>Matte</strong> - No glare, artistic look
-                </label>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="closePrintModal()" style="flex: 1; padding: 12px; border: 2px solid #e2e8f0; background: white; border-radius: 8px; cursor: pointer;">Cancel</button>
-                <button onclick="addToCart()" class="add-to-cart-btn">Add to Cart</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Shopping Cart Icon -->
-    <div id="cartIcon" class="cart-icon" onclick="showCart()">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 2L6 9H3l3 13h12l3-13h-3l-3-7"/>
-            <path d="M9 9h6"/>
-        </svg>
-        <span class="cart-count">0</span>
-    </div>
-    
-    <!-- Cart Modal -->
-    <div class="cart-modal" id="cartModal">
-        <div class="cart-content">
-            <h2>Shopping Cart</h2>
-            <div id="cartItems"></div>
-            <div id="cartTotal" style="font-size: 20px; font-weight: bold; margin-top: 20px;"></div>
-            <button class="checkout-btn" onclick="checkout()">Proceed to Checkout</button>
-            <button onclick="closeCart()" style="width: 100%; margin-top: 10px; padding: 12px; border: 2px solid #e2e8f0; background: white; border-radius: 8px; cursor: pointer;">Continue Shopping</button>
+            <button id="downloadBtn" onclick="downloadPhoto()" class="download-btn">📥 Download</button>
         </div>
     </div>
     
     <script>
-        let session = null;
+        let galleryToken = null;
         let sessionId = null;
-        let cart = [];
-        let currentImage = null;
+        let sessionData = null;
+        let clientKey = null;
+        let photos = [];
+        let downloadedPhotos = new Set();
+        let currentPhoto = null;
+        let freeDownloadLimit = 0;
+        let pricePerPhoto = 0;
+        
+        // SHA-256 hash function for client key generation
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // Generate client key (must match server algorithm exactly)
+        async function generateClientKey(galleryAccessToken, sessionId) {
+            if (!galleryAccessToken || !sessionId) {
+                throw new Error('Gallery token and session ID required for client key generation');
+            }
+            
+            const baseString = `${galleryAccessToken}-${sessionId}`;
+            const hashHex = await sha256(baseString);
+            const clientKey = `gallery-${hashHex.substring(0, 16)}`;
+            
+            console.log(`🔑 Generated client key: ${clientKey}`);
+            return clientKey;
+        }
         
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get session ID from URL - handle both path and query parameter formats
-            const pathMatch = window.location.pathname.match(/\/sessions\/([^\/]+)\/gallery/);
-            if (pathMatch) {
-                sessionId = pathMatch[1];
-            } else {
-                // Fallback to query parameter
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Extract gallery token from URL
                 const urlParams = new URLSearchParams(window.location.search);
-                sessionId = urlParams.get('session');
-            }
-            
-            if (sessionId) {
-                loadSession();
-            } else {
-                showError('Invalid session ID');
-            }
-            
-            // Load cart from localStorage
-            const savedCart = localStorage.getItem('printCart');
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
-                updateCartDisplay();
-            }
-            
-            // Add click handlers for size options
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.size-option')) {
-                    document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('selected'));
-                    e.target.closest('.size-option').classList.add('selected');
+                galleryToken = urlParams.get('token');
+                
+                // Fallback: try to get from URL path
+                if (!galleryToken) {
+                    const pathParts = window.location.pathname.split('/');
+                    const lastSegment = pathParts[pathParts.length - 1];
+                    if (lastSegment && lastSegment !== 'gallery.html' && lastSegment !== '') {
+                        galleryToken = lastSegment;
+                    }
                 }
-            });
+                
+                if (!galleryToken) {
+                    showError('Invalid gallery access link');
+                    return;
+                }
+                
+                console.log('🔑 Gallery token extracted:', galleryToken.substring(0, 8) + '...');
+                
+                // Load gallery data
+                await loadGallery();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to initialize gallery');
+            }
         });
 
-        async function loadSession() {
+        async function loadGallery() {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}`);
-                if (response.ok) {
-                    session = await response.json();
-                    renderSessionInfo();
-                    renderGallery();
-                } else {
-                    showError('Session not found');
+                console.log('📸 Loading gallery with token:', galleryToken.substring(0, 8) + '...');
+                
+                // Fetch session data from verification endpoint
+                const response = await fetch(`/api/gallery/${galleryToken}/verify`);
+                
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        showError('Invalid or expired gallery access link');
+                    } else if (response.status === 410) {
+                        showError('This gallery has expired');
+                    } else {
+                        showError('Failed to load gallery');
+                    }
+                    return;
                 }
+                
+                const data = await response.json();
+                sessionData = data.session;
+                sessionId = data.sessionId;
+                photos = sessionData.photos || [];
+                
+                // Extract download settings
+                freeDownloadLimit = parseInt(sessionData.freeDownloads) || 0;
+                pricePerPhoto = parseFloat(sessionData.pricePerDownload) || 0;
+                
+                // Generate client key
+                clientKey = await generateClientKey(galleryToken, sessionId);
+                
+                console.log('✅ Gallery loaded:', {
+                    sessionId,
+                    clientName: sessionData.clientName,
+                    photoCount: photos.length,
+                    freeDownloadLimit,
+                    pricePerPhoto,
+                    clientKey
+                });
+                
+                // Check which photos have been downloaded
+                await checkDownloadedPhotos();
+                
+                // Render gallery
+                renderGallery();
+                updateDownloadCounter();
+                
             } catch (error) {
-                console.error('Error loading session:', error);
-                showError('Error loading session');
+                console.error('❌ Error loading gallery:', error);
+                showError('Error loading gallery: ' + error.message);
             }
         }
 
-        function renderSessionInfo() {
-            if (!session) return;
+        async function checkDownloadedPhotos() {
+            try {
+                // Load from localStorage (persists across page reloads)
+                const storageKey = `downloaded_photos_${sessionId}_${clientKey}`;
+                const stored = localStorage.getItem(storageKey);
+                
+                if (stored) {
+                    const storedPhotos = JSON.parse(stored);
+                    storedPhotos.forEach(photoId => downloadedPhotos.add(photoId));
+                    console.log('📊 Loaded downloaded photos from storage:', Array.from(downloadedPhotos));
+                }
+            } catch (error) {
+                console.warn('Could not load download history from storage:', error);
+            }
+        }
 
-            document.getElementById('galleryTitle').textContent = `${session.clientName} - ${session.sessionType}`;
-            
-            const sessionInfo = document.getElementById('sessionInfo');
-            sessionInfo.innerHTML = `
-                <div class="session-details">
-                    <div class="detail-item">
-                        <span class="detail-label">Client:</span>
-                        <span class="detail-value">${session.clientName}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Type:</span>
-                        <span class="detail-value">${session.sessionType}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Date:</span>
-                        <span class="detail-value">${formatDateTime(session.dateTime)}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Location:</span>
-                        <span class="detail-value">${session.location}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Phone:</span>
-                        <span class="detail-value">${session.phoneNumber}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email:</span>
-                        <span class="detail-value">${session.email}</span>
-                    </div>
-                </div>
-            `;
+        function saveDownloadedPhotos() {
+            try {
+                const storageKey = `downloaded_photos_${sessionId}_${clientKey}`;
+                localStorage.setItem(storageKey, JSON.stringify(Array.from(downloadedPhotos)));
+            } catch (error) {
+                console.warn('Could not save download history:', error);
+            }
         }
 
         function renderGallery() {
-            if (!session) return;
-
-            const photos = session.photos || [];
             const photoCountEl = document.getElementById('photoCount');
             const galleryGrid = document.getElementById('galleryGrid');
+            const galleryTitle = document.getElementById('galleryTitle');
+            
+            // Update title
+            galleryTitle.textContent = `${sessionData.clientName} - Gallery`;
             
             photoCountEl.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
 
@@ -761,85 +547,93 @@
                 `;
                 return;
             }
-
-            // BULLETPROOF PHOTO RENDERING: Verify photos match client name
-            console.log(`🔒 RENDERING VERIFIED PHOTOS for ${session.clientName}:`, {
-                sessionId: sessionId,
-                clientName: session.clientName,
-                photoCount: photos.length,
-                photosToRender: photos.map(p => p.url || p.filename)
-            });
             
             galleryGrid.innerHTML = photos.map((photo, index) => {
-                // STRICT: Only render verified photo.url structure
                 const photoUrl = photo.url || '/placeholder-image.jpg';
-                const photoFilename = photo.filename || `${session.clientName}_Photo_${index + 1}.jpg`;
-                
-                console.log(`✅ VERIFIED PHOTO ${index + 1} for ${session.clientName}:`, {
-                    url: photoUrl,
-                    filename: photoFilename
-                });
+                const photoFilename = photo.filename || `photo_${index + 1}.jpg`;
+                const photoId = photo.filename || `photo_${index}`;
+                const isDownloaded = downloadedPhotos.has(photoId);
                 
                 return `
-                <div class="photo-item" data-photo-id="${index}" data-photo-url="${photoUrl}" data-photo-name="${photoFilename}">
-                    <img src="${photoUrl}" alt="Session photo" loading="lazy" onerror="this.src='/placeholder-image.jpg'">
-                    <div class="photo-overlay">
-                        <button class="quick-order-btn" onclick="event.stopPropagation(); quickOrder(${index})">Order Print</button>
-                    </div>
-                    <div class="photo-verification">
-                        <small>✅ ${session.clientName} - Photo ${index + 1}</small>
-                    </div>
+                <div class="photo-item" data-photo-index="${index}" data-photo-id="${photoId}" data-photo-url="${photoUrl}" data-photo-name="${photoFilename}">
+                    <img src="${photoUrl}" alt="Gallery photo" loading="lazy" onerror="this.src='/placeholder-image.jpg'">
+                    ${isDownloaded ? '<div class="downloaded-badge">Downloaded</div>' : ''}
                 </div>
                 `;
             }).join('');
             
             // Add click handlers to open lightbox
             document.querySelectorAll('.photo-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!e.target.closest('.quick-order-btn')) {
-                        openLightbox(this);
-                    }
+                item.addEventListener('click', function() {
+                    openLightbox(this);
                 });
             });
         }
+
+        function updateDownloadCounter() {
+            const counterEl = document.getElementById('downloadCounter');
+            const downloadCount = downloadedPhotos.size;
+            const remainingFree = Math.max(0, freeDownloadLimit - downloadCount);
+            
+            if (freeDownloadLimit > 0) {
+                if (remainingFree > 0) {
+                    counterEl.textContent = `Free downloads remaining: ${remainingFree}`;
+                    counterEl.className = 'download-counter';
+                } else {
+                    counterEl.textContent = `All downloads: $${pricePerPhoto.toFixed(2)} per photo`;
+                    counterEl.className = 'download-counter paid';
+                }
+            } else if (pricePerPhoto > 0) {
+                counterEl.textContent = `All downloads: $${pricePerPhoto.toFixed(2)} per photo`;
+                counterEl.className = 'download-counter paid';
+            } else {
+                counterEl.textContent = 'Free unlimited downloads';
+                counterEl.className = 'download-counter';
+            }
+            
+            counterEl.style.display = 'inline-block';
+        }
         
         function openLightbox(photoElement) {
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightbox-img');
+            const photoIndex = parseInt(photoElement.dataset.photoIndex);
+            const photoId = photoElement.dataset.photoId;
+            const photoUrl = photoElement.dataset.photoUrl;
+            const photoName = photoElement.dataset.photoName;
             
-            // Store current image data
-            currentImage = {
-                url: photoElement.dataset.photoUrl,
-                filename: photoElement.dataset.photoName,
-                index: photoElement.dataset.photoId
+            currentPhoto = {
+                index: photoIndex,
+                id: photoId,
+                url: photoUrl,
+                filename: photoName,
+                isDownloaded: downloadedPhotos.has(photoId)
             };
             
-            // Set image source
-            lightboxImg.src = currentImage.url;
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const downloadBtn = document.getElementById('downloadBtn');
             
-            // Show lightbox
+            lightboxImg.src = photoUrl;
+            
+            // Update download button based on status
+            const downloadCount = downloadedPhotos.size;
+            const remainingFree = Math.max(0, freeDownloadLimit - downloadCount);
+            
+            if (currentPhoto.isDownloaded) {
+                downloadBtn.textContent = '📥 Re-download Free';
+                downloadBtn.className = 'download-btn redownload';
+            } else if (remainingFree > 0) {
+                downloadBtn.textContent = '📥 Download Free';
+                downloadBtn.className = 'download-btn free';
+            } else if (pricePerPhoto > 0) {
+                downloadBtn.textContent = `📥 Download - $${pricePerPhoto.toFixed(2)}`;
+                downloadBtn.className = 'download-btn paid';
+            } else {
+                downloadBtn.textContent = '📥 Download';
+                downloadBtn.className = 'download-btn';
+            }
+            
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
-            
-            // CRITICAL: Force button visibility after modal opens
-            setTimeout(() => {
-                const orderBtn = lightbox.querySelector('.order-print-btn');
-                const downloadBtn = lightbox.querySelector('.download-btn');
-                
-                if (orderBtn) {
-                    orderBtn.style.display = 'inline-block';
-                    orderBtn.style.visibility = 'visible';
-                    orderBtn.style.opacity = '1';
-                    // Ensure button is in viewport
-                    orderBtn.scrollIntoView({ block: 'nearest', behavior: 'instant' });
-                }
-                
-                if (downloadBtn) {
-                    downloadBtn.style.display = 'inline-block';
-                    downloadBtn.style.visibility = 'visible';
-                    downloadBtn.style.opacity = '1';
-                }
-            }, 100);
         }
         
         function closeLightbox() {
@@ -848,161 +642,89 @@
             document.body.style.overflow = '';
         }
         
-        function quickOrder(photoIndex) {
-            const photo = session.photos[photoIndex];
-            currentImage = {
-                url: photo.url,
-                filename: photo.filename || 'photo.jpg',
-                index: photoIndex
-            };
-            showPrintOptions();
-        }
-        
-        function orderPrintFromLightbox() {
-            showPrintOptions();
-        }
-        
-        function showPrintOptions() {
-            if (!currentImage) return;
-            
-            const modal = document.getElementById('printModal');
-            const preview = document.getElementById('printPreview');
-            
-            preview.src = currentImage.url;
-            modal.classList.add('active');
-            
-            // Reset selection
-            document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('selected'));
-        }
-        
-        function closePrintModal() {
-            const modal = document.getElementById('printModal');
-            modal.classList.remove('active');
-        }
-        
-        function addToCart() {
-            const selectedSize = document.querySelector('.size-option.selected');
-            if (!selectedSize) {
-                showToast('Please select a print size');
+        async function downloadPhoto() {
+            if (!currentPhoto || !sessionId || !clientKey) {
+                showToast('Download not available', 'error');
                 return;
             }
             
-            const selectedFinish = document.querySelector('input[name="finish"]:checked');
-            
-            const item = {
-                photo: currentImage.url,
-                filename: currentImage.filename,
-                size: selectedSize.dataset.size,
-                price: parseFloat(selectedSize.dataset.price),
-                finish: selectedFinish.value,
-                quantity: 1
-            };
-            
-            cart.push(item);
-            localStorage.setItem('printCart', JSON.stringify(cart));
-            
-            updateCartDisplay();
-            closePrintModal();
-            showToast('Added to cart!');
-        }
-        
-        function updateCartDisplay() {
-            const cartIcon = document.getElementById('cartIcon');
-            const cartCount = cartIcon.querySelector('.cart-count');
-            
-            if (cart.length > 0) {
-                cartIcon.classList.add('visible');
-                cartCount.textContent = cart.length;
-            } else {
-                cartIcon.classList.remove('visible');
-            }
-        }
-        
-        function showCart() {
-            const modal = document.getElementById('cartModal');
-            const cartItems = document.getElementById('cartItems');
-            const cartTotal = document.getElementById('cartTotal');
-            
-            if (cart.length === 0) {
-                cartItems.innerHTML = '<p>Your cart is empty</p>';
-                cartTotal.textContent = '';
-            } else {
-                cartItems.innerHTML = cart.map((item, index) => `
-                    <div class="cart-item">
-                        <img src="${item.photo}" alt="Print">
-                        <div style="flex: 1;">
-                            <h4>${item.size}" ${item.finish} Print</h4>
-                            <p>$${item.price.toFixed(2)}</p>
-                        </div>
-                        <button onclick="removeFromCart(${index})" style="padding: 5px 10px; background: #f56565; color: white; border: none; border-radius: 5px; cursor: pointer;">Remove</button>
-                    </div>
-                `).join('');
-                
-                const total = cart.reduce((sum, item) => sum + item.price, 0);
-                cartTotal.textContent = `Total: $${total.toFixed(2)}`;
-            }
-            
-            modal.classList.add('active');
-        }
-        
-        function closeCart() {
-            const modal = document.getElementById('cartModal');
-            modal.classList.remove('active');
-        }
-        
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            localStorage.setItem('printCart', JSON.stringify(cart));
-            updateCartDisplay();
-            showCart(); // Refresh cart display
-        }
-        
-        async function checkout() {
-            if (cart.length === 0) {
-                showToast('Your cart is empty');
-                return;
-            }
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Processing...';
             
             try {
-                const response = await fetch('/api/print/checkout', {
+                console.log('📥 Initiating download:', {
+                    sessionId,
+                    photoId: currentPhoto.id,
+                    clientKey: clientKey.substring(0, 16) + '...',
+                    isRedownload: currentPhoto.isDownloaded
+                });
+                
+                const response = await fetch(`/api/gallery/${sessionId}/download`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        sessionId: sessionId,
-                        items: cart
+                        photoId: currentPhoto.id,
+                        clientKey: clientKey,
+                        photoUrl: currentPhoto.url,
+                        filename: currentPhoto.filename
                     })
                 });
                 
                 const data = await response.json();
                 
-                if (data.checkoutUrl) {
-                    window.location.href = data.checkoutUrl;
-                } else {
-                    showToast('Checkout processing...');
-                    // Clear cart after successful order
-                    cart = [];
-                    localStorage.removeItem('printCart');
-                    updateCartDisplay();
-                    closeCart();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Download failed');
                 }
+                
+                console.log('✅ Download response:', data);
+                
+                if (data.success) {
+                    if (data.checkoutUrl) {
+                        // Paid download - redirect to Stripe checkout
+                        console.log('💳 Redirecting to Stripe checkout...');
+                        window.location.href = data.checkoutUrl;
+                    } else if (data.downloadUrl) {
+                        // Free or re-download - start download immediately
+                        console.log('✅ Starting download...');
+                        
+                        // Create temporary link and trigger download
+                        const link = document.createElement('a');
+                        link.href = data.downloadUrl;
+                        link.download = currentPhoto.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Mark as downloaded and save to localStorage
+                        if (!currentPhoto.isDownloaded) {
+                            downloadedPhotos.add(currentPhoto.id);
+                            saveDownloadedPhotos();
+                            renderGallery();
+                            updateDownloadCounter();
+                        }
+                        
+                        showToast(data.redownload ? 'Re-download started!' : 'Download started!');
+                        closeLightbox();
+                    }
+                } else {
+                    throw new Error(data.error || 'Download failed');
+                }
+                
             } catch (error) {
-                console.error('Checkout error:', error);
-                showToast('Error processing checkout');
+                console.error('❌ Download error:', error);
+                showToast(error.message || 'Download failed', 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                // Button text will be reset when lightbox reopens
             }
         }
         
-        function downloadImage() {
-            if (!currentImage) return;
-            
-            const link = document.createElement('a');
-            link.href = currentImage.url;
-            link.download = currentImage.filename;
-            link.click();
-        }
-        
-        function showToast(message) {
+        function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = 'toast';
+            toast.className = `toast ${type}`;
             toast.textContent = message;
             document.body.appendChild(toast);
             
@@ -1019,15 +741,6 @@
                     <p>${message}</p>
                 </div>
             `;
-        }
-        
-        function formatDateTime(dateTime) {
-            const date = new Date(dateTime);
-            return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
-        }
-        
-        function goBack() {
-            window.location.href = '/secure-app.html';
         }
     </script>
 </body>
