@@ -1277,3 +1277,194 @@ export const dataExportRequests = pgTable("data_export_requests", {
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// ========================================================================================
+// MISSING TABLES - Added to fix deployment conflicts
+// ========================================================================================
+
+// 1. Business Settings table
+export const businessSettings = pgTable("business_settings", {
+  id: varchar("id").primaryKey().notNull(), // UUID
+  userId: text("user_id").notNull().unique(),
+  businessName: text("business_name"),
+  location: text("location"),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  logoFilename: text("logo_filename"),
+  themeColor: text("theme_color").default("#d4af37"),
+  tagline: text("tagline"),
+  photographyStyle: text("photography_style"),
+  currency: text("currency").default("USD"),
+  taxRate: decimal("tax_rate"),
+  enableEmail: boolean("enable_email").default(true),
+  enableSms: boolean("enable_sms").default(false),
+  autoReminders: boolean("auto_reminders").default(true),
+  welcomeEmailTemplate: text("welcome_email_template"),
+  onboardingCompleted: boolean("onboarding_completed").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+// 2. Session Types table
+export const sessionTypes = pgTable("session_types", {
+  id: varchar("id").primaryKey().notNull(), // UUID
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  price: decimal("price").notNull(),
+  duration: integer("duration").notNull(),
+  deliverables: text("deliverables"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+// 3. Storefront Sites table
+export const storefrontSites = pgTable("storefront_sites", {
+  id: varchar("id").primaryKey().notNull(), // UUID
+  userId: varchar("user_id").notNull().unique(),
+  siteData: jsonb("site_data").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// 4. Published Sites table (for published storefronts)
+export const publishedSites = pgTable("published_sites", {
+  id: varchar("id").primaryKey().notNull(), // UUID
+  userId: varchar("user_id").notNull().unique(),
+  username: varchar("username").notNull().unique(),
+  siteData: jsonb("site_data").notNull(),
+  publishedAt: timestamp("published_at").defaultNow(),
+});
+
+// 5. Poses table
+export const poses = pgTable("poses", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  imageUrl: varchar("image_url").notNull(),
+  category: jsonb("category").default([]),
+  tags: jsonb("tags").default([]),
+  approved: boolean("approved").default(false),
+  favoriteCount: integer("favorite_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 6. Raw Backups table (for RAW file backup tracking)
+export const rawBackups = pgTable("raw_backups", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  sessionId: varchar("session_id"),
+  filename: varchar("filename").notNull(),
+  fileSize: varchar("file_size").notNull(),
+  backupLocation: varchar("backup_location").notNull(),
+  backupStatus: varchar("backup_status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// 7. AI Credit Transactions table
+export const aiCreditTransactions = pgTable("ai_credit_transactions", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  amount: integer("amount").notNull(), // Negative for usage, positive for purchases
+  operation: varchar("operation").notNull(),
+  details: text("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 8. Deposit Payments table
+export const depositPayments = pgTable("deposit_payments", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").default("pending"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 9. Community Notifications table
+export const communityNotifications = pgTable("community_notifications", {
+  id: varchar("id").primaryKey().notNull(), // UUID
+  userId: varchar("user_id").notNull(),
+  type: varchar("type").notNull(), // 'like', 'comment', 'follow', 'mention', 'message'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  relatedId: varchar("related_id"),
+  relatedType: varchar("related_type"),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  typeCheck: check("community_notifications_type_check", 
+    sql`${table.type} IN ('like', 'comment', 'follow', 'mention', 'message')`
+  ),
+}));
+
+// 10. Watermark Settings table
+export const watermarkSettings = pgTable("watermark_settings", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  sessionId: varchar("session_id"),
+  watermarkEnabled: boolean("watermark_enabled").default(false),
+  watermarkType: varchar("watermark_type").default("text"), // 'text' or 'logo'
+  watermarkText: varchar("watermark_text"),
+  watermarkLogoUrl: varchar("watermark_logo_url"),
+  watermarkPosition: varchar("watermark_position").default("bottom-right"),
+  watermarkOpacity: integer("watermark_opacity").default(60),
+  watermarkScale: integer("watermark_scale").default(20),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// 11. Raw Storage Billing table
+export const rawStorageBilling = pgTable("raw_storage_billing", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  billingPeriod: timestamp("billing_period").notNull(),
+  storageUsedGb: decimal("storage_used_gb", { precision: 10, scale: 3 }).notNull(),
+  storageLimit: decimal("storage_limit", { precision: 10, scale: 3 }).notNull(),
+  billingAmount: decimal("billing_amount", { precision: 10, scale: 2 }).notNull(),
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  status: varchar("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 12. Contracts table
+export const contracts = pgTable("contracts", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  photographerId: varchar("photographer_id").notNull(),
+  sessionId: varchar("session_id"),
+  clientId: varchar("client_id"),
+  templateKey: varchar("template_key"),
+  title: varchar("title").notNull(),
+  html: text("html").notNull(),
+  resolvedHtml: text("resolved_html"),
+  status: varchar("status").default("draft"),
+  createdAt: varchar("created_at").notNull(), // Stored as BIGINT in DB
+  updatedAt: varchar("updated_at").notNull(), // Stored as BIGINT in DB
+  sentAt: varchar("sent_at"), // Stored as BIGINT in DB
+  viewedAt: varchar("viewed_at"), // Stored as BIGINT in DB
+  signedAt: varchar("signed_at"), // Stored as BIGINT in DB
+  signerIp: varchar("signer_ip"),
+  signerName: varchar("signer_name"),
+  signerEmail: varchar("signer_email"),
+  signatureData: text("signature_data"),
+  pdfUrl: text("pdf_url"),
+  pdfHash: varchar("pdf_hash"),
+  viewToken: varchar("view_token"),
+  clientEmail: varchar("client_email"),
+  timeline: jsonb("timeline").default([]),
+  metadata: jsonb("metadata").default({}),
+});
+
+// 13. Gallery Storage Tracking table
+export const galleryStorageTracking = pgTable("gallery_storage_tracking", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  totalFiles: integer("total_files").default(0),
+  totalSizeBytes: varchar("total_size_bytes").default("0"),
+  totalSizeGb: decimal("total_size_gb", { precision: 10, scale: 3 }).default("0"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
