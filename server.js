@@ -16122,20 +16122,20 @@ app.get('/', (req, res) => {
 
 // Secure login page
 app.get('/secure-login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'secure-login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'secure-login.html'));
 });
 
 // Subscription checkout page
 app.get('/subscription-checkout.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'subscription-checkout.html'));
+    res.sendFile(path.join(__dirname, 'public', 'subscription-checkout.html'));
 });
 
 // Subscription success page (after Stripe payment)
 app.get('/subscription-success', (req, res) => {
-    res.sendFile(path.join(__dirname, 'subscription-success.html'));
+    res.sendFile(path.join(__dirname, 'public', 'subscription-success.html'));
 });
 app.get('/subscription-success.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'subscription-success.html'));
+    res.sendFile(path.join(__dirname, 'public', 'subscription-success.html'));
 });
 
 // Secure app - BULLETPROOF authentication required
