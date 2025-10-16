@@ -105,8 +105,7 @@
             console.log('💰 Fetching sale data from server:', { photoUrl: img.src });
             
             // Fetch sale data from server API (userId now derived from session)
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/photo-sales/photo-settings/${photoUrl}`);
+            const response = await fetch(`/api/photo-sales/photo-settings/${photoUrl}`);
             
             if (!response.ok) {
                 console.warn('⚠️ Failed to fetch sale settings, using defaults:', response.statusText);

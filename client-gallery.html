@@ -1706,15 +1706,20 @@
             }
 
             /**
-             * Get the correct API base URL for all environments
-             * Always uses the current origin to ensure API calls route to the correct server
-             * This works in localhost, Replit, and custom domain deployments
+             * Get the correct API base URL for both localhost development and production
+             * For localhost development: use current origin (e.g., http://localhost:5000)
+             * For production published galleries: use main domain (https://photomanagementsystem.com)
              */
             getApiBaseUrl() {
-                // CRITICAL FIX: Always use current origin for API calls
-                // This ensures API requests go to the same server that served the gallery
-                // Works correctly in all environments: localhost, Replit, custom domains
-                return window.location.origin;
+                const hostname = window.location.hostname;
+
+                // For localhost development, use current origin
+                if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('replit')) {
+                    return window.location.origin;
+                }
+
+                // For production published galleries on subdomains, use main domain
+                return 'https://photomanagementsystem.com';
             }
 
             async init() {
@@ -2456,13 +2461,10 @@
                     </button>
                 `;
 
-                // Construct absolute URL for cross-domain compatibility
-                const photoUrl = photo.url.startsWith('http') ? photo.url : `${this.getApiBaseUrl()}${photo.url}`;
-                
                 return `
                     <div class="${cardClass}" data-photo-id="${photoIdToCheck}">
                         <div class="photo-wrapper">
-                            <img src="${photoUrl}" alt="Gallery photo" loading="lazy" 
+                            <img src="${photo.url}" alt="Gallery photo" loading="lazy" 
                                  data-photo-id="${photoIdToCheck}" 
                                  data-entitled="${isEntitled}"
                                  onerror="console.error('❌ Failed to load image:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"
@@ -2794,12 +2796,7 @@
                     cartItemsContainer.innerHTML = this.cart.map((item, index) => {
                         // Find photo details for image URL
                         const photo = this.photos.find(p => p.filename === item.photoId || p.id === item.photoId);
-                        let imageUrl = photo?.url || item.photoUrl || '/static/img/placeholder.png'; // Fallback image
-                        
-                        // Construct absolute URL for cross-domain compatibility
-                        if (imageUrl && !imageUrl.startsWith('http')) {
-                            imageUrl = `${this.getApiBaseUrl()}${imageUrl}`;
-                        }
+                        const imageUrl = photo?.url || item.photoUrl || '/static/img/placeholder.png'; // Fallback image
 
                         return `
                             <div class="cart-item" data-photo-id="${item.photoId}">

@@ -250,42 +250,30 @@ async function updateGalleryStorageUsage(userId, sessionId, fileName, fileSizeBy
 }
 
 
-// PostgreSQL database connection - Validate and create SHARED pool
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is required but not set!');
-}
+// PostgreSQL database connection - Initialize first with improved stability
+// FORCE SAME DATABASE FOR DEV AND PRODUCTION
+const SHARED_DATABASE_URL = "postgresql://neondb_owner:npg_0japMVAEZcF8@ep-flat-thunder-adxhx3pb.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
 
-console.log('🔗 Database: Using DATABASE_URL from environment (SHARED POOL)');
-
-// Detect production environment properly
-const isProduction = process.env.REPLIT_DEPLOYMENT === '1' || 
-                     process.env.NODE_ENV === 'production' ||
-                     process.env.DATABASE_URL?.includes('neon.tech');
-                     
-if (isProduction && !process.env.NODE_ENV) {
-    process.env.NODE_ENV = 'production';
-}
-
-console.log('📍 Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
-console.log('   REPLIT_DEPLOYMENT:', process.env.REPLIT_DEPLOYMENT || 'not set');
-console.log('   NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('🔗 Database: Using shared dev/prod database (server.js)');
+console.log('📍 Environment:', process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT');
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: SHARED_DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // SHARED POOL: Replit database limits (max 5 total), min: 0 so idle modules don't reserve connections
-    max: 3,
-    min: 0,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-    acquireTimeoutMillis: 60000,
-    maxUses: 7500,
+    // Optimized configuration to prevent idle-in-transaction timeouts
+    max: process.env.NODE_ENV === 'production' ? 20 : 10, // Reduced to prevent connection exhaustion
+    min: process.env.NODE_ENV === 'production' ? 2 : 1,   // Lower minimum for stability
+    idleTimeoutMillis: 30000, // 30 seconds - shorter to prevent idle timeouts
+    connectionTimeoutMillis: 10000, // 10 seconds connection timeout
+    acquireTimeoutMillis: 60000, // 60 seconds acquire timeout
+    maxUses: 7500, // Lower max uses for better connection recycling
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000,
-    allowExitOnIdle: false,
-    statement_timeout: 30000,
-    query_timeout: 25000,
-    idle_in_transaction_session_timeout: 20000,
+    keepAliveInitialDelayMillis: 10000, // 10 second initial delay
+    allowExitOnIdle: false, // Prevent pool from exiting
+    // Critical timeout settings to prevent idle-in-transaction errors
+    statement_timeout: 30000, // 30 second statement timeout
+    query_timeout: 25000,     // 25 second query timeout
+    idle_in_transaction_session_timeout: 20000, // 20 second idle-in-transaction timeout
 });
 
 // Initialize health check system
@@ -352,14 +340,14 @@ const localBackup = new LocalBackupFallback();
 
 // Initialize services with proper dependencies (single instance)
 const r2FileManager = new R2FileManager(localBackup, pool);
-const paymentPlanManager = new PaymentPlanManager(pool);
-const paymentScheduler = new PaymentScheduler(pool);
+const paymentPlanManager = new PaymentPlanManager();
+const paymentScheduler = new PaymentScheduler();
 
 // Ensure R2 is properly initialized before other services use it
 console.log('✅ Core services initialized: R2FileManager, PaymentPlanManager, PaymentScheduler');
 
 // Initialize Download Commerce Manager for advanced pricing and entitlement management
-const downloadCommerceManager = new DownloadCommerceManager(pool);
+const downloadCommerceManager = new DownloadCommerceManager();
 
 // Import and initialize multipart uploader for FAST uploads
 const MultipartUploader = require('./server/multipart-upload');
@@ -688,70 +676,6 @@ const normalizeUserForLance = (user) => {
     return user;
 };
 
-// Helper function to ensure user exists in database
-async function ensureUserInDatabase(user) {
-    if (!user || !user.uid || !user.email) {
-        console.warn('⚠️ Cannot upsert user: missing uid or email');
-        return;
-    }
-
-    let client;
-    try {
-        client = await pool.connect();
-        
-        // First, check if user exists by ID
-        const existingUser = await client.query('SELECT id, email FROM users WHERE id = $1', [user.uid]);
-        
-        if (existingUser.rows.length > 0) {
-            // User exists by ID - update if needed
-            await client.query(`
-                UPDATE users 
-                SET email = $2, display_name = $3, updated_at = NOW()
-                WHERE id = $1
-            `, [user.uid, user.email, user.displayName || user.email]);
-            console.log(`✅ User updated in database: ${user.email} (ID: ${user.uid})`);
-        } else {
-            // User doesn't exist - try to insert, handling email conflicts
-            try {
-                await client.query(`
-                    INSERT INTO users (
-                        id, email, display_name, 
-                        subscription_status, subscription_plan,
-                        onboarding_completed, stripe_onboarding_complete,
-                        ai_credits, platform_fee_percentage,
-                        created_at, updated_at
-                    )
-                    VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
-                `, [user.uid, user.email, user.displayName || user.email]);
-                console.log(`✅ User created in database: ${user.email} (ID: ${user.uid})`);
-            } catch (insertError) {
-                // If email conflict, update the existing record to use the new ID
-                if (insertError.code === '23505' && insertError.constraint === 'users_email_unique') {
-                    await client.query(`
-                        UPDATE users 
-                        SET id = $1, display_name = $3, updated_at = NOW()
-                        WHERE email = $2
-                    `, [user.uid, user.email, user.displayName || user.email]);
-                    console.log(`✅ User merged in database (email existed): ${user.email} (ID: ${user.uid})`);
-                } else {
-                    throw insertError;
-                }
-            }
-        }
-    } catch (dbError) {
-        console.error('❌ Database error ensuring user exists:', dbError);
-        // Don't throw - authentication can work without DB
-    } finally {
-        if (client) {
-            try {
-                client.release();
-            } catch (releaseError) {
-                console.error('Error releasing database client:', releaseError);
-            }
-        }
-    }
-}
-
 // Enhanced authentication middleware with strict security
 const isAuthenticated = async (req, res, next) => {
     // Enhanced authentication check with better error handling
@@ -798,10 +722,6 @@ const isAuthenticated = async (req, res, next) => {
                     req.session.user = normalizedUser;
                 }
                 console.log('✅ Bearer token authentication successful for', decodedToken.email, 'uid:', normalizedUser.uid);
-                
-                // Ensure user exists in database
-                await ensureUserInDatabase(normalizedUser);
-                
                 next();
                 return;
             } catch (tokenError) {
@@ -855,10 +775,6 @@ const isAuthenticated = async (req, res, next) => {
                         }
                         req.user = normalizedUser;
                         console.log('✅ ANDROID: Token fallback authentication successful');
-                        
-                        // Ensure user exists in database
-                        await ensureUserInDatabase(normalizedUser);
-                        
                         next();
                         return;
                     }
@@ -894,9 +810,6 @@ const isAuthenticated = async (req, res, next) => {
 
         // Set req.user for downstream middleware - use real session user
         req.user = user;
-        
-        // Ensure user exists in database
-        await ensureUserInDatabase(user);
         
         // Enhanced logging for Stripe Connect routes
         if (isStripeConnectRoute) {
@@ -1636,18 +1549,11 @@ if (ENABLE_SUBDOMAIN_ROUTING) {
     console.log('📁 Path-based routing active (default)');
 }
 
-// CRITICAL: Trust proxy for custom domain support
-// This allows Express to recognize HTTPS requests when behind Replit's proxy
-// Without this, session cookies won't be set on custom domains (photomanagementsystem.com)
-app.set('trust proxy', 1);
-console.log('✅ Proxy trust enabled for custom domain cookie support');
-
 // Session configuration with fallback mechanism
 const pgSession = connectPg(session);
 
 // Create session store with fallback to memory store
 let sessionStore;
-let sessionStoreType = 'unknown';
 try {
     sessionStore = new pgSession({
         conString: process.env.DATABASE_URL,
@@ -1660,12 +1566,10 @@ try {
         console.error('Session store error:', error.message);
     });
     
-    sessionStoreType = 'postgresql';
     console.log('✅ PostgreSQL session store initialized');
 } catch (error) {
     console.warn('⚠️ PostgreSQL session store failed, using memory store:', error.message);
     sessionStore = null; // Will use default memory store
-    sessionStoreType = 'memory';
 }
 
 // Detect Replit environment (both dev and production run in iframes with HTTPS)
@@ -1912,9 +1816,6 @@ app.post('/auth/session', async (req, res) => {
             req.session.user = normalizedUser;
         }
         req.user = normalizedUser;
-
-        // Ensure user exists in database
-        await ensureUserInDatabase(normalizedUser);
 
         // Store Android auth info for mobile compatibility
         const userAgent = req.headers['user-agent'] || '';
@@ -2200,9 +2101,6 @@ app.post('/api/auth/login', async (req, res) => {
             req.session.user = normalizedUser;
         }
         req.user = normalizedUser;
-        
-        // Ensure user exists in database
-        await ensureUserInDatabase(normalizedUser);
         
         // Store Android auth token for fallback
         if ((isAndroid || isCapacitor) && req.session) {
@@ -2911,9 +2809,6 @@ app.post('/api/verify-auth', async (req, res) => {
             req.session.user = normalizedUser;
         }
         
-        // Ensure user exists in database
-        await ensureUserInDatabase(normalizedUser);
-        
         // For Android apps, also store authentication token for fallback
         if (isAndroidApp && req.session) {
             req.session.androidAuth = {
@@ -3181,7 +3076,7 @@ app.get('/r2/file/photographer-:userId/session-:sessionId/:folderType/:fileName'
 });
 
 // R2 Storage API Routes - Complete file management system
-app.use('/api/r2', createR2Routes(pool, realTimeGalleryUpdates));
+app.use('/api/r2', createR2Routes(realTimeGalleryUpdates));
 
 // Unified Download Orchestrator Routes - Modern download handling (takes priority)
 app.use('/api/downloads/orchestrator', createDownloadOrchestratorRoutes({
@@ -3192,7 +3087,7 @@ app.use('/api/downloads/orchestrator', createDownloadOrchestratorRoutes({
 }));
 
 // Download Control API Routes - Photo delivery with pricing and watermarks (legacy)
-app.use('/api/downloads', createDownloadRoutes(pool, isAuthenticated, downloadCommerceManager));
+app.use('/api/downloads', createDownloadRoutes(isAuthenticated, downloadCommerceManager));
 
 // Preview Generation API Routes - Watermarked previews for gallery viewing
 const createPreviewApiRoutes = require('./server/preview-api-routes');
@@ -4146,7 +4041,7 @@ app.get('/api/r2-investigation-simple', async (req, res) => {
 });
 
 // Object Storage Routes for Gallery and Raw Storage
-const objectStorageService = new ObjectStorageService(pool);
+const objectStorageService = new ObjectStorageService();
 
 // Get upload URL for session files (WITH STORAGE QUOTA ENFORCEMENT) - Using R2
 app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, res) => {
@@ -5754,14 +5649,9 @@ app.get('/health', async (req, res) => {
     const healthCheck = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '2.0.1', // Incremented to track deployment
+        version: '1.0.0',
         uptime: Math.floor(process.uptime()),
-        environment: process.env.NODE_ENV || 'development',
-        sessionStore: sessionStoreType,
-        hasSession: !!req.session,
-        sessionId: req.session?.id || 'none',
-        hasUser: !!(req.session && req.session.user),
-        userEmail: req.session?.user?.email || 'none'
+        environment: process.env.NODE_ENV || 'development'
     };
 
     // Quick basic health check - responds immediately for load balancer
@@ -5894,73 +5784,7 @@ async function initializeDatabase(retryCount = 0) {
         // Test database connection first with a simple query
         const result = await pool.query('SELECT NOW()');
         console.log('Database connection established successfully at:', result.rows[0].now);
-        
-        // Create photography_sessions table first (CRITICAL FOR PRODUCTION)
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS photography_sessions (
-                id VARCHAR PRIMARY KEY NOT NULL,
-                user_id VARCHAR NOT NULL,
-                client_name VARCHAR NOT NULL,
-                session_type VARCHAR NOT NULL,
-                date_time TIMESTAMP NOT NULL,
-                location VARCHAR NOT NULL,
-                phone_number VARCHAR NOT NULL,
-                email VARCHAR NOT NULL,
-                price NUMERIC(10, 2) NOT NULL,
-                deposit_amount NUMERIC(10, 2) DEFAULT 0.00,
-                duration INTEGER NOT NULL,
-                notes TEXT DEFAULT '',
-                contract_signed BOOLEAN DEFAULT false,
-                paid BOOLEAN DEFAULT false,
-                edited BOOLEAN DEFAULT false,
-                delivered BOOLEAN DEFAULT false,
-                send_reminder BOOLEAN DEFAULT false,
-                notify_gallery_ready BOOLEAN DEFAULT false,
-                photos JSONB DEFAULT '[]'::jsonb,
-                gallery_access_token VARCHAR,
-                gallery_created_at TIMESTAMP,
-                gallery_expires_at TIMESTAMP,
-                gallery_ready_notified BOOLEAN DEFAULT false,
-                last_gallery_notification JSONB,
-                stripe_invoice JSONB,
-                has_payment_plan BOOLEAN DEFAULT false,
-                payment_plan_id VARCHAR,
-                total_amount NUMERIC(10, 2),
-                payment_plan_start_date TIMESTAMP,
-                payment_plan_end_date TIMESTAMP,
-                monthly_payment NUMERIC(10, 2),
-                payments_remaining INTEGER DEFAULT 0,
-                next_payment_date TIMESTAMP,
-                download_enabled BOOLEAN DEFAULT true,
-                download_max INTEGER,
-                pricing_model VARCHAR DEFAULT 'free',
-                free_downloads INTEGER DEFAULT 0,
-                price_per_download NUMERIC(10, 2) DEFAULT 0.00,
-                watermark_enabled BOOLEAN DEFAULT false,
-                watermark_type VARCHAR DEFAULT 'text',
-                watermark_logo_url VARCHAR,
-                watermark_text VARCHAR DEFAULT '© Photography',
-                watermark_opacity INTEGER DEFAULT 60,
-                watermark_position VARCHAR DEFAULT 'bottom-right',
-                watermark_scale INTEGER DEFAULT 20,
-                watermark_updated_at TIMESTAMP DEFAULT NOW(),
-                download_policy_id VARCHAR,
-                total_download_revenue NUMERIC(10, 2) DEFAULT 0.00,
-                last_download_activity TIMESTAMP,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                deposit_paid BOOLEAN DEFAULT false,
-                deposit_sent BOOLEAN DEFAULT false,
-                invoice_sent BOOLEAN DEFAULT false,
-                deposit_paid_at TIMESTAMP,
-                invoice_paid_at TIMESTAMP,
-                free_downloads_remaining INTEGER,
-                unlimited_access BOOLEAN DEFAULT false,
-                unlimited_access_price NUMERIC(10, 2)
-            )
-        `);
-        console.log('✅ photography_sessions table ready');
-        
+        // This table already exists, just ensure it's ready
         // Add subscribers table for multi-user management
         await pool.query(`
             CREATE TABLE IF NOT EXISTS subscribers (
@@ -7050,15 +6874,11 @@ app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async 
     }
 });
 
-app.get('/api/sessions', isAuthenticated, async (req, res) => {
+app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         // Normalize user for Lance's multiple emails
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
-        
-        // Check if user has admin credentials using the shared admin config
-        const userEmail = req.user.email?.toLowerCase();
-        const isAdmin = isAdminEmail(userEmail);
 
         // Debug logging to see what user is requesting sessions
         console.log('📋 Sessions requested by user:', {
@@ -7066,15 +6886,20 @@ app.get('/api/sessions', isAuthenticated, async (req, res) => {
             normalized_uid: userId,
             email: req.user.email,
             displayName: req.user.displayName,
-            isAdmin: isAdmin
+            isAdmin: req.subscriptionStatus?.isAdmin
         });
 
         let sessions = await getAllSessions(userId);
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
-        // SPECIAL ACCESS: If admin credentials are verified
+        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)  
+        const userEmail = req.user.email?.toLowerCase();
+        const isAdmin = userEmail === 'lancecasselman@icloud.com' || 
+                       userEmail === 'lancecasselman2011@gmail.com' || 
+                       userEmail === 'lance@thelegacyphotography.com';
+        
         if (isAdmin) {
-            console.log('🔓 ADMIN ACCESS: Loading all sessions for admin account');
+            console.log('🔓 UNIFIED LANCE ACCOUNT: Loading all sessions for unified Lance account');
 
             // Get sessions for the unified Lance account
             const lanceSessionsResult = await pool.query(`
@@ -10259,7 +10084,7 @@ app.post('/api/payment-records/:paymentId/tip', async (req, res) => {
         }
         
         // Update tip amount in the database
-        const paymentManager = new PaymentPlanManager(pool);
+        const paymentManager = new PaymentPlanManager();
         await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
         
         res.json({
@@ -10281,7 +10106,7 @@ app.post('/api/payment-records/:paymentId/tip', async (req, res) => {
 app.get('/api/public/invoice/:paymentId', async (req, res) => {
     try {
         const { paymentId } = req.params;
-        const paymentManager = new PaymentPlanManager(pool);
+        const paymentManager = new PaymentPlanManager();
         const invoiceDetails = await paymentManager.getPublicInvoiceDetails(paymentId);
         
         if (!invoiceDetails) {
@@ -10319,7 +10144,7 @@ app.post('/api/public/invoice/:paymentId/tip', async (req, res) => {
         }
         
         // Update tip amount in the database
-        const paymentManager = new PaymentPlanManager(pool);
+        const paymentManager = new PaymentPlanManager();
         await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
         
         res.json({
@@ -10409,7 +10234,7 @@ app.post('/api/public/invoice/:paymentId/send-with-tip', async (req, res) => {
         const { paymentId } = req.params;
         const { tipAmount } = req.body;
         
-        const paymentManager = new PaymentPlanManager(pool);
+        const paymentManager = new PaymentPlanManager();
         
         // Update tip amount first
         if (tipAmount && parseFloat(tipAmount) > 0) {
@@ -12209,18 +12034,6 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
 // EXPLICIT STATIC FILE ROUTE - Serve client-gallery.html BEFORE gallery token routes
 app.get('/client-gallery.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'client-gallery.html'));
-});
-
-// EXPLICIT ROUTE for gallery-manager.html with aggressive cache-busting
-app.get('/gallery-manager.html', (req, res) => {
-    // ULTRA-AGGRESSIVE cache busting for gallery manager
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
-    res.setHeader('X-Accel-Expires', '0'); // For nginx proxies
-    res.setHeader('Last-Modified', new Date().toUTCString()); // Always mark as just modified
-    res.sendFile(path.join(__dirname, 'gallery-manager.html'));
 });
 
 // BULLETPROOF CLIENT GALLERY SYSTEM - Updated to use /g/:token pattern to avoid conflicts
@@ -16961,38 +16774,11 @@ app.get('/hero-background.jpg', (req, res) => {
 app.get('/test-android-auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
 });
-app.get('/auth-diagnostic.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'auth-diagnostic.html'));
-});
 
-// Serve static files from public directory with NO CACHING for HTML/JS/CSS
-app.use(express.static(path.join(__dirname, 'public'), {
+app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,
-    lastModified: false,
-    setHeaders: (res, filePath) => {
-        // Force no-cache for HTML, JavaScript, and CSS files to prevent stale code
-        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
-            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
-            res.setHeader('Pragma', 'no-cache');
-            res.setHeader('Expires', '0');
-        }
-    }
-}));
-
-// Also serve from root for backward compatibility with manifest.json, etc
-app.use(express.static(path.join(__dirname), {
-    index: false,
-    etag: false,
-    lastModified: false,
-    setHeaders: (res, filePath) => {
-        // Force no-cache for HTML, JavaScript, and CSS files
-        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
-            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
-            res.setHeader('Pragma', 'no-cache');
-            res.setHeader('Expires', '0');
-        }
-    }
+    lastModified: false
 }));
 
 // SECURITY: Static serving moved to end to prevent route bypass
@@ -17306,22 +17092,12 @@ async function startServer() {
             console.log('AUTH: Authentication required for all access - no anonymous mode');
         }
         
-        // Initialize database - CRITICAL FOR PRODUCTION - Must succeed before accepting requests
+        // Initialize database asynchronously after server starts
         initializeDatabase().then(() => {
-            console.log('✅ Database connected and ready - server is operational');
+            console.log('Database connected and ready');
         }).catch(error => {
-            console.error('❌ CRITICAL: Database initialization failed!', error);
-            console.error('Stack trace:', error.stack);
-            console.error('Server cannot operate without database - will retry initialization');
-            // Retry after 5 seconds
-            setTimeout(() => {
-                initializeDatabase().then(() => {
-                    console.log('✅ Database initialized successfully on retry');
-                }).catch(retryError => {
-                    console.error('❌ Database initialization failed on retry:', retryError.message);
-                    process.exit(1); // Exit if can't initialize database
-                });
-            }, 5000);
+            console.error('Database initialization failed, but server is running:', error.message);
+            console.log('Server will continue running. Database will retry connection on next request.');
         });
     });
 

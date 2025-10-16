@@ -32,9 +32,7 @@ class ObjectNotFoundError extends Error {
 
 // The object storage service is used to interact with the object storage service.
 class ObjectStorageService {
-  constructor(pool = null) {
-    this.pool = pool;
-  }
+  constructor() {}
 
   // Gets the public object search paths.
   getPublicObjectSearchPaths() {
@@ -191,23 +189,21 @@ class ObjectStorageService {
     
     // CRITICAL: Also remove from session_files database table for accurate storage calculations
     try {
-      if (!this.pool) {
-        console.warn('⚠️  No database pool available for file cleanup');
-      } else {
-        // Delete both possible filename formats (full path and just filename)
-        const deleteResult1 = await this.pool.query(
-          'DELETE FROM session_files WHERE session_id = $1 AND filename = $2 AND folder_type = $3',
-          [sessionId, fileName, folderType]
-        );
-        
-        const deleteResult2 = await this.pool.query(
-          'DELETE FROM session_files WHERE session_id = $1 AND filename LIKE $2 AND folder_type = $3',
-          [sessionId, `%.private/sessions/${sessionId}/${folderType}/${fileName}`, folderType]
-        );
-        
-        const totalDeleted = deleteResult1.rowCount + deleteResult2.rowCount;
-        console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${fileName} (${folderType})`);
-      }
+      const { pool } = require('./db');
+      
+      // Delete both possible filename formats (full path and just filename)
+      const deleteResult1 = await pool.query(
+        'DELETE FROM session_files WHERE session_id = $1 AND filename = $2 AND folder_type = $3',
+        [sessionId, fileName, folderType]
+      );
+      
+      const deleteResult2 = await pool.query(
+        'DELETE FROM session_files WHERE session_id = $1 AND filename LIKE $2 AND folder_type = $3',
+        [sessionId, `%.private/sessions/${sessionId}/${folderType}/${fileName}`, folderType]
+      );
+      
+      const totalDeleted = deleteResult1.rowCount + deleteResult2.rowCount;
+      console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${fileName} (${folderType})`);
       
     } catch (dbError) {
       console.error(' Failed to remove file from database (storage calculation may be incorrect):', dbError.message);

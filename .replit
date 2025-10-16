@@ -9,6 +9,16 @@ runButton = "Project"
 
 [[workflows.workflow]]
 name = "Stable Server"
+author = 44735007
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node --max-old-space-size=512 server.js"
+
+[[workflows.workflow]]
+name = "Stable Server"
+mode = "parallel"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -22,10 +32,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 36409
-externalPort = 5173
 
 [[ports]]
 localPort = 37935
@@ -51,7 +57,6 @@ externalPort = 4200
 [deployment]
 deploymentTarget = "vm"
 run = ["node", "server.js"]
-build = ["bash", "-c", "yes | npm run db:push -- --force || true"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"

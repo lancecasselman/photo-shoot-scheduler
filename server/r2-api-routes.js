@@ -7,6 +7,7 @@ const R2SyncService = require('./r2-sync-service');
 const UnifiedFileDeletionService = require('./unified-file-deletion');
 const StorageSystem = require('./storage-system');
 const GalleryPhotoSync = require('./sync-gallery-photos');
+const { Pool } = require('pg');
 
 // Configure multer for file uploads (memory storage for direct R2 upload)
 const upload = multer({
@@ -65,16 +66,15 @@ const upload = multer({
  * R2 Storage API Routes
  * All routes handle authentication and storage limit enforcement
  * Frontend never receives R2 credentials - all operations go through backend
- * 
- * @param {Pool} pool - REQUIRED shared database pool (no fallback creation)
- * @param {Object} realTimeGalleryUpdates - Optional real-time updates handler
  */
-function createR2Routes(pool, realTimeGalleryUpdates = null) {
-  if (!pool) {
-    throw new Error('createR2Routes requires a shared database pool parameter');
-  }
-  
+function createR2Routes(realTimeGalleryUpdates = null) {
   const router = express.Router();
+
+  // Database connection for API routes
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
 
   const r2Manager = new R2FileManager(null, pool);
   const storageSystem = new StorageSystem(pool, r2Manager);
