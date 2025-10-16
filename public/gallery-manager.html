@@ -630,8 +630,8 @@
                         credentials: 'include',
                         headers: this.authManager.getHeaders(),
                         body: JSON.stringify({
-                            free_download_limit: freeLimit,
-                            price_per_photo: pricePerPhoto.toFixed(2)
+                            freeDownloadLimit: freeLimit,
+                            pricePerPhoto: pricePerPhoto.toFixed(2)
                         })
                     });
                     
@@ -639,7 +639,8 @@
                         this.showMessage('Download settings saved successfully!', 'success');
                         console.log('Saved download settings:', { freeLimit, pricePerPhoto });
                     } else {
-                        throw new Error('Failed to save settings');
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        throw new Error(errorData.error || `HTTP ${response.status}`);
                     }
                 } catch (error) {
                     console.error('Error saving download settings:', error);
