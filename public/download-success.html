@@ -410,12 +410,17 @@
         }
         
         function goToGallery() {
-            if (sessionId && clientKey) {
+            // Check for gallery token first (new format)
+            const urlParams = new URLSearchParams(window.location.search);
+            const galleryToken = urlParams.get('token');
+            
+            if (galleryToken) {
+                window.location.href = `/client-gallery.html?token=${galleryToken}`;
+            } else if (sessionId && clientKey) {
                 window.location.href = `/client-gallery.html?sessionId=${sessionId}&clientKey=${clientKey}`;
             } else if (sessionId) {
                 window.location.href = `/client-gallery.html?sessionId=${sessionId}`;
             } else {
-                const urlParams = new URLSearchParams(window.location.search);
                 const orderId = urlParams.get('order_id');
                 if (orderId) {
                     window.location.href = `/client-gallery.html`;
