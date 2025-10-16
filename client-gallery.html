@@ -114,6 +114,44 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
+        /* Pricing Rules Display */
+        .pricing-rules {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15);
+        }
+
+        .pricing-icon {
+            font-size: 2rem;
+        }
+
+        .pricing-text {
+            text-align: left;
+            color: #0c4a6e;
+            line-height: 1.6;
+        }
+
+        .pricing-text strong {
+            color: #0369a1;
+            font-weight: 600;
+        }
+
+        .pricing-highlight {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 0 3px;
+        }
+
         /* Gallery Grid */
         .gallery-grid {
             display: grid;
@@ -392,6 +430,10 @@
         <div class="header">
             <h1 id="galleryTitle">Loading Gallery...</h1>
             <p id="gallerySubtitle">Please wait while we load your photos</p>
+            <div id="pricingRules" class="pricing-rules" style="display: none;">
+                <div class="pricing-icon">💎</div>
+                <div class="pricing-text"></div>
+            </div>
             <div id="downloadCounter" class="download-counter" style="display: none;"></div>
         </div>
 
@@ -696,11 +738,54 @@
                 if (this.sessionData) {
                     title.textContent = `${this.sessionData.clientName}'s Gallery`;
                     subtitle.textContent = `${this.photos.length} photo${this.photos.length !== 1 ? 's' : ''} available`;
+                    
+                    // Update pricing rules display
+                    this.updatePricingRules();
                 }
 
                 if (this.photos.length === 0) {
                     document.getElementById('emptyGallery').style.display = 'block';
                 }
+            }
+
+            updatePricingRules() {
+                const pricingRulesEl = document.getElementById('pricingRules');
+                const pricingTextEl = pricingRulesEl.querySelector('.pricing-text');
+                
+                const freeLimit = parseInt(this.sessionData.freeDownloads) || 0;
+                const pricePerPhoto = parseFloat(this.sessionData.pricePerDownload) || 0;
+                
+                let rulesHTML = '';
+                
+                if (freeLimit > 0 && pricePerPhoto > 0) {
+                    // Has free downloads + paid after
+                    rulesHTML = `
+                        <div><strong>Download Pricing:</strong></div>
+                        <div>First <span class="pricing-highlight">${freeLimit} photo${freeLimit !== 1 ? 's' : ''}</span> FREE</div>
+                        <div>Additional photos: <span class="pricing-highlight">$${pricePerPhoto.toFixed(2)} each</span></div>
+                    `;
+                } else if (freeLimit > 0 && pricePerPhoto === 0) {
+                    // Free limited downloads
+                    rulesHTML = `
+                        <div><strong>Download Pricing:</strong></div>
+                        <div><span class="pricing-highlight">${freeLimit} FREE download${freeLimit !== 1 ? 's' : ''}</span> available</div>
+                    `;
+                } else if (freeLimit === 0 && pricePerPhoto > 0) {
+                    // All paid downloads
+                    rulesHTML = `
+                        <div><strong>Download Pricing:</strong></div>
+                        <div>All downloads: <span class="pricing-highlight">$${pricePerPhoto.toFixed(2)} per photo</span></div>
+                    `;
+                } else {
+                    // Unlimited free
+                    rulesHTML = `
+                        <div><strong>Download Pricing:</strong></div>
+                        <div><span class="pricing-highlight">FREE unlimited downloads</span> 🎉</div>
+                    `;
+                }
+                
+                pricingTextEl.innerHTML = rulesHTML;
+                pricingRulesEl.style.display = 'inline-flex';
             }
 
             displayPhotos() {
