@@ -423,6 +423,19 @@
                 Save Download Settings
             </button>
         </div>
+
+        <!-- Delete All Photos Section -->
+        <div style="padding: 30px; background: #fff5f5; border-top: 2px solid #fee; border-bottom: 2px solid #fee;">
+            <h3 style="margin-bottom: 15px; color: #dc2626; font-size: 20px;">⚠️ Danger Zone</h3>
+            <p style="margin-bottom: 20px; color: #555; line-height: 1.6;">
+                Delete all photos from this session. This will permanently remove all photos from cloud storage and the database. 
+                <strong>This action cannot be undone!</strong>
+            </p>
+            <button id="deleteAllPhotos" 
+                    style="padding: 12px 30px; background: #dc2626; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                🗑️ Delete All Photos
+            </button>
+        </div>
         
         <div class="gallery-section">
             <div class="gallery-header">
@@ -592,6 +605,10 @@
                 document.getElementById('saveDownloadSettings')?.addEventListener('click', () => {
                     this.saveDownloadSettings();
                 });
+
+                document.getElementById('deleteAllPhotos')?.addEventListener('click', () => {
+                    this.deleteAllPhotos();
+                });
             }
             
             async loadSession() {
@@ -645,6 +662,39 @@
                 } catch (error) {
                     console.error('Error saving download settings:', error);
                     this.showMessage('Failed to save download settings', 'error');
+                }
+            }
+
+            async deleteAllPhotos() {
+                // Double confirmation for safety
+                const confirmation1 = confirm('⚠️ Are you sure you want to delete ALL photos from this session?\n\nThis will permanently remove all photos from cloud storage and the database.');
+                if (!confirmation1) return;
+
+                const confirmation2 = confirm('⚠️ FINAL WARNING: This action CANNOT be undone!\n\nAll photos will be permanently deleted from R2 storage and the database.\n\nClick OK to proceed with deletion.');
+                if (!confirmation2) return;
+
+                try {
+                    this.showMessage('Deleting all photos...', 'info');
+
+                    const response = await fetch(`/api/sessions/${this.sessionId}/delete-all-photos`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: this.authManager.getHeaders()
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.showMessage(`✅ Successfully deleted ${data.deletedCount} photos from R2 and database`, 'success');
+                        
+                        // Reload the gallery to show empty state
+                        await this.loadGallery();
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        this.showMessage(`Failed to delete photos: ${errorData.error}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to delete all photos:', error);
+                    this.showMessage('Failed to delete photos: ' + error.message, 'error');
                 }
             }
             
