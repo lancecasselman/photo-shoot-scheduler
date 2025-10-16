@@ -862,7 +862,18 @@
                     
                     if (response.ok) {
                         const data = await response.json();
-                        this.showMessage(`✅ Successfully deleted ${data.deletedCount} photos from R2 and database`, 'success');
+                        const photoCount = data.deletedCount || 0;
+                        const failedCount = data.failedCount || 0;
+                        const storage = data.storageReclaimed || '0 MB';
+                        
+                        // Show appropriate message based on results
+                        if (photoCount === 0 && failedCount === 0) {
+                            this.showMessage('ℹ️ No photos found to delete', 'info');
+                        } else if (photoCount > 0 && failedCount === 0) {
+                            this.showMessage(`✅ Successfully deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''} from R2 and database. Reclaimed ${storage} of storage.`, 'success');
+                        } else if (failedCount > 0) {
+                            this.showMessage(`⚠️ Deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''}, but ${failedCount} failed. Reclaimed ${storage}.`, 'warning');
+                        }
                         
                         // Reload the gallery to show empty state
                         await this.loadGallery();

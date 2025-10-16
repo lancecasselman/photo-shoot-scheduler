@@ -2457,8 +2457,18 @@ window.deleteAllPhotos = async function(sessionId) {
         
         if (result.success) {
             const photoCount = result.deletedCount || 0;
+            const failedCount = result.failedCount || 0;
             const storage = result.storageReclaimed || '0 MB';
-            showMessage(`✅ Successfully deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''}. Reclaimed ${storage} of storage.`, 'success');
+            
+            // Show appropriate message based on results
+            if (photoCount === 0 && failedCount === 0) {
+                showMessage('ℹ️ No photos found to delete', 'info');
+            } else if (photoCount > 0 && failedCount === 0) {
+                showMessage(`✅ Successfully deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''}. Reclaimed ${storage} of storage.`, 'success');
+            } else if (failedCount > 0) {
+                showMessage(`⚠️ Deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''}, but ${failedCount} failed. Reclaimed ${storage}.`, 'warning');
+            }
+            
             // Refresh the session data
             await loadSessions();
             // Close the modal
