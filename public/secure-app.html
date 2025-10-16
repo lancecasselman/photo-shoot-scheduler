@@ -7748,7 +7748,7 @@ ${agreement.content || 'No content available'}
             }
         }
 
-        // Open CLIENT Gallery (public view) in new window
+        // Open Gallery Manager (photographer's upload/management interface)
         window.openGalleryWindow = function(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) {
@@ -7756,15 +7756,9 @@ ${agreement.content || 'No content available'}
                 return;
             }
             
-            // Check if gallery token exists
-            if (!session.galleryAccessToken) {
-                showMessage('Gallery not available yet. Please send gallery to client first.', 'warning');
-                return;
-            }
-            
-            // Open the CLIENT gallery with token (no authentication required)
-            const url = `/g/${session.galleryAccessToken}`;
-            window.open(url, '_blank');
+            // Open gallery manager in same tab (to preserve auth session)
+            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}`;
+            window.location.href = url;
         };
 
 
