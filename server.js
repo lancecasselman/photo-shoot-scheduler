@@ -8598,7 +8598,47 @@ app.post('/api/sessions/:id/confirm-uploads', isAuthenticated, async (req, res) 
         // Update storage quota cache
         await storageSystem.calculateStorageUsage(dbUserId);
 
+        // Generate thumbnails for uploaded images (in background, don't block response)
+        const thumbnailPromises = uploads.map(async (upload) => {
+            try {
+                // Check if it's an image file
+                const isImage = r2FileManager.isImageFile(upload.filename);
+                if (!isImage) {
+                    console.log(`⏭️ Skipping thumbnail for non-image: ${upload.filename}`);
+                    return;
+                }
+
+                console.log(`🖼️ Generating thumbnails for: ${upload.filename}`);
+                
+                // Download file from R2
+                const { GetObjectCommand } = require('@aws-sdk/client-s3');
+                const getCommand = new GetObjectCommand({
+                    Bucket: r2FileManager.bucketName,
+                    Key: upload.key
+                });
+                
+                const response = await r2FileManager.s3Client.send(getCommand);
+                const chunks = [];
+                for await (const chunk of response.Body) {
+                    chunks.push(chunk);
+                }
+                const fileBuffer = Buffer.concat(chunks);
+                
+                // Generate thumbnails
+                await r2FileManager.generateThumbnail(fileBuffer, upload.filename, dbUserId, sessionId, 'gallery');
+                console.log(`✅ Thumbnails generated for: ${upload.filename}`);
+            } catch (thumbError) {
+                console.warn(`⚠️ Failed to generate thumbnails for ${upload.filename}:`, thumbError.message);
+            }
+        });
+
+        // Don't await - let thumbnails generate in background
+        Promise.all(thumbnailPromises).catch(err => 
+            console.error('Background thumbnail generation error:', err)
+        );
+
         console.log(`✅ Confirmed ${uploads.length} uploads for session ${sessionId}, total photos: ${updatedPhotos.length}`);
+        console.log(`📸 Thumbnail generation started for ${uploads.filter(u => r2FileManager.isImageFile(u.filename)).length} images`);
         
         res.json({
             success: true,

@@ -1107,20 +1107,12 @@ class R2FileManager {
         console.warn(`   ⚠️ No database pool available - skipping database insertion`);
       }
       
-      // Generate thumbnail for image files
-      if (this.isImageFile(filename)) {
+      // Generate thumbnail for image files DIRECTLY from buffer (no download needed)
+      if (this.isImageFile(filename) && fileBuffer) {
         try {
-          // Download the file from R2 to generate thumbnails
-          const { GetObjectCommand } = require('@aws-sdk/client-s3');
-          const getCommand = new GetObjectCommand({
-            Bucket: this.bucketName,
-            Key: r2Key
-          });
-          const response = await this.s3Client.send(getCommand);
-          const fileBuffer = await this.streamToBuffer(response.Body);
-          
+          console.log(`🖼️ Generating thumbnails from upload buffer for: ${filename}`);
           await this.generateThumbnail(fileBuffer, filename, userId, sessionId, fileType);
-          console.log(`🖼️ Thumbnail generated for: ${filename}`);
+          console.log(`✅ Thumbnails generated successfully (sm, md, lg)`);
         } catch (thumbnailError) {
           console.warn(`⚠️ Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
           // Continue - thumbnail generation failure shouldn't fail the processing
