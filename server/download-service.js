@@ -29,15 +29,15 @@ const DownloadCommerceManager = require('./download-commerce');
 const PreviewGenerationService = require('./preview-generation');
 
 class DownloadService {
-  constructor(pool) {
-    if (!pool) {
-      throw new Error('DownloadService requires a shared database pool parameter');
-    }
+  constructor(pool = null) {
+    this.pool = pool || new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
     
-    this.pool = pool;
     this.db = drizzle(this.pool);
     this.r2Manager = new R2FileManager(null, this.pool);
-    this.commerceManager = new DownloadCommerceManager(this.pool);
+    this.commerceManager = new DownloadCommerceManager();
     this.previewService = new PreviewGenerationService(this.pool);
     
     // Service configuration

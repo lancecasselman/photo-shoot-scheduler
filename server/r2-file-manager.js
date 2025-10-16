@@ -1563,23 +1563,21 @@ class R2FileManager {
       
       // CRITICAL: Also remove from session_files database table for accurate storage calculations
       try {
-        if (!this.pool) {
-          console.warn('⚠️  No database pool available for file cleanup');
-        } else {
-          // Delete both possible filename formats (full path and just filename)
-          const deleteResult1 = await this.pool.query(
-            'DELETE FROM session_files WHERE session_id = $1 AND filename = $2',
-            [sessionId, filename]
-          );
-          
-          const deleteResult2 = await this.pool.query(
-            'DELETE FROM session_files WHERE session_id = $1 AND filename LIKE $2',
-            [sessionId, `%.private/sessions/${sessionId}/%/${filename}`]
-          );
-          
-          const totalDeleted = deleteResult1.rowCount + deleteResult2.rowCount;
-          console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${filename}`);
-        }
+        const { pool } = require('./db');
+        
+        // Delete both possible filename formats (full path and just filename)
+        const deleteResult1 = await pool.query(
+          'DELETE FROM session_files WHERE session_id = $1 AND filename = $2',
+          [sessionId, filename]
+        );
+        
+        const deleteResult2 = await pool.query(
+          'DELETE FROM session_files WHERE session_id = $1 AND filename LIKE $2',
+          [sessionId, `%.private/sessions/${sessionId}/%/${filename}`]
+        );
+        
+        const totalDeleted = deleteResult1.rowCount + deleteResult2.rowCount;
+        console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${filename}`);
         
       } catch (dbError) {
         console.error(' Failed to remove file from database (storage calculation may be incorrect):', dbError.message);

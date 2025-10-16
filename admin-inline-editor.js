@@ -58,6 +58,7 @@
                 applyEditingToExistingContent();
             } else if (authData.email === ADMIN_EMAIL) {
                 // Admin user but not on secure-landing page - just load saved edits without controls
+                console.log('Admin user detected, but controls disabled on this page');
                 await loadSavedEdits();
             }
         } catch (error) {

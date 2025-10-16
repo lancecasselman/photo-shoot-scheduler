@@ -32,8 +32,7 @@ class PhotoDeletion {
             }
 
             // Make deletion request
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(filename)}`, {
+            const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(filename)}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
@@ -99,8 +98,7 @@ class PhotoDeletion {
             // Show progress indicator
             showMessage(`Deleting ${filenames.length} photos...`, 'info');
 
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}`, {
+            const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'

@@ -28,12 +28,20 @@ const DB_ERROR_PATTERNS = {
 };
 
 class DatabaseTransactionManager {
-  constructor(pool) {
-    if (!pool) {
-      throw new Error('DatabaseTransactionManager requires a shared database pool parameter');
-    }
+  constructor(pool = null) {
+    this.pool = pool || new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      // Connection pool configuration for high availability
+      max: 20, // Maximum pool size
+      min: 5,  // Minimum pool size
+      idleTimeoutMillis: 30000, // 30 seconds idle timeout
+      connectionTimeoutMillis: 10000, // 10 seconds connection timeout
+      acquireTimeoutMillis: 60000, // 60 seconds acquire timeout
+      statement_timeout: 60000, // 60 seconds statement timeout
+      idle_in_transaction_session_timeout: 30000 // 30 seconds transaction timeout
+    });
     
-    this.pool = pool;
     this.db = drizzle(this.pool);
     
     // Transaction configuration
@@ -553,8 +561,11 @@ class DatabaseTransactionManager {
   }
 }
 
-// Export class only (no singleton - pool must be passed explicitly)
+// Export singleton instance and class
+const dbTransactionManager = new DatabaseTransactionManager();
+
 module.exports = {
   DatabaseTransactionManager,
+  dbTransactionManager,
   DB_ERROR_PATTERNS
 };

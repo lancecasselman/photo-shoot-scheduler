@@ -1716,8 +1716,7 @@
 
             async loadPolicy() {
                 try {
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/downloads/sessions/${this.sessionId}/policy`, {
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
                         credentials: 'include'
                     });
 
@@ -2013,8 +2012,7 @@
                     }
 
                     // Send update request
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/downloads/sessions/${this.sessionId}/policy`, {
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/policy`, {
                         method: 'PUT',
                         credentials: 'include',
                         body: formData
@@ -2046,8 +2044,7 @@
                 if (!otherSessionId) return;
 
                 try {
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/downloads/sessions/${otherSessionId}/policy`, {
+                    const response = await fetch(`/api/downloads/sessions/${otherSessionId}/policy`, {
                         credentials: 'include'
                     });
 
@@ -2068,8 +2065,7 @@
             async loadAnalytics() {
                 try {
                     // Fetch analytics data
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/downloads/sessions/${this.sessionId}/analytics`, {
+                    const response = await fetch(`/api/downloads/sessions/${this.sessionId}/analytics`, {
                         credentials: 'include'
                     });
 
@@ -2104,8 +2100,7 @@
         // Load session data to get client contact info
         async function loadSessionData() {
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
                     credentials: 'include'
                 });
 
@@ -2127,39 +2122,6 @@
             }
         }
 
-        // Helper function to get the authenticated origin for API calls
-        // This ensures API calls work even when page is loaded from custom domain
-        function getApiOrigin() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const authOrigin = urlParams.get('authOrigin');
-            // Use passed authOrigin if available, otherwise use current origin
-            return authOrigin ? decodeURIComponent(authOrigin) : window.location.origin;
-        }
-
-        // Fetch thumbnail with credentials and convert to blob URL
-        // This ensures session cookies are properly sent even in popup windows
-        async function buildThumbnailBlob(sessionId, fileName, size = 'medium') {
-            try {
-                const apiOrigin = window.location.origin;
-                const thumbnailUrl = `${apiOrigin}/api/r2/thumbnail/${sessionId}/${encodeURIComponent(fileName)}?size=${size}`;
-                
-                const response = await fetch(thumbnailUrl, {
-                    credentials: 'include', // Include session cookies
-                    mode: 'cors'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Thumbnail fetch failed: ${response.status}`);
-                }
-
-                const blob = await response.blob();
-                return URL.createObjectURL(blob);
-            } catch (error) {
-                console.error('Failed to load thumbnail:', error);
-                return null; // Return null to trigger fallback
-            }
-        }
-
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -2168,7 +2130,6 @@
             clientName = urlParams.get('clientName') || 'Client';
 
             console.log('URL Parameters:', { sessionId, folderType, clientName });
-            console.log('API Origin:', window.location.origin);
 
             // Update UI
             document.getElementById('folderTitle').textContent = 'Gallery Manager';
@@ -2594,8 +2555,7 @@
                 }
 
                 // Step 1: Get presigned URL for direct R2 upload (bypasses server)
-                const apiOrigin = window.location.origin;
-                const urlResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}/upload-urls`, {
+                const urlResponse = await fetch(`/api/sessions/${sessionId}/upload-urls`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -2642,8 +2602,7 @@
                         uploadedFileName = uploadData.fileName;
 
                         // Step 3: Update database with the uploaded file info
-                        const apiOrigin = window.location.origin;
-                        response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/record`, {
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/record`, {
                             method: 'POST',
                             credentials: 'include',
                             headers: {
@@ -2675,7 +2634,7 @@
                         const formData = new FormData();
                         formData.append('file', file);
 
-                        response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                        response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                             method: 'POST',
                             credentials: 'include',
                             body: formData
@@ -2698,7 +2657,7 @@
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
+                    response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                         method: 'POST',
                         credentials: 'include',
                         body: formData
@@ -2896,8 +2855,7 @@
         // Load files
         async function loadFiles() {
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}`, {
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
                     credentials: 'include' // Include cookies for authentication
                 });
 
@@ -2984,25 +2942,16 @@
             if (isImage) {
                 const img = document.createElement('img');
                 const thumbnailFileName = file.fileName || file.name;
-                
+                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
+
+                img.src = thumbnailUrl;
                 img.alt = file.name;
                 img.loading = 'lazy';
                 img.onclick = () => openLightbox(file.downloadUrl);
-                
-                // Load thumbnail using fetch-to-blob to properly send credentials
-                buildThumbnailBlob(sessionId, thumbnailFileName, 'medium').then(blobUrl => {
-                    if (blobUrl) {
-                        img.src = blobUrl;
-                    } else {
-                        // Fallback to icon if thumbnail fails
-                        img.style.display = 'none';
-                        filePreview.innerHTML = '<div class="file-icon">IMG</div>';
-                    }
-                }).catch(error => {
-                    console.error('Thumbnail load error:', error);
+                img.onerror = () => {
                     img.style.display = 'none';
                     filePreview.innerHTML = '<div class="file-icon">IMG</div>';
-                });
+                };
 
                 filePreview.appendChild(img);
             } else {
@@ -3128,8 +3077,7 @@
                 downloadBtn.innerHTML = '⏳ Creating ZIP...';
                 downloadBtn.disabled = true;
 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/download-zip`, {
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/download-zip`, {
                     method: 'GET',
                     credentials: 'include', // Include cookies for authentication
                     headers: {
@@ -3263,8 +3211,7 @@
                 const filenames = files.map(file => file.fileName || file.name);
 
                 // Call server endpoint to delete all files using optimized batch deletion
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/delete-all-photos`, {
+                const response = await fetch(`/api/sessions/${sessionId}/delete-all-photos`, {
                     method: 'DELETE',
                     credentials: 'include',
                     headers: {
@@ -3361,8 +3308,7 @@
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
                     try {
-                        const apiOrigin = window.location.origin;
-                        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/create-gallery`, {
+                        const response = await fetch(`/api/sessions/${sessionId}/create-gallery`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -3429,8 +3375,7 @@ Lance - The Legacy Photography`;
                 // If no gallery token exists, create one first
                 if (!galleryToken) {
                     try {
-                        const apiOrigin = window.location.origin;
-                        const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/create-gallery`, {
+                        const response = await fetch(`/api/sessions/${sessionId}/create-gallery`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -3518,8 +3463,7 @@ Lance - The Legacy Photography`;
         async function quickToggleDownloads() {
             try {
                 // Get current policy first
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
 
@@ -3534,7 +3478,7 @@ Lance - The Legacy Photography`;
                 const formData = new FormData();
                 formData.append('downloadEnabled', newStatus.toString());
 
-                const updateResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
+                const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -3591,8 +3535,7 @@ Lance - The Legacy Photography`;
                     }
                 }
 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -3612,8 +3555,7 @@ Lance - The Legacy Photography`;
         async function quickWatermarkToggle() {
             try {
                 // Get current policy
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
+                const response = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     credentials: 'include'
                 });
 
@@ -3635,7 +3577,7 @@ Lance - The Legacy Photography`;
                     formData.append('watermarkOpacity', '60');
                 }
 
-                const updateResponse = await fetch(`${apiOrigin}/api/downloads/sessions/${sessionId}/policy`, {
+                const updateResponse = await fetch(`/api/downloads/sessions/${sessionId}/policy`, {
                     method: 'PUT',
                     credentials: 'include',
                     body: formData
@@ -3773,8 +3715,7 @@ Lance - The Legacy Photography`;
                 // Fallback: Try direct API call if PhotoDeletion fails
                 console.log('Attempting direct API deletion...');
                 try {
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(fileName)}`, {
+                    const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(fileName)}`, {
                         method: 'DELETE',
                         credentials: 'include'
                     });

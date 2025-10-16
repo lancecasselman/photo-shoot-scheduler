@@ -8,21 +8,22 @@ packages = ["android-tools", "firebase-tools", "freetype", "git-lfs", "gitFull",
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Project"
+name = "Stable Server"
+author = 44735007
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node --max-old-space-size=512 server.js"
+
+[[workflows.workflow]]
+name = "Stable Server"
 mode = "parallel"
 author = "agent"
 
 [[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Server"
-
-[[workflows.workflow]]
-name = "Server"
-author = "agent"
-
-[[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server.js"
+args = "node --max-old-space-size=512 server.js"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
@@ -31,6 +32,10 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 35613
+externalPort = 5000
 
 [[ports]]
 localPort = 37935
@@ -54,9 +59,8 @@ externalPort = 4200
 
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 run = ["node", "server.js"]
-build = ["bash", "-c", "yes | npm run db:push -- --force || true"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"

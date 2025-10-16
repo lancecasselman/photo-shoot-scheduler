@@ -1,7 +1,7 @@
 # Photography Management System
 
 ## Overview
-A subscription-based photography business management platform designed for professional photographers. It offers comprehensive workflow tools including session scheduling, client management, invoicing, contract signing, and a CapCut-style website builder. The platform aims to boost photographer productivity and client satisfaction, operating on a subscription model with tiered storage options.
+A streamlined photography business management platform for professional photographers, offering workflow management tools such as session scheduling, client management, invoicing, and contract signing. The platform operates on a subscription model with a Professional plan including 100GB storage and additional 1TB storage add-ons. The vision is to enhance photographer productivity and client satisfaction.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -10,42 +10,109 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 ## System Architecture
 
 ### Frontend Architecture
-A static HTML/CSS/JavaScript multi-page application built with vanilla JavaScript, featuring a responsive, mobile-first design and PWA capabilities. It utilizes a component-based UI with tabbed navigation. The CapCut-style Website Builder includes a full-screen preview, drag-and-drop functionality, and editable components with 21 professional fonts, focusing on a web-app only strategy. The UI color scheme uses `#10b981` (teal) for primary actions and `#dc2626` (red) for danger actions, ensuring accessibility and consistent branding.
+A static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, utilizing a responsive, mobile-first design and PWA capabilities. It features a component-based UI with tabbed navigation. The CapCut-style Website Builder includes full-screen preview, drag-and-drop functionality, editable components, and 21 professional fonts, focusing on a web-app only strategy.
+
+**UI Color Scheme (October 2025):**
+Standardized teal/green theme for consistent button visibility and brand identity:
+- Primary accent: #10b981 (teal) with white text for all primary action buttons
+- Danger actions: #dc2626 (red) with white text for destructive operations
+- Session action buttons (Booking Agreement, Download Controls, Send Deposit) unified with teal theme for visual consistency
+- Removed all white-on-white and low-contrast button states for accessibility compliance
 
 ### Backend Architecture
-Powered by a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are managed server-side. The system employs a unified Firebase configuration for consistent authentication across frontend and backend components. Critical authentication flows and browser caching issues have been addressed to ensure robust user access and deployment stability.
+Built on a Node.js/Express server for API routes and business logic. Authentication and subscription verification are handled server-side.
+
+### Authentication & Authorization
+Firebase Authentication supports email/password and Google OAuth with role-based access. Server-side session management incorporates critical safety checks to prevent crashes and dynamic CORS configuration for secure session cookie handling in production. Session consolidation unifies user accounts, particularly for administrators, ensuring consistent access across platforms.
+
+**Critical Authentication Bug Fixes (October 2025):**
+Fixed fundamental authentication flow issues causing 401 errors and preventing user access:
+
+1. **Wrong Login Endpoint:** All login flows (secure-login.html, secure-app.html, native-auth.js) were calling `/auth/session` but backend expected `/api/auth/login`
+   - Fixed: Updated all Firebase auth handlers to POST to `/api/auth/login` with credentials: 'include'
+
+2. **Premature Session Loading:** DOMContentLoaded handler in script.js (line 1861) was calling `loadSessions()` before authentication completed
+   - Fixed: Removed unconditional loadSessions() call, now only called after successful authentication in initializePage()
+
+3. **Duplicate Auth Logic:** secure-app.html had its own DOMContentLoaded auth check that raced with script.js's initializePage()
+   - Fixed: Removed duplicate auth system, unified all auth through initializePage() on window.load event
+
+4. **Missing Login Redirect:** When authentication failed, users saw blank page instead of login screen
+   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails (script.js line 3884)
+
+5. **Session Persistence Issues:** Iframe environment blocking session cookies
+   - Verified: Session middleware configured with `secure: true`, `sameSite: 'none'`, dynamic CORS origin callback
+   - Verified: All fetch calls include `credentials: 'include'`
+
+**Authentication Flow (Corrected):**
+1. User accesses /secure-app.html
+2. window.load event fires → initializePage() runs
+3. checkAuth() verifies session with /api/auth/user
+4. If not authenticated → redirect to /secure-login.html
+5. User logs in with Google → Firebase token sent to /api/auth/login
+6. Backend creates session with normalized user data (all Lance emails → uid 44735007)
+7. User redirected to /secure-app.html
+8. checkAuth() succeeds → loadSessions() loads all sessions
+
+**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails (line 169-179 in subscription-auth-middleware.js)
 
 ### Database Architecture
-Primary database is PostgreSQL, accessed via Drizzle ORM. Firebase Firestore provides real-time synchronization capabilities. The system utilizes a shared PostgreSQL connection pool architecture to manage database connections efficiently, ensuring stability and preventing connection errors. Database schema is meticulously defined to prevent deployment conflicts.
+Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firestore for real-time synchronization.
 
 ### File Storage Strategy
-Cloudflare R2 serves as the primary cloud storage solution, supporting human-readable file organization and dual-path compatibility. Firebase Storage is used for website assets and user profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
+Cloudflare R2 is the primary cloud storage, using human-readable file organization and supporting dual-path for backward compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
+
+### Photography Delivery System
+A comprehensive download-based delivery system with flexible pricing (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration. It uses a streamlined credit-based system for downloads, with a clear path for clients to purchase unlimited access.
+
+### Photography Community Platform
+A social platform with a multi-tab feed system, customizable post types, advanced image optimization, social features, user profiles with reputation points, direct messaging, and EXIF extraction.
 
 ### Core Features & System Design
-The platform integrates several key features:
-- **Photography Delivery System:** Comprehensive download system with flexible pricing, customizable watermarking, and Stripe Connect integration.
-- **Photography Community Platform:** A social platform with multi-tab feeds, customizable posts, advanced image optimization, user profiles, direct messaging, and EXIF extraction.
-- **AI-Powered Blog Generator:** Integrates OpenAI for customizable blog post generation within the website builder, including SEO optimization and metadata generation.
-- **Website Publishing System:** Allows photographers to publish websites to subdomains with real-time availability checks and one-click publishing.
-- **Onboarding System:** A 5-step wizard for new users covering business information and subscription integration.
-- **Unified Subscription Management System:** Manages multiple billing models (Professional Plan, storage add-ons) using Stripe, including webhooks and automatic storage quota management.
-- **Subscription Cancellation & Access Control:** Provides full cancellation functionality and enforces subscription requirements via authentication middleware.
-- **Production Deployment Infrastructure:** Features production-ready configuration with security hardening, health monitoring, and robust error handling on a Reserved VM.
-- **Platform Analytics & Business Intelligence:** A dashboard for monitoring SaaS performance, user engagement, and platform health.
-- **Data Export & GDPR Compliance System:** Offers enterprise-grade data portability, GDPR Article 20 compliance, and Right to be Forgotten functionality.
-- **Automated Backup & Disaster Recovery:** Production-grade system with daily database backups, weekly full system backups, and encrypted cloud storage in Cloudflare R2.
-- **Advanced User Management System:** Admin dashboard for managing photographer accounts, usage analytics, and bulk operations.
-- **Enterprise Support System:** Professional client support infrastructure with automatic issue resolution, multi-channel support, and ticket management.
+Includes chronological session sorting, an integrated deposit system, storage quota and billing, unified file deletion, customizable pages, booking agreements with e-signatures, and Stripe Connect Express for multi-photographer payments.
+
+### AI-Powered Blog Generator
+Integrates OpenAI for customizable blog post generation within the website builder, offering topic, style, tone, length options, SEO keyword optimization, and automatic metadata generation.
+
+### Website Publishing System
+Allows photographers to publish websites to subdomains with real-time availability checks, one-click publishing, and live preview capabilities, available for professional plans.
+
+### Onboarding System
+A 5-step wizard for new users covering username selection, business information, photography specialty, and subscription integration.
+
+### Unified Subscription Management System
+Manages multiple platforms and billing models (Professional Plan, storage add-ons) using Stripe for web payments, webhooks, multi-platform customer tracking, and automatic storage quota management.
+
+### Subscription Cancellation & Access Control
+Provides full cancellation functionality and enforces subscription requirements through authentication middleware, frontend guards, and automatic redirection.
+
+### Production Deployment Infrastructure
+Features production-ready configuration with security hardening, health monitoring, structured logging, database optimization, and robust error handling. Deployed on a Reserved VM for 24/7 reliability and consistent background job execution.
+
+### Platform Analytics & Business Intelligence
+A dashboard for monitoring SaaS performance, including revenue, user engagement, platform health, support, and business metrics.
+
+### Data Export & GDPR Compliance System
+Provides enterprise-grade data portability and privacy compliance with data export options, GDPR Article 20 compliance, Right to be Forgotten functionality, and audit logging.
+
+### Automated Backup & Disaster Recovery
+A production-grade backup system with automated daily database backups, weekly full system backups, integrity checking, encrypted cloud storage in Cloudflare R2, and point-in-time recovery.
+
+### Advanced User Management System
+A comprehensive dashboard for platform administrators to manage photographer accounts, offering filtering, search, bulk operations, account controls, usage analytics, and export tools.
+
+### Enterprise Support System
+Professional-grade client support infrastructure with automatic issue resolution, multi-channel support, a help center, ticket management, support analytics, and client communication.
 
 ## External Dependencies
 
 ### Core Services
-- **Firebase**: Authentication, Firestore, Storage.
-- **PostgreSQL**: Primary relational database.
+- **Firebase**: Authentication, Firestore, Storage, Hosting.
+- **PostgreSQL**: Primary relational database (via Neon serverless).
 - **Stripe**: Payment processing, subscription management, Stripe Connect.
-- **SendGrid**: Email delivery.
+- **SendGrid**: Email delivery service.
 - **Cloudflare R2**: Primary cloud storage.
-- **WHCC**: Print fulfillment.
+- **WHCC**: Print fulfillment service.
 - **OpenAI**: AI-powered blog generation.
 
 ### Development & Deployment
@@ -55,8 +122,10 @@ The platform integrates several key features:
 - **Archiver**: ZIP file generation.
 - **Sharp**: Image processing.
 - **AWS SDK**: S3-compatible interface for R2 storage.
+- **JSZip**: Client-side ZIP file creation.
+- **Uppy**: Advanced file upload interface.
 
 ### APIs
-- **Google Distance Matrix API**: Mileage tracking.
-- **OpenWeatherMap Geocoding API**: Location-based services.
-- **Sunrise-Sunset API**: Astronomical calculations.
+- **Google Distance Matrix API**: For mileage tracking.
+- **OpenWeatherMap Geocoding API**: For location-based services.
+- **Sunrise-Sunset API**: For astronomical calculations.

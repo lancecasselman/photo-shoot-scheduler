@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Photo Shoot Scheduler">
@@ -5937,8 +5936,7 @@
                 
                 showMessage('Preparing contract for sending...', 'info');
 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}/send`, {
+                const response = await fetch(`/api/contracts/${contractId}/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -6210,8 +6208,7 @@ The Legacy Photography`);
             console.log('Loading contract:', contractId);
             
             // Fetch the contract
-            const apiOrigin = window.location.origin;
-            const response = await fetch(`${apiOrigin}/api/booking/agreements/${contractId}/signed`);
+            const response = await fetch(`/api/booking/agreements/${contractId}/signed`);
             if (!response.ok) {
                 showMessage('Failed to load contract', 'error');
                 return;
@@ -6423,8 +6420,7 @@ ${agreement.content || 'No content available'}
                 console.log('Viewing signed contract for session:', sessionId);
                 
                 // Check if there are any signed contracts for this session
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/booking-agreements/session/${sessionId}/signed`, {
+                const response = await fetch(`/api/booking-agreements/session/${sessionId}/signed`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -7075,8 +7071,66 @@ ${agreement.content || 'No content available'}
             setMinDateTime();
         }
 
-        // REMOVED: Duplicate loadSessions function - now using the comprehensive version from script.js
-        // The script.js version includes all features: subscription handling, storage stats, and proper field transformation
+        window.loadSessions = async function() {
+            try {
+                const response = await fetch('/api/sessions', {
+                    credentials: 'include' // Required for session cookies
+                });
+                if (response.ok) {
+                    const rawData = await response.json();
+                    console.log('Data type:', typeof rawData, 'Array:', Array.isArray(rawData));
+                    console.log('Raw API response:', rawData);
+                    
+                    // Debug deposit amount for Testing dammit session
+                    const testingSession = rawData.find(s => s.clientName === 'Testing dammit');
+                    console.log('Testing session deposit_amount from API:', testingSession?.depositAmount || 'NOT FOUND');
+                    
+                    // Transform and ensure deposit amounts are properly included
+                    sessions = rawData.map(session => ({
+                        ...session,
+                        depositAmount: session.depositAmount || session.deposit_amount || 0,
+                        reminderEnabled: session.sendReminder || false,
+                        reminderSent: session.reminderSent || false
+                    }));
+                    
+                    console.log('Transformed sessions:', sessions);
+                    console.log(`Successfully loaded ${sessions.length} sessions`);
+                    
+
+                    
+
+                    
+                    // Store sessions globally and render
+                    window.sessions = sessions;
+                    console.log('About to render sorted sessions...');
+                    if (typeof window.renderSessions === 'function') {
+                        window.renderSessions();
+                        console.log(' Sorted sessions rendered successfully');
+                        
+                    }
+                    
+                    // Remove any existing storage display elements from session cards
+                    setTimeout(() => {
+                        document.querySelectorAll('.session-total-storage').forEach(element => {
+                            element.remove();
+                        });
+                    }, 150);
+                    
+                    // Load global storage statistics after sessions are loaded
+                    console.log('Loading global storage statistics...');
+                    setTimeout(() => {
+                        loadGlobalStorageStats();
+                    }, 200);
+                } else if (response.status === 403) {
+                    const data = await response.json();
+                    if (data.requiresSubscription) {
+                        showSubscriptionModal(data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
         
         // Function to trigger immediate payment status refresh
         window.triggerImmediatePaymentRefresh = async function() {
@@ -7260,7 +7314,7 @@ ${agreement.content || 'No content available'}
                                 <button onclick="openUpdateSessionModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Update Session</button>
                                 <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
-                                <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-primary booking-agreement-btn" data-session-id="${sessionId}" style="background-color: #10b981 !important; color: white !important;">
+                                <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-primary booking-agreement-btn" data-session-id="${sessionId}">
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
                                 <button onclick="openDownloadControls('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📥 Download Controls</button>
@@ -7352,8 +7406,7 @@ ${agreement.content || 'No content available'}
 
             try {
                 const authToken = await getAuthToken();
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/${folderType}`, {
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
                     headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
                 });
 
@@ -7581,7 +7634,7 @@ ${agreement.content || 'No content available'}
                         try {
                             // Get upload URL with file size for quota enforcement
                             const authToken = await getAuthToken();
-                            const uploadResponse = await fetch(`${apiOrigin}/api/sessions/${sessionId}/files/upload`, {
+                            const uploadResponse = await fetch(`/api/sessions/${sessionId}/files/upload`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -7690,10 +7743,7 @@ ${agreement.content || 'No content available'}
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            // Add cache-busting version parameter AND authenticated origin to force fresh load and maintain auth
-            const cacheBuster = Date.now();
-            const authOrigin = encodeURIComponent(window.location.origin);
-            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}&v=${cacheBuster}&authOrigin=${authOrigin}`;
+            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}`;
             const windowName = `gallery_${sessionId}`;
             const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no';
             
@@ -8053,8 +8103,7 @@ lance@thelegacyphotography.com`;
 
                 session[field] = value;
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(session)
@@ -8329,8 +8378,7 @@ lance@thelegacyphotography.com`;
                 session.tipAmount = amount;
                 session.tipDate = new Date().toISOString();
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(session)
@@ -8684,8 +8732,7 @@ lance@thelegacyphotography.com`;
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, {
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({ contractType })
@@ -9418,8 +9465,7 @@ lance@thelegacyphotography.com`;
                 // Find the contract from all sessions
                 let foundContract = null;
                 for (const session of sessions) {
-                    const apiOrigin = window.location.origin;
-                    const response = await fetch(`${apiOrigin}/api/booking/agreements/session/${session.id}/all`);
+                    const response = await fetch(`/api/booking/agreements/session/${session.id}/all`);
                     if (response.ok) {
                         const agreements = await response.json();
                         const agreement = agreements.find(a => a.id === contractId);
@@ -9509,8 +9555,7 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
+                const response = await fetch(`/api/contracts/${contractId}`, {
                     method: 'GET',
                     headers
                 });
@@ -9584,8 +9629,7 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
+                const response = await fetch(`/api/contracts/${contractId}`, {
                     method: 'PUT',
                     headers,
                     body: JSON.stringify({
@@ -9673,8 +9717,7 @@ ${contract.content || 'No content available'}
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts/custom`, {
+                const response = await fetch(`/api/sessions/${sessionId}/contracts/custom`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -9808,8 +9851,7 @@ ${contract.content || 'No content available'}
             };
             
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}`, {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(sessionData)
@@ -10162,8 +10204,7 @@ END:VCALENDAR`;
         
         window.viewPaymentPlan = async function(sessionId) {
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/payment-plan`);
+                const response = await fetch(`/api/sessions/${sessionId}/payment-plan`);
                 
                 if (!response.ok) {
                     throw new Error('Payment plan not found');
@@ -10232,8 +10273,7 @@ END:VCALENDAR`;
         
         async function markPaymentPaid(paymentId) {
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/payments/${paymentId}/mark-paid`, {
+                const response = await fetch(`/api/payments/${paymentId}/mark-paid`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -10268,8 +10308,7 @@ END:VCALENDAR`;
         
         async function sendPaymentInvoice(paymentId) {
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/payments/${paymentId}/send-invoice`, {
+                const response = await fetch(`/api/payments/${paymentId}/send-invoice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -10433,8 +10472,7 @@ END:VCALENDAR`;
                 
                 showMessage('Saving changes...', 'info');
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
+                const response = await fetch(`/api/contracts/${contractId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -10518,8 +10556,7 @@ END:VCALENDAR`;
                     headers['Authorization'] = `Bearer ${authToken}`;
                 }
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, { headers });
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, { headers });
                 if (!response.ok) {
                     throw new Error('Failed to load contracts');
                 }
@@ -10577,8 +10614,7 @@ END:VCALENDAR`;
             try {
                 showMessage('Creating contract...', 'info');
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/sessions/${sessionId}/contracts`, {
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -10612,8 +10648,7 @@ END:VCALENDAR`;
             try {
                 showMessage('Preparing contract email...', 'info');
                 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}/send`, {
+                const response = await fetch(`/api/contracts/${contractId}/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -10663,8 +10698,7 @@ END:VCALENDAR`;
                 currentEditContractId = contractId;
                 
                 // Fetch contract details
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${contractId}`, {
+                const response = await fetch(`/api/contracts/${contractId}`, {
                     headers: {
                         'Authorization': `Bearer ${await getAuthToken()}`
                     }
@@ -10716,8 +10750,7 @@ END:VCALENDAR`;
                     return;
                 }
 
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/contracts/${currentEditContractId}`, {
+                const response = await fetch(`/api/contracts/${currentEditContractId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -14740,8 +14773,7 @@ END:VCALENDAR`;
             }
 
             try {
-                const apiOrigin = window.location.origin;
-                const response = await fetch(`${apiOrigin}/api/expenses/${expenseId}`, {
+                const response = await fetch(`/api/expenses/${expenseId}`, {
                     method: 'DELETE'
                 });
 
@@ -17934,7 +17966,7 @@ END:VCALENDAR`;
         });
 
         // Global currentUser variable for Business Setup
-        window.currentUser = window.currentUser || null;
+        let currentUser = null;
         
         // Business Setup Section Functions
         function showSection(sectionId) {
@@ -18023,12 +18055,12 @@ END:VCALENDAR`;
                 } else if (stripeData.hasAccount) {
                     // Account exists but onboarding not complete
                     statusText.textContent = 'Complete your payment setup';
-                    statusDetails.innerHTML = `
+                    statusDetails.innerHTML = \`
                         <p>Your Stripe Express account has been created but setup is not complete.</p>
                         <button onclick="continueBusinessSetupStripeOnboarding()" class="primary-btn" style="margin-top: 15px;">
                             Continue Setup
                         </button>
-                    `;
+                    \`;
                     setupForm.style.display = 'none';
                     completeSection.style.display = 'none';
                     
@@ -18126,7 +18158,7 @@ END:VCALENDAR`;
 
 
     <!-- Booking Agreements System -->
-    <link rel="stylesheet" href="booking-agreements-modal.css?v=1760321500">
+    <link rel="stylesheet" href="booking-agreements-modal.css">
     <script src="booking-agreements-modal.js?v=1756847230"></script>
     
     <!-- Contract Modal Button Script -->

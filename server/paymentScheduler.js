@@ -2,11 +2,8 @@ const cron = require('node-cron');
 const PaymentPlanManager = require('./paymentPlans');
 
 class PaymentScheduler {
-  constructor(pool) {
-    if (!pool) {
-      throw new Error('PaymentScheduler requires a shared database pool parameter');
-    }
-    this.paymentManager = new PaymentPlanManager(pool);
+  constructor() {
+    this.paymentManager = new PaymentPlanManager();
     this.isRunning = false;
   }
 
@@ -80,8 +77,7 @@ class PaymentScheduler {
     console.log(' Starting weekly payment plan review...');
     
     try {
-      // Use db from paymentManager (which has the shared pool)
-      const db = this.paymentManager.db;
+      const { db } = require('./db');
       const { paymentPlans, paymentRecords } = require('../shared/schema');
       const { eq, and } = require('drizzle-orm');
 

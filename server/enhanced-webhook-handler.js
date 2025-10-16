@@ -27,15 +27,15 @@ const DownloadService = require('./download-service');
 const DownloadCommerceManager = require('./download-commerce');
 
 class EnhancedWebhookHandler {
-  constructor(pool) {
-    if (!pool) {
-      throw new Error('EnhancedWebhookHandler requires a shared database pool parameter');
-    }
+  constructor(pool = null) {
+    this.pool = pool || new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
     
-    this.pool = pool;
     this.db = drizzle(this.pool);
     this.downloadService = new DownloadService(this.pool);
-    this.commerceManager = new DownloadCommerceManager(this.pool);
+    this.commerceManager = new DownloadCommerceManager();
     
     // Retry configuration with exponential backoff
     this.retryConfig = {
