@@ -2456,7 +2456,9 @@ window.deleteAllPhotos = async function(sessionId) {
         const result = await response.json();
         
         if (result.success) {
-            showMessage(`Successfully deleted all photos. Reclaimed ${result.totalReclaimedMB}MB of storage.`, 'success');
+            const photoCount = result.deletedCount || 0;
+            const storage = result.storageReclaimed || '0 MB';
+            showMessage(`✅ Successfully deleted ${photoCount} photo${photoCount !== 1 ? 's' : ''}. Reclaimed ${storage} of storage.`, 'success');
             // Refresh the session data
             await loadSessions();
             // Close the modal
