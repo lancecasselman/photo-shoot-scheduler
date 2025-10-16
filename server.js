@@ -9190,23 +9190,23 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                 
                 const download = existingDownload.rows[0];
                 
-                // Get session userId to construct R2 key
-                const userResult = await client.query(`
-                    SELECT user_id FROM photography_sessions WHERE id = $1
-                `, [sessionId]);
+                // Get r2_key from session_files table (use database-stored path, don't regenerate!)
+                const fileResult = await client.query(`
+                    SELECT r2_key FROM session_files 
+                    WHERE session_id = $1 AND filename = $2 AND folder_type = 'gallery'
+                    LIMIT 1
+                `, [sessionId, download.filename]);
                 
-                if (userResult.rows.length === 0) {
+                if (fileResult.rows.length === 0 || !fileResult.rows[0].r2_key) {
+                    console.log(`❌ No r2_key found for file: ${download.filename}`);
                     return res.status(404).json({
                         success: false,
-                        error: 'Session not found'
+                        error: 'File not found in storage'
                     });
                 }
                 
-                const userId = userResult.rows[0].user_id;
-                
-                // Construct proper R2 key: photographer-{userId}/session-{sessionId}/gallery/{filename}
-                const r2Key = `photographer-${userId}/session-${sessionId}/gallery/${download.filename}`;
-                console.log(`📦 Constructing R2 key for re-download: ${r2Key}`);
+                const r2Key = fileResult.rows[0].r2_key;
+                console.log(`📦 Using database r2_key for re-download: ${r2Key}`);
                 
                 // Generate download URL using R2
                 const downloadUrl = await r2FileManager.getSignedUrl(r2Key, 3600); // 1 hour expiry
@@ -9275,9 +9275,23 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'free', 0, $8, 'completed', NOW())
                 `, [downloadId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, token]);
                 
-                // Construct proper R2 key: photographer-{userId}/session-{sessionId}/gallery/{filename}
-                const r2Key = `photographer-${photographerId}/session-${sessionId}/gallery/${filename}`;
-                console.log(`📦 Constructing R2 key for free download: ${r2Key}`);
+                // Get r2_key from session_files table (use database-stored path, don't regenerate!)
+                const fileResult = await client.query(`
+                    SELECT r2_key FROM session_files 
+                    WHERE session_id = $1 AND filename = $2 AND folder_type = 'gallery'
+                    LIMIT 1
+                `, [sessionId, filename]);
+                
+                if (fileResult.rows.length === 0 || !fileResult.rows[0].r2_key) {
+                    console.log(`❌ No r2_key found for file: ${filename}`);
+                    return res.status(404).json({
+                        success: false,
+                        error: 'File not found in storage'
+                    });
+                }
+                
+                const r2Key = fileResult.rows[0].r2_key;
+                console.log(`📦 Using database r2_key for free download: ${r2Key}`);
                 
                 // Generate download URL using R2
                 const downloadUrl = await r2FileManager.getSignedUrl(r2Key, 3600); // 1 hour expiry
