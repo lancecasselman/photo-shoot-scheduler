@@ -87,6 +87,22 @@
             opacity: 0.8;
         }
 
+        /* Download Counter Display */
+        .download-counter {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .download-counter.paid {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
         /* Pricing Info Banner */
         .pricing-banner {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
@@ -281,6 +297,28 @@
         .price-badge.paid {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
+        }
+
+        /* Downloaded Badge */
+        .downloaded-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #48bb78;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 1;
+        }
+
+        .downloaded-badge::before {
+            content: '✓';
+            font-size: 1.2rem;
         }
 
         /* Photo Info */
@@ -1464,6 +1502,7 @@
         <div class="header">
             <h1 id="galleryTitle">Loading Gallery...</h1>
             <p id="gallerySubtitle">Please wait while we load your photos</p>
+            <div id="downloadCounter" class="download-counter" style="display: none;"></div>
         </div>
 
         <!-- Pricing Banner -->
@@ -1658,6 +1697,12 @@
                 this.cachedGalleryClientKey = null;
                 this.currentQuota = null; // Track current quota status
 
+                // Download tracking (simplified system from gallery.html)
+                this.downloadedPhotos = new Set();
+                this.downloadClientKey = null; // Client key for download system (SHA-256 based)
+                this.freeDownloadLimit = 0;
+                this.pricePerPhoto = 0;
+
                 // Initialize from URL - support both path and query parameter patterns
                 const urlParams = new URLSearchParams(window.location.search);
                 const pathParts = window.location.pathname.split('/');
@@ -1722,6 +1767,89 @@
                 return 'https://photomanagementsystem.com';
             }
 
+            // SHA-256 hash function for client key generation
+            async sha256(message) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                return hashHex;
+            }
+
+            // Generate client key for download system (must match server algorithm exactly)
+            async generateDownloadClientKey(galleryAccessToken, sessionId) {
+                if (!galleryAccessToken || !sessionId) {
+                    throw new Error('Gallery token and session ID required for client key generation');
+                }
+                
+                const baseString = `${galleryAccessToken}-${sessionId}`;
+                const hashHex = await this.sha256(baseString);
+                const clientKey = `gallery-${hashHex.substring(0, 16)}`;
+                
+                console.log(`🔑 Generated download client key: ${clientKey}`);
+                return clientKey;
+            }
+
+            async checkDownloadedPhotos() {
+                try {
+                    if (!this.sessionData?.id || !this.downloadClientKey) {
+                        console.warn('Cannot check downloaded photos - missing sessionId or clientKey');
+                        return;
+                    }
+
+                    // Load from localStorage (persists across page reloads)
+                    const storageKey = `downloaded_photos_${this.sessionData.id}_${this.downloadClientKey}`;
+                    const stored = localStorage.getItem(storageKey);
+                    
+                    if (stored) {
+                        const storedPhotos = JSON.parse(stored);
+                        storedPhotos.forEach(photoId => this.downloadedPhotos.add(photoId));
+                        console.log('📊 Loaded downloaded photos from storage:', Array.from(this.downloadedPhotos));
+                    }
+                } catch (error) {
+                    console.warn('Could not load download history from storage:', error);
+                }
+            }
+
+            saveDownloadedPhotos() {
+                try {
+                    if (!this.sessionData?.id || !this.downloadClientKey) {
+                        return;
+                    }
+
+                    const storageKey = `downloaded_photos_${this.sessionData.id}_${this.downloadClientKey}`;
+                    localStorage.setItem(storageKey, JSON.stringify(Array.from(this.downloadedPhotos)));
+                } catch (error) {
+                    console.warn('Could not save download history:', error);
+                }
+            }
+
+            updateDownloadCounter() {
+                const counterEl = document.getElementById('downloadCounter');
+                if (!counterEl) return;
+
+                const downloadCount = this.downloadedPhotos.size;
+                const remainingFree = Math.max(0, this.freeDownloadLimit - downloadCount);
+                
+                if (this.freeDownloadLimit > 0) {
+                    if (remainingFree > 0) {
+                        counterEl.textContent = `Free downloads remaining: ${remainingFree}`;
+                        counterEl.className = 'download-counter';
+                    } else {
+                        counterEl.textContent = `All downloads: $${this.pricePerPhoto.toFixed(2)} per photo`;
+                        counterEl.className = 'download-counter paid';
+                    }
+                } else if (this.pricePerPhoto > 0) {
+                    counterEl.textContent = `All downloads: $${this.pricePerPhoto.toFixed(2)} per photo`;
+                    counterEl.className = 'download-counter paid';
+                } else {
+                    counterEl.textContent = 'Free unlimited downloads';
+                    counterEl.className = 'download-counter';
+                }
+                
+                counterEl.style.display = 'inline-block';
+            }
+
             async init() {
                 console.log('🛒 Initializing ClientGalleryCart...');
 
@@ -1742,6 +1870,28 @@
 
                 // Load gallery data
                 await this.loadGallery();
+
+                // Initialize simplified download system (from gallery.html)
+                if (this.sessionData && this.galleryToken) {
+                    // Extract download settings
+                    this.freeDownloadLimit = parseInt(this.sessionData.freeDownloads) || 0;
+                    this.pricePerPhoto = parseFloat(this.sessionData.pricePerDownload) || 0;
+                    
+                    // Generate download client key
+                    this.downloadClientKey = await this.generateDownloadClientKey(this.galleryToken, this.sessionData.id);
+                    
+                    console.log('📥 Download system initialized:', {
+                        freeDownloadLimit: this.freeDownloadLimit,
+                        pricePerPhoto: this.pricePerPhoto,
+                        downloadClientKey: this.downloadClientKey
+                    });
+                    
+                    // Check which photos have been downloaded
+                    await this.checkDownloadedPhotos();
+                    
+                    // Update download counter display
+                    this.updateDownloadCounter();
+                }
 
                 // FREEMIUM FIX: Generate and cache gallery-based client key for freemium mode
                 if (this.policy && this.policy.mode === 'freemium' && this.galleryToken && this.sessionData) {
@@ -2358,10 +2508,19 @@
                 
                 const price = this.calculatePrice(index, this.policy, this.entitlements.filter(e => e.photoId === photoIdToCheck).length);
                 const isInCart = this.cart.some(item => item.photoId === photoIdToCheck);
+                
+                // Check if photo has been downloaded (simplified download system)
+                const isDownloaded = this.downloadedPhotos.has(photoIdToCheck);
 
-                console.log(`🖼️ Rendering photo card ${index}: ${photoIdToCheck} (price: $${price === null ? 'N/A' : price.toFixed(2)}, hasEntitlement: ${isEntitled}, mode: ${this.policy?.mode})`);
+                console.log(`🖼️ Rendering photo card ${index}: ${photoIdToCheck} (price: $${price === null ? 'N/A' : price.toFixed(2)}, hasEntitlement: ${isEntitled}, downloaded: ${isDownloaded}, mode: ${this.policy?.mode})`);
 
                 let priceBadge = '';
+                let downloadedBadge = '';
+                // Show downloaded badge if photo has been downloaded
+                if (isDownloaded) {
+                    downloadedBadge = `<div class="downloaded-badge">Downloaded</div>`;
+                }
+
                 // Show price badge only if not free, not entitled, and has a valid price
                 if (this.policy && this.policy.mode !== 'free' && !isEntitled && price !== null && price !== undefined && price !== 0) {
                     priceBadge = `<div class="price-badge paid">$${price.toFixed(2)}</div>`;
@@ -2376,8 +2535,17 @@
                 let addToCartButtonText = '🛒 Add to Cart';
                 let showAddToCartButton = true;
 
+                // Simplified download system: Handle downloaded photos (for re-download)
+                const downloadCount = this.downloadedPhotos.size;
+                const remainingFree = Math.max(0, this.freeDownloadLimit - downloadCount);
+
                 // Determine button states based on pricing model and entitlements
-                if (isEntitled) {
+                if (isDownloaded) {
+                    // Photo already downloaded - allow re-download for free
+                    downloadButtonClass += ' redownload';
+                    downloadButtonText = '📥 Re-download Free';
+                    showAddToCartButton = false;
+                } else if (isEntitled) {
                     // User already has entitlement - immediate download
                     downloadButtonClass += ' immediate';
                     downloadButtonText = '📥 Download Now';
@@ -2401,11 +2569,11 @@
                             if (price === 0) {
                                 // Within free limit
                                 downloadButtonClass += ' immediate free';
-                                downloadButtonText = '📥 Free Download';
+                                downloadButtonText = remainingFree > 0 ? '📥 Download Free' : '📥 Free Download';
                                 showAddToCartButton = false; // Free download, no cart needed
                             } else {
                                 // Beyond free limit, requires payment
-                                downloadButtonText = '🛒 Add to Cart';
+                                downloadButtonText = this.pricePerPhoto > 0 ? `📥 Download - $${this.pricePerPhoto.toFixed(2)}` : '🛒 Add to Cart';
                                 addToCartButtonText = isInCart ? '✓ In Cart' : '🛒 Add to Cart';
                                 showAddToCartButton = true;
                             }
@@ -2473,6 +2641,7 @@
                                 Image unavailable
                             </div>
                             ${priceBadge}
+                            ${downloadedBadge}
                         </div>
                         <div class="photo-info">
                             <h3 class="photo-filename">${photo.filename || `Photo ${index + 1}`}</h3>
@@ -3092,78 +3261,85 @@
 
             async downloadPhoto(photoId, photoUrl, filename, fromCart = false) {
                 try {
-                    console.log(`⬇️ [SIMPLE] Starting download for photo: ${photoId}`);
+                    console.log('📥 Initiating download:', {
+                        sessionId: this.sessionData?.id,
+                        photoId,
+                        clientKey: this.downloadClientKey?.substring(0, 16) + '...',
+                        isRedownload: this.downloadedPhotos.has(photoId)
+                    });
 
-                    if (!this.galleryToken || !this.sessionData) {
-                        this.showError('Gallery access not properly initialized');
+                    if (!this.sessionData || !this.downloadClientKey) {
+                        this.showError('Download system not initialized');
                         return;
                     }
 
                     // Show download progress
-                    this.showProgress('Preparing download...');
+                    this.showProgress('Processing download...');
 
-                    const downloadPayload = {
-                        galleryAccessToken: this.galleryToken,
-                        sessionId: this.sessionData.id,
-                        photoId: photoId,
-                        photoUrl: photoUrl,
-                        filename: filename
-                    };
-
-                    console.log(`📡 [SIMPLE] Sending download request:`, downloadPayload);
-
-                    const response = await fetch(`${this.getApiBaseUrl()}/api/downloads/simple/download`, {
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/gallery/${this.sessionData.id}/download`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(downloadPayload)
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            photoId: photoId,
+                            clientKey: this.downloadClientKey,
+                            photoUrl: photoUrl,
+                            filename: filename
+                        })
                     });
 
-                    const result = await response.json();
+                    const data = await response.json();
                     this.hideProgress();
 
-                    console.log(`📋 [SIMPLE] Download response:`, result);
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Download failed');
+                    }
 
-                    if (result.success && result.downloadUrl) {
-                        console.log(`✅ [SIMPLE] Download authorized for photo: ${photoId}`);
+                    console.log('✅ Download response:', data);
 
-                        // Trigger actual download
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.download = result.filename || filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                    if (data.success) {
+                        if (data.checkoutUrl) {
+                            // Paid download - redirect to Stripe checkout
+                            console.log('💳 Redirecting to Stripe checkout...');
+                            window.location.href = data.checkoutUrl;
+                        } else if (data.downloadUrl) {
+                            // Free or re-download - start download immediately
+                            console.log('✅ Starting download...');
 
-                        // Show success message
-                        const downloadType = result.downloadType === 'unlimited' ? 'Unlimited' : 'Free';
-                        this.showSuccess(`Downloaded: ${filename} (${downloadType})`);
+                            // Create temporary link and trigger download
+                            const link = document.createElement('a');
+                            link.href = data.downloadUrl;
+                            link.download = filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
 
-                        // Update credit status display
-                        if (this.creditStatus) {
-                            if (result.downloadType !== 'unlimited') {
-                                this.creditStatus.freeDownloadsRemaining = result.remainingDownloads;
+                            // Track download (only for new downloads, not re-downloads)
+                            if (!this.downloadedPhotos.has(photoId)) {
+                                this.downloadedPhotos.add(photoId);
+                                this.saveDownloadedPhotos();
+                                console.log(`✅ Tracked download: ${photoId}`);
                             }
-                            this.updateCreditDisplay();
+
+                            // Update counter and re-render gallery
+                            this.updateDownloadCounter();
+                            this.displayPhotos();
+
+                            // Show success message
+                            const message = data.isRedownload 
+                                ? `Re-downloaded: ${filename}` 
+                                : data.isFree 
+                                    ? `Downloaded free: ${filename}` 
+                                    : `Downloaded: ${filename}`;
+                            this.showSuccess(message);
                         }
-
-                        // Refresh credit status from server
-                        await this.fetchCreditStatus();
-
-                    } else if (response.status === 402 && result.code === 'PAYMENT_REQUIRED') {
-                        console.log(`💳 [SIMPLE] Payment required - showing unlock modal`);
-                        
-                        // Show unlock modal
-                        this.showUnlockModal(result.unlimitedAccessPrice);
-
-                    } else {
-                        console.warn(`⚠️ [SIMPLE] Download failed for photo: ${photoId}`, result);
-                        this.showError(result.error || 'Download failed');
                     }
 
                 } catch (error) {
                     this.hideProgress();
-                    console.error('❌ [SIMPLE] Error downloading photo:', error);
-                    this.showError('Download failed. Please try again.');
+                    console.error('❌ Error downloading photo:', error);
+                    this.showError(error.message || 'Download failed. Please try again.');
                 }
             }
 
