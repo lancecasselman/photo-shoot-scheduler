@@ -45,6 +45,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 37765
+externalPort = 5000
+
+[[ports]]
 localPort = 37935
 externalPort = 3000
 
@@ -66,8 +70,8 @@ externalPort = 4200
 
 
 [deployment]
-deploymentTarget = "vm"
-run = ["node", "server.js"]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "db:push", "--force"]
 build = ["bash", "-c", "yes | npm run db:push -- --force || true"]
 
 [objectStorage]
