@@ -425,48 +425,37 @@
             }
             
             async initialize() {
-                return new Promise((resolve) => {
-                    // Set persistence to ensure auth state is maintained
-                    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                        .then(() => {
-                            firebase.auth().onAuthStateChanged(async (user) => {
-                                if (user) {
-                                    this.currentUser = user;
-                                    await this.refreshToken();
-                                    this.startTokenRefresh();
-                                    
-                                    // Ensure we have a valid token
-                                    if (this.authToken) {
-                                        resolve(true);
-                                    } else {
-                                        console.error('Failed to get auth token despite having user');
-                                        resolve(false);
-                                    }
-                                } else {
-                                    // No Firebase user - authentication required
-                                    console.log('No Firebase user found, authentication required');
-                                    resolve(false);
-                                }
-                            });
-                        })
-                        .catch((error) => {
-                            console.error('Error setting persistence:', error);
-                            resolve(false);
-                        });
-                });
+                try {
+                    // Check backend session instead of Firebase client auth
+                    const response = await fetch('/api/auth/user', {
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.user) {
+                            this.currentUser = data.user;
+                            this.authToken = 'session-authenticated'; // Backend handles auth
+                            console.log('User authenticated via session:', data.user.email);
+                            return true;
+                        }
+                    }
+                    
+                    console.log('No backend session found');
+                    return false;
+                } catch (error) {
+                    console.error('Error checking authentication:', error);
+                    return false;
+                }
             }
             
             
             async refreshToken() {
-                if (this.currentUser) {
-                    try {
-                        this.authToken = await this.currentUser.getIdToken();
-                        console.log('Auth token refreshed successfully');
-                    } catch (error) {
-                        console.error('Error refreshing token:', error);
-                        this.authToken = null;
-                    }
-                }
+                // Token refresh handled by backend session, no action needed
+                console.log('Session-based auth - no token refresh needed');
             }
             
             startTokenRefresh() {
