@@ -51,6 +51,7 @@ externalPort = 4200
 [deployment]
 deploymentTarget = "vm"
 run = ["node", "server.js"]
+build = ["npm", "run", "db:push", "--", "--force"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"
