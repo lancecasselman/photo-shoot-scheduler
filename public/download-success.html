@@ -336,6 +336,14 @@
                 sessionId = urlParams.get('sessionId');
                 clientKey = urlParams.get('clientKey');
                 
+                // Handle gallery download (single photo) vs bulk order
+                if (sessionId && clientKey && !orderId) {
+                    // Single photo gallery download - just show success message
+                    document.getElementById('purchaseAmount').textContent = 'Purchase Confirmed';
+                    document.getElementById('entitlementStatus').style.display = 'block';
+                    return;
+                }
+                
                 if (!orderId) {
                     throw new Error('Order ID not found in URL');
                 }
@@ -402,16 +410,15 @@
         }
         
         function goToGallery() {
-            if (sessionId) {
-                const galleryUrl = clientKey 
-                    ? `/gallery?session=${sessionId}&clientKey=${clientKey}`
-                    : `/gallery?session=${sessionId}`;
-                window.location.href = galleryUrl;
+            if (sessionId && clientKey) {
+                window.location.href = `/client-gallery.html?sessionId=${sessionId}&clientKey=${clientKey}`;
+            } else if (sessionId) {
+                window.location.href = `/client-gallery.html?sessionId=${sessionId}`;
             } else {
                 const urlParams = new URLSearchParams(window.location.search);
                 const orderId = urlParams.get('order_id');
                 if (orderId) {
-                    window.location.href = `/gallery`;
+                    window.location.href = `/client-gallery.html`;
                 } else {
                     alert('Unable to determine gallery location. Please check your email for the gallery link.');
                 }

@@ -9056,16 +9056,33 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                     });
                 }
 
-                // Check photographer's Stripe Connect account
-                if (!session.stripe_connect_account_id || !session.stripe_onboarding_complete) {
-                    return res.status(400).json({
+                // Get photographer email to check if admin
+                const photographerResult = await client.query(`
+                    SELECT email FROM users WHERE id = $1
+                `, [photographerId]);
+                
+                if (photographerResult.rows.length === 0) {
+                    return res.status(404).json({
                         success: false,
-                        error: 'Photographer has not configured payment processing'
+                        error: 'Photographer not found'
                     });
                 }
+                
+                const photographerEmail = photographerResult.rows[0].email;
+                const adminEmails = [
+                    'lancecasselman@icloud.com',
+                    'lancecasselman2011@gmail.com', 
+                    'lance@thelegacyphotography.com'
+                ];
+                const isAdminAccount = adminEmails.includes(photographerEmail.toLowerCase());
 
-                // Create Stripe checkout session using Connect account
-                const checkoutSession = await stripe.checkout.sessions.create({
+                // Calculate platform fee (5% for non-admin accounts)
+                const platformFeePercentage = 5; // 5% platform fee
+                const amountInCents = Math.round(pricePerPhoto * 100);
+                const platformFee = isAdminAccount ? 0 : Math.round(amountInCents * (platformFeePercentage / 100));
+
+                // Build checkout session config
+                let checkoutConfig = {
                     payment_method_types: ['card'],
                     mode: 'payment',
                     line_items: [{
@@ -9076,7 +9093,7 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                                 description: 'High-resolution digital photo download',
                                 images: photoUrl ? [photoUrl] : []
                             },
-                            unit_amount: Math.round(pricePerPhoto * 100) // Convert to cents
+                            unit_amount: amountInCents
                         },
                         quantity: 1
                     }],
@@ -9088,20 +9105,61 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                         filename,
                         clientKey,
                         photographerId,
-                        amount: pricePerPhoto.toString()
+                        amount: pricePerPhoto.toString(),
+                        isAdminAccount: isAdminAccount.toString()
                     },
-                    success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/download-success.html?session_id={CHECKOUT_SESSION_ID}`,
-                    cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/gallery-manager.html?sessionId=${sessionId}`
-                }, {
-                    stripeAccount: session.stripe_connect_account_id // Use photographer's Connect account
-                });
+                    success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/download-success.html?session_id={CHECKOUT_SESSION_ID}&sessionId=${sessionId}&clientKey=${clientKey}`,
+                    cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/client-gallery.html?sessionId=${sessionId}&clientKey=${clientKey}`
+                };
+
+                if (isAdminAccount) {
+                    // Admin account - use regular platform Stripe (100% to platform)
+                    console.log(`💳 ADMIN ACCOUNT: Creating regular Stripe checkout for ${photographerEmail}`);
+                    checkoutConfig.payment_intent_data = {
+                        metadata: {
+                            type: 'gallery_download',
+                            sessionId,
+                            photoId,
+                            isAdminAccount: true
+                        }
+                    };
+                } else {
+                    // Regular photographer - use Stripe Connect with platform fee
+                    console.log(`💳 PHOTOGRAPHER ACCOUNT: Creating Stripe Connect checkout for ${photographerEmail}`);
+                    
+                    // Validate Connect account
+                    if (!session.stripe_connect_account_id || !session.stripe_onboarding_complete) {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Photographer has not configured payment processing'
+                        });
+                    }
+                    
+                    checkoutConfig.payment_intent_data = {
+                        application_fee_amount: platformFee, // Platform takes 5% fee
+                        on_behalf_of: session.stripe_connect_account_id,
+                        transfer_data: {
+                            destination: session.stripe_connect_account_id // 95% goes to photographer
+                        },
+                        metadata: {
+                            type: 'gallery_download',
+                            sessionId,
+                            photoId,
+                            isAdminAccount: false
+                        }
+                    };
+                }
+
+                const checkoutSession = await stripe.checkout.sessions.create(checkoutConfig);
 
                 console.log(`✅ Stripe checkout session created: ${checkoutSession.id}`);
+                console.log(`   Platform fee: $${(platformFee / 100).toFixed(2)} (${isAdminAccount ? 'ADMIN - No fee' : '5%'})`);
                 
                 return res.json({
                     success: true,
+                    requiresPayment: true,
                     downloadType: 'paid',
-                    checkoutUrl: checkoutSession.url,
+                    stripeUrl: checkoutSession.url, // Frontend expects 'stripeUrl'
                     checkoutSessionId: checkoutSession.id,
                     amount: pricePerPhoto
                 });
