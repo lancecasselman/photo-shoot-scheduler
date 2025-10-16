@@ -64,7 +64,18 @@ Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firesto
 Cloudflare R2 is the primary cloud storage, using human-readable file organization and supporting dual-path for backward compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
 
 ### Photography Delivery System
-A comprehensive download-based delivery system with flexible pricing (FREE, PAID, FREEMIUM), customizable watermarking, and Stripe Connect integration. It uses a streamlined credit-based system for downloads, with a clear path for clients to purchase unlimited access.
+**Simplified Download System (October 2025):**
+A clean, per-session download pricing model where photographers set:
+- **Free Download Limit**: Number of free downloads per session (e.g., 5 free photos)
+- **Price Per Photo**: Cost for downloads after free limit (e.g., $3 per photo)
+
+Key features:
+- Re-downloads are always free once a photo is downloaded
+- Downloads tracked in galleryDownloads table per session/client
+- Stripe Connect integration for paid downloads
+- Client gallery UI shows remaining free downloads
+- Simple pay-per-photo flow with Stripe checkout
+- Customizable watermarking support retained
 
 ### Photography Community Platform
 A social platform with a multi-tab feed system, customizable post types, advanced image optimization, social features, user profiles with reputation points, direct messaging, and EXIF extraction.
