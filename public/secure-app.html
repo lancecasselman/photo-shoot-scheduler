@@ -7748,16 +7748,23 @@ ${agreement.content || 'No content available'}
             }
         }
 
-        // Open Gallery folder in new window
+        // Open CLIENT Gallery (public view) in new window
         window.openGalleryWindow = function(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
-            if (!session) return;
+            if (!session) {
+                showMessage('Session not found', 'error');
+                return;
+            }
             
-            const url = `/gallery-manager.html?sessionId=${sessionId}&folderType=gallery&clientName=${encodeURIComponent(session.clientName)}`;
-            const windowName = `gallery_${sessionId}`;
-            const windowFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no';
+            // Check if gallery token exists
+            if (!session.galleryAccessToken) {
+                showMessage('Gallery not available yet. Please send gallery to client first.', 'warning');
+                return;
+            }
             
-            window.open(url, windowName, windowFeatures);
+            // Open the CLIENT gallery with token (no authentication required)
+            const url = `/g/${session.galleryAccessToken}`;
+            window.open(url, '_blank');
         };
 
 
