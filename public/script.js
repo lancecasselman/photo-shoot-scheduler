@@ -470,6 +470,8 @@ async function loadSessions() {
                 phoneNumber: session.phone_number || session.phoneNumber,
                 email: session.email,
                 price: parseFloat(session.price) || 0,
+                freeDownloadLimit: parseInt(session.free_download_limit || session.freeDownloadLimit) || 0,
+                pricePerPhoto: parseFloat(session.price_per_photo || session.pricePerPhoto) || 0,
                 depositAmount: parseFloat(session.deposit_amount || session.depositAmount) || 0,
                 // CRITICAL FIX: Read payment status fields correctly from both camelCase and snake_case
                 depositPaid: session.depositPaid || session.deposit_paid || false,
@@ -987,6 +989,8 @@ window.editSession = function(sessionId) {
     form.elements.phoneNumber.value = session.phoneNumber;
     form.elements.email.value = session.email;
     form.elements.price.value = session.price;
+    form.elements.freeDownloadLimit.value = session.freeDownloadLimit || 0;
+    form.elements.pricePerPhoto.value = session.pricePerPhoto || 0.00;
     form.elements.duration.value = session.duration;
     form.elements.notes.value = session.notes;
     form.elements.contractSigned.checked = session.contractSigned;
@@ -1818,10 +1822,10 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let [key, value] of formData.entries()) {
                 if (key === 'contractSigned' || key === 'paid' || key === 'edited' || key === 'delivered' || key === 'reminderEnabled' || key === 'galleryReadyNotified') {
                     sessionData[key] = value === 'on';
-                } else if (key === 'price') {
+                } else if (key === 'price' || key === 'pricePerPhoto') {
                     sessionData[key] = parseFloat(value) || 0;
-                } else if (key === 'duration') {
-                    sessionData[key] = parseInt(value) || 60;
+                } else if (key === 'duration' || key === 'freeDownloadLimit') {
+                    sessionData[key] = parseInt(value) || 0;
                 } else {
                     sessionData[key] = value;
                 }

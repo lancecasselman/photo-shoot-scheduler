@@ -2518,17 +2518,36 @@ app.put('/api/sessions/:sessionId', isAuthenticated, async (req, res) => {
             const updateValues = [];
             let paramCount = 1;
             
-            const allowedFields = [
-                'client_name', 'session_type', 'date_time', 'location', 'phone_number',
-                'email', 'price', 'deposit_amount', 'duration', 'notes', 'contract_signed',
-                'paid', 'edited', 'delivered', 'send_reminder', 'notify_gallery_ready',
-                'deposit_paid', 'deposit_sent', 'invoice_sent'
-            ];
+            // Map camelCase frontend field names to snake_case database column names
+            const fieldMapping = {
+                'clientName': 'client_name',
+                'sessionType': 'session_type',
+                'dateTime': 'date_time',
+                'location': 'location',
+                'phoneNumber': 'phone_number',
+                'email': 'email',
+                'price': 'price',
+                'depositAmount': 'deposit_amount',
+                'freeDownloadLimit': 'free_download_limit',
+                'pricePerPhoto': 'price_per_photo',
+                'duration': 'duration',
+                'notes': 'notes',
+                'contractSigned': 'contract_signed',
+                'paid': 'paid',
+                'edited': 'edited',
+                'delivered': 'delivered',
+                'sendReminder': 'send_reminder',
+                'reminderEnabled': 'reminder_enabled',
+                'galleryReadyNotified': 'gallery_ready_notified',
+                'depositPaid': 'deposit_paid',
+                'depositSent': 'deposit_sent',
+                'invoiceSent': 'invoice_sent'
+            };
             
-            for (const field of allowedFields) {
-                if (req.body[field] !== undefined) {
-                    updateFields.push(`${field} = $${paramCount}`);
-                    updateValues.push(req.body[field]);
+            for (const [camelCaseField, snakeCaseField] of Object.entries(fieldMapping)) {
+                if (req.body[camelCaseField] !== undefined) {
+                    updateFields.push(`${snakeCaseField} = $${paramCount}`);
+                    updateValues.push(req.body[camelCaseField]);
                     paramCount++;
                 }
             }

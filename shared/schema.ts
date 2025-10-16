@@ -144,6 +144,9 @@ export const photographySessions = pgTable("photography_sessions", {
   unlimitedAccess: boolean("unlimited_access").default(false), // True when client has paid for unlimited access
   unlimitedAccessPrice: decimal("unlimited_access_price", { precision: 10, scale: 2 }), // Price for unlimited access
   unlimitedAccessPurchasedAt: timestamp("unlimited_access_purchased_at"), // When unlimited was purchased
+  // New Simplified Download System (per-session)
+  freeDownloadLimit: integer("free_download_limit").default(0), // Number of free downloads per session
+  pricePerPhoto: decimal("price_per_photo", { precision: 10, scale: 2 }).default("0.00"), // Price per photo after free limit
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
