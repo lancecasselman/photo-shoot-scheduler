@@ -32,7 +32,8 @@ const {
   photographySessions, 
   digitalTransactions,
   downloadEntitlements,
-  downloadOrders
+  downloadOrders,
+  downloadPolicies
 } = schema;
 const { eq, and, desc, count, sum, gte, lte, sql } = require('drizzle-orm');
 
@@ -116,16 +117,14 @@ function generateGalleryClientKey(galleryAccessToken, sessionId) {
 // REMOVED: Deprecated generateUniqueClientKey function
 // All client key generation now uses generateGalleryClientKey for consistency
 
-function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
+function createDownloadRoutes(pool, isAuthenticated, downloadCommerceManager) {
+  if (!pool) {
+    throw new Error('createDownloadRoutes requires a shared database pool parameter');
+  }
+  
   const router = express.Router();
   
-  // Database connection for API routes
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-  });
-  
-  // Create Drizzle db instance with full schema
+  // Create Drizzle db instance with full schema (using shared pool)
   const db = drizzle(pool, { schema });
   const r2Manager = new R2FileManager(null, pool);
   
@@ -772,6 +771,108 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
       
       return res.handleError('INTERNAL_ERROR', 
         'Unexpected error during access validation', errorContext);
+    }
+  });
+
+  /**
+   * GET /api/downloads/unified/entitlements
+   * Get download entitlements for unified gallery access
+   * SECURITY: Validates gallery access before returning entitlements
+   */
+  router.get('/unified/entitlements', downloadRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    const correlationId = req.correlationId;
+    
+    try {
+      const { sessionId, clientKey, galleryAccessToken } = req.query;
+      
+      const context = {
+        endpoint: '/api/downloads/unified/entitlements',
+        method: 'GET',
+        sessionId: sessionId || 'unknown',
+        correlationId
+      };
+
+      // Validate required parameters
+      if (!galleryAccessToken) {
+        return res.handleError('MISSING_REQUIRED_FIELDS', 
+          'Missing required field: galleryAccessToken', context);
+      }
+
+      console.log(`📋 [${correlationId}] Getting entitlements for gallery token (sessionId: ${sessionId || 'resolving'})`);
+
+      // CRITICAL SECURITY: Validate gallery access first
+      const authResult = await downloadService.resolveSessionFromGalleryToken(galleryAccessToken);
+
+      if (!authResult.success) {
+        const errorCode = authResult.code || 'VALIDATION_ERROR';
+        const authContext = {
+          ...context,
+          additional: {
+            authenticationError: authResult.error,
+            tokenLength: galleryAccessToken?.length || 0
+          }
+        };
+        
+        console.warn(`⚠️ [${correlationId}] Access validation failed: ${authResult.error}`);
+        return res.handleError(errorCode, authResult.error, authContext);
+      }
+
+      // Access validated - now get entitlements
+      const resolvedSessionId = authResult.session.id;
+      const resolvedClientKey = authResult.clientKey;
+      
+      const result = await downloadService.getDownloadEntitlements(resolvedSessionId, resolvedClientKey);
+      
+      if (result.success) {
+        const processingTime = Date.now() - startTime;
+        console.log(`✅ [${correlationId}] Entitlements retrieved for session ${resolvedSessionId} in ${processingTime}ms`);
+        
+        res.json({
+          success: true,
+          entitlements: result.entitlements,
+          meta: {
+            correlationId,
+            processingTime,
+            timestamp: new Date().toISOString()
+          }
+        });
+      } else {
+        const errorContext = {
+          ...context,
+          sessionId: resolvedSessionId,
+          additional: {
+            entitlementsError: result.error
+          }
+        };
+        
+        console.warn(`⚠️ [${correlationId}] Failed to get entitlements: ${result.error}`);
+        return res.handleError('ENTITLEMENTS_ERROR', 
+          result.error || 'Failed to retrieve entitlements', errorContext);
+      }
+
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
+      console.error(`❌ [${correlationId}] Unexpected error getting entitlements:`, error);
+      
+      const errorContext = {
+        endpoint: '/api/downloads/unified/entitlements',
+        method: 'GET',
+        sessionId: req.query?.sessionId,
+        correlationId,
+        additional: {
+          processingTime,
+          errorStack: error.stack
+        },
+        debug: {
+          stack: error.stack,
+          details: error.message,
+          originalError: error.toString()
+        }
+      };
+      
+      return res.handleError('INTERNAL_ERROR', 
+        'Unexpected error retrieving entitlements', errorContext);
     }
   });
 
@@ -1523,7 +1624,7 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
         protectionLevel: session.protectionLevel || 'medium' // low, medium, high
       };
 
-      res.json({ success: true, policy });
+      res.json(policy);
     } catch (error) {
       console.error('Error getting download policy:', error);
       res.status(500).json({ error: 'Failed to get download policy' });

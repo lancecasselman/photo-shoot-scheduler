@@ -25,22 +25,30 @@ Built on a Node.js/Express server for API routes and business logic. Authenticat
 ### Authentication & Authorization
 Firebase Authentication supports email/password and Google OAuth with role-based access. Server-side session management incorporates critical safety checks to prevent crashes and dynamic CORS configuration for secure session cookie handling in production. Session consolidation unifies user accounts, particularly for administrators, ensuring consistent access across platforms.
 
+**Firebase Integration (October 2025):**
+Unified Firebase configuration across all frontend and backend components:
+- **Project:** photoshcheduleapp
+- **Auth Domain:** photoshcheduleapp.firebaseapp.com
+- **Backend:** Firebase Admin SDK with service account authentication
+- **Frontend:** Firebase SDK v10.7.1 (modular) and v9.0.0 (compat)
+- **Centralized Config:** `public/firebase-config.js` for consistency
+
 **Critical Authentication Bug Fixes (October 2025):**
 Fixed fundamental authentication flow issues causing 401 errors and preventing user access:
 
-1. **Wrong Login Endpoint:** All login flows (secure-login.html, secure-app.html, native-auth.js) were calling `/auth/session` but backend expected `/api/auth/login`
-   - Fixed: Updated all Firebase auth handlers to POST to `/api/auth/login` with credentials: 'include'
+1. **Duplicate Script.js File:** Root-level `script.js` (outdated) was being served instead of `public/script.js`
+   - Fixed: Removed duplicate, configured static file serving to prioritize `public/` directory
+   - Fixed: Updated redirect code to properly send users to `/secure-login.html` when not authenticated
 
-2. **Premature Session Loading:** DOMContentLoaded handler in script.js (line 1861) was calling `loadSessions()` before authentication completed
-   - Fixed: Removed unconditional loadSessions() call, now only called after successful authentication in initializePage()
+2. **Inconsistent Firebase Configs:** Some files used wrong Firebase project (photoappstorage)
+   - Fixed: Updated all files to use correct project (photoshcheduleapp)
+   - Fixed: Created centralized `firebase-config.js` for future consistency
 
-3. **Duplicate Auth Logic:** secure-app.html had its own DOMContentLoaded auth check that raced with script.js's initializePage()
-   - Fixed: Removed duplicate auth system, unified all auth through initializePage() on window.load event
+3. **Missing Login Redirect:** When authentication failed, users saw blank page with 401 errors
+   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails
+   - Fixed: Removed outdated script.js that had `return;` instead of redirect
 
-4. **Missing Login Redirect:** When authentication failed, users saw blank page instead of login screen
-   - Fixed: Added `window.location.href = '/secure-login.html'` redirect when checkAuth() fails (script.js line 3884)
-
-5. **Session Persistence Issues:** Iframe environment blocking session cookies
+4. **Session Persistence Issues:** Iframe environment blocking session cookies
    - Verified: Session middleware configured with `secure: true`, `sameSite: 'none'`, dynamic CORS origin callback
    - Verified: All fetch calls include `credentials: 'include'`
 
@@ -50,14 +58,97 @@ Fixed fundamental authentication flow issues causing 401 errors and preventing u
 3. checkAuth() verifies session with /api/auth/user
 4. If not authenticated → redirect to /secure-login.html
 5. User logs in with Google → Firebase token sent to /api/auth/login
-6. Backend creates session with normalized user data (all Lance emails → uid 44735007)
-7. User redirected to /secure-app.html
-8. checkAuth() succeeds → loadSessions() loads all sessions
+6. Backend verifies token with Firebase Admin SDK
+7. Backend creates session with normalized user data (all Lance emails → uid 44735007)
+8. Backend stores session in PostgreSQL
+9. User redirected to /secure-app.html
+10. checkAuth() succeeds → loadSessions() loads all sessions ✅
 
-**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails (line 169-179 in subscription-auth-middleware.js)
+**Browser Caching Fix (October 2025):**
+Fixed critical production issue where published app showed old code due to browser caching:
+- **Problem:** Static files had no cache-control headers, browsers cached old JavaScript for days
+- **Impact:** Published app appeared broken while preview worked (both same server, different cache state)
+- **Solution:** Added `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` headers to all HTML/JS/CSS files
+- **Result:** Browsers always fetch latest code, no more stale file issues
+- **Implementation:** `setHeaders` callback in `express.static()` middleware (server.js lines 16964-16986)
+
+**Admin Access:** requireActiveSubscription middleware has built-in bypass for admin emails
 
 ### Database Architecture
 Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firestore for real-time synchronization.
+
+**Critical Database Connection Fixes (October 2025 - FINAL):**
+Fixed database connection chaos causing "Control plane request failed" and "Too many connection attempts" errors by implementing **true shared pool architecture**:
+
+1. **Hardcoded Database URLs Removed:**
+   - `server.js` line 255: Was using hardcoded postgresql URL instead of `process.env.DATABASE_URL`
+   - `server/db.ts` line 16: Was using same hardcoded URL instead of `process.env.DATABASE_URL`
+   - Fixed: Both now use `process.env.DATABASE_URL` from Replit secrets with validation
+   - Result: Session store and app now connect to SAME database
+
+2. **Shared Pool Architecture Implemented:**
+   - **ONE shared pool** in `server.js` with max: 3, min: 0 (respects Replit's ~5 connection limit)
+   - **ALL services now REQUIRE pool parameter** (no fallback creation)
+   - Removed duplicate pool creation from 10+ files:
+     - `database-transaction-manager.js`: Removed singleton, requires pool
+     - `enhanced-quota-manager.js`: Requires pool, no fallback
+     - `quota-monitoring-system.js`: Requires pool, no fallback
+     - `r2-api-routes.js`: Accepts pool parameter, removed creation
+     - `download-commerce.js`: Requires pool, no fallback
+     - `download-service.js`: Requires pool, no fallback
+     - `download-routes.js`: Accepts pool parameter, removed creation
+     - `enhanced-webhook-handler.js`: Requires pool, no fallback
+
+3. **Critical Fixes:**
+   - Removed `dbTransactionManager` singleton that was creating pool without parameter
+   - Updated all service constructors to throw error if pool not provided
+   - Updated all route factories to accept pool as first parameter
+   - Set min: 0 on shared pool so idle services don't reserve connections
+
+4. **DATABASE_URL Validation:**
+   - Added startup check: `if (!process.env.DATABASE_URL)` throw error
+   - Prevents silent failures from missing configuration
+
+**Database Configuration:**
+- Architecture: ONE shared pool, injected to all services
+- Connection Pool: max: 3, min: 0 (no idle connection reservation)
+- Environment: Uses `DATABASE_URL` from Replit secrets (validated at startup)
+- SSL: Enabled in production with `rejectUnauthorized: false`
+- Timeouts: Statement: 30s, Query: 25s, Idle-in-transaction: 20s
+- Status: Server running successfully, no connection errors
+
+**Remaining Pool Cleanup Tasks:**
+
+**CRITICAL (Will break at runtime when methods are called):**
+- `server/objectStorage.js` line 192: `deleteSessionFile()` imports pool from db.ts (will throw)
+- `server/r2-file-manager.js`: Imports pool from db.ts (will throw when used)
+- `server/paymentScheduler.js` line 87: FIXED - now uses `this.paymentManager.db`
+
+**Non-Critical (Not actively used or properly close pools):**
+The following files still create Pool instances but are not breaking the server because they either:
+1. Create pools in methods that aren't actively called during startup, OR
+2. Properly close pools after use (pool.end())
+
+Files requiring refactoring to use shared pool:
+- `server/gallery-print-routes.js`: Module-level pool creation
+- `server/download-webhook-handler.js`: Module-level pool creation  
+- `server/preview-generation.js`: Creates pool in constructor
+- `server/preview-api-routes.js`: Module-level pool creation
+- `server/sync-gallery-photos.js`: Creates pool in constructor
+- `server/production-monitoring.js`: Has pool fallback in constructor
+- `server/comprehensive-error-handler.js`: Has pool fallback in constructor
+- `server/enhanced-cart-manager.js`: Has pool fallback in constructor
+- `server/quota-system-validation.js`: Creates pool in constructor
+- `server/controllers/download-orchestrator.js`: Has pool fallback
+- `server/unified-file-deletion.js`: Creates pool in constructor
+- `server/payment-notifications.js`: Creates pool in constructor
+- `server/paymentPlans.js`: Lines 539 & 555 (methods create temporary pools)
+
+Refactoring pattern for each file:
+1. Update constructor to require pool parameter (no fallback)
+2. Store as `this.pool` or create `this.db = drizzle(pool)`
+3. Update server.js to pass shared pool when instantiating
+4. Remove `const { Pool } = require('pg')` import if no longer needed
 
 ### File Storage Strategy
 Cloudflare R2 is the primary cloud storage, using human-readable file organization and supporting dual-path for backward compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.

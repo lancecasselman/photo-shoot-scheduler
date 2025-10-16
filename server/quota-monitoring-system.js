@@ -16,12 +16,12 @@ const {
 } = require('../shared/schema');
 
 class QuotaMonitoringSystem {
-    constructor(pool = null) {
-        this.pool = pool || new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-        });
+    constructor(pool) {
+        if (!pool) {
+            throw new Error('QuotaMonitoringSystem requires a shared database pool parameter');
+        }
         
+        this.pool = pool;
         this.db = drizzle(this.pool);
         
         // Monitoring configuration

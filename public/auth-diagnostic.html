@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Diagnostic</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .test {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-left: 4px solid #0f0;
+        }
+        .pass { border-left-color: #0f0; }
+        .fail { border-left-color: #f00; color: #f00; }
+        .warn { border-left-color: #ff0; color: #ff0; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        button:hover { background: #0c0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Authentication Diagnostic Tool</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="runDiagnostics()">Run Full Diagnostics</button>
+    <button onclick="testLogin()">Test Login Flow</button>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Using CORRECT Firebase config for photoshcheduleapp
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        window.firebaseAuth = auth;
+        
+        window.runDiagnostics = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Running diagnostics...</h2>';
+            
+            const tests = [];
+            
+            // Test 1: Firebase Init
+            tests.push({
+                name: 'Firebase Initialization',
+                status: auth ? 'PASS' : 'FAIL',
+                data: auth ? 'Firebase Auth initialized' : 'Firebase Auth failed'
+            });
+            
+            // Test 2: Auth State
+            const user = auth.currentUser;
+            tests.push({
+                name: 'Firebase Auth State',
+                status: user ? 'PASS' : 'FAIL',
+                data: user ? JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName
+                }, null, 2) : 'No user logged in'
+            });
+            
+            // Test 3: Get Token
+            let token = null;
+            if (user) {
+                try {
+                    token = await user.getIdToken();
+                    tests.push({
+                        name: 'Firebase Token Generation',
+                        status: 'PASS',
+                        data: `Token: ${token.substring(0, 50)}...`
+                    });
+                } catch (error) {
+                    tests.push({
+                        name: 'Firebase Token Generation',
+                        status: 'FAIL',
+                        data: error.message
+                    });
+                }
+            } else {
+                tests.push({
+                    name: 'Firebase Token Generation',
+                    status: 'SKIP',
+                    data: 'No user to generate token'
+                });
+            }
+            
+            // Test 4: Session Cookie
+            const cookies = document.cookie;
+            tests.push({
+                name: 'Session Cookie',
+                status: cookies.includes('connect.sid') ? 'PASS' : 'FAIL',
+                data: cookies || 'No cookies found'
+            });
+            
+            // Test 5: API Auth Check
+            try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                const response = await fetch('/api/auth/user', {
+                    headers,
+                    credentials: 'include'
+                });
+                tests.push({
+                    name: 'API Auth Check (/api/auth/user)',
+                    status: response.ok ? 'PASS' : 'FAIL',
+                    data: await response.text()
+                });
+            } catch (error) {
+                tests.push({
+                    name: 'API Auth Check',
+                    status: 'FAIL',
+                    data: error.message
+                });
+            }
+            
+            // Test 6: Session Fetch
+            try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                const response = await fetch('/api/sessions', {
+                    headers,
+                    credentials: 'include'
+                });
+                tests.push({
+                    name: 'Session Fetch (/api/sessions)',
+                    status: response.ok ? 'PASS' : 'FAIL',
+                    data: await response.text()
+                });
+            } catch (error) {
+                tests.push({
+                    name: 'Session Fetch',
+                    status: 'FAIL',
+                    data: error.message
+                });
+            }
+            
+            // Render results
+            let html = '';
+            tests.forEach(test => {
+                const cssClass = test.status === 'PASS' ? 'pass' : test.status === 'SKIP' ? 'warn' : 'fail';
+                html += `
+                    <div class="test ${cssClass}">
+                        <strong>${test.status}</strong>: ${test.name}
+                        <pre>${test.data}</pre>
+                    </div>
+                `;
+            });
+            results.innerHTML = html;
+        };
+        
+        window.testLogin = function() {
+            window.location.href = '/secure-login.html';
+        };
+        
+        // Auto-run on load
+        setTimeout(() => window.runDiagnostics(), 500);
+    </script>
+</body>
+</html>

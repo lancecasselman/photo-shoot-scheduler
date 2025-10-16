@@ -26,8 +26,9 @@ module.exports = {
       
       // List of trusted domains (including production deployment URLs)
       const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-        'https://photo-shoot-scheduler-lancecasselman.replit.app',
-        'https://yourdomain.com'
+        'https://photo-management.replit.app',
+        'https://photomanagementsystem.com',
+        'http://photomanagementsystem.com'
       ];
       
       // Check if origin is in the allowed list or is a Replit dev URL

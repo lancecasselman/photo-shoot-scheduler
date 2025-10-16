@@ -71,11 +71,16 @@ class RealTimeGalleryUpdates extends EventEmitter {
       }
 
       const session = result.rows[0];
-      const now = new Date();
-      const expiresAt = new Date(session.gallery_expires_at);
+      
+      // Only check expiration if gallery_expires_at is set (not NULL)
+      // NULL means the gallery never expires
+      if (session.gallery_expires_at) {
+        const now = new Date();
+        const expiresAt = new Date(session.gallery_expires_at);
 
-      if (now > expiresAt) {
-        return { valid: false, reason: 'Gallery access has expired' };
+        if (now > expiresAt) {
+          return { valid: false, reason: 'Gallery access has expired' };
+        }
       }
 
       return {
