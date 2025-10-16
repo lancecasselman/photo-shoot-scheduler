@@ -241,6 +241,11 @@ class EnhancedWebhookHandler {
   async handleCheckoutCompleted(event) {
     const session = event.data.object;
     
+    // Check if this is a gallery download payment
+    if (session.metadata?.type === 'gallery_download') {
+      return await this.handleGalleryDownloadPayment(session, event);
+    }
+    
     // Start atomic transaction
     const client = await this.pool.connect();
     
@@ -362,6 +367,84 @@ class EnhancedWebhookHandler {
       
     } catch (error) {
       await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Handle gallery download payment completion
+   */
+  async handleGalleryDownloadPayment(session, event) {
+    const crypto = require('crypto');
+    const { v4: uuidv4 } = require('uuid');
+    
+    const client = await this.pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Extract metadata
+      const { sessionId, photoId, photoUrl, filename, clientKey, photographerId, amount } = session.metadata;
+      const amountPaid = parseInt(amount * 100) || 0; // Convert to cents
+      
+      console.log(`📥 Processing gallery download payment for photo ${photoId}`);
+      
+      // 1. Create download token
+      const token = crypto.randomBytes(32).toString('hex');
+      const tokenId = uuidv4();
+      const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+      
+      await client.query(`
+        INSERT INTO download_tokens (id, token, photo_url, filename, session_id, expires_at, is_used, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
+      `, [tokenId, token, photoUrl, filename, sessionId, expiresAt]);
+      
+      // 2. Create digital transaction record
+      const transactionId = uuidv4();
+      const paymentIntentId = session.payment_intent || `pi_${Date.now()}`;
+      
+      await client.query(`
+        INSERT INTO digital_transactions (
+          id, session_id, user_id, photo_id, stripe_payment_intent_id, 
+          amount, download_token, status, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', NOW())
+      `, [transactionId, sessionId, photographerId, photoId, paymentIntentId, amountPaid, token]);
+      
+      // 3. Create gallery_downloads record with digital_transaction_id
+      const downloadId = uuidv4();
+      await client.query(`
+        INSERT INTO gallery_downloads (
+          id, session_id, user_id, client_key, photo_id, photo_url, filename,
+          download_type, amount_paid, download_token, digital_transaction_id,
+          stripe_payment_id, status, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'paid', $8, $9, $10, $11, 'completed', NOW())
+      `, [downloadId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, 
+          amountPaid, token, transactionId, paymentIntentId]);
+      
+      // 4. Update session revenue tracking (optional)
+      await client.query(`
+        UPDATE photography_sessions 
+        SET total_download_revenue = COALESCE(total_download_revenue, 0) + $1,
+            last_download_activity = NOW()
+        WHERE id = $2
+      `, [amountPaid / 100, sessionId]);
+      
+      await client.query('COMMIT');
+      
+      console.log(`✅ [${event.id}] Gallery download payment processed: ${photoId}`);
+      
+      return { 
+        success: true, 
+        downloadId,
+        transactionId,
+        token
+      };
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(`❌ Error processing gallery download payment:`, error);
       throw error;
     } finally {
       client.release();

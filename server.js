@@ -8924,6 +8924,203 @@ app.post('/api/gallery/process-uploaded-files', isAuthenticated, async (req, res
     }
 });
 
+// Simplified photo download endpoint
+app.post('/api/gallery/:sessionId/download', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { photoId, clientKey, photoUrl, filename } = req.body;
+
+        console.log(`📥 Download request for session ${sessionId}, photo ${photoId}, client ${clientKey}`);
+
+        // Validate required fields
+        if (!sessionId || !photoId || !clientKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: sessionId, photoId, clientKey'
+            });
+        }
+
+        if (!photoUrl || !filename) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: photoUrl, filename'
+            });
+        }
+
+        let client;
+        try {
+            client = await pool.connect();
+
+            // 1. Check if client has already downloaded this specific photo
+            const existingDownload = await client.query(`
+                SELECT id, photo_url, filename, download_token 
+                FROM gallery_downloads 
+                WHERE session_id = $1 AND client_key = $2 AND photo_id = $3 
+                AND status = 'completed'
+                LIMIT 1
+            `, [sessionId, clientKey, photoId]);
+
+            if (existingDownload.rows.length > 0) {
+                console.log(`✅ Re-download detected - returning new download URL`);
+                
+                const download = existingDownload.rows[0];
+                
+                // Generate download URL using R2
+                const downloadUrl = await r2FileManager.getSignedUrl(download.photo_url, 3600); // 1 hour expiry
+                
+                return res.json({
+                    success: true,
+                    redownload: true,
+                    downloadUrl,
+                    downloadType: 'free' // Re-downloads are free
+                });
+            }
+
+            // 2. Get session details with JOIN to users table
+            const sessionResult = await client.query(`
+                SELECT ps.user_id, ps.free_download_limit, ps.price_per_photo,
+                       u.stripe_connect_account_id, u.stripe_onboarding_complete
+                FROM photography_sessions ps
+                JOIN users u ON ps.user_id = u.id
+                WHERE ps.id = $1
+            `, [sessionId]);
+
+            if (sessionResult.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Session not found'
+                });
+            }
+
+            const session = sessionResult.rows[0];
+            const freeDownloadLimit = parseInt(session.free_download_limit) || 0;
+            const pricePerPhoto = parseFloat(session.price_per_photo) || 0;
+            const photographerId = session.user_id;
+
+            // 3. Count unique photos downloaded by this client from this session
+            const downloadCountResult = await client.query(`
+                SELECT COUNT(DISTINCT photo_id) as count
+                FROM gallery_downloads
+                WHERE session_id = $1 AND client_key = $2 AND status = 'completed'
+            `, [sessionId, clientKey]);
+
+            const downloadCount = parseInt(downloadCountResult.rows[0].count) || 0;
+            console.log(`📊 Client has downloaded ${downloadCount} photos, free limit is ${freeDownloadLimit}`);
+
+            // 4. Determine if download is free or paid
+            if (downloadCount < freeDownloadLimit) {
+                // FREE DOWNLOAD
+                console.log(`✅ Free download allowed (${downloadCount + 1}/${freeDownloadLimit})`);
+                
+                // Generate download token
+                const token = crypto.randomBytes(32).toString('hex');
+                const tokenId = uuidv4();
+                const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+                
+                // Insert download token
+                await client.query(`
+                    INSERT INTO download_tokens (id, token, photo_url, filename, session_id, expires_at, is_used, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
+                `, [tokenId, token, photoUrl, filename, sessionId, expiresAt]);
+                
+                // Track download in gallery_downloads (free download - no digital_transaction_id)
+                const downloadId = uuidv4();
+                await client.query(`
+                    INSERT INTO gallery_downloads (
+                        id, session_id, user_id, client_key, photo_id, photo_url, filename,
+                        download_type, amount_paid, download_token, status, created_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'free', 0, $8, 'completed', NOW())
+                `, [downloadId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, token]);
+                
+                // Generate download URL using R2
+                const downloadUrl = await r2FileManager.getSignedUrl(photoUrl, 3600); // 1 hour expiry
+                
+                console.log(`✅ Free download recorded and URL generated`);
+                
+                return res.json({
+                    success: true,
+                    downloadType: 'free',
+                    downloadUrl,
+                    token,
+                    remainingFreeDownloads: freeDownloadLimit - downloadCount - 1
+                });
+                
+            } else {
+                // PAID DOWNLOAD
+                console.log(`💳 Paid download required - creating Stripe checkout`);
+                
+                if (pricePerPhoto <= 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Photo price not configured for this session'
+                    });
+                }
+
+                // Check photographer's Stripe Connect account
+                if (!session.stripe_connect_account_id || !session.stripe_onboarding_complete) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Photographer has not configured payment processing'
+                    });
+                }
+
+                // Create Stripe checkout session using Connect account
+                const checkoutSession = await stripe.checkout.sessions.create({
+                    payment_method_types: ['card'],
+                    mode: 'payment',
+                    line_items: [{
+                        price_data: {
+                            currency: 'usd',
+                            product_data: {
+                                name: `Photo Download - ${filename}`,
+                                description: 'High-resolution digital photo download',
+                                images: photoUrl ? [photoUrl] : []
+                            },
+                            unit_amount: Math.round(pricePerPhoto * 100) // Convert to cents
+                        },
+                        quantity: 1
+                    }],
+                    metadata: {
+                        type: 'gallery_download',
+                        sessionId,
+                        photoId,
+                        photoUrl,
+                        filename,
+                        clientKey,
+                        photographerId,
+                        amount: pricePerPhoto.toString()
+                    },
+                    success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/download-success.html?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/gallery-manager.html?sessionId=${sessionId}`
+                }, {
+                    stripeAccount: session.stripe_connect_account_id // Use photographer's Connect account
+                });
+
+                console.log(`✅ Stripe checkout session created: ${checkoutSession.id}`);
+                
+                return res.json({
+                    success: true,
+                    downloadType: 'paid',
+                    checkoutUrl: checkoutSession.url,
+                    checkoutSessionId: checkoutSession.id,
+                    amount: pricePerPhoto
+                });
+            }
+
+        } finally {
+            if (client) client.release();
+        }
+
+    } catch (error) {
+        console.error('❌ Download endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process download request',
+            details: error.message
+        });
+    }
+});
+
 // Upload photos to session with enhanced error handling and processing (LEGACY - SLOWER)
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
