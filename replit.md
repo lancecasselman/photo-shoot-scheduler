@@ -16,8 +16,9 @@ A static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, uti
 Standardized teal/green theme for consistent button visibility and brand identity:
 - Primary accent: #10b981 (teal) with white text for all primary action buttons
 - Danger actions: #dc2626 (red) with white text for destructive operations
-- Session action buttons (Booking Agreement, Download Controls, Send Deposit) unified with teal theme for visual consistency
+- Session action buttons (Booking Agreement, Create Agreement, Send Deposit) unified with teal theme for visual consistency
 - Removed all white-on-white and low-contrast button states for accessibility compliance
+- Download Controls button removed from session cards (October 2025)
 
 ### Backend Architecture
 Built on a Node.js/Express server for API routes and business logic. Authentication and subscription verification are handled server-side.
