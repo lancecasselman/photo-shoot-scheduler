@@ -488,6 +488,7 @@ async function loadSessions() {
                 reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
                 galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
                 reminderSent: session.reminder_sent || session.reminderSent || false,
+                galleryAccessToken: session.gallery_access_token || session.galleryAccessToken || null,
                 createdBy: session.created_by || session.createdBy,
                 createdAt: session.created_at || session.createdAt,
                 updatedAt: session.updated_at || session.updatedAt
