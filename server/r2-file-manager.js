@@ -1819,9 +1819,9 @@ class R2FileManager {
         throw new Error('R2 storage is not available');
       }
 
-      // Look up photographer name and session name from database
+      // Look up photographer name, session name, and session type from database
       const sessionQuery = await this.pool.query(
-        `SELECT s.client_name, u.display_name 
+        `SELECT s.client_name, s.session_type, u.display_name 
          FROM photography_sessions s 
          JOIN users u ON s.user_id = u.id 
          WHERE s.id = $1 AND s.user_id = $2`,
@@ -1832,13 +1832,15 @@ class R2FileManager {
         throw new Error(`Session not found: ${sessionId}`);
       }
 
-      const { client_name, display_name } = sessionQuery.rows[0];
+      const { client_name, session_type, display_name } = sessionQuery.rows[0];
       
       // Slugify names for R2 paths (replace spaces with underscores, lowercase)
       const slugifiedPhotographer = (display_name || userId).toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const slugifiedSession = (client_name || sessionId).toLowerCase().replace(/[^a-z0-9]/g, '_');
+      // CRITICAL FIX: Include session_type to match the standard R2 path format
+      const sessionSlug = `${client_name || sessionId}_${session_type || 'session'}`;
+      const slugifiedSession = sessionSlug.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
-      // Generate R2 key using photographer and session names
+      // Generate R2 key using photographer and session names (SAME FORMAT as generateR2Key)
       const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       const key = `photographer-${slugifiedPhotographer}/session-${slugifiedSession}/gallery/${sanitizedFilename}`;
       
