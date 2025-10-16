@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Settings - Photography Management</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-cancelled {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .subscription-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .subscription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .subscription-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .subscription-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #2d3748;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .danger-zone {
+            border: 2px solid #dc2626;
+            border-radius: 12px;
+            padding: 25px;
+            background: #fef2f2;
+        }
+
+        .danger-zone h3 {
+            color: #dc2626;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .danger-zone p {
+            color: #991b1b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            font-size: 14px;
+            color: #991b1b;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+
+        .warning-text {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #991b1b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #065f46;
+            display: none;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #991b1b;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header, .card {
+                padding: 20px;
+            }
+
+            .info-grid, .subscription-details {
+                grid-template-columns: 1fr;
+            }
+
+            .subscription-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/secure-app.html" class="back-link">← Back to Dashboard</a>
+
+        <div class="header">
+            <h1>Subscription Settings</h1>
+            <p>Manage your subscription and billing information</p>
+        </div>
+
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="loadingContainer" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; color: #718096;">Loading subscription information...</p>
+        </div>
+
+        <div id="contentContainer" style="display: none;">
+            <!-- Current Plan Overview -->
+            <div class="card">
+                <h2>Current Plan</h2>
+                <div id="planOverview"></div>
+            </div>
+
+            <!-- Active Subscriptions -->
+            <div class="card">
+                <h2>Active Subscriptions</h2>
+                <div id="subscriptionsList"></div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card">
+                <div class="danger-zone">
+                    <h3>⚠️ Danger Zone</h3>
+                    <p>
+                        Canceling your subscription will immediately revoke access to all features.
+                        You can optionally delete all your data from our platform, Stripe, and Firebase.
+                    </p>
+                    <button class="btn btn-danger" onclick="showCancelModal()">
+                        Cancel Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancellation Modal -->
+    <div id="cancelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Cancel Subscription</h3>
+                <button class="modal-close" onclick="hideCancelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-text">
+                    <strong>⚠️ Warning:</strong> This action will cancel all your active subscriptions.
+                    You will lose access to all platform features immediately.
+                </div>
+
+                <p style="margin: 15px 0; color: #2d3748;">
+                    Please select what you would like us to do:
+                </p>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="deleteAllData" onchange="toggleDeleteConfirmation()">
+                        <span>
+                            <strong>Delete all my data</strong><br>
+                            This will permanently remove all your data from our platform, Stripe Connect, and Firebase.
+                            This includes all sessions, photos, client information, and billing history.
+                            <strong>This action cannot be undone.</strong>
+                        </span>
+                    </label>
+                </div>
+
+                <div id="cancellationReason" style="margin: 20px 0;">
+                    <label style="display: block; margin-bottom: 8px; color: #2d3748; font-weight: 500;">
+                        Reason for cancellation (optional):
+                    </label>
+                    <textarea 
+                        id="reasonText" 
+                        rows="3" 
+                        placeholder="Help us improve by sharing why you're canceling..."
+                        style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit;">
+                    </textarea>
+                </div>
+
+                <div id="deleteConfirmation" style="display: none; margin: 20px 0;">
+                    <div class="warning-text">
+                        <strong>⚠️ FINAL CONFIRMATION:</strong> 
+                        Type <strong>DELETE</strong> below to confirm permanent data deletion.
+                    </div>
+                    <input 
+                        type="text" 
+                        id="confirmationInput" 
+                        placeholder="Type DELETE to confirm"
+                        style="width: 100%; padding: 10px; border: 2px solid #dc2626; border-radius: 6px; margin-top: 10px; font-weight: 600;">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideCancelModal()">
+                    Keep Subscription
+                </button>
+                <button id="confirmCancelBtn" class="btn btn-danger" onclick="confirmCancellation()">
+                    Cancel Subscription
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subscriptionData = null;
+
+        async function loadSubscriptionData() {
+            try {
+                const response = await fetch('/api/subscription-status');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load subscription data');
+                }
+
+                const data = await response.json();
+                subscriptionData = data.status;
+
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('contentContainer').style.display = 'block';
+
+                renderPlanOverview();
+                renderSubscriptionsList();
+
+            } catch (error) {
+                console.error('Error loading subscription data:', error);
+                document.getElementById('loadingContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Unable to Load Subscription Information</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPlanOverview() {
+            const container = document.getElementById('planOverview');
+            const hasPlan = subscriptionData.hasProfessionalPlan;
+            const status = subscriptionData.professionalStatus || 'inactive';
+
+            let statusBadge = `<span class="status-badge status-${status}">${status}</span>`;
+            if (subscriptionData.isAdmin) {
+                statusBadge = `<span class="status-badge status-active">ADMIN ACCESS</span>`;
+            }
+
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <h3 style="font-size: 28px; color: #2d3748; margin: 0;">
+                            ${hasPlan ? 'Professional Plan' : 'No Active Plan'}
+                        </h3>
+                        ${statusBadge}
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Storage</div>
+                        <div class="info-value">${subscriptionData.totalStorageGb || 0} GB</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Monthly Cost</div>
+                        <div class="info-value">$${subscriptionData.monthlyTotal || 0}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Next Billing</div>
+                        <div class="info-value">
+                            ${subscriptionData.nextBillingDate 
+                                ? new Date(subscriptionData.nextBillingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                                : 'N/A'}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Platform</div>
+                        <div class="info-value">${subscriptionData.professionalPlatform || 'N/A'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSubscriptionsList() {
+            const container = document.getElementById('subscriptionsList');
+            const subs = subscriptionData.subscriptions || [];
+
+            if (subs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Active Subscriptions</h3>
+                        <p>You don't have any active subscriptions at the moment.</p>
+                        <a href="/secure-app.html" class="btn btn-primary" style="display: inline-block; margin-top: 15px; text-decoration: none;">
+                            View Plans
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = subs.map(sub => {
+                const startDate = new Date(sub.current_period_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const endDate = new Date(sub.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                return `
+                    <div class="subscription-item">
+                        <div class="subscription-header">
+                            <div class="subscription-title">
+                                ${sub.subscription_type === 'professional' ? '🎯 Professional Plan' : '💾 Storage Add-on'}
+                                ${sub.storage_tb > 0 ? ` (${sub.storage_tb} TB)` : ''}
+                            </div>
+                            <span class="status-badge status-${sub.status}">${sub.status}</span>
+                        </div>
+                        <div class="subscription-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Price</div>
+                                <div class="detail-value">$${parseFloat(sub.price_amount).toFixed(2)}/${sub.billing_cycle || 'month'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Platform</div>
+                                <div class="detail-value">${sub.platform}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Current Period</div>
+                                <div class="detail-value">${startDate} - ${endDate}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Subscription ID</div>
+                                <div class="detail-value" style="font-size: 12px; word-break: break-all;">
+                                    ${sub.external_subscription_id.substring(0, 20)}...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showCancelModal() {
+            document.getElementById('cancelModal').classList.add('show');
+        }
+
+        function hideCancelModal() {
+            document.getElementById('cancelModal').classList.remove('show');
+            document.getElementById('deleteAllData').checked = false;
+            document.getElementById('reasonText').value = '';
+            document.getElementById('confirmationInput').value = '';
+            document.getElementById('deleteConfirmation').style.display = 'none';
+        }
+
+        function toggleDeleteConfirmation() {
+            const deleteChecked = document.getElementById('deleteAllData').checked;
+            document.getElementById('deleteConfirmation').style.display = deleteChecked ? 'block' : 'none';
+            document.getElementById('confirmationInput').value = '';
+        }
+
+        async function confirmCancellation() {
+            const deleteData = document.getElementById('deleteAllData').checked;
+            const reason = document.getElementById('reasonText').value.trim();
+            const confirmationText = document.getElementById('confirmationInput').value.trim();
+
+            // If deleting data, require confirmation
+            if (deleteData && confirmationText !== 'DELETE') {
+                showError('Please type DELETE to confirm data deletion');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to cancel your subscription? This action will take effect immediately.')) {
+                return;
+            }
+
+            try {
+                document.getElementById('confirmCancelBtn').disabled = true;
+                document.getElementById('confirmCancelBtn').textContent = 'Processing...';
+
+                const response = await fetch('/api/subscriptions/cancel-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reason: reason || 'user_requested',
+                        deleteAllData: deleteData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to cancel subscription');
+                }
+
+                hideCancelModal();
+                showSuccess(`Subscription cancelled successfully. ${data.result.cancelledCount} subscription(s) cancelled.`);
+
+                // Reload data after 2 seconds
+                setTimeout(() => {
+                    if (deleteData) {
+                        // If data was deleted, redirect to landing page
+                        showSuccess('All data has been deleted. Redirecting to home page...');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        location.reload();
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error cancelling subscription:', error);
+                showError(error.message);
+                document.getElementById('confirmCancelBtn').disabled = false;
+                document.getElementById('confirmCancelBtn').textContent = 'Cancel Subscription';
+            }
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load data on page load
+        window.addEventListener('load', loadSubscriptionData);
+    </script>
+</body>
+</html>

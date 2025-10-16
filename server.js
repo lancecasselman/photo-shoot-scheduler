@@ -2786,7 +2786,7 @@ app.get('/api/subscription-status', async (req, res) => {
     }
 });
 
-// Cancel all subscriptions endpoint
+// Cancel all subscriptions endpoint with optional data deletion
 app.post('/api/subscriptions/cancel-all', async (req, res) => {
     try {
         // Check authentication first
@@ -2798,16 +2798,138 @@ app.post('/api/subscriptions/cancel-all', async (req, res) => {
         }
         
         const userId = req.session.user.uid;
-        const { reason } = req.body;
+        const userEmail = req.session.user.email;
+        const { reason, deleteAllData } = req.body;
         
-        console.log(`📝 Processing subscription cancellation for user ${userId}`);
+        console.log(`📝 Processing subscription cancellation for user ${userId}`, {
+            deleteAllData,
+            reason
+        });
         
         const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
         const subscriptionManager = new UnifiedSubscriptionManager(pool);
         
+        // Step 1: Cancel all subscriptions
         const result = await subscriptionManager.cancelAllUserSubscriptions(userId, reason || 'user_requested');
         
         console.log(`✅ Subscription cancellation completed: ${result.cancelledCount}/${result.totalSubscriptions} cancelled`);
+        
+        // Step 2: If requested, delete all user data
+        if (deleteAllData === true) {
+            console.log(`🗑️ FULL DATA DELETION requested for user ${userId}`);
+            
+            try {
+                // Get user info for Stripe Connect deletion
+                const userResult = await pool.query(
+                    'SELECT stripe_connect_account_id, email FROM users WHERE id = $1',
+                    [userId]
+                );
+                
+                if (userResult.rows.length > 0) {
+                    const stripeConnectAccountId = userResult.rows[0].stripe_connect_account_id;
+                    
+                    // Delete Stripe Connect account if exists
+                    if (stripeConnectAccountId) {
+                        try {
+                            console.log(`💳 Deleting Stripe Connect account: ${stripeConnectAccountId}`);
+                            await stripe.accounts.del(stripeConnectAccountId);
+                            console.log(`✅ Stripe Connect account deleted successfully`);
+                        } catch (stripeError) {
+                            console.error(`❌ Error deleting Stripe Connect account:`, stripeError.message);
+                            // Continue with deletion even if Stripe fails
+                        }
+                    }
+                }
+                
+                // Delete all user data from R2 storage
+                try {
+                    console.log(`📦 Deleting all R2 files for user ${userId}`);
+                    const userPrefix = `photographer-${userId}/`;
+                    await r2FileManager.deleteFolder(userPrefix);
+                    console.log(`✅ R2 files deleted successfully`);
+                } catch (r2Error) {
+                    console.error(`❌ Error deleting R2 files:`, r2Error.message);
+                    // Continue with deletion
+                }
+                
+                // Delete all database records (in order to respect foreign key constraints)
+                const client = await pool.connect();
+                try {
+                    await client.query('BEGIN');
+                    
+                    console.log(`🗄️ Deleting all database records for user ${userId}`);
+                    
+                    // Delete in reverse order of dependencies
+                    await client.query('DELETE FROM subscription_events WHERE subscription_id IN (SELECT id FROM subscriptions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM subscriptions WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM user_subscription_summary WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM gallery_downloads WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM digital_transactions WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM download_orders WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM download_entitlements WHERE session_id IN (SELECT id FROM photography_sessions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM download_tokens WHERE session_id IN (SELECT id FROM photography_sessions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM session_files WHERE session_id IN (SELECT id FROM photography_sessions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM session_expenses WHERE session_id IN (SELECT id FROM photography_sessions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM booking_agreements WHERE session_id IN (SELECT id FROM photography_sessions WHERE user_id = $1)', [userId]);
+                    await client.query('DELETE FROM photography_sessions WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM storage_subscriptions WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM storage_billing_history WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM r2_storage_usage WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM r2_storage_billing WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM community_posts WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM community_comments WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM community_likes WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM community_followers WHERE follower_id = $1 OR following_id = $1', [userId]);
+                    await client.query('DELETE FROM data_export_requests WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM backup_records WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM support_tickets WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM analytics_events WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM published_websites WHERE user_id = $1', [userId]);
+                    await client.query('DELETE FROM users WHERE id = $1', [userId]);
+                    
+                    await client.query('COMMIT');
+                    console.log(`✅ All database records deleted successfully`);
+                } catch (dbError) {
+                    await client.query('ROLLBACK');
+                    console.error(`❌ Error deleting database records:`, dbError);
+                    throw dbError;
+                } finally {
+                    client.release();
+                }
+                
+                // Delete from Firebase Auth
+                try {
+                    console.log(`🔥 Deleting Firebase Auth user: ${userId}`);
+                    await admin.auth().deleteUser(userId);
+                    console.log(`✅ Firebase Auth user deleted successfully`);
+                } catch (firebaseError) {
+                    console.error(`❌ Error deleting Firebase user:`, firebaseError.message);
+                    // Continue even if Firebase deletion fails
+                }
+                
+                // Destroy the session
+                if (req.session) {
+                    req.session.destroy();
+                }
+                
+                console.log(`✅ COMPLETE DATA DELETION finished for user ${userId}`);
+                
+                return res.json({
+                    result: {
+                        ...result,
+                        dataDeleted: true,
+                        message: 'All subscriptions cancelled and all user data permanently deleted'
+                    }
+                });
+                
+            } catch (deletionError) {
+                console.error('❌ Error during data deletion:', deletionError);
+                return res.status(500).json({
+                    error: 'Subscriptions cancelled but data deletion failed: ' + deletionError.message,
+                    result
+                });
+            }
+        }
         
         res.json({ result });
     } catch (error) {
