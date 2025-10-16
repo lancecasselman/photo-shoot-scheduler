@@ -1030,8 +1030,9 @@
                         throw new Error(`HTTP ${response.status}`);
                     }
                     
-                    const files = await response.json();
-                    this.renderGallery(files);
+                    const data = await response.json();
+                    // API returns { files: [...] }
+                    this.renderGallery(data.files || []);
                     
                 } catch (error) {
                     console.error('Failed to load gallery:', error);
