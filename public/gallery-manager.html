@@ -402,6 +402,28 @@
             <div id="progressContainer"></div>
         </div>
         
+        <div class="download-controls-section" style="padding: 30px 40px; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
+            <h3 style="margin-bottom: 20px; color: #333; font-size: 20px;">Download Settings</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">Free Download Limit</label>
+                    <input type="number" id="freeDownloadLimit" min="0" value="0" 
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;">
+                    <small style="display: block; margin-top: 5px; color: #666;">Number of free downloads allowed per client</small>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">Price Per Photo ($)</label>
+                    <input type="number" id="pricePerPhoto" min="0" step="0.01" value="0.00" 
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;">
+                    <small style="display: block; margin-top: 5px; color: #666;">Price for downloads after free limit is exceeded</small>
+                </div>
+            </div>
+            <button id="saveDownloadSettings" 
+                    style="margin-top: 20px; padding: 12px 30px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer;">
+                Save Download Settings
+            </button>
+        </div>
+        
         <div class="gallery-section">
             <div class="gallery-header">
                 <div class="gallery-title">Gallery</div>
@@ -473,15 +495,18 @@
             }
             
             getToken() {
-                return this.authToken;
+                // Session-based auth doesn't use tokens
+                return null;
             }
             
             getHeaders() {
+                // For session-based auth, just return basic headers
                 const headers = {
                     'Content-Type': 'application/json'
                 };
                 
-                if (this.authToken) {
+                // Don't send Bearer token - session cookies handle auth
+                if (false && this.authToken) {
                     headers['Authorization'] = `Bearer ${this.authToken}`;
                 }
                 
@@ -562,6 +587,11 @@
                 this.elements.cancelAllBtn.addEventListener('click', () => {
                     this.cancelAllUploads();
                 });
+                
+                // Download settings save button
+                document.getElementById('saveDownloadSettings')?.addEventListener('click', () => {
+                    this.saveDownloadSettings();
+                });
             }
             
             async loadSession() {
@@ -574,10 +604,46 @@
                     if (response.ok) {
                         const session = await response.json();
                         this.elements.clientName.textContent = session.clientName || 'Unknown Client';
+                        
+                        // Load download settings
+                        const freeLimit = session.freeDownloadLimit || session.free_download_limit || 0;
+                        const pricePerPhoto = session.pricePerPhoto || session.price_per_photo || 0;
+                        
+                        document.getElementById('freeDownloadLimit').value = freeLimit;
+                        document.getElementById('pricePerPhoto').value = parseFloat(pricePerPhoto).toFixed(2);
+                        
+                        console.log('Loaded download settings:', { freeLimit, pricePerPhoto });
                     }
                 } catch (error) {
                     console.error('Failed to load session:', error);
                     this.elements.clientName.textContent = 'Session ' + this.sessionId;
+                }
+            }
+            
+            async saveDownloadSettings() {
+                try {
+                    const freeLimit = parseInt(document.getElementById('freeDownloadLimit').value) || 0;
+                    const pricePerPhoto = parseFloat(document.getElementById('pricePerPhoto').value) || 0;
+                    
+                    const response = await fetch(`/api/sessions/${this.sessionId}`, {
+                        method: 'PUT',
+                        credentials: 'include',
+                        headers: this.authManager.getHeaders(),
+                        body: JSON.stringify({
+                            free_download_limit: freeLimit,
+                            price_per_photo: pricePerPhoto.toFixed(2)
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        this.showMessage('Download settings saved successfully!', 'success');
+                        console.log('Saved download settings:', { freeLimit, pricePerPhoto });
+                    } else {
+                        throw new Error('Failed to save settings');
+                    }
+                } catch (error) {
+                    console.error('Error saving download settings:', error);
+                    this.showMessage('Failed to save download settings', 'error');
                 }
             }
             
@@ -955,7 +1021,9 @@
                 try {
                     const response = await fetch(`/api/sessions/${this.sessionId}/files/${this.folderType}`, {
                         credentials: 'include',
-                        headers: this.authManager.getToken() ? { 'Authorization': `Bearer ${this.authManager.getToken()}` } : {}
+                        headers: {
+                            'Accept': 'application/json'
+                        }
                     });
                     
                     if (!response.ok) {
