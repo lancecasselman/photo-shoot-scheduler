@@ -256,7 +256,19 @@ if (!process.env.DATABASE_URL) {
 }
 
 console.log('🔗 Database: Using DATABASE_URL from environment (SHARED POOL)');
-console.log('📍 Environment:', process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT');
+
+// Detect production environment properly
+const isProduction = process.env.REPLIT_DEPLOYMENT === '1' || 
+                     process.env.NODE_ENV === 'production' ||
+                     process.env.DATABASE_URL?.includes('neon.tech');
+                     
+if (isProduction && !process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production';
+}
+
+console.log('📍 Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+console.log('   REPLIT_DEPLOYMENT:', process.env.REPLIT_DEPLOYMENT || 'not set');
+console.log('   NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
