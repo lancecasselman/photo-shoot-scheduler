@@ -11117,6 +11117,11 @@ app.post('/api/test-community-post', async (req, res) => {
     });
 });
 
+// Serve gallery manager page (requires authentication)
+app.get('/gallery-manager.html', subscriptionAuth.requireActiveSubscription, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'gallery-manager.html'));
+});
+
 // Serve public invoice page (no authentication required)
 app.get('/invoice.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
