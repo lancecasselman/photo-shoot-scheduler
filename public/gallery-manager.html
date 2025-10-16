@@ -276,6 +276,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
             cursor: pointer;
+            position: relative;
         }
         
         .gallery-item:hover {
@@ -305,6 +306,114 @@
         .gallery-item-size {
             font-size: 13px;
             color: #999;
+        }
+        
+        .gallery-item-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .gallery-item:hover .gallery-item-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .preview-btn {
+            color: #333;
+        }
+        
+        .preview-btn:hover {
+            background: #10b981;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .delete-btn {
+            color: #dc2626;
+        }
+        
+        .delete-btn:hover {
+            background: #dc2626;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+        
+        .preview-modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .preview-modal img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .preview-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .preview-close:hover {
+            background: #dc2626;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .preview-filename {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+            word-break: break-all;
         }
         
         .empty-state {
@@ -1116,12 +1225,68 @@
                              alt="${this.escapeHtml(file.name || file.fileName)}"
                              loading="lazy"
                              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+                        <div class="gallery-item-actions">
+                            <button class="action-btn preview-btn" onclick="galleryManager.previewPhoto('${this.escapeHtml(file.fileName)}')">
+                                👁️ Preview
+                            </button>
+                            <button class="action-btn delete-btn" onclick="galleryManager.deletePhoto('${this.escapeHtml(file.fileName)}')">
+                                🗑️ Delete
+                            </button>
+                        </div>
                         <div class="gallery-item-info">
                             <div class="gallery-item-name">${this.escapeHtml(file.name || file.fileName)}</div>
                             <div class="gallery-item-size">${this.formatFileSize(file.size)}</div>
                         </div>
                     </div>
                 `).join('');
+            }
+
+            previewPhoto(filename) {
+                const modal = document.createElement('div');
+                modal.className = 'preview-modal';
+                modal.innerHTML = `
+                    <div class="preview-modal-content">
+                        <button class="preview-close" onclick="this.closest('.preview-modal').remove()">✕</button>
+                        <img src="/api/sessions/${this.sessionId}/files/${this.folderType}/full/${encodeURIComponent(filename)}" 
+                             alt="${this.escapeHtml(filename)}"
+                             onerror="this.src='/api/sessions/${this.sessionId}/files/${this.folderType}/thumbnail/${encodeURIComponent(filename)}'">
+                        <div class="preview-filename">${this.escapeHtml(filename)}</div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+
+            async deletePhoto(filename) {
+                if (!confirm(`Delete "${filename}"?\n\nThis will permanently remove the photo from cloud storage and the database.`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/sessions/${this.sessionId}/files/${this.folderType}/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: this.authManager.getHeaders()
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.showMessage(`✅ ${filename} deleted successfully${data.reclaimedMB ? ` (${data.reclaimedMB}MB reclaimed)` : ''}`, 'success');
+                        await this.loadGallery(); // Reload gallery
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        this.showMessage(`Failed to delete: ${errorData.error}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    this.showMessage('Failed to delete photo: ' + error.message, 'error');
+                }
             }
             
             formatFileSize(bytes) {
