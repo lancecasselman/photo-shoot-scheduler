@@ -69,12 +69,15 @@ A clean, per-session download pricing model where photographers set:
 - **Free Download Limit**: Number of free downloads per session (e.g., 5 free photos)
 - **Price Per Photo**: Cost for downloads after free limit (e.g., $3 per photo)
 
-Key features:
+Implementation:
+- Client gallery (client-gallery.html) rebuilt from 4,894 to 763 lines (84% reduction)
+- Removed all complex cart/policy/credit systems
+- Simple localStorage-based download tracking per session+client
+- Downloads tracked in galleryDownloads table with digital_transactions for paid downloads
+- Stripe Connect integration via /api/gallery/:sessionId/download endpoint
+- Client gallery shows ONE clear download counter with remaining free downloads
+- Dynamic download buttons: "Download Free" / "Download - $X" / "Re-download Free"
 - Re-downloads are always free once a photo is downloaded
-- Downloads tracked in galleryDownloads table per session/client
-- Stripe Connect integration for paid downloads
-- Client gallery UI shows remaining free downloads
-- Simple pay-per-photo flow with Stripe checkout
 - Customizable watermarking support retained
 
 ### Photography Community Platform
