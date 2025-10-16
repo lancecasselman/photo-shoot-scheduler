@@ -533,6 +533,48 @@
             </button>
         </div>
 
+        <!-- Share Gallery Section -->
+        <div style="padding: 30px 40px; background: white; border-bottom: 2px solid #e0e0e0;">
+            <h3 style="margin-bottom: 20px; color: #333; font-size: 20px;">📤 Share Gallery with Client</h3>
+            <p style="margin-bottom: 20px; color: #666; line-height: 1.6;">
+                Send the gallery link to your client via their default email or messaging app. No sign-up required!
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">Client Email (Optional)</label>
+                    <input type="email" id="clientEmail" placeholder="client@example.com"
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">Client Phone (Optional)</label>
+                    <input type="tel" id="clientPhone" placeholder="(555) 123-4567"
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px;">
+                <button id="shareViaEmail" 
+                        style="padding: 12px 30px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    📧 Send via Email
+                </button>
+                <button id="shareViaSMS" 
+                        style="padding: 12px 30px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    💬 Send via Text/SMS
+                </button>
+                <button id="copyGalleryLink" 
+                        style="padding: 12px 30px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    📋 Copy Link
+                </button>
+            </div>
+            
+            <div id="galleryLinkDisplay" style="display: none; margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px; border: 1px solid #d1d5db;">
+                <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px;">Gallery Link:</label>
+                <input type="text" id="galleryLinkInput" readonly 
+                       style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: white; font-family: monospace;">
+            </div>
+        </div>
+
         <!-- Delete All Photos Section -->
         <div style="padding: 30px; background: #fff5f5; border-top: 2px solid #fee; border-bottom: 2px solid #fee;">
             <h3 style="margin-bottom: 15px; color: #dc2626; font-size: 20px;">⚠️ Danger Zone</h3>
@@ -718,6 +760,19 @@
                 document.getElementById('deleteAllPhotos')?.addEventListener('click', () => {
                     this.deleteAllPhotos();
                 });
+
+                // Share gallery buttons
+                document.getElementById('shareViaEmail')?.addEventListener('click', () => {
+                    this.shareViaEmail();
+                });
+
+                document.getElementById('shareViaSMS')?.addEventListener('click', () => {
+                    this.shareViaSMS();
+                });
+
+                document.getElementById('copyGalleryLink')?.addEventListener('click', () => {
+                    this.copyGalleryLink();
+                });
             }
             
             async loadSession() {
@@ -729,6 +784,7 @@
                     
                     if (response.ok) {
                         const session = await response.json();
+                        this.sessionData = session; // Store session data for sharing
                         this.elements.clientName.textContent = session.clientName || 'Unknown Client';
                         
                         // Load download settings
@@ -737,6 +793,19 @@
                         
                         document.getElementById('freeDownloadLimit').value = freeLimit;
                         document.getElementById('pricePerPhoto').value = parseFloat(pricePerPhoto).toFixed(2);
+                        
+                        // Load client contact info if available
+                        if (session.clientEmail) {
+                            document.getElementById('clientEmail').value = session.clientEmail;
+                        }
+                        if (session.clientPhone) {
+                            document.getElementById('clientPhone').value = session.clientPhone;
+                        }
+                        
+                        // Update gallery link display if token exists
+                        if (session.galleryAccessToken || session.gallery_access_token) {
+                            this.updateGalleryLink();
+                        }
                         
                         console.log('Loaded download settings:', { freeLimit, pricePerPhoto });
                     }
@@ -804,6 +873,132 @@
                 } catch (error) {
                     console.error('Failed to delete all photos:', error);
                     this.showMessage('Failed to delete photos: ' + error.message, 'error');
+                }
+            }
+
+            updateGalleryLink() {
+                if (!this.sessionData) return;
+                
+                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
+                if (!token) return;
+                
+                const baseUrl = window.location.origin;
+                const galleryUrl = `${baseUrl}/client-gallery.html?token=${token}`;
+                
+                // Show and populate the link display
+                const linkDisplay = document.getElementById('galleryLinkDisplay');
+                const linkInput = document.getElementById('galleryLinkInput');
+                
+                linkDisplay.style.display = 'block';
+                linkInput.value = galleryUrl;
+            }
+
+            shareViaEmail() {
+                if (!this.sessionData) {
+                    this.showMessage('Session data not loaded', 'error');
+                    return;
+                }
+                
+                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
+                if (!token) {
+                    this.showMessage('Gallery access token not found', 'error');
+                    return;
+                }
+                
+                const clientEmail = document.getElementById('clientEmail').value;
+                if (!clientEmail) {
+                    this.showMessage('Please enter client email address', 'warning');
+                    return;
+                }
+                
+                const baseUrl = window.location.origin;
+                const galleryUrl = `${baseUrl}/client-gallery.html?token=${token}`;
+                const clientName = this.sessionData.clientName || this.sessionData.client_name || 'Client';
+                const sessionType = this.sessionData.sessionType || this.sessionData.session_type || 'session';
+                
+                // Create email subject and body
+                const subject = `Your ${sessionType} Photo Gallery is Ready!`;
+                const body = `Hi ${clientName},
+
+Your ${sessionType} photos are ready to view! Click the link below to access your private gallery:
+
+${galleryUrl}
+
+You can view and download your photos from this secure gallery. The link is unique to your session.
+
+Thank you!`;
+                
+                // Create mailto link
+                const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                // Open email client
+                window.location.href = mailtoLink;
+                
+                this.showMessage('Opening your email client...', 'success');
+            }
+
+            shareViaSMS() {
+                if (!this.sessionData) {
+                    this.showMessage('Session data not loaded', 'error');
+                    return;
+                }
+                
+                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
+                if (!token) {
+                    this.showMessage('Gallery access token not found', 'error');
+                    return;
+                }
+                
+                const clientPhone = document.getElementById('clientPhone').value;
+                if (!clientPhone) {
+                    this.showMessage('Please enter client phone number', 'warning');
+                    return;
+                }
+                
+                const baseUrl = window.location.origin;
+                const galleryUrl = `${baseUrl}/client-gallery.html?token=${token}`;
+                const clientName = this.sessionData.clientName || this.sessionData.client_name || 'Client';
+                
+                // Create SMS message
+                const message = `Hi ${clientName}! Your photo gallery is ready to view: ${galleryUrl}`;
+                
+                // Create SMS link (works on mobile and some desktop apps)
+                const smsLink = `sms:${clientPhone}?body=${encodeURIComponent(message)}`;
+                
+                // Open messaging app
+                window.location.href = smsLink;
+                
+                this.showMessage('Opening your messaging app...', 'success');
+            }
+
+            async copyGalleryLink() {
+                if (!this.sessionData) {
+                    this.showMessage('Session data not loaded', 'error');
+                    return;
+                }
+                
+                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
+                if (!token) {
+                    this.showMessage('Gallery access token not found', 'error');
+                    return;
+                }
+                
+                const baseUrl = window.location.origin;
+                const galleryUrl = `${baseUrl}/client-gallery.html?token=${token}`;
+                
+                try {
+                    // Copy to clipboard
+                    await navigator.clipboard.writeText(galleryUrl);
+                    this.showMessage('✅ Gallery link copied to clipboard!', 'success');
+                    
+                    // Show the link display
+                    this.updateGalleryLink();
+                } catch (error) {
+                    console.error('Failed to copy:', error);
+                    // Fallback: select the text
+                    const linkInput = document.getElementById('galleryLinkInput');
+                    linkInput.select();
+                    this.showMessage('Link ready to copy (Ctrl+C)', 'info');
                 }
             }
             
