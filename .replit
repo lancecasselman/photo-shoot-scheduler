@@ -71,7 +71,7 @@ externalPort = 4200
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["npm", "run", "db:push", "--force"]
+run = ["node", "server.js"]
 build = ["bash", "-c", "yes | npm run db:push -- --force || true"]
 
 [objectStorage]
