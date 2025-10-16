@@ -4545,9 +4545,9 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', isAuth
             
             // All images in gallery should be processable as thumbnails
             // Get file from R2
-            const fileData = await r2FileManager.getFile(fileRecord.r2_key);
+            const downloadResult = await r2FileManager.downloadFile(userId, sessionId, fileName);
             
-            if (!fileData) {
+            if (!downloadResult.success || !downloadResult.buffer) {
                 return res.status(404).json({ error: 'File not found in storage' });
             }
             
@@ -4569,14 +4569,14 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', isAuth
                 // Stream the data through sharp and to the response
                 const stream = require('stream');
                 const bufferStream = new stream.PassThrough();
-                bufferStream.end(fileData);
+                bufferStream.end(downloadResult.buffer);
                 bufferStream.pipe(thumbnail).pipe(res);
                 
             } catch (thumbnailError) {
                 console.error('Thumbnail generation error:', thumbnailError);
                 // Fallback to original image if thumbnail generation fails
-                res.setHeader('Content-Type', fileRecord.content_type);
-                res.send(fileData);
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.send(downloadResult.buffer);
             }
             
         } finally {
