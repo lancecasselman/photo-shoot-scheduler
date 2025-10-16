@@ -1061,13 +1061,13 @@
                 
                 this.elements.galleryGrid.innerHTML = files.map(file => `
                     <div class="gallery-item">
-                        <img src="/api/sessions/${this.sessionId}/files/${this.folderType}/download/${encodeURIComponent(file.filename)}" 
+                        <img src="/api/sessions/${this.sessionId}/files/${this.folderType}/thumbnail/${encodeURIComponent(file.filename)}" 
                              alt="${this.escapeHtml(file.filename)}"
                              loading="lazy"
                              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
                         <div class="gallery-item-info">
                             <div class="gallery-item-name">${this.escapeHtml(file.filename)}</div>
-                            <div class="gallery-item-size">${this.formatFileSize(file.file_size_bytes)}</div>
+                            <div class="gallery-item-size">${this.formatFileSize(file.fileSizeBytes)}</div>
                         </div>
                     </div>
                 `).join('');
