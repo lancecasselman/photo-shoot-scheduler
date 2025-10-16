@@ -9063,8 +9063,26 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                 
                 const download = existingDownload.rows[0];
                 
+                // Get session userId to construct R2 key
+                const userResult = await client.query(`
+                    SELECT user_id FROM photography_sessions WHERE id = $1
+                `, [sessionId]);
+                
+                if (userResult.rows.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Session not found'
+                    });
+                }
+                
+                const userId = userResult.rows[0].user_id;
+                
+                // Construct proper R2 key: photographer-{userId}/session-{sessionId}/gallery/{filename}
+                const r2Key = `photographer-${userId}/session-${sessionId}/gallery/${download.filename}`;
+                console.log(`📦 Constructing R2 key for re-download: ${r2Key}`);
+                
                 // Generate download URL using R2
-                const downloadUrl = await r2FileManager.getSignedUrl(download.photo_url, 3600); // 1 hour expiry
+                const downloadUrl = await r2FileManager.getSignedUrl(r2Key, 3600); // 1 hour expiry
                 
                 return res.json({
                     success: true,
@@ -9130,8 +9148,12 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'free', 0, $8, 'completed', NOW())
                 `, [downloadId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, token]);
                 
+                // Construct proper R2 key: photographer-{userId}/session-{sessionId}/gallery/{filename}
+                const r2Key = `photographer-${photographerId}/session-${sessionId}/gallery/${filename}`;
+                console.log(`📦 Constructing R2 key for free download: ${r2Key}`);
+                
                 // Generate download URL using R2
-                const downloadUrl = await r2FileManager.getSignedUrl(photoUrl, 3600); // 1 hour expiry
+                const downloadUrl = await r2FileManager.getSignedUrl(r2Key, 3600); // 1 hour expiry
                 
                 console.log(`✅ Free download recorded and URL generated`);
                 
