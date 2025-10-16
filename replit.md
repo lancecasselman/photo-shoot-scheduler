@@ -63,6 +63,14 @@ Primary database is PostgreSQL via Drizzle ORM, complemented by Firebase Firesto
 ### File Storage Strategy
 Cloudflare R2 is the primary cloud storage, using human-readable file organization and supporting dual-path for backward compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads and on-the-fly thumbnail generation.
 
+**R2 Download Path Fix (October 2025):**
+Fixed critical issue where photo downloads failed due to R2 path mismatch:
+- **Problem**: Download system was regenerating R2 paths instead of using stored `r2_key` from database, causing "specified key does not exist" errors
+- **Root Cause**: Files stored at human-readable paths like `photographer-lance_casselman/session-lance/gallery/` were being looked up at incorrect regenerated paths
+- **Solution**: Updated thumbnail endpoint (server.js line 4736) to use `downloadFileBuffer(r2_key)` directly from session_files table
+- **Fallback**: R2FileManager.downloadFile() now includes database-lookup fallback for files with stored r2_keys
+- **Result**: Gallery downloads now working correctly for files with proper R2 keys (verified with 28-38MB photo downloads)
+
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
 A clean, per-session download pricing model where photographers set:

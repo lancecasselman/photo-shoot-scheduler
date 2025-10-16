@@ -4723,9 +4723,14 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', isAuth
             
             const fileRecord = fileResult.rows[0];
             
+            // Check if r2_key exists
+            if (!fileRecord.r2_key) {
+                return res.status(404).json({ error: 'File not found - missing R2 key' });
+            }
+            
             // All images in gallery should be processable as thumbnails
-            // Get file from R2
-            const downloadResult = await r2FileManager.downloadFile(userId, sessionId, fileName);
+            // Get file from R2 using the r2_key directly from database
+            const downloadResult = await r2FileManager.downloadFileBuffer(fileRecord.r2_key);
             
             if (!downloadResult.success || !downloadResult.buffer) {
                 return res.status(404).json({ error: 'File not found in storage' });
