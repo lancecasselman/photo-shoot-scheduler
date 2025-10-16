@@ -28,7 +28,7 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 // Platform fee percentage (configurable via environment variable)
-const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE) || 5; // 5% default
+const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE) || 0; // No platform fee - photographers keep 100%
 
 class DownloadCommerceManager {
     constructor() {

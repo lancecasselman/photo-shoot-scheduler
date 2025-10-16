@@ -9076,10 +9076,10 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                 ];
                 const isAdminAccount = adminEmails.includes(photographerEmail.toLowerCase());
 
-                // Calculate platform fee (5% for non-admin accounts)
-                const platformFeePercentage = 5; // 5% platform fee
+                // Calculate platform fee (0% - photographers keep 100%)
+                const platformFeePercentage = 0; // No platform fee
                 const amountInCents = Math.round(pricePerPhoto * 100);
-                const platformFee = isAdminAccount ? 0 : Math.round(amountInCents * (platformFeePercentage / 100));
+                const platformFee = 0; // No platform fee
 
                 // Build checkout session config
                 let checkoutConfig = {
@@ -9153,7 +9153,7 @@ app.post('/api/gallery/:sessionId/download', async (req, res) => {
                 const checkoutSession = await stripe.checkout.sessions.create(checkoutConfig);
 
                 console.log(`✅ Stripe checkout session created: ${checkoutSession.id}`);
-                console.log(`   Platform fee: $${(platformFee / 100).toFixed(2)} (${isAdminAccount ? 'ADMIN - No fee' : '5%'})`);
+                console.log(`   Platform fee: $0.00 (No platform fee - photographers keep 100%)`);
                 
                 return res.json({
                     success: true,
