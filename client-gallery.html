@@ -12,6 +12,13 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Screenshot Protection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
         }
 
         body {
@@ -147,6 +154,50 @@
             object-fit: cover;
             display: block;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Extra image protection */
+            pointer-events: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+        }
+        
+        /* Screenshot Protection Watermark */
+        .screenshot-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 6rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.03);
+            pointer-events: none;
+            z-index: 9998;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+        
+        /* Protection indicator badge */
+        .protection-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .protection-badge::before {
+            content: '🔒';
         }
 
         .photo-card:hover .photo-wrapper img {
@@ -373,8 +424,67 @@
         <span id="successText">Download started!</span>
     </div>
 
+    <!-- Screenshot Protection Elements -->
+    <div class="screenshot-watermark">COPYRIGHTED · DO NOT COPY</div>
+    <div class="protection-badge">Screenshot Protection Active</div>
+
     <!-- Include Screenshot Protection Script -->
     <script src="/static/js/screenshot-protection.js"></script>
+    
+    <!-- Inline Screenshot Protection -->
+    <script>
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Block screenshot keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Print Screen, Cmd+Shift+3/4 (Mac), Windows+Shift+S, etc.
+            if (
+                e.key === 'PrintScreen' ||
+                (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4')) ||
+                (e.key === 's' && e.metaKey && e.shiftKey) ||
+                (e.key === 'S' && e.ctrlKey && e.shiftKey)
+            ) {
+                e.preventDefault();
+                alert('📸 Screenshots are disabled for copyright protection');
+                return false;
+            }
+            
+            // Block Ctrl+S / Cmd+S (save)
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Disable drag and drop for all images
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Additional mobile protection
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                // Prevent multi-touch gestures that could be used for screenshots
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Detect when user leaves the page (potential screenshot)
+        let screenshotAttempts = 0;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                screenshotAttempts++;
+                console.warn('🔒 Page visibility changed - potential screenshot attempt');
+            }
+        });
+    </script>
 
     <script>
         console.log('🚀 Gallery JavaScript starting to load...');
