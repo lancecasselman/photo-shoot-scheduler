@@ -84,12 +84,20 @@ Fixed field name mismatch between backend and frontend for R2 presigned URL resp
 - **Result**: All new uploads now store correct r2_keys, thumbnails load successfully
 
 **Photo Deletion System Fix (October 2025):**
-Fixed critical bug causing photo deletions to fail and rollback:
-- **Problem**: Photo deletion failed with error "column 'filename' does not exist" during download cleanup
-- **Root Cause**: download_history table only has photo_id column, but deletion query tried to use both photo_id and filename
-- **Solution**: Updated server/unified-file-deletion.js line 174-177 to use only photo_id in WHERE clause
-- **Impact**: Deletion transactions now complete successfully without rollback
-- **Schema Verified**: download_history only contains: id, session_id, client_key, photo_id, token_id, order_id, ip_address, user_agent, status, failure_reason, created_at
+Fixed critical bugs causing photo deletions to fail and rollback:
+
+1. **Column Name Mismatch:**
+   - **Problem**: Photo deletion failed with error "column 'filename' does not exist" during download cleanup
+   - **Root Cause**: download_history table only has photo_id column, but deletion query tried to use both photo_id and filename
+   - **Solution**: Updated server/unified-file-deletion.js line 174-177 to use only photo_id in WHERE clause
+   - **Impact**: Deletion transactions now complete successfully without rollback
+
+2. **Transaction Abort on Missing Tables:**
+   - **Problem**: "Delete All Photos" button stuck in infinite loop; deletions failed with "current transaction is aborted, commands ignored until end of transaction block"
+   - **Root Cause**: PostgreSQL aborts entire transaction when any error occurs, even with try-catch blocks. Optional table cleanups (website_gallery_photos, community_photos) caused transaction abort
+   - **Solution**: Implemented SAVEPOINT/ROLLBACK TO SAVEPOINT pattern for optional table cleanups (r2_files, website_gallery_photos, community_photos)
+   - **Impact**: Photo deletions now complete successfully even when optional tables don't exist; transaction continues after isolated errors
+   - **Pattern**: Each optional cleanup wrapped in SAVEPOINT → query → RELEASE on success or ROLLBACK TO SAVEPOINT → RELEASE on error
 
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
