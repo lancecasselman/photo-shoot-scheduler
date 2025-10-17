@@ -80,48 +80,49 @@ class UnifiedFileDeletion {
             deletionLog.push(`✓ Deleted from cloud storage using key: ${r2Key}`);
             console.log(`☁️ Successfully deleted from R2: ${filename} - proceeding with cleanup`);
 
-            // Step 3: Delete all thumbnails, previews, and cached versions
-            console.log(`🖼️ Starting comprehensive thumbnail cleanup for: ${filename}`);
-            const thumbnailSizes = ['_sm', '_md', '_lg', '_thumb', '_preview', ''];
-            const thumbnailPaths = [];
+            // Step 3: Delete thumbnails and previews (optimized - only actual paths)
+            console.log(`🖼️ Starting optimized thumbnail cleanup for: ${filename}`);
             let thumbnailsDeleted = 0;
             
             try {
-                // Generate all possible thumbnail and preview paths
-                const baseFilename = filename.replace(/\.[^/.]+$/, ""); // Remove extension
-                const extension = filename.substring(filename.lastIndexOf('.'));
+                const baseFilename = filename.replace(/\.[^/.]+$/, "");
+                const thumbnailPaths = [];
                 
-                for (const size of thumbnailSizes) {
-                    const thumbnailFilename = size ? `${baseFilename}${size}${extension}` : filename;
-                    const paths = [
-                        `${userId}/${sessionId}/thumbnails/${thumbnailFilename}`,
-                        `${userId}/${sessionId}/previews/${thumbnailFilename}`,
-                        `${userId}/${sessionId}/cache/${thumbnailFilename}`,
-                        `thumbnails/${userId}/${sessionId}/${thumbnailFilename}`,
-                        `previews/${userId}/${sessionId}/${thumbnailFilename}`,
-                        `cache/${userId}/${sessionId}/${thumbnailFilename}`
-                    ];
-                    thumbnailPaths.push(...paths);
-                }
-                
-                // Delete each thumbnail/preview variant using direct R2 key deletion
-                for (const thumbnailPath of thumbnailPaths) {
+                // 1. Current system thumbnails (_sm, _md, _lg) at human-readable paths
+                for (const size of ['_sm', '_md', '_lg']) {
+                    const thumbnailFilename = `${baseFilename}${size}.jpg`;
                     try {
-                        // Use deleteFileByKey since thumbnails don't have database records
-                        await this.r2Manager.deleteFileByKey(thumbnailPath);
-                        thumbnailsDeleted++;
-                        console.log(`📷 Deleted thumbnail: ${thumbnailPath}`);
-                    } catch (thumbError) {
-                        // Individual thumbnail failures are acceptable (file may not exist)
-                        // Don't log these as they clutter the output
+                        const thumbnailKey = await this.r2Manager.generateR2Key(userId, sessionId, thumbnailFilename, 'thumbnails');
+                        thumbnailPaths.push(thumbnailKey);
+                    } catch (err) {
+                        // Fallback to UUID path if generateR2Key fails
+                        thumbnailPaths.push(`photographer-${userId}/session-${sessionId}/thumbnails/${thumbnailFilename}`);
                     }
                 }
                 
-                if (thumbnailsDeleted > 0) {
-                    deletionLog.push(`✓ Deleted ${thumbnailsDeleted} thumbnail/preview variant(s)`);
-                } else {
-                    deletionLog.push(`📷 No thumbnails found to delete (acceptable)`);
+                // 2. Preview system paths (with pricing modes)
+                for (const mode of ['free', 'paid', 'freemium']) {
+                    thumbnailPaths.push(`previews/photographer-${userId}/session-${sessionId}/${mode}/${filename}`);
                 }
+                
+                // 3. Legacy fallback - UUID-based thumbnail paths
+                for (const size of ['_sm', '_md', '_lg']) {
+                    const thumbnailFilename = `${baseFilename}${size}.jpg`;
+                    thumbnailPaths.push(`${userId}/${sessionId}/thumbnails/${thumbnailFilename}`);
+                }
+                
+                // Delete each thumbnail (R2 returns success even for non-existent files)
+                for (const thumbnailPath of thumbnailPaths) {
+                    try {
+                        await this.r2Manager.deleteFileByKey(thumbnailPath);
+                        thumbnailsDeleted++;
+                    } catch (thumbError) {
+                        // Individual thumbnail failures are acceptable (file may not exist)
+                    }
+                }
+                
+                deletionLog.push(`✓ Cleaned up ${thumbnailsDeleted} thumbnail path(s)`);
+                console.log(`📷 Thumbnail cleanup: ${thumbnailsDeleted} path(s) processed`);
                 
             } catch (thumbError) {
                 console.warn(`⚠️ Thumbnail cleanup error: ${thumbError.message}`);
