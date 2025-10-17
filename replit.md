@@ -9,6 +9,17 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Session Creation Form Cleanup (Oct 17, 2025)
+**Change:** Removed download control fields from session creation form to simplify the initial session setup.
+
+**Fields Removed:**
+- Free Download Limit input
+- Price Per Photo input
+
+**Rationale:** Download pricing settings are better configured in the gallery manager after photos are uploaded, not during initial session creation. This keeps the session form focused on essential booking details (client, date, location, price, etc.).
+
+**Location:** Download settings remain fully functional in the gallery manager (`public/gallery-manager.html`) where photographers can set them when preparing to share galleries.
+
 ### Automatic Gallery Token Generation (Oct 17, 2025)
 **Problem:** When photographers tried to share a gallery link (via email, SMS, or copy), they received "gallery access token not found" error. The backend endpoint to create tokens existed but was never called from the UI.
 
