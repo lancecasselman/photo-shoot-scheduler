@@ -9,6 +9,20 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Automatic Gallery Token Generation (Oct 17, 2025)
+**Problem:** When photographers tried to share a gallery link (via email, SMS, or copy), they received "gallery access token not found" error. The backend endpoint to create tokens existed but was never called from the UI.
+
+**Solution:** Added automatic gallery token generation:
+- Created `ensureGalleryToken()` helper function that checks for token and creates it if missing
+- Updated all share functions (shareViaEmail, shareViaSMS, copyGalleryLink) to auto-generate tokens
+- Gallery links now display immediately after token is created
+- Seamless UX - photographers never see the error, token is created automatically when needed
+
+**Technical Details:**
+- Calls `/api/sessions/:sessionId/create-gallery` API endpoint
+- Caches token in sessionData for reuse
+- Updates UI to show gallery link after generation
+
 ### Gallery Share Auto-Population Fix (Oct 17, 2025)
 **Problem:** The "Share Gallery with Client" section in gallery manager showed placeholder values (client@example.com, (555) 123-4567) instead of auto-populating with the session's actual contact information.
 
