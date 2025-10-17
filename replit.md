@@ -83,6 +83,14 @@ Fixed field name mismatch between backend and frontend for R2 presigned URL resp
 - **Backfill**: Updated 3 existing photos (DSC_2342.jpg, DSC_2308.jpg, DSC_2310.jpg) with correct R2 paths
 - **Result**: All new uploads now store correct r2_keys, thumbnails load successfully
 
+**Photo Deletion System Fix (October 2025):**
+Fixed critical bug causing photo deletions to fail and rollback:
+- **Problem**: Photo deletion failed with error "column 'filename' does not exist" during download cleanup
+- **Root Cause**: download_history table only has photo_id column, but deletion query tried to use both photo_id and filename
+- **Solution**: Updated server/unified-file-deletion.js line 174-177 to use only photo_id in WHERE clause
+- **Impact**: Deletion transactions now complete successfully without rollback
+- **Schema Verified**: download_history only contains: id, session_id, client_key, photo_id, token_id, order_id, ip_address, user_agent, status, failure_reason, created_at
+
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
 A clean, per-session download pricing model where photographers set:
