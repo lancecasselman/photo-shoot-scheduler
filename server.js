@@ -2667,7 +2667,10 @@ app.delete('/api/sessions/:sessionId', isAuthenticated, async (req, res) => {
             
             const clientName = sessionCheck.rows[0].client_name;
             
-            // Delete associated files first
+            // CRITICAL: Delete gallery_downloads FIRST to prevent FK constraint errors
+            await client.query('DELETE FROM gallery_downloads WHERE session_id = $1', [sessionId]);
+            
+            // Delete associated files
             await client.query('DELETE FROM session_files WHERE session_id = $1', [sessionId]);
             
             // Delete the session
