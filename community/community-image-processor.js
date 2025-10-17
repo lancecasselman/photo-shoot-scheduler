@@ -186,17 +186,10 @@ class CommunityImageProcessor {
             
             await this.r2Client.send(command);
             
-            // Generate a presigned URL valid for 7 days
-            const getCommand = new GetObjectCommand({
-                Bucket: this.bucketName,
-                Key: key
-            });
+            // Return permanent public URL instead of expiring presigned URL
+            const publicUrl = `${this.publicUrl}/${key}`;
             
-            const presignedUrl = await getSignedUrl(this.r2Client, getCommand, { 
-                expiresIn: 604800 // 7 days 
-            });
-            
-            return presignedUrl;
+            return publicUrl;
         } catch (error) {
             console.error('Error uploading to R2:', error);
             throw error;
