@@ -104,10 +104,11 @@ class UnifiedFileDeletion {
                     thumbnailPaths.push(...paths);
                 }
                 
-                // Delete each thumbnail/preview variant
+                // Delete each thumbnail/preview variant using direct R2 key deletion
                 for (const thumbnailPath of thumbnailPaths) {
                     try {
-                        await this.r2Manager.deleteFile(thumbnailPath);
+                        // Use deleteFileByKey since thumbnails don't have database records
+                        await this.r2Manager.deleteFileByKey(thumbnailPath);
                         thumbnailsDeleted++;
                         console.log(`📷 Deleted thumbnail: ${thumbnailPath}`);
                     } catch (thumbError) {
