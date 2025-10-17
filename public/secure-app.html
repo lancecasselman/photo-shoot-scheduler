@@ -7451,7 +7451,7 @@ ${agreement.content || 'No content available'}
                             thumbnail.className = 'file-thumbnail';
                             
                             const img = document.createElement('img');
-                            img.src = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(file.name)}?size=medium&t=${Date.now()}`;
+                            img.src = `/api/sessions/${sessionId}/files/gallery/thumbnail/${encodeURIComponent(file.name)}`;
                             img.alt = file.name;
                             img.loading = 'lazy';
                             img.onclick = () => {
@@ -10090,8 +10090,8 @@ END:VCALENDAR`;
             content.onclick = (e) => e.stopPropagation();
             
             const img = document.createElement('img');
-            // Use R2 preview if sessionId provided, otherwise legacy uploads
-            img.src = sessionId ? `/api/r2/preview/${sessionId}/${filename}` : `/uploads/${filename}`;
+            // Use session file download for full-size preview if sessionId provided, otherwise legacy uploads
+            img.src = sessionId ? `/api/sessions/${sessionId}/files/gallery/download/${encodeURIComponent(filename)}` : `/uploads/${filename}`;
             img.style.cssText = `
                 max-width: 100%;
                 max-height: 85vh;
