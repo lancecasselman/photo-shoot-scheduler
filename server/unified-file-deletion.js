@@ -207,45 +207,54 @@ class UnifiedFileDeletion {
                 console.log(`🗑️ Cleaned ${transactionsResult.rowCount} digital transactions`);
             }
             
-            // 6f. Clean up r2_files table if it exists (allow this one to fail silently)
+            // 6f. Clean up r2_files table if it exists (use savepoint to prevent transaction abort)
             try {
+                await client.query('SAVEPOINT r2_files_cleanup');
                 const r2FilesResult = await client.query(`
                     DELETE FROM r2_files 
                     WHERE session_id = $1 AND (filename = $2 OR original_filename = $2)
                 `, [sessionId, filename]);
+                await client.query('RELEASE SAVEPOINT r2_files_cleanup');
                 if (r2FilesResult.rowCount > 0) {
                     deletionLog.push(`✓ Removed ${r2FilesResult.rowCount} R2 file record(s)`);
                     console.log(`🗑️ Cleaned ${r2FilesResult.rowCount} R2 file records`);
                 }
             } catch (r2Error) {
-                // This table may not exist in all installations - log but don't fail
+                await client.query('ROLLBACK TO SAVEPOINT r2_files_cleanup');
+                await client.query('RELEASE SAVEPOINT r2_files_cleanup');
                 console.log(`📝 R2 files table cleanup (may not exist): ${r2Error.message}`);
             }
             
             deletionLog.push(`✓ Completed comprehensive download cleanup`);
             
-            // Step 7: Clean up photo metadata and associations (allow missing tables)
+            // Step 7: Clean up photo metadata and associations (use savepoints to prevent transaction abort)
+            // SAVEPOINT for website_gallery_photos
             try {
-                // Remove from any website builder galleries (if applicable)
+                await client.query('SAVEPOINT website_cleanup');
                 await client.query(`
                     DELETE FROM website_gallery_photos 
                     WHERE session_id = $1 AND filename = $2
                 `, [sessionId, filename]);
+                await client.query('RELEASE SAVEPOINT website_cleanup');
                 deletionLog.push(`✓ Cleaned website gallery associations`);
             } catch (websiteError) {
-                // Table may not exist - log but continue
+                await client.query('ROLLBACK TO SAVEPOINT website_cleanup');
+                await client.query('RELEASE SAVEPOINT website_cleanup');
                 console.log(`📝 Website gallery cleanup (table may not exist): ${websiteError.message}`);
             }
 
+            // SAVEPOINT for community_photos
             try {
-                // Remove from community posts if shared (if applicable)
+                await client.query('SAVEPOINT community_cleanup');
                 await client.query(`
                     DELETE FROM community_photos 
                     WHERE session_id = $1 AND filename = $2
                 `, [sessionId, filename]);
+                await client.query('RELEASE SAVEPOINT community_cleanup');
                 deletionLog.push(`✓ Cleaned community post associations`);
             } catch (communityError) {
-                // Table may not exist - log but continue
+                await client.query('ROLLBACK TO SAVEPOINT community_cleanup');
+                await client.query('RELEASE SAVEPOINT community_cleanup');
                 console.log(`📝 Community posts cleanup (table may not exist): ${communityError.message}`);
             }
 
