@@ -75,6 +75,14 @@ Fixed critical issue where photo downloads failed due to R2 path mismatch:
 - **Result**: Gallery downloads now working correctly for files with proper R2 keys (verified with 28-38MB photo downloads)
 - **Payment Logic**: All payment checks preserved - re-downloads are free, first-time downloads check free limit, paid downloads redirect to Stripe
 
+**R2 Key Field Name Fix (October 2025):**
+Fixed field name mismatch between backend and frontend for R2 presigned URL responses:
+- **Problem**: R2FileManager returned `key` field but frontend expected `r2Key`, causing NULL r2_keys for newly uploaded photos
+- **Root Cause**: Frontend (gallery-manager.html) expected `r2Key` property when recording uploads to session_files table
+- **Solution**: Changed server/r2-file-manager.js line 1911 from `key: result.key` to `r2Key: result.key`
+- **Backfill**: Updated 3 existing photos (DSC_2342.jpg, DSC_2308.jpg, DSC_2310.jpg) with correct R2 paths
+- **Result**: All new uploads now store correct r2_keys, thumbnails load successfully
+
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
 A clean, per-session download pricing model where photographers set:
