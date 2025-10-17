@@ -23,12 +23,12 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 - Protected by authentication middleware
 
 ### Session Deletion Foreign Key Constraint Fix (Oct 17, 2025)
-**Problem:** Session deletion failed with FK constraint error: "update or delete on table \"photography_sessions\" violates foreign key constraint \"gallery_downloads_session_id_fkey\" on table \"gallery_downloads\"". This occurred because if any DELETE failed during the transaction (e.g., deleting from a non-existent table), PostgreSQL aborted the transaction, preventing gallery_downloads cleanup and causing FK errors.
+**Problem:** Session deletion failed with FK constraint error: "update or delete on table \"photography_sessions\" violates foreign key constraint \"gallery_downloads_session_id_fkey\" on table \"gallery_downloads\"". The system had TWO deletion endpoints, and the simple one wasn't cleaning up gallery_downloads.
 
-**Solution:** Applied SAVEPOINT pattern to session deletion (server.js lines 6530-6646):
-1. **Critical ordering:** Delete gallery_downloads FIRST (lines 6530-6538) before any optional cleanups
-2. **Transaction safety:** Wrap each optional table cleanup in SAVEPOINT → query → RELEASE/ROLLBACK pattern
-3. **Result:** Session deletion completes successfully even when optional tables are missing
+**Solution:** Fixed BOTH session deletion endpoints:
+1. **Simple DELETE** (line 2673-2680): Delete gallery_downloads FIRST before session_files and session
+2. **Comprehensive DELETE** (lines 6530-6646): Applied SAVEPOINT pattern with gallery_downloads deletion first
+3. **Result:** Session deletion works correctly from both endpoints without FK constraint violations
 
 ### Thumbnail Deletion Optimization (Oct 17, 2025)
 **Optimization:** Reduced thumbnail deletion from 36 to 9 API calls per photo (75% reduction, 4x faster) by targeting only 3 specific path patterns instead of brute-force checking all 36 variations. Uses deleteFileByKey() with correct R2 key parameter instead of deleteFile().
