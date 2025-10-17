@@ -9,6 +9,19 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Storage Manager Dashboard (Oct 17, 2025)
+**Feature:** Created comprehensive storage dashboard (`public/storage-dashboard.html`) that was previously missing from the navigation menu.
+
+**Implementation:**
+- Real-time storage visualization with color-coded progress bars (green < 75%, yellow < 90%, red >= 90%)
+- Usage breakdown by file type (gallery photos vs raw files)
+- Storage plan display (100GB base + add-on packages at $25/TB/month)
+- Purchase interface for 1-5TB storage packages
+- Active subscription management with cancellation
+- Admin unlimited storage handling
+- Responsive mobile-friendly design
+- Protected by authentication middleware
+
 ### Session Deletion Foreign Key Constraint Fix (Oct 17, 2025)
 **Problem:** Session deletion failed with FK constraint error: "update or delete on table \"photography_sessions\" violates foreign key constraint \"gallery_downloads_session_id_fkey\" on table \"gallery_downloads\"". This occurred because if any DELETE failed during the transaction (e.g., deleting from a non-existent table), PostgreSQL aborted the transaction, preventing gallery_downloads cleanup and causing FK errors.
 
