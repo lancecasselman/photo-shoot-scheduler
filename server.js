@@ -6524,6 +6524,16 @@ async function deleteSession(id, userId) {
         // Step 3: Database cleanup (files already removed from R2 by UnifiedFileDeletion)
         console.log(`🗄️ Starting database record cleanup for session ${id}`);
         
+        // CRITICAL: Delete gallery_downloads FIRST before any optional cleanups
+        // This prevents FK constraint errors if later deletes abort the transaction
+        try {
+            const deleteGalleryDownloadsQuery = 'DELETE FROM gallery_downloads WHERE session_id = $1';
+            const downloadsResult = await client.query(deleteGalleryDownloadsQuery, [id]);
+            console.log(`✅ CRITICAL: Deleted ${downloadsResult.rowCount} gallery downloads FIRST`);
+        } catch (galleryError) {
+            console.warn(`⚠️ Gallery downloads cleanup error (table may not exist):`, galleryError.message);
+        }
+        
         // First, get all payment plan IDs for this session
         const paymentPlansQuery = 'SELECT id FROM payment_plans WHERE session_id = $1';
         const paymentPlansResult = await client.query(paymentPlansQuery, [id]);
@@ -6557,40 +6567,80 @@ async function deleteSession(id, userId) {
         await client.query(deleteDepositPaymentsQuery, [id]);
         console.log(`Deleted deposit payments for session ${id}`);
         
-        // Delete any remaining gallery downloads (some may have been cleaned by UnifiedFileDeletion)
-        const deleteGalleryDownloadsQuery = 'DELETE FROM gallery_downloads WHERE session_id = $1';
-        const downloadsResult = await client.query(deleteGalleryDownloadsQuery, [id]);
-        console.log(`Deleted ${downloadsResult.rowCount} remaining gallery downloads for session ${id}`);
+        // Optional table cleanups - use SAVEPOINT pattern to prevent transaction abort
+        // If a table doesn't exist, rollback to savepoint instead of aborting the entire transaction
         
-        // Delete any remaining download policies (some may have been cleaned by UnifiedFileDeletion)
-        const deleteDownloadPoliciesQuery = 'DELETE FROM download_policies WHERE session_id = $1';
-        const policiesResult = await client.query(deleteDownloadPoliciesQuery, [id]);
-        console.log(`Deleted ${policiesResult.rowCount} remaining download policies for session ${id}`);
+        await client.query('SAVEPOINT cleanup_download_policies');
+        try {
+            const deleteDownloadPoliciesQuery = 'DELETE FROM download_policies WHERE session_id = $1';
+            const policiesResult = await client.query(deleteDownloadPoliciesQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_download_policies');
+            console.log(`Deleted ${policiesResult.rowCount} download policies`);
+        } catch (err) { 
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_download_policies');
+            await client.query('RELEASE SAVEPOINT cleanup_download_policies');
+            console.warn(`⚠️ download_policies cleanup (table may not exist):`, err.message);
+        }
         
-        // Delete any remaining digital transactions (some may have been cleaned by UnifiedFileDeletion)
-        const deleteDigitalTransactionsQuery = 'DELETE FROM digital_transactions WHERE session_id = $1';
-        const transactionsResult = await client.query(deleteDigitalTransactionsQuery, [id]);
-        console.log(`Deleted ${transactionsResult.rowCount} remaining digital transactions for session ${id}`);
+        await client.query('SAVEPOINT cleanup_digital_transactions');
+        try {
+            const deleteDigitalTransactionsQuery = 'DELETE FROM digital_transactions WHERE session_id = $1';
+            const transactionsResult = await client.query(deleteDigitalTransactionsQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_digital_transactions');
+            console.log(`Deleted ${transactionsResult.rowCount} digital transactions`);
+        } catch (err) {
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_digital_transactions');
+            await client.query('RELEASE SAVEPOINT cleanup_digital_transactions');
+            console.warn(`⚠️ digital_transactions cleanup (table may not exist):`, err.message);
+        }
         
-        // Delete any remaining download orders (some may have been cleaned by UnifiedFileDeletion)
-        const deleteDownloadOrdersQuery = 'DELETE FROM download_orders WHERE session_id = $1';
-        const ordersResult = await client.query(deleteDownloadOrdersQuery, [id]);
-        console.log(`Deleted ${ordersResult.rowCount} remaining download orders for session ${id}`);
+        await client.query('SAVEPOINT cleanup_download_orders');
+        try {
+            const deleteDownloadOrdersQuery = 'DELETE FROM download_orders WHERE session_id = $1';
+            const ordersResult = await client.query(deleteDownloadOrdersQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_download_orders');
+            console.log(`Deleted ${ordersResult.rowCount} download orders`);
+        } catch (err) {
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_download_orders');
+            await client.query('RELEASE SAVEPOINT cleanup_download_orders');
+            console.warn(`⚠️ download_orders cleanup (table may not exist):`, err.message);
+        }
         
-        // Delete any payment records for this session (in addition to payment plan cleanup)
-        const deletePaymentRecordsQuery = 'DELETE FROM payment_records WHERE session_id = $1';
-        await client.query(deletePaymentRecordsQuery, [id]);
-        console.log(`Deleted payment records for session ${id}`);
+        await client.query('SAVEPOINT cleanup_payment_records');
+        try {
+            const deletePaymentRecordsQuery = 'DELETE FROM payment_records WHERE session_id = $1';
+            await client.query(deletePaymentRecordsQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_payment_records');
+            console.log(`Deleted payment records for session ${id}`);
+        } catch (err) {
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_payment_records');
+            await client.query('RELEASE SAVEPOINT cleanup_payment_records');
+            console.warn(`⚠️ payment_records cleanup (table may not exist):`, err.message);
+        }
         
-        // Delete any print orders for this session
-        const deletePrintOrdersQuery = 'DELETE FROM print_orders WHERE session_id = $1';
-        await client.query(deletePrintOrdersQuery, [id]);
-        console.log(`Deleted print orders for session ${id}`);
+        await client.query('SAVEPOINT cleanup_print_orders');
+        try {
+            const deletePrintOrdersQuery = 'DELETE FROM print_orders WHERE session_id = $1';
+            await client.query(deletePrintOrdersQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_print_orders');
+            console.log(`Deleted print orders for session ${id}`);
+        } catch (err) {
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_print_orders');
+            await client.query('RELEASE SAVEPOINT cleanup_print_orders');
+            console.warn(`⚠️ print_orders cleanup (table may not exist):`, err.message);
+        }
         
-        // Delete any remaining r2_files tracking records
-        const deleteR2FilesQuery = 'DELETE FROM r2_files WHERE session_id = $1';
-        const r2Result = await client.query(deleteR2FilesQuery, [id]);
-        console.log(`Deleted ${r2Result.rowCount} remaining r2_files records for session ${id}`);
+        await client.query('SAVEPOINT cleanup_r2_files');
+        try {
+            const deleteR2FilesQuery = 'DELETE FROM r2_files WHERE session_id = $1';
+            const r2Result = await client.query(deleteR2FilesQuery, [id]);
+            await client.query('RELEASE SAVEPOINT cleanup_r2_files');
+            console.log(`Deleted ${r2Result.rowCount} r2_files tracking records`);
+        } catch (err) {
+            await client.query('ROLLBACK TO SAVEPOINT cleanup_r2_files');
+            await client.query('RELEASE SAVEPOINT cleanup_r2_files');
+            console.warn(`⚠️ r2_files cleanup (table may not exist):`, err.message);
+        }
         
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
