@@ -9,6 +9,18 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Gallery Share Auto-Population Fix (Oct 17, 2025)
+**Problem:** The "Share Gallery with Client" section in gallery manager showed placeholder values (client@example.com, (555) 123-4567) instead of auto-populating with the session's actual contact information.
+
+**Root Cause:** The loadSession() function was using incorrect field names:
+- Looking for: `session.clientEmail` and `session.clientPhone`
+- Actual fields: `session.email` and `session.phoneNumber`/`session.phone_number`
+
+**Solution:** Updated `public/gallery-manager.html` to correctly map session data:
+- Changed to use `session.email` for email field
+- Changed to use `session.phoneNumber || session.phone_number` for phone field (handles both camelCase and snake_case)
+- Photographer can now share galleries immediately without manual data entry
+
 ### Storage Manager Dashboard (Oct 17, 2025)
 **Feature:** Created comprehensive storage dashboard (`public/storage-dashboard.html`) that was previously missing from the navigation menu.
 
