@@ -904,15 +904,50 @@
                 linkInput.value = galleryUrl;
             }
 
-            shareViaEmail() {
+            async ensureGalleryToken() {
+                if (!this.sessionData) {
+                    throw new Error('Session data not loaded');
+                }
+                
+                let token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
+                
+                if (!token) {
+                    try {
+                        const response = await fetch(`/api/sessions/${this.sessionId}/create-gallery`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: this.authManager.getHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            token = data.accessToken;
+                            this.sessionData.galleryAccessToken = token;
+                            this.sessionData.gallery_access_token = token;
+                            this.updateGalleryLink();
+                        } else {
+                            throw new Error('Failed to create gallery access token');
+                        }
+                    } catch (error) {
+                        console.error('Error creating gallery token:', error);
+                        throw error;
+                    }
+                }
+                
+                return token;
+            }
+
+            async shareViaEmail() {
                 if (!this.sessionData) {
                     this.showMessage('Session data not loaded', 'error');
                     return;
                 }
                 
-                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
-                if (!token) {
-                    this.showMessage('Gallery access token not found', 'error');
+                let token;
+                try {
+                    token = await this.ensureGalleryToken();
+                } catch (error) {
+                    this.showMessage('Failed to generate gallery link', 'error');
                     return;
                 }
                 
@@ -948,15 +983,17 @@ Thank you!`;
                 this.showMessage('Opening your email client...', 'success');
             }
 
-            shareViaSMS() {
+            async shareViaSMS() {
                 if (!this.sessionData) {
                     this.showMessage('Session data not loaded', 'error');
                     return;
                 }
                 
-                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
-                if (!token) {
-                    this.showMessage('Gallery access token not found', 'error');
+                let token;
+                try {
+                    token = await this.ensureGalleryToken();
+                } catch (error) {
+                    this.showMessage('Failed to generate gallery link', 'error');
                     return;
                 }
                 
@@ -988,9 +1025,11 @@ Thank you!`;
                     return;
                 }
                 
-                const token = this.sessionData.galleryAccessToken || this.sessionData.gallery_access_token;
-                if (!token) {
-                    this.showMessage('Gallery access token not found', 'error');
+                let token;
+                try {
+                    token = await this.ensureGalleryToken();
+                } catch (error) {
+                    this.showMessage('Failed to generate gallery link', 'error');
                     return;
                 }
                 
