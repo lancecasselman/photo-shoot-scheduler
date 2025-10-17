@@ -170,7 +170,7 @@ class UnifiedFileDeletion {
             // 6b. Clean up download_history (all download attempt logs)
             const historyResult = await client.query(`
                 DELETE FROM download_history 
-                WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
+                WHERE session_id = $1 AND photo_id = $2
             `, [sessionId, filename]);
             if (historyResult.rowCount > 0) {
                 deletionLog.push(`✓ Removed ${historyResult.rowCount} download history record(s)`);
