@@ -9,6 +9,23 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Community Photo Expiration Removed (Oct 17, 2025)
+**Problem:** Community photos were expiring after 7 days, causing images to become inaccessible even though the files remained in storage. Users saw "expired" photos in the community feed.
+
+**Root Cause:** The `CommunityImageProcessor.uploadToR2()` function was generating presigned R2 URLs with a 7-day expiration (604800 seconds) instead of permanent public URLs.
+
+**Solution:** Changed community photo storage to use permanent public URLs:
+- Removed presigned URL generation with expiration
+- Now returns permanent public R2 URLs: `${publicUrl}/${key}`
+- Community photos are publicly accessible and never expire
+
+**Impact:**
+- All new community photos have permanent URLs
+- Old photos with expired URLs would need to be re-uploaded (cannot regenerate expired URLs)
+- Photos remain visible forever regardless of post age
+
+**Location:** `community/community-image-processor.js` (uploadToR2 function)
+
 ### Session Creation Form Cleanup (Oct 17, 2025)
 **Change:** Removed download control fields from session creation form to simplify the initial session setup.
 
