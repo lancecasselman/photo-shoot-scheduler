@@ -99,6 +99,13 @@ Fixed critical bugs causing photo deletions to fail and rollback:
    - **Impact**: Photo deletions now complete successfully even when optional tables don't exist; transaction continues after isolated errors
    - **Pattern**: Each optional cleanup wrapped in SAVEPOINT → query → RELEASE on success or ROLLBACK TO SAVEPOINT → RELEASE on error
 
+3. **Thumbnail Deletion Infinite Loop:**
+   - **Problem**: "Delete All Photos" button stuck with "undefined from session undefined" errors, caused infinite loop trying to delete thumbnails
+   - **Root Cause**: Thumbnail cleanup called `deleteFile(thumbnailPath)` with 1 parameter, but method expects 3: `deleteFile(userId, sessionId, filename)`. This caused userId=path, sessionId=undefined, filename=undefined
+   - **Solution**: Changed server/unified-file-deletion.js line 114 to use `deleteFileByKey(thumbnailPath)` which accepts single R2 key parameter
+   - **Impact**: Thumbnail deletion completes without errors, no more infinite loops or undefined parameter messages
+   - **Result**: Photo deletions execute successfully, thumbnails properly removed from R2 storage
+
 ### Photography Delivery System
 **Simplified Download System (October 2025):**
 A clean, per-session download pricing model where photographers set:
