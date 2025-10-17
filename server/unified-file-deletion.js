@@ -177,17 +177,7 @@ class UnifiedFileDeletion {
                 console.log(`🗑️ Cleaned ${historyResult.rowCount} download history records`);
             }
             
-            // 6c. Clean up unused download_tokens for this photo
-            const tokensResult = await client.query(`
-                DELETE FROM download_tokens 
-                WHERE session_id = $1 AND (filename = $2 OR photo_id = $2)
-            `, [sessionId, filename]);
-            if (tokensResult.rowCount > 0) {
-                deletionLog.push(`✓ Removed ${tokensResult.rowCount} download token(s)`);
-                console.log(`🗑️ Cleaned ${tokensResult.rowCount} download tokens`);
-            }
-            
-            // 6d. Clean up gallery_downloads (download usage records)
+            // 6c. Clean up gallery_downloads FIRST (has foreign key to download_tokens)
             const galleryDownloadsResult = await client.query(`
                 DELETE FROM gallery_downloads 
                 WHERE session_id = $1 AND (photo_id = $2 OR filename = $2)
@@ -195,6 +185,16 @@ class UnifiedFileDeletion {
             if (galleryDownloadsResult.rowCount > 0) {
                 deletionLog.push(`✓ Removed ${galleryDownloadsResult.rowCount} gallery download record(s)`);
                 console.log(`🗑️ Cleaned ${galleryDownloadsResult.rowCount} gallery download records`);
+            }
+            
+            // 6d. Clean up download_tokens AFTER gallery_downloads (to avoid foreign key constraint)
+            const tokensResult = await client.query(`
+                DELETE FROM download_tokens 
+                WHERE session_id = $1 AND (filename = $2 OR photo_id = $2)
+            `, [sessionId, filename]);
+            if (tokensResult.rowCount > 0) {
+                deletionLog.push(`✓ Removed ${tokensResult.rowCount} download token(s)`);
+                console.log(`🗑️ Cleaned ${tokensResult.rowCount} download tokens`);
             }
             
             // 6e. Clean up digital_transactions (payment records)
