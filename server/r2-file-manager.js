@@ -1905,7 +1905,7 @@ class R2FileManager {
           urls.push({
             filename: file.filename,
             presignedUrl: result.presignedUrl,
-            key: result.key,
+            r2Key: result.key,
             expiresIn: result.expiresIn
           });
         }
