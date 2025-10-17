@@ -795,11 +795,11 @@
                         document.getElementById('pricePerPhoto').value = parseFloat(pricePerPhoto).toFixed(2);
                         
                         // Load client contact info if available
-                        if (session.clientEmail) {
-                            document.getElementById('clientEmail').value = session.clientEmail;
+                        if (session.email) {
+                            document.getElementById('clientEmail').value = session.email;
                         }
-                        if (session.clientPhone) {
-                            document.getElementById('clientPhone').value = session.clientPhone;
+                        if (session.phoneNumber || session.phone_number) {
+                            document.getElementById('clientPhone').value = session.phoneNumber || session.phone_number;
                         }
                         
                         // Update gallery link display if token exists
