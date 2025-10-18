@@ -337,45 +337,67 @@
                 sessionId = urlParams.get('sessionId');
                 clientKey = urlParams.get('clientKey');
                 
+                console.log('🔍 URL Parameters:', {
+                    checkoutSessionId,
+                    orderId,
+                    galleryToken,
+                    sessionId,
+                    clientKey
+                });
+                
                 // CASE 1: Single photo purchase from gallery (has Stripe session_id + gallery token)
                 if (checkoutSessionId && galleryToken && !orderId) {
                     console.log('📸 Single photo purchase - fetching from Stripe session');
                     
-                    // Fetch checkout session details from our backend
-                    const response = await fetch(`/api/stripe/checkout-session/${checkoutSessionId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to retrieve purchase details');
+                    try {
+                        // Fetch checkout session details from our backend
+                        const response = await fetch(`/api/stripe/checkout-session/${checkoutSessionId}`);
+                        if (!response.ok) {
+                            throw new Error('Failed to retrieve purchase details from Stripe');
+                        }
+                        
+                        const data = await response.json();
+                        if (!data.success) {
+                            throw new Error(data.error || 'Failed to load purchase details');
+                        }
+                        
+                        const session = data.session;
+                        const photoName = session.metadata?.filename || 'Your Photo';
+                        const amount = session.amount_total / 100; // Convert cents to dollars
+                        
+                        console.log('✅ Loaded purchase details:', { amount, photoName, session });
+                        
+                        document.getElementById('purchaseAmount').textContent = `$${amount.toFixed(2)}`;
+                        document.getElementById('photosPurchased').style.display = 'block';
+                        document.getElementById('photosCount').textContent = '1';
+                        document.getElementById('entitlementStatus').style.display = 'block';
+                        
+                        document.getElementById('orderDetails').style.display = 'block';
+                        document.getElementById('orderId').textContent = checkoutSessionId.substring(0, 12) + '...';
+                        document.getElementById('transactionId').textContent = session.payment_intent 
+                            ? session.payment_intent.substring(0, 20) + '...'
+                            : checkoutSessionId.substring(0, 20) + '...';
+                        document.getElementById('amountPaid').textContent = `$${amount.toFixed(2)} USD`;
+                        document.getElementById('purchaseDate').textContent = new Date().toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        // Hide error message
+                        document.getElementById('errorMessage').style.display = 'none';
+                        
+                        return;
+                    } catch (apiError) {
+                        console.error('❌ Error fetching Stripe session:', apiError);
+                        // Show basic success message even if API fails
+                        document.getElementById('purchaseAmount').textContent = 'Purchase Confirmed';
+                        document.getElementById('entitlementStatus').style.display = 'block';
+                        document.getElementById('errorMessage').style.display = 'none';
+                        return;
                     }
-                    
-                    const data = await response.json();
-                    if (!data.success) {
-                        throw new Error(data.error || 'Failed to load purchase details');
-                    }
-                    
-                    const session = data.session;
-                    const photoName = session.metadata?.filename || 'Your Photo';
-                    const amount = session.amount_total / 100; // Convert cents to dollars
-                    
-                    document.getElementById('purchaseAmount').textContent = `$${amount.toFixed(2)}`;
-                    document.getElementById('photosPurchased').style.display = 'block';
-                    document.getElementById('photosCount').textContent = '1';
-                    document.getElementById('entitlementStatus').style.display = 'block';
-                    
-                    document.getElementById('orderDetails').style.display = 'block';
-                    document.getElementById('orderId').textContent = checkoutSessionId.substring(0, 12) + '...';
-                    document.getElementById('transactionId').textContent = session.payment_intent 
-                        ? session.payment_intent.substring(0, 20) + '...'
-                        : checkoutSessionId.substring(0, 20) + '...';
-                    document.getElementById('amountPaid').textContent = `$${amount.toFixed(2)} USD`;
-                    document.getElementById('purchaseDate').textContent = new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
-                    return;
                 }
                 
                 // CASE 2: Old format with sessionId/clientKey but no orderId
