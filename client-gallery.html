@@ -242,26 +242,64 @@
             transform: scale(1.08) rotate(0.5deg);
         }
 
-        /* Downloaded Badge */
+        /* Downloaded Badge - Enhanced Visibility */
         .downloaded-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #48bb78;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 5px;
-            z-index: 1;
+            gap: 6px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            animation: badgeAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .downloaded-badge::before {
             content: '✓';
-            font-size: 1.2rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+            animation: checkPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes badgeAppear {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes checkPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+
+        /* Downloaded Photo Overlay */
+        .photo-card.downloaded .photo-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+            border: 3px solid rgba(16, 185, 129, 0.3);
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* Photo Info */
@@ -812,7 +850,7 @@
                 const isUnlimited = this.freeDownloadLimit === 0 && this.pricePerPhoto === 0;
 
                 const card = document.createElement('div');
-                card.className = 'photo-card';
+                card.className = `photo-card ${isDownloaded ? 'downloaded' : ''}`;
                 card.dataset.photoId = photoId;
 
                 let buttonText, buttonClass;
