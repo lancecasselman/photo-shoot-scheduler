@@ -16621,6 +16621,12 @@ app.get('/subscription-success.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'subscription-success.html'));
 });
 
+// Download purchase success page (after Stripe payment for gallery downloads)
+app.get('/download-success.html', (req, res) => {
+    console.log('💰 DOWNLOAD SUCCESS: Serving download success page');
+    res.sendFile(path.join(__dirname, 'download-success.html'));
+});
+
 // Secure app - BULLETPROOF authentication required
 app.get('/secure-app.html', async (req, res) => {
     console.log('🔐 SECURE: Access attempt to secure app');
