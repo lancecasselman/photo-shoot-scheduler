@@ -16672,6 +16672,10 @@ app.get('/subscription-success.html', (req, res) => {
 // Download purchase success page (after Stripe payment for gallery downloads)
 app.get('/download-success.html', (req, res) => {
     console.log('💰 DOWNLOAD SUCCESS: Serving download success page');
+    // Prevent caching so users always get the latest version
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'download-success.html'));
 });
 
