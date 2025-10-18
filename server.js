@@ -1488,6 +1488,7 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
                     const downloadId = uuidv4();
                     const transactionId = uuidv4();
                     const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+                    const amountInCents = Math.round(parseFloat(amount) * 100); // Convert to cents
                     
                     // Insert download token
                     await pool.query(`
@@ -1495,15 +1496,15 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
                         VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
                     `, [tokenId, token, photoUrl, filename, sessionId, expiresAt]);
                     
-                    // Create digital transaction record for revenue tracking
+                    // Create digital transaction record (matches schema: id, session_id, user_id, photo_id, stripe_payment_intent_id, amount, download_token, status)
                     await pool.query(`
                         INSERT INTO digital_transactions (
-                            id, session_id, user_id, client_key, photo_id, photo_url, filename,
-                            transaction_type, amount, stripe_payment_intent_id, stripe_checkout_session_id,
+                            id, session_id, user_id, photo_id, 
+                            stripe_payment_intent_id, amount, download_token, 
                             status, created_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'download', $8, $9, $10, 'completed', NOW())
-                    `, [transactionId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, 
-                        amount, session.payment_intent, session.id]);
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', NOW())
+                    `, [transactionId, sessionId, photographerId, photoId, 
+                        session.payment_intent, amountInCents, token]);
                     
                     // Track download in gallery_downloads table (paid download)
                     await pool.query(`
@@ -1518,7 +1519,8 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
                     console.log(`✅ Gallery download processed successfully:`, {
                         downloadId,
                         transactionId,
-                        token: token.substring(0, 10) + '...'
+                        token: token.substring(0, 10) + '...',
+                        amount: `$${amount}`
                     });
                     
                 } catch (error) {
