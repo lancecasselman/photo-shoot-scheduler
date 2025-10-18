@@ -9,32 +9,44 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
-### Enhanced Download Tracking Visual Indicators (Oct 18, 2025)
-**Enhancement:** Improved the client gallery download tracking display to make it instantly obvious which photos have been downloaded.
+### Download History Server Synchronization (Oct 18, 2025)
+**Enhancement:** Implemented server-side download history synchronization so downloaded photo badges persist across devices and browser sessions.
 
 **Changes Made:**
-1. **Enhanced Downloaded Badge:**
-   - Larger, more prominent badge with gradient green background
-   - Added animated entrance (scales in with rotation)
-   - Pulsing checkmark animation to draw attention
-   - Stronger shadow for better visibility
+1. **Server-Side Download History API:**
+   - New endpoint: `GET /api/gallery/:token/download-history?clientKey=xxx`
+   - Queries `gallery_downloads` table for client's download history
+   - Returns list of downloaded photo IDs with timestamps
+   - Includes proper connection management with try/finally blocks
+   - Security-conscious logging (no sensitive tokens in logs)
 
-2. **Photo Overlay Effect:**
+2. **Client-Server Sync Logic:**
+   - Made `loadDownloadedPhotos()` async to fetch from server
+   - First loads from localStorage (instant)
+   - Then syncs with server to get downloads from other devices/sessions
+   - Merges server downloads into localStorage
+   - Re-renders photos with badges after sync
+
+3. **Timing Fix:**
+   - Gallery init() now awaits loadDownloadedPhotos() before final rendering
+   - Ensures badges appear on first page load without race conditions
+   - Prevents photos rendering before download history loads
+
+4. **Enhanced Visual Indicators:**
+   - Larger, animated "✓ Downloaded" badge with gradient green background
    - Subtle green tint overlay on downloaded photos
    - 3px green border around downloaded photos
-   - Makes downloaded photos obvious at a glance
-
-3. **CSS Animations:**
-   - `badgeAppear`: Smooth badge entrance animation
-   - `checkPulse`: Gentle pulsing effect on checkmark
+   - Pulsing checkmark animation
+   - Smooth badge entrance animation
 
 **User Experience:**
-- Clients can instantly see which photos they've already downloaded
-- Downloaded photos have a "✓ Downloaded" badge and green overlay
+- Clients can see download history synced across all devices
+- Downloaded photos show green "✓ Downloaded" badge and overlay
 - Button text changes to "Re-download Free" for downloaded photos
-- All download tracking persists in localStorage per client
+- Download tracking persists even after clearing browser cache
+- Seamless sync between localStorage and database
 
-**Location:** `client-gallery.html` (CSS lines 248-306, JS line 856)
+**Location:** `client-gallery.html` (loadDownloadedPhotos function), `server.js` (lines 12840-12911)
 
 ### Community Photo Expiration Removed (Oct 17, 2025)
 **Problem:** Community photos were expiring after 7 days, causing images to become inaccessible even though the files remained in storage. Users saw "expired" photos in the community feed.
