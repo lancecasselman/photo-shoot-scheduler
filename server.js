@@ -10576,6 +10576,54 @@ app.get('/api/stripe/public-key', (req, res) => {
     res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY });
 });
 
+// Retrieve Stripe checkout session details (for download success page)
+app.get('/api/stripe/checkout-session/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        if (!sessionId || !sessionId.startsWith('cs_')) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid checkout session ID'
+            });
+        }
+        
+        console.log(`🔍 Retrieving Stripe checkout session: ${sessionId}`);
+        
+        // Retrieve the checkout session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Checkout session not found'
+            });
+        }
+        
+        // Return safe session data (no sensitive info)
+        res.json({
+            success: true,
+            session: {
+                id: session.id,
+                amount_total: session.amount_total,
+                currency: session.currency,
+                payment_status: session.payment_status,
+                status: session.status,
+                payment_intent: session.payment_intent,
+                metadata: session.metadata,
+                created: session.created
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error retrieving checkout session:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve checkout session'
+        });
+    }
+});
+
 // Payment Plan API Routes
 app.post('/api/payment-plans', isAuthenticated, async (req, res) => {
     try {
