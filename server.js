@@ -1463,6 +1463,75 @@ app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/js
 
         console.log(`🎯 Processing webhook event: ${event.type}`);
         
+        // IMPORTANT: Route gallery_download events before subscription manager
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            
+            // Check if this is a gallery download purchase
+            if (session.metadata && session.metadata.type === 'gallery_download') {
+                const { sessionId, photoId, photoUrl, filename, clientKey, photographerId, amount, isAdminAccount } = session.metadata;
+                
+                console.log(`📥 Processing gallery download purchase:`, {
+                    sessionId,
+                    photoId,
+                    filename,
+                    amount,
+                    checkoutSessionId: session.id
+                });
+                
+                try {
+                    const { v4: uuidv4 } = require('uuid');
+                    
+                    // Generate download token
+                    const token = require('crypto').randomBytes(32).toString('hex');
+                    const tokenId = uuidv4();
+                    const downloadId = uuidv4();
+                    const transactionId = uuidv4();
+                    const expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+                    
+                    // Insert download token
+                    await pool.query(`
+                        INSERT INTO download_tokens (id, token, photo_url, filename, session_id, expires_at, is_used, created_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
+                    `, [tokenId, token, photoUrl, filename, sessionId, expiresAt]);
+                    
+                    // Create digital transaction record for revenue tracking
+                    await pool.query(`
+                        INSERT INTO digital_transactions (
+                            id, session_id, user_id, client_key, photo_id, photo_url, filename,
+                            transaction_type, amount, stripe_payment_intent_id, stripe_checkout_session_id,
+                            status, created_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'download', $8, $9, $10, 'completed', NOW())
+                    `, [transactionId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, 
+                        amount, session.payment_intent, session.id]);
+                    
+                    // Track download in gallery_downloads table (paid download)
+                    await pool.query(`
+                        INSERT INTO gallery_downloads (
+                            id, session_id, user_id, client_key, photo_id, photo_url, filename,
+                            download_type, amount_paid, download_token, digital_transaction_id, 
+                            stripe_checkout_session_id, status, created_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'paid', $8, $9, $10, $11, 'completed', NOW())
+                    `, [downloadId, sessionId, photographerId, clientKey, photoId, photoUrl, filename, 
+                        amount, token, transactionId, session.id]);
+                    
+                    console.log(`✅ Gallery download processed successfully:`, {
+                        downloadId,
+                        transactionId,
+                        token: token.substring(0, 10) + '...'
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Error processing gallery download webhook:', error);
+                    // Don't throw - webhook should still return 200
+                }
+                
+                // Return immediately - don't process as subscription
+                console.log(`✅ Webhook processed successfully: ${event.type}`);
+                return res.json({ received: true });
+            }
+        }
+        
         // Process the webhook event using subscription manager
         const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
         const subscriptionManager = new UnifiedSubscriptionManager(pool);
