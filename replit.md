@@ -9,6 +9,33 @@ Website Builder Interface: CapCut-style with full-screen preview and bottom tool
 
 ## Recent Changes
 
+### Enhanced Download Tracking Visual Indicators (Oct 18, 2025)
+**Enhancement:** Improved the client gallery download tracking display to make it instantly obvious which photos have been downloaded.
+
+**Changes Made:**
+1. **Enhanced Downloaded Badge:**
+   - Larger, more prominent badge with gradient green background
+   - Added animated entrance (scales in with rotation)
+   - Pulsing checkmark animation to draw attention
+   - Stronger shadow for better visibility
+
+2. **Photo Overlay Effect:**
+   - Subtle green tint overlay on downloaded photos
+   - 3px green border around downloaded photos
+   - Makes downloaded photos obvious at a glance
+
+3. **CSS Animations:**
+   - `badgeAppear`: Smooth badge entrance animation
+   - `checkPulse`: Gentle pulsing effect on checkmark
+
+**User Experience:**
+- Clients can instantly see which photos they've already downloaded
+- Downloaded photos have a "✓ Downloaded" badge and green overlay
+- Button text changes to "Re-download Free" for downloaded photos
+- All download tracking persists in localStorage per client
+
+**Location:** `client-gallery.html` (CSS lines 248-306, JS line 856)
+
 ### Community Photo Expiration Removed (Oct 17, 2025)
 **Problem:** Community photos were expiring after 7 days, causing images to become inaccessible even though the files remained in storage. Users saw "expired" photos in the community feed.
 
