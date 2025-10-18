@@ -12834,6 +12834,79 @@ app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/verify', async (req, res) => {
     }
 });
 
+// API endpoint for getting download history for a client (required by client-gallery.html)
+app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/download-history', async (req, res) => {
+    const galleryToken = req.params.token;
+    const clientKey = req.query.clientKey;
+    
+    let client;
+    try {
+        console.log('📊 API: Fetching download history');
+        
+        if (!clientKey) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Client key required' 
+            });
+        }
+        
+        // Get session from gallery token
+        client = await pool.connect();
+        
+        const sessionQuery = await client.query(`
+            SELECT id 
+            FROM photography_sessions 
+            WHERE gallery_access_token = $1
+        `, [galleryToken]);
+
+        if (sessionQuery.rows.length === 0) {
+            console.log('❌ API: Gallery not found');
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Gallery not found' 
+            });
+        }
+
+        const sessionId = sessionQuery.rows[0].id;
+        
+        // Get download history for this client from gallery_downloads table
+        const historyQuery = await client.query(`
+            SELECT photo_id, photo_url, filename, created_at
+            FROM gallery_downloads 
+            WHERE session_id = $1 AND client_key = $2
+            ORDER BY created_at DESC
+        `, [sessionId, clientKey]);
+        
+        const downloadedPhotos = historyQuery.rows.map(row => ({
+            photoId: row.photo_id,
+            photoUrl: row.photo_url,
+            filename: row.filename,
+            downloadedAt: row.created_at
+        }));
+
+        console.log('✅ API: Download history retrieved:', {
+            downloadCount: downloadedPhotos.length
+        });
+
+        res.json({
+            success: true,
+            downloads: downloadedPhotos
+        });
+
+    } catch (error) {
+        console.error('Error getting download history:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to get download history' 
+        });
+    } finally {
+        // Always release the client connection
+        if (client) {
+            client.release();
+        }
+    }
+});
+
 // API endpoint for getting gallery photos (required by client-gallery.html) - with token constraints
 app.get('/api/gallery/:token([A-Za-z0-9_-]{20,})/photos', async (req, res) => {
     const galleryToken = req.params.token;

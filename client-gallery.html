@@ -649,11 +649,14 @@
                             downloadClientKey: this.downloadClientKey
                         });
                         
-                        // Load download history
-                        this.loadDownloadedPhotos();
+                        // Load download history (await to ensure badges show on first render)
+                        await this.loadDownloadedPhotos();
                         
                         // Update counter
                         this.updateDownloadCounter();
+                        
+                        // Re-render photos with download badges
+                        this.displayPhotos();
                     }
                 } catch (error) {
                     console.error('❌ Error initializing gallery:', error);
@@ -661,17 +664,48 @@
                 }
             }
 
-            loadDownloadedPhotos() {
+            async loadDownloadedPhotos() {
                 try {
                     if (!this.sessionData?.id || !this.downloadClientKey) return;
 
+                    // First load from localStorage (instant)
                     const storageKey = `downloaded_photos_${this.sessionData.id}_${this.downloadClientKey}`;
                     const stored = localStorage.getItem(storageKey);
                     
                     if (stored) {
                         const storedPhotos = JSON.parse(stored);
                         storedPhotos.forEach(photoId => this.downloadedPhotos.add(photoId));
-                        console.log('📊 Loaded downloaded photos:', Array.from(this.downloadedPhotos));
+                        console.log('📊 Loaded downloaded photos from localStorage:', Array.from(this.downloadedPhotos));
+                    }
+
+                    // Then sync with server to get any downloads from other devices/sessions
+                    try {
+                        const response = await fetch(`${this.getApiBaseUrl()}/api/gallery/${this.galleryToken}/download-history?clientKey=${this.downloadClientKey}`);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.downloads) {
+                                console.log('🔄 Syncing download history from server:', data.downloads.length, 'downloads');
+                                
+                                // Add all downloaded photo IDs to the set
+                                data.downloads.forEach(download => {
+                                    this.downloadedPhotos.add(download.photoId);
+                                });
+                                
+                                // Save updated history to localStorage
+                                this.saveDownloadedPhotos();
+                                
+                                // Refresh display if we found new downloads
+                                if (data.downloads.length > 0) {
+                                    console.log('✅ Synced download history - total downloaded:', this.downloadedPhotos.size);
+                                    this.displayPhotos();
+                                    this.updateDownloadCounter();
+                                }
+                            }
+                        }
+                    } catch (syncError) {
+                        console.warn('Could not sync download history from server:', syncError);
+                        // Continue with localStorage data
                     }
                 } catch (error) {
                     console.warn('Could not load download history:', error);
