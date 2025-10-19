@@ -2488,6 +2488,7 @@ router.post('/whcc-webhook', express.raw({type: 'application/json'}), (req, res)
         console.error('❌ Error processing WHCC webhook:', error);
         res.status(400).send('Bad Request');
     }
+    */
 });
 
 // Secure download endpoint for digital purchases
