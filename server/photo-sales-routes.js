@@ -2515,6 +2515,27 @@ router.get('/secure/:token', async (req, res) => {
         // REMOVED: Token usage marking for unlimited re-downloads
         console.log(`🔓 Token usage tracking disabled - allowing unlimited re-downloads`);
         
+        // SECURITY: Get the photography session to validate ownership
+        const { photographySessions } = require('../shared/schema');
+        const session = await db.select()
+            .from(photographySessions)
+            .where(eq(photographySessions.id, download.sessionId))
+            .limit(1);
+        
+        if (session.length === 0) {
+            console.warn('⚠️ Photography session not found for download token:', download.sessionId);
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        const photographerId = session[0].userId;
+        const tokenSessionId = download.sessionId;
+        const tokenFilename = download.filename;
+        
+        // SECURITY: Construct the expected R2 key from trusted database fields
+        const expectedR2Key = `photographer-${photographerId}/session-${tokenSessionId}/gallery/${tokenFilename}`;
+        
+        console.log(`🔒 Expected R2 key from trusted data: ${expectedR2Key}`);
+        
         // Verify the Stripe session is still valid and paid
         try {
             const stripeSession = await stripe.checkout.sessions.retrieve(download.sessionId);
@@ -2524,11 +2545,7 @@ router.get('/secure/:token', async (req, res) => {
                 return res.status(403).json({ error: 'Payment required to access download' });
             }
             
-            // Verify the photo matches what was paid for
-            if (stripeSession.metadata.photoUrl !== download.photoUrl) {
-                console.warn('⚠️ Photo URL mismatch in download token vs paid session');
-                return res.status(403).json({ error: 'Invalid download request' });
-            }
+            console.log(`✅ Payment verified for session ${download.sessionId}, file: ${tokenFilename}`);
             
         } catch (stripeError) {
             console.error('❌ Failed to verify Stripe session:', stripeError);
@@ -2550,13 +2567,41 @@ router.get('/secure/:token', async (req, res) => {
                 },
             });
             
-            // Extract R2 key from photo URL
-            const r2Key = download.photoUrl.split('/').pop(); // Extract filename from URL
+            // SECURITY: Extract actual R2 key from photoUrl using proper URL parsing
+            let actualR2Key = download.photoUrl;
             
-            // Get object from R2
+            // If it's a full URL, safely extract the pathname
+            if (actualR2Key.includes('://')) {
+                try {
+                    const url = new URL(actualR2Key);
+                    // Remove leading slash from pathname and decode percent-encoding
+                    actualR2Key = decodeURIComponent(url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname);
+                } catch (urlError) {
+                    console.error('❌ Invalid photo URL format:', actualR2Key);
+                    return res.status(400).json({ error: 'Invalid photo URL' });
+                }
+            }
+            
+            // Normalize both keys by trimming whitespace and decoding
+            const normalizedActualKey = actualR2Key.trim();
+            const normalizedExpectedKey = expectedR2Key.trim();
+            
+            // SECURITY: Verify the actual R2 key EXACTLY matches the expected key
+            if (normalizedActualKey !== normalizedExpectedKey) {
+                console.warn('⚠️ R2 key mismatch - potential tampering detected:', {
+                    expected: normalizedExpectedKey,
+                    actual: normalizedActualKey,
+                    sessionId: download.sessionId
+                });
+                return res.status(403).json({ error: 'Invalid download - file path mismatch' });
+            }
+            
+            console.log(`📥 Downloading from R2 with validated key: ${normalizedExpectedKey}`);
+            
+            // Get object from R2 using the validated expected key
             const command = new GetObjectCommand({
                 Bucket: process.env.R2_BUCKET_NAME,
-                Key: r2Key,
+                Key: normalizedExpectedKey,
             });
             
             const response = await s3Client.send(command);
