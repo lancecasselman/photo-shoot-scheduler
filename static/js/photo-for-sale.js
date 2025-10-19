@@ -1032,6 +1032,14 @@
         console.log('💳 Processing digital purchase:', { photoUrl, filename, price });
         
         try {
+            // Get session information for purchase tracking
+            const sessionId = getSessionId();
+            const galleryToken = getGalleryToken();
+            
+            if (!sessionId || !galleryToken) {
+                console.warn('⚠️ Missing session info for purchase tracking');
+            }
+            
             // Call API to create Stripe payment for digital download
             const response = await fetch('/api/print/digital-order', {
                 method: 'POST',
@@ -1040,7 +1048,9 @@
                     photoUrl,
                     filename,
                     price,
-                    type: 'digital'
+                    type: 'digital',
+                    sessionId,
+                    galleryToken
                 })
             });
             
