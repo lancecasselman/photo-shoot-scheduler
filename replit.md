@@ -25,7 +25,7 @@ PostgreSQL is the primary database, managed with Drizzle ORM, supplemented by Fi
 Cloudflare R2 serves as the primary cloud storage solution, featuring human-readable file organization and dual-path compatibility. Firebase Storage is used for website assets and profile images. The system supports full-resolution downloads, on-the-fly thumbnail generation, and optimized file deletion processes for R2.
 
 ### Photography Delivery System
-Implements a per-session download pricing model, allowing photographers to set free download limits and per-photo costs. It includes a streamlined client gallery with localStorage-based download tracking, integration with Stripe Connect, and customizable watermarking.
+Implements a per-session download pricing model, allowing photographers to set free download limits and per-photo costs. It includes a streamlined client gallery with localStorage-based download tracking, integration with Stripe Connect, and customizable watermarking. The system now features **purchased photo tracking** that persists photography session IDs through the Stripe checkout flow, enabling galleries to display which photos have been purchased and provide immediate download access via secure tokens. Gallery visitors can view purchased photos with dedicated download buttons using dual authentication (gallery token or photographer credentials).
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed, customizable post types, advanced image optimization, social features, user profiles with reputation points, direct messaging, and EXIF extraction.
