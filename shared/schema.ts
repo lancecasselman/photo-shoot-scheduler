@@ -403,20 +403,16 @@ export type BusinessExpense = typeof businessExpenses.$inferSelect;
 export const downloadTokens = pgTable("download_tokens", {
   id: varchar("id").primaryKey().notNull(),
   token: varchar("token").notNull().unique(),
-  photoUrl: varchar("photo_url").notNull(),
-  filename: varchar("filename").notNull(),
+  purchaseId: varchar("purchase_id").notNull(), // Stripe checkout session ID grouping multiple photos
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at").notNull(),
-  isUsed: boolean("is_used").default(false),
-  usedAt: timestamp("used_at"),
-  oneTime: boolean("one_time").default(true), // Whether token is single-use
+  usedAt: timestamp("used_at"), // Single-use validation - null if not used yet
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   sessionIdx: index("idx_download_tokens_session").on(table.sessionId),
   tokenIdx: index("idx_download_tokens_token").on(table.token),
+  purchaseIdx: index("idx_download_tokens_purchase").on(table.purchaseId),
   expiresIdx: index("idx_download_tokens_expires").on(table.expiresAt),
-  // Composite unique constraint for token-session binding
-  tokenSessionUnique: unique("download_tokens_token_session_key").on(table.token, table.sessionId),
 }));
 
 // Digital transaction records
@@ -426,18 +422,14 @@ export const digitalTransactions = pgTable("digital_transactions", {
   userId: varchar("user_id").notNull().references(() => users.id), // photographer
   photoId: varchar("photo_id").notNull(), // ID or filename of purchased photo
   stripePaymentIntentId: varchar("stripe_payment_intent_id").notNull(), // Stripe Payment Intent ID
+  stripeCheckoutSessionId: varchar("stripe_checkout_session_id"), // Links to purchase
   amount: integer("amount").notNull(), // Amount in cents
-  downloadToken: varchar("download_token").notNull().unique().references(() => downloadTokens.token, { onDelete: "restrict" }),
+  downloadToken: varchar("download_token").references(() => downloadTokens.token, { onDelete: "restrict" }),
   status: varchar("status").notNull().default("pending").$type<'pending' | 'completed' | 'failed' | 'refunded'>(),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   sessionDateIdx: index("idx_digital_transactions_session_date").on(table.sessionId, table.createdAt),
-  // Composite FK to ensure token belongs to same session
-  tokenSessionFk: foreignKey({
-    columns: [table.downloadToken, table.sessionId],
-    foreignColumns: [downloadTokens.token, downloadTokens.sessionId],
-    name: "digital_transactions_token_session_fkey"
-  }).onDelete("restrict"),
+  checkoutSessionIdx: index("idx_digital_transactions_checkout_session").on(table.stripeCheckoutSessionId),
 }));
 
 // Webhook events tracking for idempotency and monitoring
@@ -479,8 +471,9 @@ export const galleryDownloads = pgTable("gallery_downloads", {
   downloadType: varchar("download_type").notNull().default("free").$type<'free' | 'paid'>(),
   amountPaid: integer("amount_paid").default(0), // amount in cents
   stripePaymentId: varchar("stripe_payment_id"), // Stripe payment intent ID
+  stripeCheckoutSessionId: varchar("stripe_checkout_session_id"), // Groups multiple photos purchased together
   digitalTransactionId: varchar("digital_transaction_id").unique().references(() => digitalTransactions.id, { onDelete: "set null" }),
-  downloadToken: varchar("download_token").notNull().unique().references(() => downloadTokens.token), // one-time use token with FK
+  downloadToken: varchar("download_token").references(() => downloadTokens.token), // purchase-level token (shared across photos in same purchase)
   isWatermarked: boolean("is_watermarked").default(false),
   watermarkConfig: jsonb("watermark_config").default({}), // snapshot of watermark settings at time of download
   ipAddress: varchar("ip_address"),
@@ -495,18 +488,13 @@ export const galleryDownloads = pgTable("gallery_downloads", {
   `),
   sessionClientIdx: index("idx_gallery_downloads_session_client").on(table.sessionId, table.clientKey, table.status),
   sessionDateIdx: index("idx_gallery_downloads_session_date").on(table.sessionId, table.createdAt),
+  checkoutSessionIdx: index("idx_gallery_downloads_checkout_session").on(table.stripeCheckoutSessionId),
   // Cross-tenant isolation constraint - user_id must match session owner
   userSessionFk: foreignKey({
     columns: [table.userId, table.sessionId],
     foreignColumns: [photographySessions.userId, photographySessions.id],
     name: "gallery_downloads_user_session_fkey"
   }).onDelete("cascade"),
-  // Composite FK to ensure token belongs to same session
-  tokenSessionFk: foreignKey({
-    columns: [table.downloadToken, table.sessionId],
-    foreignColumns: [downloadTokens.token, downloadTokens.sessionId],
-    name: "gallery_downloads_token_session_fkey"
-  }).onDelete("restrict"),
 }));
 
 export type InsertDownloadToken = typeof downloadTokens.$inferInsert;
