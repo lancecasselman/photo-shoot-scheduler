@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clientQuotas = exports.downloadEvents = exports.sessionFiles = exports.photoForSaleSettings = exports.adminContentEdits = exports.printCarts = exports.printProducts = exports.printOrders = exports.photographerClients = exports.communityChallenges = exports.communityMessages = exports.communityFollows = exports.communitySaves = exports.communityComments = exports.communityLikes = exports.communityPosts = exports.communityProfiles = exports.photographySessionsRelations = exports.downloadHistoryRelations = exports.downloadEntitlementsRelations = exports.downloadOrdersRelations = exports.downloadPoliciesRelations = exports.downloadHistory = exports.downloadEntitlements = exports.downloadOrders = exports.downloadPolicies = exports.galleryDownloads = exports.webhookEvents = exports.digitalTransactions = exports.downloadTokens = exports.businessExpenses = exports.aiCreditUsage = exports.r2StorageBilling = exports.r2StorageUsage = exports.storageBillingHistory = exports.storageSubscriptions = exports.userStorageQuotas = exports.r2Files = exports.subscribers = exports.paymentRecords = exports.paymentPlans = exports.photographySessions = exports.publishedWebsites = exports.users = exports.sessions = void 0;
+exports.photoForSaleSettings = exports.adminContentEdits = exports.printCarts = exports.printProducts = exports.printOrders = exports.photographerClients = exports.communityChallenges = exports.communityMessages = exports.communityFollows = exports.communitySaves = exports.communityComments = exports.communityLikes = exports.communityPosts = exports.communityProfiles = exports.photographySessionsRelations = exports.downloadHistoryRelations = exports.downloadEntitlementsRelations = exports.downloadOrdersRelations = exports.downloadPoliciesRelations = exports.downloadHistory = exports.downloadEntitlements = exports.downloadOrders = exports.downloadPolicies = exports.galleryDownloads = exports.digitalTransactions = exports.downloadTokens = exports.businessExpenses = exports.aiCreditUsage = exports.r2StorageBilling = exports.r2StorageUsage = exports.storageBillingHistory = exports.storageSubscriptions = exports.userStorageQuotas = exports.sessionFiles = exports.r2Files = exports.subscribers = exports.paymentRecords = exports.paymentPlans = exports.photographySessions = exports.publishedWebsites = exports.users = exports.sessions = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 const drizzle_orm_1 = require("drizzle-orm");
 const drizzle_orm_2 = require("drizzle-orm");
@@ -120,14 +120,6 @@ exports.photographySessions = (0, pg_core_1.pgTable)("photography_sessions", {
     downloadPolicyId: (0, pg_core_1.varchar)("download_policy_id"),
     totalDownloadRevenue: (0, pg_core_1.decimal)("total_download_revenue", { precision: 10, scale: 2 }).default("0.00"),
     lastDownloadActivity: (0, pg_core_1.timestamp)("last_download_activity"),
-    // Simple Credit System fields
-    freeDownloadsRemaining: (0, pg_core_1.integer)("free_downloads_remaining"), // Tracks remaining free downloads
-    unlimitedAccess: (0, pg_core_1.boolean)("unlimited_access").default(false), // True when client has paid for unlimited access
-    unlimitedAccessPrice: (0, pg_core_1.decimal)("unlimited_access_price", { precision: 10, scale: 2 }), // Price for unlimited access
-    unlimitedAccessPurchasedAt: (0, pg_core_1.timestamp)("unlimited_access_purchased_at"), // When unlimited was purchased
-    // New Simplified Download System (per-session)
-    freeDownloadLimit: (0, pg_core_1.integer)("free_download_limit").default(0), // Number of free downloads per session
-    pricePerPhoto: (0, pg_core_1.decimal)("price_per_photo", { precision: 10, scale: 2 }).default("0.00"), // Price per photo after free limit
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 }, (table) => ({
@@ -215,6 +207,19 @@ exports.r2Files = (0, pg_core_1.pgTable)("r2_files", {
     isPublic: (0, pg_core_1.boolean)("is_public").default(false), // For gallery sharing
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
+});
+// Session files uploaded per session (photos, documents, etc.)
+exports.sessionFiles = (0, pg_core_1.pgTable)("session_files", {
+    id: (0, pg_core_1.serial)("id").primaryKey(),
+    userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id),
+    sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id),
+    folderType: (0, pg_core_1.varchar)("folder_type").notNull(),
+    filename: (0, pg_core_1.varchar)("filename").notNull(),
+    fileSizeBytes: (0, pg_core_1.bigint)("file_size_bytes", { mode: "number" }).notNull(),
+    fileSizeMb: (0, pg_core_1.decimal)("file_size_mb", { precision: 12, scale: 2 }).notNull(),
+    uploadedAt: (0, pg_core_1.timestamp)("uploaded_at").defaultNow(),
+    originalName: (0, pg_core_1.varchar)("original_name"),
+    r2Key: (0, pg_core_1.text)("r2_key"),
 });
 // Storage quota tracking per user (100GB free + 1TB packages at $25/month each)
 exports.userStorageQuotas = (0, pg_core_1.pgTable)("user_storage_quotas", {
@@ -333,16 +338,26 @@ exports.businessExpenses = (0, pg_core_1.pgTable)("business_expenses", {
 exports.downloadTokens = (0, pg_core_1.pgTable)("download_tokens", {
     id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
     token: (0, pg_core_1.varchar)("token").notNull().unique(),
-    purchaseId: (0, pg_core_1.varchar)("purchase_id").notNull(), // Stripe checkout session ID grouping multiple photos
+    photoUrl: (0, pg_core_1.varchar)("photo_url"),
+    filename: (0, pg_core_1.varchar)("filename"),
     sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
-    expiresAt: (0, pg_core_1.timestamp)("expires_at").notNull(),
-    usedAt: (0, pg_core_1.timestamp)("used_at"), // Single-use validation - null if not used yet
+    expiresAt: (0, pg_core_1.timestamp)("expires_at"), // Nullable - tokens don't expire
+    isUsed: (0, pg_core_1.boolean)("is_used").default(false),
+    usedAt: (0, pg_core_1.timestamp)("used_at"),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
+    clientEmail: (0, pg_core_1.varchar)("client_email"),
+    clientKey: (0, pg_core_1.varchar)("client_key"),
+    photoId: (0, pg_core_1.varchar)("photo_id"),
+    tokenHash: (0, pg_core_1.varchar)("token_hash"),
+    ipAddress: (0, pg_core_1.varchar)("ip_address"),
+    maxUses: (0, pg_core_1.integer)("max_uses"),
+    usedByIp: (0, pg_core_1.varchar)("used_by_ip"),
 }, (table) => ({
     sessionIdx: (0, pg_core_1.index)("idx_download_tokens_session").on(table.sessionId),
     tokenIdx: (0, pg_core_1.index)("idx_download_tokens_token").on(table.token),
-    purchaseIdx: (0, pg_core_1.index)("idx_download_tokens_purchase").on(table.purchaseId),
     expiresIdx: (0, pg_core_1.index)("idx_download_tokens_expires").on(table.expiresAt),
+    // Composite unique constraint for token-session binding
+    tokenSessionUnique: (0, pg_core_1.unique)("download_tokens_token_session_key").on(table.token, table.sessionId),
 }));
 // Digital transaction records
 exports.digitalTransactions = (0, pg_core_1.pgTable)("digital_transactions", {
@@ -351,38 +366,18 @@ exports.digitalTransactions = (0, pg_core_1.pgTable)("digital_transactions", {
     userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id), // photographer
     photoId: (0, pg_core_1.varchar)("photo_id").notNull(), // ID or filename of purchased photo
     stripePaymentIntentId: (0, pg_core_1.varchar)("stripe_payment_intent_id").notNull(), // Stripe Payment Intent ID
-    stripeCheckoutSessionId: (0, pg_core_1.varchar)("stripe_checkout_session_id"), // Links to purchase
     amount: (0, pg_core_1.integer)("amount").notNull(), // Amount in cents
-    downloadToken: (0, pg_core_1.varchar)("download_token").references(() => exports.downloadTokens.token, { onDelete: "restrict" }),
+    downloadToken: (0, pg_core_1.varchar)("download_token").notNull().unique().references(() => exports.downloadTokens.token, { onDelete: "restrict" }),
     status: (0, pg_core_1.varchar)("status").notNull().default("pending").$type(),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
 }, (table) => ({
     sessionDateIdx: (0, pg_core_1.index)("idx_digital_transactions_session_date").on(table.sessionId, table.createdAt),
-    checkoutSessionIdx: (0, pg_core_1.index)("idx_digital_transactions_checkout_session").on(table.stripeCheckoutSessionId),
-}));
-// Webhook events tracking for idempotency and monitoring
-exports.webhookEvents = (0, pg_core_1.pgTable)("webhook_events", {
-    id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
-    stripeEventId: (0, pg_core_1.varchar)("stripe_event_id").notNull().unique(),
-    eventType: (0, pg_core_1.varchar)("event_type").notNull(),
-    processedAt: (0, pg_core_1.timestamp)("processed_at").defaultNow(),
-    processingAttempts: (0, pg_core_1.integer)("processing_attempts").notNull().default(0),
-    maxRetries: (0, pg_core_1.integer)("max_retries").notNull().default(3),
-    lastRetryAt: (0, pg_core_1.timestamp)("last_retry_at"),
-    nextRetryAt: (0, pg_core_1.timestamp)("next_retry_at"),
-    status: (0, pg_core_1.varchar)("status").notNull().default("pending").$type(),
-    errorMessage: (0, pg_core_1.text)("error_message"),
-    eventData: (0, pg_core_1.jsonb)("event_data"),
-    orderId: (0, pg_core_1.varchar)("order_id").references(() => exports.downloadOrders.id, { onDelete: "set null" }),
-    sessionId: (0, pg_core_1.varchar)("session_id").references(() => exports.photographySessions.id, { onDelete: "set null" }),
-    processingDurationMs: (0, pg_core_1.integer)("processing_duration_ms"),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-}, (table) => ({
-    eventTypeIdx: (0, pg_core_1.index)("idx_webhook_events_type").on(table.eventType),
-    statusIdx: (0, pg_core_1.index)("idx_webhook_events_status").on(table.status),
-    retryIdx: (0, pg_core_1.index)("idx_webhook_events_retry").on(table.nextRetryAt, table.status),
-    createdAtIdx: (0, pg_core_1.index)("idx_webhook_events_created").on(table.createdAt),
+    // Composite FK to ensure token belongs to same session
+    tokenSessionFk: (0, pg_core_1.foreignKey)({
+        columns: [table.downloadToken, table.sessionId],
+        foreignColumns: [exports.downloadTokens.token, exports.downloadTokens.sessionId],
+        name: "digital_transactions_token_session_fkey"
+    }).onDelete("restrict"),
 }));
 // Gallery download usage tracking per session/client
 exports.galleryDownloads = (0, pg_core_1.pgTable)("gallery_downloads", {
@@ -398,9 +393,8 @@ exports.galleryDownloads = (0, pg_core_1.pgTable)("gallery_downloads", {
     downloadType: (0, pg_core_1.varchar)("download_type").notNull().default("free").$type(),
     amountPaid: (0, pg_core_1.integer)("amount_paid").default(0), // amount in cents
     stripePaymentId: (0, pg_core_1.varchar)("stripe_payment_id"), // Stripe payment intent ID
-    stripeCheckoutSessionId: (0, pg_core_1.varchar)("stripe_checkout_session_id"), // Groups multiple photos purchased together
     digitalTransactionId: (0, pg_core_1.varchar)("digital_transaction_id").unique().references(() => exports.digitalTransactions.id, { onDelete: "set null" }),
-    downloadToken: (0, pg_core_1.varchar)("download_token").references(() => exports.downloadTokens.token), // purchase-level token (shared across photos in same purchase)
+    downloadToken: (0, pg_core_1.varchar)("download_token").notNull().unique().references(() => exports.downloadTokens.token), // one-time use token with FK
     isWatermarked: (0, pg_core_1.boolean)("is_watermarked").default(false),
     watermarkConfig: (0, pg_core_1.jsonb)("watermark_config").default({}), // snapshot of watermark settings at time of download
     ipAddress: (0, pg_core_1.varchar)("ip_address"),
@@ -415,13 +409,18 @@ exports.galleryDownloads = (0, pg_core_1.pgTable)("gallery_downloads", {
   `),
     sessionClientIdx: (0, pg_core_1.index)("idx_gallery_downloads_session_client").on(table.sessionId, table.clientKey, table.status),
     sessionDateIdx: (0, pg_core_1.index)("idx_gallery_downloads_session_date").on(table.sessionId, table.createdAt),
-    checkoutSessionIdx: (0, pg_core_1.index)("idx_gallery_downloads_checkout_session").on(table.stripeCheckoutSessionId),
     // Cross-tenant isolation constraint - user_id must match session owner
     userSessionFk: (0, pg_core_1.foreignKey)({
         columns: [table.userId, table.sessionId],
         foreignColumns: [exports.photographySessions.userId, exports.photographySessions.id],
         name: "gallery_downloads_user_session_fkey"
     }).onDelete("cascade"),
+    // Composite FK to ensure token belongs to same session
+    tokenSessionFk: (0, pg_core_1.foreignKey)({
+        columns: [table.downloadToken, table.sessionId],
+        foreignColumns: [exports.downloadTokens.token, exports.downloadTokens.sessionId],
+        name: "gallery_downloads_token_session_fkey"
+    }).onDelete("restrict"),
 }));
 // Enhanced Download Commerce Tables
 // Download Policies table - defines pricing models for photo sessions
@@ -461,7 +460,6 @@ exports.downloadOrders = (0, pg_core_1.pgTable)("download_orders", {
     stripePaymentIntentId: (0, pg_core_1.varchar)("stripe_payment_intent_id").unique(),
     stripeConnectAccountId: (0, pg_core_1.varchar)("stripe_connect_account_id"),
     platformFeeAmount: (0, pg_core_1.decimal)("platform_fee_amount", { precision: 10, scale: 2 }),
-    isAdminAccount: (0, pg_core_1.boolean)("is_admin_account").default(false), // Whether this order is from an admin account
     status: (0, pg_core_1.varchar)("status").notNull().default("pending").$type(),
     receiptUrl: (0, pg_core_1.varchar)("receipt_url"),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
@@ -482,41 +480,16 @@ exports.downloadEntitlements = (0, pg_core_1.pgTable)("download_entitlements", {
     sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
     clientKey: (0, pg_core_1.varchar)("client_key").notNull(),
     photoId: (0, pg_core_1.varchar)("photo_id"), // null for bulk entitlements
-    remaining: (0, pg_core_1.integer)("remaining").notNull().default(1), // Number of downloads remaining
+    remaining: (0, pg_core_1.integer)("remaining").notNull(), // Number of downloads remaining
     expiresAt: (0, pg_core_1.timestamp)("expires_at"),
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     usedAt: (0, pg_core_1.timestamp)("used_at"), // When fully consumed
-    isActive: (0, pg_core_1.boolean)("is_active").default(true).notNull(), // Whether entitlement is active
-    // New fields for enhanced quota tracking
-    type: (0, pg_core_1.varchar)("type").default("download").$type(),
-    lastAccessAt: (0, pg_core_1.timestamp)("last_access_at"), // For tracking access patterns
-    ipAddress: (0, pg_core_1.varchar)("ip_address"), // For abuse tracking
 }, (table) => ({
-    // Existing indexes
     sessionIdx: (0, pg_core_1.index)("idx_download_entitlements_session").on(table.sessionId),
     clientKeyIdx: (0, pg_core_1.index)("idx_download_entitlements_client").on(table.clientKey),
     sessionClientIdx: (0, pg_core_1.index)("idx_download_entitlements_session_client").on(table.sessionId, table.clientKey),
-    // New production-optimized indexes for quota operations
-    quotaCheckIdx: (0, pg_core_1.index)("idx_download_entitlements_quota_check").on(table.sessionId, table.clientKey, table.remaining, table.isActive),
-    activeQuotaIdx: (0, pg_core_1.index)("idx_download_entitlements_active_quota").on(table.sessionId, table.clientKey, table.isActive, table.expiresAt),
-    remainingIdx: (0, pg_core_1.index)("idx_download_entitlements_remaining").on(table.remaining, table.isActive),
-    expiresIdx: (0, pg_core_1.index)("idx_download_entitlements_expires").on(table.expiresAt, table.isActive),
-    typeIdx: (0, pg_core_1.index)("idx_download_entitlements_type").on(table.type, table.isActive),
-    ipTrackingIdx: (0, pg_core_1.index)("idx_download_entitlements_ip_tracking").on(table.ipAddress, table.createdAt),
-    accessPatternIdx: (0, pg_core_1.index)("idx_download_entitlements_access_pattern").on(table.clientKey, table.lastAccessAt),
     // Unique constraint to prevent duplicate entitlements for the same photo
     uniqueEntitlement: (0, pg_core_1.unique)("download_entitlements_unique").on(table.clientKey, table.sessionId, table.photoId),
-    // Data integrity constraints for quota enforcement
-    remainingNonNegativeCheck: (0, pg_core_1.check)("download_entitlements_remaining_check", (0, drizzle_orm_1.sql) `remaining >= 0`),
-    expiresLogicCheck: (0, pg_core_1.check)("download_entitlements_expires_logic_check", (0, drizzle_orm_1.sql) `
-    expires_at IS NULL OR expires_at > created_at
-  `),
-    usedAtLogicCheck: (0, pg_core_1.check)("download_entitlements_used_logic_check", (0, drizzle_orm_1.sql) `
-    (remaining = 0 AND used_at IS NOT NULL) OR (remaining > 0 AND used_at IS NULL)
-  `),
-    typeValidationCheck: (0, pg_core_1.check)("download_entitlements_type_check", (0, drizzle_orm_1.sql) `
-    type IN ('download', 'cart_reservation', 'bulk')
-  `),
 }));
 // Download History table - tracks all download attempts
 exports.downloadHistory = (0, pg_core_1.pgTable)("download_history", {
@@ -811,71 +784,3 @@ exports.photoForSaleSettings = (0, pg_core_1.pgTable)("photo_for_sale_settings",
     createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
     updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
 });
-// ========================================================================================
-// ENHANCED GALLERY DELIVERY SYSTEM TABLES
-// ========================================================================================
-// Session files - proper tracking of gallery assets with metadata
-exports.sessionFiles = (0, pg_core_1.pgTable)("session_files", {
-    id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
-    sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
-    userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id), // photographer
-    filename: (0, pg_core_1.varchar)("filename").notNull(),
-    originalName: (0, pg_core_1.varchar)("original_name").notNull(),
-    fileSize: (0, pg_core_1.varchar)("file_size").notNull(), // bytes as string for large numbers
-    mimeType: (0, pg_core_1.varchar)("mime_type").notNull(),
-    folderType: (0, pg_core_1.varchar)("folder_type").notNull().default("gallery").$type(),
-    r2Key: (0, pg_core_1.varchar)("r2_key").notNull(), // Full R2 storage path
-    r2Url: (0, pg_core_1.varchar)("r2_url"), // Public URL if available
-    thumbnailR2Key: (0, pg_core_1.varchar)("thumbnail_r2_key"), // Thumbnail version
-    isPublic: (0, pg_core_1.boolean)("is_public").default(true), // For gallery sharing
-    uploadedAt: (0, pg_core_1.timestamp)("uploaded_at").defaultNow(),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-}, (table) => ({
-    sessionIdx: (0, pg_core_1.index)("idx_session_files_session").on(table.sessionId),
-    folderTypeIdx: (0, pg_core_1.index)("idx_session_files_folder_type").on(table.folderType),
-    uploadedAtIdx: (0, pg_core_1.index)("idx_session_files_uploaded_at").on(table.uploadedAt),
-}));
-// Download events - comprehensive audit trail for all downloads
-exports.downloadEvents = (0, pg_core_1.pgTable)("download_events", {
-    id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
-    sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
-    userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id), // photographer
-    clientKey: (0, pg_core_1.varchar)("client_key").notNull(),
-    photoId: (0, pg_core_1.varchar)("photo_id").notNull(),
-    filename: (0, pg_core_1.varchar)("filename").notNull(),
-    downloadStatus: (0, pg_core_1.varchar)("download_status").notNull().default("initiated").$type(),
-    fileSize: (0, pg_core_1.varchar)("file_size"), // bytes downloaded
-    downloadDuration: (0, pg_core_1.integer)("download_duration"), // milliseconds
-    userAgent: (0, pg_core_1.text)("user_agent"),
-    ipAddress: (0, pg_core_1.varchar)("ip_address"),
-    errorMessage: (0, pg_core_1.text)("error_message"), // if failed
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-}, (table) => ({
-    sessionDateIdx: (0, pg_core_1.index)("idx_download_events_session_date").on(table.sessionId, table.createdAt),
-    clientIdx: (0, pg_core_1.index)("idx_download_events_client").on(table.clientKey),
-    statusIdx: (0, pg_core_1.index)("idx_download_events_status").on(table.downloadStatus),
-    createdAtIdx: (0, pg_core_1.index)("idx_download_events_created_at").on(table.createdAt),
-}));
-// Client quotas - per-client quota tracking for freemium galleries
-exports.clientQuotas = (0, pg_core_1.pgTable)("client_quotas", {
-    id: (0, pg_core_1.varchar)("id").primaryKey().notNull(),
-    sessionId: (0, pg_core_1.varchar)("session_id").notNull().references(() => exports.photographySessions.id, { onDelete: "cascade" }),
-    userId: (0, pg_core_1.varchar)("user_id").notNull().references(() => exports.users.id), // photographer
-    clientKey: (0, pg_core_1.varchar)("client_key").notNull(), // unique client identifier
-    quotaType: (0, pg_core_1.varchar)("quota_type").notNull().default("freemium").$type(),
-    totalQuota: (0, pg_core_1.integer)("total_quota").default(0), // total allowed downloads (0 = unlimited)
-    usedQuota: (0, pg_core_1.integer)("used_quota").default(0), // downloads consumed
-    remainingQuota: (0, pg_core_1.integer)("remaining_quota").default(0), // calculated field
-    resetDate: (0, pg_core_1.timestamp)("reset_date"), // when quota resets (if applicable)
-    isActive: (0, pg_core_1.boolean)("is_active").default(true),
-    lastActivity: (0, pg_core_1.timestamp)("last_activity"),
-    createdAt: (0, pg_core_1.timestamp)("created_at").defaultNow(),
-    updatedAt: (0, pg_core_1.timestamp)("updated_at").defaultNow(),
-}, (table) => ({
-    sessionClientIdx: (0, pg_core_1.index)("idx_client_quotas_session_client").on(table.sessionId, table.clientKey),
-    activeIdx: (0, pg_core_1.index)("idx_client_quotas_active").on(table.isActive),
-    lastActivityIdx: (0, pg_core_1.index)("idx_client_quotas_last_activity").on(table.lastActivity),
-    // Unique constraint for one quota per client per session
-    sessionClientUnique: (0, pg_core_1.unique)("client_quotas_session_client_key").on(table.sessionId, table.clientKey),
-}));
