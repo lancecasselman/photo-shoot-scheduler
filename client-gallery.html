@@ -302,6 +302,53 @@
             z-index: 1;
         }
 
+        /* Purchased Badge - Similar to Downloaded but Different Color */
+        .purchased-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            animation: badgeAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .purchased-badge::before {
+            content: '💎';
+            font-size: 1.1rem;
+        }
+
+        /* Purchased Photo Overlay */
+        .photo-card.purchased .photo-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .download-btn.purchased {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .download-btn.purchased:hover {
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
         /* Photo Info */
         .photo-info {
             padding: 20px;
@@ -579,6 +626,7 @@
                 this.pricePerPhoto = 0;
                 this.downloadedPhotos = new Set();
                 this.downloadClientKey = null;
+                this.purchasedPhotos = new Map();
 
                 // Extract gallery token from URL
                 const urlParams = new URLSearchParams(window.location.search);
@@ -652,6 +700,9 @@
                         // Load download history (await to ensure badges show on first render)
                         await this.loadDownloadedPhotos();
                         
+                        // Load purchased photos
+                        await this.loadPurchasedPhotos();
+                        
                         // Update counter
                         this.updateDownloadCounter();
                         
@@ -720,6 +771,38 @@
                     localStorage.setItem(storageKey, JSON.stringify(Array.from(this.downloadedPhotos)));
                 } catch (error) {
                     console.warn('Could not save download history:', error);
+                }
+            }
+
+            async loadPurchasedPhotos() {
+                try {
+                    if (!this.sessionData?.id || !this.galleryToken) return;
+
+                    console.log('💎 Loading purchased photos from API...');
+                    
+                    const response = await fetch(`${this.getApiBaseUrl()}/api/photo-sales/purchased-photos?sessionId=${this.sessionData.id}&galleryToken=${encodeURIComponent(this.galleryToken)}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.success && Array.isArray(data.purchasedPhotos)) {
+                            console.log(`✅ Loaded ${data.purchasedPhotos.length} purchased photos`);
+                            
+                            data.purchasedPhotos.forEach(purchase => {
+                                this.purchasedPhotos.set(purchase.filename, {
+                                    downloadUrl: purchase.downloadUrl,
+                                    downloadToken: purchase.downloadToken,
+                                    photoUrl: purchase.photoUrl
+                                });
+                            });
+                            
+                            console.log('💎 Purchased photos stored:', Array.from(this.purchasedPhotos.keys()));
+                        }
+                    } else {
+                        console.warn('Could not load purchased photos:', response.status);
+                    }
+                } catch (error) {
+                    console.warn('Error loading purchased photos:', error);
                 }
             }
 
@@ -877,6 +960,7 @@
 
             renderPhotoCard(photo, index) {
                 const photoId = photo.filename || photo.id || String(index);
+                const isPurchased = this.purchasedPhotos.has(photoId);
                 const isDownloaded = this.downloadedPhotos.has(photoId);
                 
                 const downloadCount = this.downloadedPhotos.size;
@@ -884,13 +968,26 @@
                 const isUnlimited = this.freeDownloadLimit === 0 && this.pricePerPhoto === 0;
 
                 const card = document.createElement('div');
-                card.className = `photo-card ${isDownloaded ? 'downloaded' : ''}`;
+                
+                let cardClass = 'photo-card';
+                if (isPurchased) {
+                    cardClass += ' purchased';
+                } else if (isDownloaded) {
+                    cardClass += ' downloaded';
+                }
+                card.className = cardClass;
                 card.dataset.photoId = photoId;
 
-                let buttonText, buttonClass;
-                if (isDownloaded) {
+                let buttonText, buttonClass, badgeHtml = '';
+                
+                if (isPurchased) {
+                    buttonText = 'Purchased - Download';
+                    buttonClass = 'purchased';
+                    badgeHtml = '<div class="purchased-badge">Purchased</div>';
+                } else if (isDownloaded) {
                     buttonText = 'Re-download Free';
                     buttonClass = '';
+                    badgeHtml = '<div class="downloaded-badge">Downloaded</div>';
                 } else if (isFree || isUnlimited) {
                     buttonText = 'Download Free';
                     buttonClass = '';
@@ -902,7 +999,7 @@
                 card.innerHTML = `
                     <div class="photo-wrapper">
                         <img src="${photo.photoUrl}" alt="${photo.filename}">
-                        ${isDownloaded ? '<div class="downloaded-badge">Downloaded</div>' : ''}
+                        ${badgeHtml}
                     </div>
                     <div class="photo-info">
                         <h3 class="photo-filename">${photo.filename}</h3>
@@ -925,6 +1022,23 @@
             async downloadPhoto(photoId, photoUrl, filename) {
                 try {
                     console.log(`📥 Starting download for ${filename}...`);
+
+                    const isPurchased = this.purchasedPhotos.has(photoId);
+                    
+                    if (isPurchased) {
+                        console.log('💎 This photo has been purchased, using secure download URL...');
+                        const purchaseInfo = this.purchasedPhotos.get(photoId);
+                        
+                        const a = document.createElement('a');
+                        a.href = purchaseInfo.downloadUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        this.showSuccess('Purchased photo download started!');
+                        return;
+                    }
 
                     const isRedownload = this.downloadedPhotos.has(photoId);
                     const downloadCount = this.downloadedPhotos.size;

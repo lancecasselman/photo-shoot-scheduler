@@ -5,7 +5,7 @@ const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db.ts');
-const { photoForSaleSettings, downloadTokens, digitalTransactions } = require('../shared/schema');
+const { photoForSaleSettings, downloadTokens, digitalTransactions, photographySessions } = require('../shared/schema');
 const { eq, and } = require('drizzle-orm');
 const router = express.Router();
 
@@ -1245,7 +1245,7 @@ router.post('/digital-order', async (req, res) => {
     try {
         console.log('📱 Processing digital photo order:', req.body);
         
-        const { photoUrl, filename, customerInfo } = req.body;
+        const { photoUrl, filename, customerInfo, sessionId, galleryToken } = req.body;
         
         if (!photoUrl || !filename) {
             return res.status(400).json({ 
@@ -1277,15 +1277,67 @@ router.post('/digital-order', async (req, res) => {
             return res.status(401).json({ error: 'Authentication required' });
         }
         
-        // SECURITY: Validate photo ownership before processing
-        const hasAccess = await validatePhotoOwnership(userId, photoUrl);
-        if (!hasAccess) {
-            return res.status(403).json({ error: 'Access denied: Photo not owned by user' });
+        // SECURITY: If sessionId provided, validate photo belongs to that session
+        if (sessionId) {
+            try {
+                const { sessionFiles } = require('../shared/schema');
+                const photoSession = await db.select()
+                    .from(photographySessions)
+                    .where(and(
+                        eq(photographySessions.id, sessionId),
+                        eq(photographySessions.userId, userId)
+                    ))
+                    .limit(1);
+                
+                if (photoSession.length === 0) {
+                    return res.status(403).json({ 
+                        error: 'Access denied: Session not found or not owned by user',
+                        code: 'SESSION_ACCESS_DENIED'
+                    });
+                }
+                
+                // Validate photo belongs to this session (check if photo exists in session.photos)
+                const session = photoSession[0];
+                const photos = session.photos || [];
+                const photoExists = photos.some(photo => 
+                    photo.url === photoUrl || 
+                    photo.filename === filename ||
+                    photoUrl.includes(photo.filename)
+                );
+                
+                if (!photoExists) {
+                    return res.status(403).json({ 
+                        error: 'Access denied: Photo not found in this session',
+                        code: 'PHOTO_NOT_IN_SESSION'
+                    });
+                }
+                
+                console.log(`✅ Photo ownership validated for session ${sessionId}`);
+            } catch (error) {
+                console.error('❌ Error validating photo session ownership:', error);
+                return res.status(500).json({ 
+                    error: 'Validation error',
+                    details: 'Unable to validate photo ownership',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+        } else {
+            // SECURITY: Validate photo ownership before processing (legacy check)
+            const hasAccess = await validatePhotoOwnership(userId, photoUrl);
+            if (!hasAccess) {
+                return res.status(403).json({ error: 'Access denied: Photo not owned by user' });
+            }
         }
         
         // SECURITY: Calculate price server-side, never trust client
         const validatedPrice = await getDigitalPhotoPrice(userId, photoUrl);
         console.log(`💰 Server-validated digital price: $${validatedPrice}`);
+        
+        // Build success URL with sessionId and galleryToken if provided
+        let successUrl = `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`;
+        if (sessionId && galleryToken) {
+            successUrl += `&photography_session_id=${encodeURIComponent(sessionId)}&gallery_token=${encodeURIComponent(galleryToken)}`;
+        }
         
         // Create Stripe checkout session for digital download
         let session;
@@ -1308,9 +1360,12 @@ router.post('/digital-order', async (req, res) => {
                 metadata: {
                     type: 'digital_download',
                     photoUrl: photoUrl,
-                    filename: filename
+                    filename: filename,
+                    sessionId: sessionId || '', // Photography session ID
+                    galleryToken: galleryToken || '',
+                    userId: userId
                 },
-                success_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/payment-success.html?session_id={CHECKOUT_SESSION_ID}&type=digital`,
+                success_url: successUrl,
                 cancel_url: `${process.env.BASE_URL || 'https://photomanagementsystem.com'}/print-checkout.html?cancelled=true`
             });
             
@@ -1708,6 +1763,123 @@ function getEstimatedDelivery(status, createdAt) {
     }
 }
 
+// Get purchased photos for a gallery session
+router.get('/purchased-photos', async (req, res) => {
+    try {
+        const { sessionId, galleryToken } = req.query;
+        
+        if (!sessionId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing sessionId parameter',
+                code: 'MISSING_SESSION_ID'
+            });
+        }
+        
+        console.log('🔍 Looking up purchased photos for session:', sessionId);
+        
+        // SECURITY: Support two authentication methods
+        // 1. Gallery token (for client visitors)
+        // 2. User authentication (for photographers)
+        
+        let hasAccess = false;
+        
+        // Method 1: Check gallery token (for clients viewing the gallery)
+        if (galleryToken) {
+            const sessionCheck = await db.select()
+                .from(photographySessions)
+                .where(and(
+                    eq(photographySessions.id, sessionId),
+                    eq(photographySessions.galleryAccessToken, galleryToken)
+                ))
+                .limit(1);
+            
+            if (sessionCheck.length > 0) {
+                hasAccess = true;
+                console.log('✅ Gallery token validated for session access');
+            }
+        }
+        
+        // Method 2: Check user authentication (for photographers)
+        if (!hasAccess) {
+            const userId = req.user?.uid || req.session?.user?.uid;
+            if (userId) {
+                const sessionCheck = await db.select()
+                    .from(photographySessions)
+                    .where(and(
+                        eq(photographySessions.id, sessionId),
+                        eq(photographySessions.userId, userId)
+                    ))
+                    .limit(1);
+                
+                if (sessionCheck.length > 0) {
+                    hasAccess = true;
+                    console.log('✅ User authentication validated for session access');
+                }
+            }
+        }
+        
+        // Deny access if neither method succeeded
+        if (!hasAccess) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied: Invalid gallery token or authentication required',
+                code: 'SESSION_ACCESS_DENIED'
+            });
+        }
+        
+        // Query downloadTokens table for all purchased photos in this session
+        const purchasedPhotos = await db.select({
+            id: downloadTokens.id,
+            token: downloadTokens.token,
+            photoUrl: downloadTokens.photoUrl,
+            filename: downloadTokens.filename,
+            createdAt: downloadTokens.createdAt,
+            expiresAt: downloadTokens.expiresAt,
+            isUsed: downloadTokens.isUsed,
+            usedAt: downloadTokens.usedAt
+        })
+        .from(downloadTokens)
+        .where(eq(downloadTokens.sessionId, sessionId))
+        .orderBy(downloadTokens.createdAt);
+        
+        console.log(`✅ Found ${purchasedPhotos.length} purchased photos for session ${sessionId}`);
+        
+        // Format the response with download URLs
+        const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
+                       process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` :
+                       'https://photography-app.example.com';
+        
+        const formattedPhotos = purchasedPhotos.map(photo => ({
+            filename: photo.filename,
+            photoUrl: photo.photoUrl,
+            downloadToken: photo.token,
+            downloadUrl: `${baseUrl}/api/print/secure/${photo.token}`,
+            purchasedAt: photo.createdAt,
+            expiresAt: photo.expiresAt,
+            isUsed: photo.isUsed,
+            usedAt: photo.usedAt,
+            isExpired: photo.expiresAt ? new Date(photo.expiresAt) < new Date() : false
+        }));
+        
+        res.json({
+            success: true,
+            sessionId: sessionId,
+            purchasedPhotos: formattedPhotos,
+            count: formattedPhotos.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch purchased photos:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch purchased photos',
+            message: 'An error occurred while retrieving purchased photos',
+            code: 'FETCH_ERROR'
+        });
+    }
+});
+
 // WHCC product catalog endpoint (requires auth)
 router.get('/whcc-products', (req, res) => {
     res.status(410).json({
@@ -1879,7 +2051,7 @@ async function handleDigitalDownload(session) {
     try {
         console.log('📱 Processing digital download fulfillment...');
         
-        const { photoUrl, filename } = session.metadata;
+        const { photoUrl, filename, sessionId: photographySessionId } = session.metadata;
         const customerEmail = session.customer_details?.email;
         const customerName = session.customer_details?.name || 'Customer';
         
@@ -1888,8 +2060,18 @@ async function handleDigitalDownload(session) {
             return;
         }
         
+        // Extract photography session ID from metadata (NOT the Stripe session ID)
+        const photoSessionId = photographySessionId || session.metadata.sessionId;
+        console.log('📸 Photography session ID from metadata:', photoSessionId);
+        console.log('💳 Stripe session ID:', session.id);
+        
+        if (!photoSessionId) {
+            console.warn('⚠️ No photography sessionId in metadata, download token may not be linked to gallery');
+        }
+        
         // 1. Generate a secure download link with expiration
-        const downloadToken = await generateSecureDownloadToken(photoUrl, filename, session.id);
+        // Pass the PHOTOGRAPHY session ID, not the Stripe session ID
+        const downloadToken = await generateSecureDownloadToken(photoUrl, filename, photoSessionId || session.id);
         
         // Get the correct base URL for download links
         const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
@@ -1914,7 +2096,7 @@ async function handleDigitalDownload(session) {
         }
         
         // 3. Log the transaction in database
-        await logDigitalTransaction(session, downloadToken);
+        await logDigitalTransaction(session, downloadToken, photoSessionId);
         
         console.log(`✅ Digital download processed for ${filename}`);
         
@@ -2033,11 +2215,14 @@ async function sendDigitalDownloadEmail({ customerEmail, customerName, filename,
 }
 
 // Log digital transaction in database
-async function logDigitalTransaction(session, downloadToken) {
+async function logDigitalTransaction(session, downloadToken, photographySessionId) {
     try {
+        // Use photography session ID if available, otherwise fall back to Stripe session ID
+        const sessionIdToStore = photographySessionId || session.id;
+        
         await db.insert(digitalTransactions).values({
             id: uuidv4(),
-            sessionId: session.id,
+            sessionId: sessionIdToStore, // Store photography session ID
             photoUrl: session.metadata.photoUrl,
             filename: session.metadata.filename,
             customerEmail: session.customer_details?.email,
@@ -2048,7 +2233,7 @@ async function logDigitalTransaction(session, downloadToken) {
             status: 'completed'
         });
         
-        console.log(`📊 Digital transaction logged for session ${session.id}`);
+        console.log(`📊 Digital transaction logged for photography session ${sessionIdToStore} (Stripe session: ${session.id})`);
     } catch (error) {
         console.error('❌ Failed to log digital transaction:', error);
     }
