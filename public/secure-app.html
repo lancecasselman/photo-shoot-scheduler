@@ -319,12 +319,6 @@
             min-height: 100vh;
         }
         
-        @media (max-width: 768px) {
-            .container {
-                padding: var(--spacing-sm) 0;
-            }
-        }
-        
         @media (min-width: 1920px) {
             .container {
                 padding: var(--spacing-md) 60px;
@@ -3009,9 +3003,15 @@
 
 
         @media (max-width: 768px) {
-            .container { padding: var(--spacing-sm) 0; }
-            .sessions-grid { grid-template-columns: 1fr; }
-            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 0; }
+            .sessions-grid { 
+                grid-template-columns: 1fr;
+                padding: 0;
+            }
+            .form-grid { 
+                grid-template-columns: 1fr;
+                padding: 0 16px;
+            }
             .session-actions { flex-direction: column; }
             .btn { width: 100%; margin: 2px 0; }
             .checkbox-grid { 
@@ -3022,6 +3022,7 @@
             #sessionFormContent {
                 display: block !important;
                 visibility: visible !important;
+                padding: 0;
             }
             #sessionForm .admin-checkboxes {
                 display: block !important;
@@ -3032,7 +3033,28 @@
             .app-header {
                 border-radius: 0;
                 padding: var(--spacing-md) var(--spacing-sm);
-                margin-bottom: var(--spacing-lg);
+                margin: 0 0 var(--spacing-md) 0;
+            }
+            
+            /* Edge-to-edge form on mobile */
+            .session-form {
+                border-radius: 0;
+                padding: var(--spacing-md) 0;
+                margin: 0;
+                border-left: none;
+                border-right: none;
+            }
+            
+            .collapsible-header {
+                border-radius: 0;
+                padding: var(--spacing-md);
+                margin: 0;
+                border-left: none;
+                border-right: none;
+            }
+            
+            .collapsible-content {
+                padding: var(--spacing-md) 0;
             }
             
             .status-checkboxes {
