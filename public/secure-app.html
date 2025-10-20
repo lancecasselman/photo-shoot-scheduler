@@ -13494,17 +13494,17 @@ END:VCALENDAR`;
 
             <!-- Client Database Section -->
             <div id="clientDatabaseSection" class="business-section">
-                <div class="client-database-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                    <div>
+                <div class="client-database-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                    <div style="flex: 1; min-width: 200px;">
                         <h2>👥 Client Database</h2>
                         <p>Manage all your photography clients in one place</p>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="emailAllClients()" class="btn-primary" style="padding: 12px 24px;">
-                            📧 Email All Clients
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="emailAllClients()" class="btn-primary" style="padding: 10px 20px; font-size: 14px; white-space: nowrap;">
+                            📧 Email All
                         </button>
-                        <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 12px 24px;">
-                            📥 Import from Sessions
+                        <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 10px 20px; font-size: 14px; white-space: nowrap;">
+                            📥 Import
                         </button>
                     </div>
                 </div>
