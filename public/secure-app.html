@@ -312,9 +312,9 @@
         }
         
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: var(--spacing-md);
+            max-width: 100%;
+            margin: 0;
+            padding: var(--spacing-md) var(--spacing-xl);
             overflow: visible !important;
             min-height: 100vh;
         }
@@ -322,6 +322,12 @@
         @media (max-width: 768px) {
             .container {
                 padding: var(--spacing-sm);
+            }
+        }
+        
+        @media (min-width: 1920px) {
+            .container {
+                padding: var(--spacing-md) 60px;
             }
         }
         
@@ -754,6 +760,13 @@
             margin-bottom: var(--spacing-md);
         }
         
+        @media (min-width: 1400px) {
+            .form-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+        
         .form-group {
             display: flex;
             flex-direction: column;
@@ -916,11 +929,25 @@
         
         .sessions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 20px;
             overflow: visible !important;
             z-index: auto;
             padding: 16px 0;
+        }
+        
+        @media (min-width: 1400px) {
+            .sessions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                gap: 24px;
+            }
+        }
+        
+        @media (min-width: 1920px) {
+            .sessions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+                gap: 28px;
+            }
         }
         
         /* Modern Dark Session Cards */
@@ -4485,6 +4512,18 @@
             .financial-overview {
                 grid-template-columns: repeat(4, 1fr);
                 gap: 16px;
+            }
+        }
+        
+        @media (min-width: 1400px) {
+            .financial-overview {
+                gap: 24px;
+            }
+        }
+        
+        @media (min-width: 1920px) {
+            .financial-overview {
+                gap: 32px;
             }
         }
 
