@@ -4483,19 +4483,26 @@
         @media (min-width: 768px) {
             .financial-overview {
                 grid-template-columns: repeat(4, 1fr);
-                gap: var(--spacing-lg);
+                gap: 16px;
             }
         }
 
         .financial-card {
             background: var(--bg-secondary);
             border-radius: var(--border-radius);
-            padding: var(--spacing-lg);
+            padding: 20px;
             box-shadow: var(--shadow-soft);
             display: flex;
             align-items: center;
-            gap: var(--spacing-md);
+            gap: 16px;
             border-left: 4px solid;
+            min-width: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .financial-card {
+                padding: 24px 20px;
+            }
         }
 
         .financial-card.earnings {
@@ -4515,27 +4522,50 @@
         }
 
         .card-icon {
-            font-size: 2.5rem;
+            font-size: 2rem;
             opacity: 0.8;
+            flex-shrink: 0;
+        }
+        
+        @media (min-width: 1200px) {
+            .card-icon {
+                font-size: 2.5rem;
+            }
+        }
+
+        .card-content {
+            min-width: 0;
+            flex: 1;
         }
 
         .card-content h3 {
             margin: 0 0 var(--spacing-xs) 0;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .card-content .amount {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: var(--spacing-xs);
+            white-space: nowrap;
+        }
+        
+        @media (min-width: 1200px) {
+            .card-content .amount {
+                font-size: 2rem;
+            }
         }
 
         .card-content .period {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-light);
+            white-space: nowrap;
         }
 
         .dashboard-charts {
