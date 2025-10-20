@@ -5032,14 +5032,28 @@
         .table-actions,
         .date-range-selector,
         .report-date-range,
-        .summary-card,
-        .financial-card {
+        .summary-card {
             background: #ffffff !important;
             color: #333333 !important;
             border: 1px solid #e0e0e0 !important;
         }
 
-        /* Override dark text colors in business sections */
+        /* Financial cards - keep dark background with bright white text */
+        .financial-card {
+            background: var(--bg-secondary) !important;
+            color: #FFFFFF !important;
+        }
+
+        .financial-card .card-content h3,
+        .financial-card .card-content .amount,
+        .financial-card .card-content .period,
+        .financial-card h3,
+        .financial-card .amount,
+        .financial-card .period {
+            color: #FFFFFF !important;
+        }
+
+        /* Override dark text colors in business sections (except financial cards) */
         .business-section h1,
         .business-section h2,
         .business-section h3,
@@ -5053,6 +5067,23 @@
         #reportsSection *,
         #aiAssistant * {
             color: #333333 !important;
+        }
+        
+        /* Exception: Financial dashboard stats should be bright white */
+        .financial-overview .financial-card,
+        .financial-overview .financial-card *,
+        .financial-card .card-icon,
+        .financial-card .card-content,
+        .financial-card .card-content *,
+        #totalEarnings,
+        #totalExpenses,
+        #totalMileage,
+        #netProfit,
+        #earningsPeriod,
+        #expensesPeriod,
+        #mileagePeriod,
+        #profitPeriod {
+            color: #FFFFFF !important;
         }
 
         /* Inputs and form elements */
