@@ -6165,8 +6165,8 @@
                         <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
                             <div style="flex: 1; min-width: 0;">
                                 <h3 style="margin: 0 0 10px 0; color: var(--gold-muted);">${client.client_name}</h3>
-                                ${client.email ? `<p style="margin: 5px 0;"> <a href="mailto:${client.email}" style="color: #10b981; text-decoration: none; hover: text-decoration: underline;">${client.email}</a></p>` : ''}
-                                ${client.phone_number ? `<p style="margin: 5px 0;">📞 ${client.phone_number}</p>` : ''}
+                                ${client.email ? `<p style="margin: 5px 0;"> <a href="mailto:${client.email}" style="color: #10b981; text-decoration: none;">${client.email}</a></p>` : ''}
+                                ${client.phone_number ? `<p style="margin: 5px 0;">📞 <a href="tel:${client.phone_number}" style="color: #10b981; text-decoration: none;">${client.phone_number}</a></p>` : ''}
                                 ${client.notes ? `<p style="margin: 10px 0; color: #666;"><em>${client.notes}</em></p>` : ''}
                             </div>
                             <div style="display: flex; gap: 10px; flex-shrink: 0;">
