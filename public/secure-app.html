@@ -705,10 +705,10 @@
         
         .session-form {
             background: var(--bg-card);
-            padding: var(--spacing-xl);
+            padding: var(--spacing-lg);
             border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow-medium);
-            margin-bottom: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
             border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
@@ -729,7 +729,7 @@
             color: var(--text-primary);
             font-family: var(--font-heading);
             font-size: 1.8rem;
-            margin-bottom: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -750,8 +750,8 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
+            gap: 16px;
+            margin-bottom: var(--spacing-md);
         }
         
         .form-group {
@@ -760,20 +760,20 @@
         }
         
         label {
-            margin-bottom: var(--spacing-xs);
+            margin-bottom: 6px;
             font-weight: 600;
             color: var(--text-primary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-family: var(--font-body);
         }
         
         input, textarea, select {
-            padding: 16px 18px;
+            padding: 12px 14px;
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius);
             background: var(--bg-input);
             color: var(--text-primary);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-family: var(--font-body);
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(212, 175, 55, 0.05);
@@ -917,10 +917,10 @@
         .sessions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 32px;
+            gap: 20px;
             overflow: visible !important;
             z-index: auto;
-            padding: 20px 0;
+            padding: 16px 0;
         }
         
         /* Modern Dark Session Cards */
@@ -4302,10 +4302,10 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            padding: var(--spacing-lg);
+            padding: 20px 24px;
             background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
             border-radius: var(--border-radius);
-            margin-bottom: var(--spacing-md);
+            margin-bottom: 16px;
             border: 2px solid var(--primary-accent);
             transition: all 0.3s ease;
         }
@@ -4323,6 +4323,7 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-sm);
+            font-size: 1.5rem;
         }
 
         .collapsible-header h2::before {
@@ -4347,7 +4348,7 @@
             opacity: 1 !important;
             overflow: visible !important;
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px 0 30px 0;
+            padding: 16px 0 8px 0;
             display: block !important;
             visibility: visible !important;
         }
@@ -4364,8 +4365,8 @@
         
         /* Ensure the Add Session button is always visible */
         #sessionForm button[type="submit"] {
-            margin-top: 20px;
-            margin-bottom: 10px;
+            margin-top: 16px;
+            margin-bottom: 0;
             display: block !important;
             visibility: visible !important;
             position: relative !important;
@@ -4373,7 +4374,7 @@
         }
 
         .session-form {
-            margin-bottom: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
             position: relative;
             z-index: 100;
         }
