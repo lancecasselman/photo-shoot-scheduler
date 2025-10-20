@@ -6162,16 +6162,16 @@
                 // Display clients
                 container.innerHTML = clients.map(client => `
                     <div class="client-item" style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                            <div style="flex: 1; min-width: 0;">
                                 <h3 style="margin: 0 0 10px 0; color: var(--gold-muted);">${client.client_name}</h3>
                                 ${client.email ? `<p style="margin: 5px 0;"> ${client.email}</p>` : ''}
                                 ${client.phone_number ? `<p style="margin: 5px 0;">📞 ${client.phone_number}</p>` : ''}
                                 ${client.notes ? `<p style="margin: 10px 0; color: #666;"><em>${client.notes}</em></p>` : ''}
                             </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button onclick="editClient('${client.id}')" class="btn-secondary" style="padding: 8px 16px;">Edit</button>
-                                <button onclick="deleteClient('${client.id}')" class="btn-secondary" style="padding: 8px 16px; background: #dc3545; color: white;">Delete</button>
+                            <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                                <button onclick="editClient('${client.id}')" class="btn-secondary" style="padding: 8px 16px; white-space: nowrap;">Edit</button>
+                                <button onclick="deleteClient('${client.id}')" class="btn-secondary" style="padding: 8px 16px; background: #dc3545; color: white; white-space: nowrap;">Delete</button>
                             </div>
                         </div>
                     </div>
