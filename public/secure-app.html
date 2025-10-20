@@ -321,7 +321,7 @@
         
         @media (max-width: 768px) {
             .container {
-                padding: var(--spacing-sm);
+                padding: var(--spacing-sm) 0;
             }
         }
         
@@ -3009,7 +3009,7 @@
 
 
         @media (max-width: 768px) {
-            .container { padding: 10px; }
+            .container { padding: var(--spacing-sm) 0; }
             .sessions-grid { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             .session-actions { flex-direction: column; }
@@ -3028,7 +3028,12 @@
                 visibility: visible !important;
             }
             
-
+            /* Edge-to-edge header on mobile */
+            .app-header {
+                border-radius: 0;
+                padding: var(--spacing-md) var(--spacing-sm);
+                margin-bottom: var(--spacing-lg);
+            }
             
             .status-checkboxes {
                 grid-template-columns: 1fr;
