@@ -6234,6 +6234,50 @@
         // Make it globally available
         window.importClientsFromSessions = importClientsFromSessions;
 
+        // EMAIL ALL CLIENTS
+        async function emailAllClients() {
+            try {
+                console.log('📧 Preparing to email all clients...');
+                
+                // Fetch clients from database
+                const response = await fetch('/api/clients', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load clients: ${response.status}`);
+                }
+                
+                const clients = await response.json();
+                
+                // Filter clients with email addresses
+                const clientsWithEmail = clients.filter(client => client.email);
+                
+                if (clientsWithEmail.length === 0) {
+                    showMessage('No clients with email addresses found!', 'warning');
+                    return;
+                }
+                
+                // Create BCC list (better for privacy - clients won't see each other's emails)
+                const emailList = clientsWithEmail.map(client => client.email).join(',');
+                
+                // Create mailto link with BCC
+                const mailtoLink = `mailto:?bcc=${encodeURIComponent(emailList)}`;
+                
+                // Open default email client
+                window.location.href = mailtoLink;
+                
+                console.log(`✅ Opening email client with ${clientsWithEmail.length} clients in BCC`);
+                
+            } catch (error) {
+                console.error('❌ Error preparing email:', error);
+                showMessage(`Failed to prepare email: ${error.message}`, 'error');
+            }
+        }
+        
+        // Make it globally available
+        window.emailAllClients = emailAllClients;
+
         function showContractSendingModal(contractId, contractData) {
             const isResend = contractData.contract?.status === 'sent' || contractData.contract?.status === 'signed';
             const modalTitle = isResend ? 'Resend Contract' : 'Send Contract';
@@ -13455,9 +13499,14 @@ END:VCALENDAR`;
                         <h2>👥 Client Database</h2>
                         <p>Manage all your photography clients in one place</p>
                     </div>
-                    <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 12px 24px;">
-                        📥 Import from Sessions
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="emailAllClients()" class="btn-primary" style="padding: 12px 24px;">
+                            📧 Email All Clients
+                        </button>
+                        <button onclick="importClientsFromSessions()" class="btn-primary" style="padding: 12px 24px;">
+                            📥 Import from Sessions
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="clientDatabaseList" style="margin-top: 20px;">
