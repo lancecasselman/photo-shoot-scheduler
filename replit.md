@@ -33,6 +33,9 @@ A social platform featuring a multi-tab feed, customizable post types, advanced 
 ### Core Features & System Design
 The system incorporates chronological session sorting, an integrated deposit system, storage quota management with billing, unified file deletion, customizable pages, booking agreements with e-signatures, and Stripe Connect Express for multi-photographer payments.
 
+### Payment Plan System
+A robust payment plan calculator supporting flexible payment schedules (weekly, bi-weekly, monthly) with precise rounding logic that ensures all individual payments sum to the exact total amount. Features include intelligent month-end date handling that maintains consistent payment schedules across varying month lengths, comprehensive input validation, and automatic invoice generation via Stripe Connect. The system tracks payment status, sends automated reminders, and handles overdue payments with proper state management.
+
 ### AI-Powered Blog Generator
 Integrates OpenAI to provide customizable blog post generation within the website builder, offering options for topic, style, tone, length, SEO keyword optimization, and automatic metadata generation.
 
