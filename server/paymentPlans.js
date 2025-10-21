@@ -14,7 +14,7 @@ class PaymentPlanManager {
 
       // Calculate number of payments based on frequency
       const paymentInfo = this.calculatePaymentsByFrequency(start, end, frequency, totalAmount);
-      const { totalPayments, paymentAmount, paymentDates } = paymentInfo;
+      const { totalPayments, paymentAmount, paymentDates, paymentAmounts } = paymentInfo;
 
       const planId = uuidv4();
 
@@ -34,7 +34,7 @@ class PaymentPlanManager {
         paymentFrequency: frequency
       }).returning();
 
-      // Create individual payment records
+      // Create individual payment records with exact amounts
       const paymentRecordsList = [];
       for (let i = 0; i < totalPayments; i++) {
         paymentRecordsList.push({
@@ -44,7 +44,7 @@ class PaymentPlanManager {
           userId,
           paymentNumber: i + 1,
           dueDate: paymentDates[i],
-          amount: paymentAmount.toString()
+          amount: paymentAmounts[i] // Use individual amount from array
         });
       }
 
@@ -75,47 +75,108 @@ class PaymentPlanManager {
 
   // Calculate payments by frequency (weekly, bi-weekly, monthly)
   calculatePaymentsByFrequency(startDate, endDate, frequency, totalAmount) {
+    // Normalize dates to midnight to avoid time-of-day issues
     const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
     const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // Normalize frequency (handle both 'biweekly' and 'bi-weekly')
+    const normalizedFrequency = frequency.toLowerCase().replace('-', '');
+    
     const paymentDates = [];
     let currentDate = new Date(start);
 
-    // Calculate interval based on frequency
-    let intervalDays;
-    switch (frequency) {
-      case 'weekly':
-        intervalDays = 7;
-        break;
-      case 'biweekly':
-        intervalDays = 14;
-        break;
-      case 'monthly':
-        intervalDays = 30; // Approximate for calculation
-        break;
-      default:
-        intervalDays = 30;
+    // Validate inputs
+    if (start > end) {
+      throw new Error('Start date must be before or equal to end date');
     }
+
+    const totalAmountNum = parseFloat(totalAmount);
+    if (isNaN(totalAmountNum) || totalAmountNum <= 0) {
+      throw new Error('Total amount must be a positive number');
+    }
+
+    // For monthly payments, preserve the original desired day-of-month
+    const desiredDayOfMonth = start.getDate();
 
     // Generate payment dates
     while (currentDate <= end) {
       paymentDates.push(new Date(currentDate));
 
-      if (frequency === 'monthly') {
-        // For monthly, increment by actual month
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      } else {
-        // For weekly/bi-weekly, increment by days
-        currentDate.setDate(currentDate.getDate() + intervalDays);
+      // Calculate next payment date based on frequency
+      switch (normalizedFrequency) {
+        case 'weekly':
+          currentDate.setDate(currentDate.getDate() + 7);
+          break;
+        case 'biweekly':
+          currentDate.setDate(currentDate.getDate() + 14);
+          break;
+        case 'monthly':
+          // For monthly, properly handle month-end dates
+          // Move to next month (first set day to 1 to avoid overflow)
+          currentDate.setDate(1);
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          
+          // Get the last day of this month
+          const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+          
+          // Set to the desired day or last day of month, whichever is smaller
+          currentDate.setDate(Math.min(desiredDayOfMonth, lastDayOfMonth));
+          break;
+        default:
+          // Default to monthly if frequency is unrecognized
+          console.warn(`Unknown frequency '${frequency}', defaulting to monthly`);
+          currentDate.setDate(1);
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          const defaultLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+          currentDate.setDate(Math.min(desiredDayOfMonth, defaultLastDay));
       }
     }
 
     const totalPayments = paymentDates.length;
-    const paymentAmount = (parseFloat(totalAmount) / totalPayments).toFixed(2);
+    
+    // Ensure at least one payment
+    if (totalPayments === 0) {
+      throw new Error('Payment plan must have at least one payment');
+    }
+
+    // Calculate base payment amount (rounded down to 2 decimals)
+    const basePaymentAmount = Math.floor((totalAmountNum / totalPayments) * 100) / 100;
+    
+    // Calculate what the last payment should be to make the total exact
+    const sumOfBasePayments = basePaymentAmount * (totalPayments - 1);
+    const lastPaymentAmount = Math.round((totalAmountNum - sumOfBasePayments) * 100) / 100;
+
+    // Create payment amounts array
+    const paymentAmounts = [];
+    for (let i = 0; i < totalPayments - 1; i++) {
+      paymentAmounts.push(basePaymentAmount.toFixed(2));
+    }
+    paymentAmounts.push(lastPaymentAmount.toFixed(2));
+
+    // Validate that all payments sum to total (account for floating point precision)
+    const calculatedTotal = paymentAmounts.reduce((sum, amt) => sum + parseFloat(amt), 0);
+    const difference = Math.abs(calculatedTotal - totalAmountNum);
+    
+    if (difference > 0.01) {
+      console.error(`Payment calculation error: Total ${totalAmountNum} vs Calculated ${calculatedTotal}`);
+      throw new Error('Payment amounts do not sum to total amount');
+    }
+
+    // For backward compatibility, return single paymentAmount (most common amount)
+    // Frontend/display logic can use the paymentAmounts array for detailed breakdown
+    const paymentAmount = basePaymentAmount.toFixed(2);
+
+    console.log(`Payment calculation: ${totalPayments} payments, base $${basePaymentAmount}, last payment $${lastPaymentAmount}`);
 
     return {
       totalPayments,
-      paymentAmount,
-      paymentDates
+      paymentAmount, // Base payment amount for backward compatibility
+      paymentDates,
+      paymentAmounts, // Array of exact payment amounts
+      lastPaymentAmount: lastPaymentAmount.toFixed(2)
     };
   }
 
