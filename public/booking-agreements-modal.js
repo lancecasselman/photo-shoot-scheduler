@@ -440,17 +440,42 @@ async function loadAgreementTemplates() {
             agreementTemplates = await response.json();
             console.log('Loaded templates:', agreementTemplates.length);
 
-            // Populate template dropdown
+            // Separate system and custom templates
+            const systemTemplates = agreementTemplates.filter(t => !t.user_id);
+            const customTemplates = agreementTemplates.filter(t => t.user_id);
+
+            // Populate template dropdown with groups
             const select = document.getElementById('agreementTemplate');
             if (select) {
                 select.innerHTML = '<option value="">Choose a template...</option>';
-                agreementTemplates.forEach(template => {
-                    const option = document.createElement('option');
-                    option.value = template.id;
-                    option.textContent = template.name;
-                    option.dataset.category = template.category;
-                    select.appendChild(option);
-                });
+                
+                // Add system templates group
+                if (systemTemplates.length > 0) {
+                    const systemGroup = document.createElement('optgroup');
+                    systemGroup.label = '📋 System Templates';
+                    systemTemplates.forEach(template => {
+                        const option = document.createElement('option');
+                        option.value = template.id;
+                        option.textContent = template.name;
+                        option.dataset.category = template.category;
+                        systemGroup.appendChild(option);
+                    });
+                    select.appendChild(systemGroup);
+                }
+                
+                // Add custom templates group
+                if (customTemplates.length > 0) {
+                    const customGroup = document.createElement('optgroup');
+                    customGroup.label = '✨ Your Custom Templates';
+                    customTemplates.forEach(template => {
+                        const option = document.createElement('option');
+                        option.value = template.id;
+                        option.textContent = template.name;
+                        option.dataset.category = template.category;
+                        customGroup.appendChild(option);
+                    });
+                    select.appendChild(customGroup);
+                }
             }
         } else {
             console.error('Failed to load templates, status:', response.status);

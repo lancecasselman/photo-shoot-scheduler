@@ -14,6 +14,7 @@ function createBookingAgreementRoutes(pool) {
             await client.query(`
                 CREATE TABLE IF NOT EXISTS booking_agreement_templates (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id VARCHAR(255),
                     name VARCHAR(255) NOT NULL,
                     category VARCHAR(100),
                     content TEXT NOT NULL,
@@ -21,6 +22,12 @@ function createBookingAgreementRoutes(pool) {
                     created_at TIMESTAMP DEFAULT NOW(),
                     updated_at TIMESTAMP DEFAULT NOW()
                 )
+            `);
+            
+            // Add user_id column if it doesn't exist (for existing installations)
+            await client.query(`
+                ALTER TABLE booking_agreement_templates 
+                ADD COLUMN IF NOT EXISTS user_id VARCHAR(255)
             `);
 
             // Create booking agreements table
@@ -60,8 +67,9 @@ function createBookingAgreementRoutes(pool) {
             await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_session ON booking_agreements(session_id)');
             await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_user ON booking_agreements(user_id)');
             await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_token ON booking_agreements(access_token)');
+            await client.query('CREATE INDEX IF NOT EXISTS idx_templates_user ON booking_agreement_templates(user_id)');
 
-            console.log(' Booking agreement tables initialized');
+            console.log('✅ Booking agreement tables initialized');
         } catch (error) {
             console.error('Error initializing booking agreement tables:', error);
         } finally {
@@ -72,14 +80,23 @@ function createBookingAgreementRoutes(pool) {
     // Initialize tables on startup
     initializeTables();
 
-    // Get all templates
+    // Get all templates (system + user's custom templates)
     router.get('/templates', async (req, res) => {
         try {
-            console.log('Fetching booking agreement templates...');
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            console.log('Fetching booking agreement templates for user:', userId);
+            
             const client = await pool.connect();
             try {
+                // Get system templates (user_id IS NULL) and user's custom templates
                 const result = await client.query(
-                    'SELECT * FROM booking_agreement_templates ORDER BY category, name'
+                    `SELECT * FROM booking_agreement_templates 
+                     WHERE user_id IS NULL OR user_id = $1 
+                     ORDER BY 
+                        CASE WHEN user_id IS NULL THEN 0 ELSE 1 END,
+                        category, 
+                        name`,
+                    [userId]
                 );
                 console.log(`Found ${result.rows.length} booking agreement templates`);
                 res.json(result.rows);
@@ -89,6 +106,113 @@ function createBookingAgreementRoutes(pool) {
         } catch (error) {
             console.error('Error fetching booking agreement templates:', error);
             res.status(500).json({ error: 'Failed to fetch templates', details: error.message });
+        }
+    });
+
+    // Create custom template
+    router.post('/templates', async (req, res) => {
+        try {
+            const { name, category, content } = req.body;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+            
+            if (!name || !content) {
+                return res.status(400).json({ error: 'Name and content are required' });
+            }
+            
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `INSERT INTO booking_agreement_templates 
+                     (user_id, name, category, content, is_default)
+                     VALUES ($1, $2, $3, $4, false)
+                     RETURNING *`,
+                    [userId, name, category || 'Custom', content]
+                );
+                
+                console.log(`✅ Created custom template: ${name} for user ${userId}`);
+                res.json(result.rows[0]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error creating template:', error);
+            res.status(500).json({ error: 'Failed to create template' });
+        }
+    });
+
+    // Update custom template
+    router.put('/templates/:templateId', async (req, res) => {
+        try {
+            const { templateId } = req.params;
+            const { name, category, content } = req.body;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+            
+            const client = await pool.connect();
+            try {
+                // Only allow updating user's own templates
+                const result = await client.query(
+                    `UPDATE booking_agreement_templates 
+                     SET name = $1, category = $2, content = $3, updated_at = NOW()
+                     WHERE id = $4 AND user_id = $5
+                     RETURNING *`,
+                    [name, category, content, templateId, userId]
+                );
+                
+                if (result.rows.length === 0) {
+                    return res.status(404).json({ error: 'Template not found or access denied' });
+                }
+                
+                console.log(`✅ Updated template: ${name}`);
+                res.json(result.rows[0]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error updating template:', error);
+            res.status(500).json({ error: 'Failed to update template' });
+        }
+    });
+
+    // Delete custom template
+    router.delete('/templates/:templateId', async (req, res) => {
+        try {
+            const { templateId } = req.params;
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid;
+            
+            if (!userId) {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+            
+            const client = await pool.connect();
+            try {
+                // Only allow deleting user's own templates (not system templates)
+                const result = await client.query(
+                    `DELETE FROM booking_agreement_templates 
+                     WHERE id = $1 AND user_id = $2
+                     RETURNING *`,
+                    [templateId, userId]
+                );
+                
+                if (result.rows.length === 0) {
+                    return res.status(404).json({ error: 'Template not found or access denied' });
+                }
+                
+                console.log(`✅ Deleted template: ${result.rows[0].name}`);
+                res.json({ success: true, message: 'Template deleted' });
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error deleting template:', error);
+            res.status(500).json({ error: 'Failed to delete template' });
         }
     });
 

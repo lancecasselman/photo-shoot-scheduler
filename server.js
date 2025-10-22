@@ -16780,6 +16780,12 @@ app.get('/subscription-settings.html', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'subscription-settings.html'));
 });
 
+// Contract Templates page - requires authentication
+app.get('/contract-templates.html', isAuthenticated, (req, res) => {
+    console.log('📄 CONTRACT TEMPLATES: Serving contract templates page');
+    res.sendFile(path.join(__dirname, 'public', 'contract-templates.html'));
+});
+
 // Storage Dashboard page - requires authentication
 app.get('/storage-dashboard.html', isAuthenticated, (req, res) => {
     console.log('💾 STORAGE: Serving storage dashboard page');
