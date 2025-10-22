@@ -36,6 +36,9 @@ The system incorporates chronological session sorting, an integrated deposit sys
 ### Payment Plan System
 A robust payment plan calculator supporting flexible payment schedules (weekly, bi-weekly, monthly) with precise rounding logic that ensures all individual payments sum to the exact total amount. Features include intelligent month-end date handling that maintains consistent payment schedules across varying month lengths, comprehensive input validation, and automatic invoice generation via Stripe Connect. The system tracks payment status, sends automated reminders, and handles overdue payments with proper state management.
 
+### Real-Time Notification System
+An in-app notification system that alerts photographers of critical business events. Features a header bell icon with live unread count badge, dropdown panel displaying recent notifications, and automatic polling for updates every 30 seconds. Notifications are triggered when payment plan payments are received and when clients sign contracts, storing notification data with metadata (session ID, amount, client name) for contextual alerts. The system supports marking individual notifications as read, marking all as read, and maintaining persistent notification history in PostgreSQL.
+
 ### AI-Powered Blog Generator
 Integrates OpenAI to provide customizable blog post generation within the website builder, offering options for topic, style, tone, length, SEO keyword optimization, and automatic metadata generation.
 
