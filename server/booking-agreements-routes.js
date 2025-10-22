@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const { createNotification } = require('./notifications-routes');
 
 function createBookingAgreementRoutes(pool) {
     const router = express.Router();
@@ -417,6 +418,27 @@ function createBookingAgreementRoutes(pool) {
                     signerName: signerName,
                     timestamp: new Date().toISOString()
                 });
+
+                const sessionResult = await client.query(
+                    'SELECT client_name, session_type FROM photography_sessions WHERE id = $1::text',
+                    [agreement.session_id]
+                );
+                const session = sessionResult.rows[0];
+                
+                if (session && agreement.user_id) {
+                    await createNotification(
+                        agreement.user_id,
+                        'contract_signed',
+                        'Contract Signed',
+                        `${session.client_name} signed the contract for ${session.session_type}`,
+                        {
+                            agreementId: agreement.id,
+                            sessionId: agreement.session_id,
+                            clientName: session.client_name,
+                            sessionType: session.session_type
+                        }
+                    );
+                }
 
                 res.json({ 
                     success: true, 

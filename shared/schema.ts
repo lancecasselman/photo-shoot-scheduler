@@ -218,6 +218,21 @@ export const subscribers = pgTable("subscribers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Notifications table for in-app alerts
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type").notNull(), // 'payment_received', 'contract_signed', etc.
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  metadata: jsonb("metadata").default({}), // sessionId, amount, paymentId, agreementId, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdIdx: index("idx_notifications_user_id").on(table.userId),
+  createdAtIdx: index("idx_notifications_created_at").on(table.createdAt),
+}));
+
 // Files stored in R2 (RAW files and gallery images)
 export const r2Files = pgTable("r2_files", {
   id: varchar("id").primaryKey().notNull(),

@@ -3,6 +3,7 @@ const { db } = require('./db.ts');
 const { paymentPlans, paymentRecords, photographySessions, users } = require('../shared/schema');
 const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { createNotification } = require('./notifications-routes');
 
 class PaymentPlanManager {
   // Create a payment plan for a session
@@ -263,6 +264,25 @@ class PaymentPlanManager {
           .where(eq(photographySessions.id, payment.sessionId));
 
         console.log(`SUCCESS: Payment ${payment.paymentNumber} marked as paid. ${isCompleted ? 'Plan completed!' : `${plan.totalPayments - newPaymentsCompleted} payments remaining`}`);
+        
+        const [session] = await db.select()
+          .from(photographySessions)
+          .where(eq(photographySessions.id, payment.sessionId));
+        
+        if (session) {
+          await createNotification(
+            payment.userId,
+            'payment_received',
+            'Payment Received',
+            `Payment of $${parseFloat(payment.amount).toFixed(2)} received from ${session.clientName}`,
+            {
+              sessionId: payment.sessionId,
+              paymentId: payment.id,
+              amount: payment.amount,
+              clientName: session.clientName
+            }
+          );
+        }
       }
 
       return payment;
