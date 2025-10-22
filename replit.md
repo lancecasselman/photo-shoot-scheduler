@@ -33,6 +33,9 @@ A social platform featuring a multi-tab feed, customizable post types, advanced 
 ### Core Features & System Design
 The system incorporates chronological session sorting, an integrated deposit system, storage quota management with billing, unified file deletion, customizable pages, booking agreements with e-signatures, and Stripe Connect Express for multi-photographer payments.
 
+### Custom Contract Template System
+A comprehensive template management solution allowing photographers to create and manage their own contract templates beyond the built-in system templates. Features include a dedicated template management interface at /contract-templates.html with rich text editing, template preview functionality, and visual distinction between system templates (wedding, portrait, commercial, event, mini, newborn) and photographer-created custom templates. The system implements secure multi-tenant authorization, ensuring photographers can only edit and delete their own templates. Templates are integrated into the booking agreement workflow with grouped template selectors that clearly separate system and custom options. The database schema uses user_id columns to differentiate between shared system templates (user_id IS NULL) and private photographer templates, with proper indexing for performance at scale.
+
 ### Payment Plan System
 A robust payment plan calculator supporting flexible payment schedules (weekly, bi-weekly, monthly) with precise rounding logic that ensures all individual payments sum to the exact total amount. Features include intelligent month-end date handling that maintains consistent payment schedules across varying month lengths, comprehensive input validation, and automatic invoice generation via Stripe Connect. The system tracks payment status, sends automated reminders, and handles overdue payments with proper state management.
 
