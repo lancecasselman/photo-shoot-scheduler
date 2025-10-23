@@ -554,20 +554,20 @@
             document.getElementById('templateCategory').value = '';
             document.getElementById('templateContent').innerHTML = `
                 <h2>Photography Agreement</h2>
-                <p>This agreement is between {{photographerName}} and {{clientName}} for photography services.</p>
+                <p>This agreement is between \{\{photographerName\}\} and \{\{clientName\}\} for photography services.</p>
                 <h3>Session Details</h3>
                 <ul>
-                    <li>Session Type: {{sessionType}}</li>
-                    <li>Date: {{sessionDate}}</li>
-                    <li>Location: {{location}}</li>
+                    <li>Session Type: \{\{sessionType\}\}</li>
+                    <li>Date: \{\{sessionDate\}\}</li>
+                    <li>Location: \{\{location\}\}</li>
                 </ul>
                 <h3>Investment</h3>
                 <ul>
-                    <li>Total: ${{price}}</li>
-                    <li>Deposit: ${{depositAmount}}</li>
-                    <li>Balance: ${{balanceAmount}}</li>
+                    <li>Total: $\{\{price\}\}</li>
+                    <li>Deposit: $\{\{depositAmount\}\}</li>
+                    <li>Balance: $\{\{balanceAmount\}\}</li>
                 </ul>
-                <p>Client Contact: {{clientName}} | {{clientEmail}} | {{clientPhone}}</p>
+                <p>Client Contact: \{\{clientName\}\} | \{\{clientEmail\}\} | \{\{clientPhone\}\}</p>
             `;
             document.getElementById('templateModal').classList.add('active');
             console.log('✅ Modal opened successfully');
