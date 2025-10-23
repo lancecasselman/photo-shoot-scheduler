@@ -463,13 +463,15 @@
         // Load templates on page load
         async function loadTemplates() {
             try {
+                console.log('📄 Loading templates...');
                 const response = await fetch('/api/booking/templates');
                 if (!response.ok) throw new Error('Failed to load templates');
                 
                 templates = await response.json();
+                console.log('✅ Templates loaded:', templates.length);
                 renderTemplates();
             } catch (error) {
-                console.error('Error loading templates:', error);
+                console.error('❌ Error loading templates:', error);
                 alert('Failed to load templates. Please refresh the page.');
             }
         }
@@ -545,6 +547,7 @@
         }
 
         function showCreateTemplateModal() {
+            console.log('🎯 Opening Create Template modal...');
             editingTemplateId = null;
             document.getElementById('modalTitle').textContent = 'Create New Template';
             document.getElementById('templateName').value = '';
@@ -567,6 +570,7 @@
                 <p>Client Contact: {{clientName}} | {{clientEmail}} | {{clientPhone}}</p>
             `;
             document.getElementById('templateModal').classList.add('active');
+            console.log('✅ Modal opened successfully');
         }
 
         function closeTemplateModal() {
@@ -575,9 +579,12 @@
         }
 
         async function saveTemplate() {
+            console.log('💾 Saving template...');
             const name = document.getElementById('templateName').value.trim();
             const category = document.getElementById('templateCategory').value.trim();
             const content = document.getElementById('templateContent').innerHTML;
+
+            console.log('Template data:', { name, category, contentLength: content.length });
 
             if (!name || !content) {
                 alert('Please provide a template name and content');
@@ -591,6 +598,8 @@
                 
                 const method = editingTemplateId ? 'PUT' : 'POST';
 
+                console.log(`Sending ${method} request to ${url}`);
+
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
@@ -599,14 +608,16 @@
 
                 if (!response.ok) {
                     const error = await response.json();
+                    console.error('❌ Server error:', error);
                     throw new Error(error.error || 'Failed to save template');
                 }
 
+                console.log('✅ Template saved successfully!');
                 alert(editingTemplateId ? 'Template updated successfully!' : 'Template created successfully!');
                 closeTemplateModal();
                 loadTemplates();
             } catch (error) {
-                console.error('Error saving template:', error);
+                console.error('❌ Error saving template:', error);
                 alert('Failed to save template: ' + error.message);
             }
         }
