@@ -11022,51 +11022,6 @@ END:VCALENDAR`;
             }
         }
 
-        async function sendContract(contractId) {
-            try {
-                showMessage('Preparing contract email...', 'info');
-                
-                const response = await fetch(`/api/contracts/${contractId}/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${await getAuthToken()}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to prepare contract email');
-                }
-
-                const result = await response.json();
-                
-                // Get email data from server response
-                const emailData = result.emailData;
-                if (!emailData) {
-                    throw new Error('Email template not available');
-                }
-                
-                // Create mailto link with pre-filled email
-                const mailtoLink = `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
-                
-                // Open default email client
-                window.location.href = mailtoLink;
-                
-                showMessage('Email client opened! Review and send the contract email.', 'success');
-                
-                // Show the signing URL for reference
-                alert(`Email client opened with contract details!\n\nSigning URL: ${result.signingUrl}\n\nPlease review the email and send it to your client.`);
-                
-                // Reload existing contracts to update status (only if we have a valid session ID)
-                if (currentContractSessionId) {
-                    await loadExistingContracts(currentContractSessionId);
-                }
-                
-            } catch (error) {
-                console.error('Error preparing contract email:', error);
-                showMessage('Failed to prepare contract email: ' + error.message, 'error');
-            }
-        }
 
         // Contract Edit Functions
         let currentEditContractId = null;
