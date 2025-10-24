@@ -395,6 +395,18 @@ function createBookingAgreementModal() {
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
+    // Add event listeners directly to buttons to bypass cache
+    setTimeout(() => {
+        const sendBtn = document.getElementById('sendViaSmsBtn');
+        if (sendBtn) {
+            sendBtn.removeAttribute('onclick');
+            sendBtn.addEventListener('click', async function() {
+                console.log('🎯 SEND BUTTON CLICKED VIA EVENT LISTENER!');
+                await sendForSignature();
+            });
+        }
+    }, 100);
+
     // Add event listener for ESC key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && document.getElementById('bookingAgreementModal').style.display === 'flex') {
