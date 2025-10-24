@@ -361,7 +361,7 @@ function createBookingAgreementModal() {
                         <button id="saveBtn" class="btn btn-primary" onclick="saveAgreement()">
                             <i class="fas fa-save"></i> Save Draft
                         </button>
-                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
+                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendForSignature()">
                             <i class="fas fa-sms"></i> Send via Text
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
@@ -777,13 +777,10 @@ async function saveAgreement() {
 
 // Send for signature
 async function sendForSignature() {
-    console.log('🚀🚀🚀 SEND BUTTON CLICKED!!!');
+    console.log('🚀 Send button clicked');
     console.log('Current agreement:', currentAgreement);
     console.log('Current session ID:', currentAgreementSessionId);
     console.log('Sessions available:', sessions);
-    
-    // Show a visible alert first
-    alert('Contract send button clicked! Choose email or SMS.');
     
     // Get the current session
     const session = sessions.find(s => s.id === currentAgreementSessionId);
@@ -1221,14 +1218,20 @@ async function sendViaEmail(sessionId, sessionObject = null) {
 }
 
 // Send via SMS using sms: link
-async function sendViaSMS(sessionId, sessionObject = null) {
+async function sendViaSMS(sessionId = null, sessionObject = null) {
     console.log('📱 sendViaSMS called with sessionId:', sessionId);
     console.log('📱 Passed session object:', sessionObject);
     console.log('📱 Available sessions:', typeof sessions !== 'undefined' ? sessions : 'undefined');
+    console.log('📱 currentAgreementSessionId:', typeof currentAgreementSessionId !== 'undefined' ? currentAgreementSessionId : 'undefined');
+    
+    // If no sessionId provided, use the current agreement session
+    if (!sessionId && typeof currentAgreementSessionId !== 'undefined') {
+        sessionId = currentAgreementSessionId;
+    }
     
     // Use passed session object first, fall back to global sessions array
     let session = sessionObject;
-    if (!session && typeof sessions !== 'undefined') {
+    if (!session && sessionId && typeof sessions !== 'undefined') {
         session = sessions.find(s => s.id === sessionId);
     }
     
