@@ -10968,7 +10968,7 @@ END:VCALENDAR`;
                                          Edit
                                     </button>
                                     ${contract.status === 'pending' ? `
-                                        <button class="btn btn-primary btn-sm" onclick="sendContract('${contract.id}')">
+                                        <button class="btn btn-primary btn-sm" onclick="openBookingAgreementModal('${sessionId}')">
                                             Send Contract
                                         </button>
                                     ` : contract.status === 'sent' ? `
