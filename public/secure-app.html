@@ -904,7 +904,7 @@
         
         /* Modern dark action buttons */
         .btn-edit, .btn-calendar, .btn-call, 
-        .btn-text, .btn-warning, .btn-contract, .btn-success,
+        .btn-text, .btn-contract,
         .btn-invoice, .btn-email {
             background: var(--bg-elevated);
             color: var(--text-primary);
@@ -915,15 +915,32 @@
             text-align: center;
         }
         
+        /* Teal buttons for booking modal */
+        .btn-warning, .btn-success {
+            background: #10b981 !important;
+            color: white !important;
+            border: none !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.01em;
+            text-align: center;
+        }
+        
         .btn-edit:hover, .btn-calendar:hover, 
         .btn-call:hover, .btn-text:hover,
-        .btn-warning:hover, .btn-contract:hover, .btn-success:hover,
+        .btn-contract:hover,
         .btn-invoice:hover, .btn-email:hover {
             background: var(--accent-teal);
             color: var(--text-primary);
             border-color: var(--border-accent);
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+        }
+        
+        .btn-warning:hover, .btn-success:hover {
+            background: #059669 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
         }
         
         .sessions-grid {
