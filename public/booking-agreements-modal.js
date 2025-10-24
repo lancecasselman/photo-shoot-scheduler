@@ -298,10 +298,12 @@ async function initializeBookingAgreements() {
     // Load templates
     await loadAgreementTemplates();
 
-    // Create modal if it doesn't exist
-    if (!document.getElementById('bookingAgreementModal')) {
-        createBookingAgreementModal();
+    // Always remove and recreate modal to ensure latest HTML
+    const existingModal = document.getElementById('bookingAgreementModal');
+    if (existingModal) {
+        existingModal.remove();
     }
+    createBookingAgreementModal();
 
     // Update all session cards with agreement status
     await updateAllAgreementStatuses();
