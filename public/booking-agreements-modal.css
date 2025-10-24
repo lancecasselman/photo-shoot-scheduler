@@ -360,13 +360,16 @@
     border-color: #9ca3af;
 }
 
-.btn-success {
+/* Send via Text button - override secure-app.html styles */
+#bookingAgreementModal .btn-success,
+#sendViaSmsBtn {
     background: #10b981 !important;
     color: white !important;
     border: none !important;
 }
 
-.btn-success:hover {
+#bookingAgreementModal .btn-success:hover,
+#sendViaSmsBtn:hover {
     background: #059669 !important;
     transform: translateY(-1px);
 }
@@ -382,13 +385,16 @@
     border-color: #9ca3af;
 }
 
-.btn-warning {
+/* Resend button - override secure-app.html styles */
+#bookingAgreementModal .btn-warning,
+#resendBtn {
     background: #10b981 !important;
     color: white !important;
     border: none !important;
 }
 
-.btn-warning:hover {
+#bookingAgreementModal .btn-warning:hover,
+#resendBtn:hover {
     background: #059669 !important;
     transform: translateY(-1px);
 }
