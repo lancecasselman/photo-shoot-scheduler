@@ -905,7 +905,7 @@ function showSendChoiceModal(session) {
         }
         
         if (currentAgreement && session.id) {
-            sendViaEmail(session.id);
+            sendViaEmail(session.id, session);
         } else {
             showMessage('Please save the agreement first', 'error');
         }
@@ -921,7 +921,7 @@ function showSendChoiceModal(session) {
         }
         
         if (currentAgreement && session.id) {
-            sendViaSMS(session.id);
+            sendViaSMS(session.id, session);
         } else {
             showMessage('Please save the agreement first', 'error');
         }
@@ -1157,8 +1157,13 @@ function closeSendOptionsModal() {
 }
 
 // Send via Email using mailto link
-async function sendViaEmail(sessionId) {
-    const session = sessions.find(s => s.id === sessionId);
+async function sendViaEmail(sessionId, sessionObject = null) {
+    // Use passed session object first, fall back to global sessions array
+    let session = sessionObject;
+    if (!session && typeof sessions !== 'undefined') {
+        session = sessions.find(s => s.id === sessionId);
+    }
+    
     if (!session || !session.email) {
         showMessage('Email address is required', 'error');
         return;
@@ -1216,10 +1221,17 @@ async function sendViaEmail(sessionId) {
 }
 
 // Send via SMS using sms: link
-async function sendViaSMS(sessionId) {
+async function sendViaSMS(sessionId, sessionObject = null) {
     console.log('📱 sendViaSMS called with sessionId:', sessionId);
-    console.log('📱 Available sessions:', sessions);
-    const session = sessions.find(s => s.id === sessionId);
+    console.log('📱 Passed session object:', sessionObject);
+    console.log('📱 Available sessions:', typeof sessions !== 'undefined' ? sessions : 'undefined');
+    
+    // Use passed session object first, fall back to global sessions array
+    let session = sessionObject;
+    if (!session && typeof sessions !== 'undefined') {
+        session = sessions.find(s => s.id === sessionId);
+    }
+    
     console.log('📱 Found session:', session);
     console.log('📱 Session phone number:', session?.phoneNumber);
     console.log('📱 Session phone_number:', session?.phone_number);
