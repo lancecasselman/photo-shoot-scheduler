@@ -361,14 +361,14 @@
 }
 
 .btn-success {
-    background: white;
-    color: #374151;
-    border: 1px solid #d1d5db;
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
 }
 
 .btn-success:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    background: #059669 !important;
+    transform: translateY(-1px);
 }
 
 .btn-info {
@@ -383,14 +383,14 @@
 }
 
 .btn-warning {
-    background: white;
-    color: #374151;
-    border: 1px solid #d1d5db;
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
 }
 
 .btn-warning:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    background: #059669 !important;
+    transform: translateY(-1px);
 }
 
 .btn-danger {
