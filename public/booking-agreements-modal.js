@@ -327,6 +327,18 @@ function createBookingAgreementModal() {
                 </div>
 
                 <div class="booking-modal-body">
+                    <!-- Session Info Display -->
+                    <div id="sessionInfoDisplay" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                            <div><strong>Client:</strong> <span id="sessionClientName"></span></div>
+                            <div><strong>Session:</strong> <span id="sessionType"></span></div>
+                            <div><strong>📧 Email:</strong> <span id="sessionEmail"></span></div>
+                            <div><strong>📱 Phone:</strong> <span id="sessionPhone"></span></div>
+                            <div><strong>📍 Location:</strong> <span id="sessionLocation"></span></div>
+                            <div><strong>📅 Date:</strong> <span id="sessionDate"></span></div>
+                        </div>
+                    </div>
+                
                     <!-- Agreement Viewer (for sent/signed) - SHOWN FIRST -->
                     <div id="agreementViewer" class="viewer-section" style="display: none;">
                         <div class="agreement-status-badge">
@@ -412,6 +424,14 @@ async function openBookingAgreementModal(sessionId) {
     const clientName = session.clientName || session.client_name || 'Unknown Client';
     document.getElementById('agreementModalTitle').textContent = 
         `Booking Agreement for ${clientName}`;
+
+    // Populate session info display
+    document.getElementById('sessionClientName').textContent = clientName;
+    document.getElementById('sessionType').textContent = session.sessionType || session.session_type || 'N/A';
+    document.getElementById('sessionEmail').textContent = session.email || 'No email';
+    document.getElementById('sessionPhone').textContent = session.phoneNumber || session.phone_number || 'No phone';
+    document.getElementById('sessionLocation').textContent = session.location || 'N/A';
+    document.getElementById('sessionDate').textContent = session.dateTime ? new Date(session.dateTime).toLocaleDateString() : 'N/A';
 
     // Show modal
     const modal = document.getElementById('bookingAgreementModal');
