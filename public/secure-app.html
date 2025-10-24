@@ -5746,6 +5746,34 @@
                 </div>
             </div>
             
+            <!-- Early notification function definitions to prevent ReferenceError -->
+            <script>
+                // Define notification functions early so they're available when buttons are clicked
+                // These will be enhanced later when NotificationManager is fully loaded
+                window.toggleNotificationDropdown = function() {
+                    const dropdown = document.getElementById('notificationDropdown');
+                    if (dropdown) {
+                        const isOpen = dropdown.classList.contains('show');
+                        if (isOpen) {
+                            dropdown.classList.remove('show');
+                        } else {
+                            dropdown.classList.add('show');
+                            // If NotificationManager is loaded, use it
+                            if (window.notificationManager) {
+                                window.notificationManager.renderNotificationDropdown();
+                            }
+                        }
+                    }
+                };
+                
+                window.markAllNotificationsAsRead = async function() {
+                    // If NotificationManager is loaded, use it
+                    if (window.notificationManager) {
+                        await window.notificationManager.markAllAsRead();
+                    }
+                };
+            </script>
+            
             <!-- Mobile Dropdown Menu - inside header for proper positioning -->
         <div class="mobile-menu" id="mobileMenu">
             <nav class="nav-menu">
@@ -18639,8 +18667,10 @@ END:VCALENDAR`;
         }
 
         const notificationManager = new NotificationManager();
+        window.notificationManager = notificationManager;
 
-        function toggleNotificationDropdown() {
+        // Override early stubs with full implementations
+        window.toggleNotificationDropdown = function() {
             const dropdown = document.getElementById('notificationDropdown');
             const isOpen = dropdown.classList.contains('show');
             
@@ -18650,11 +18680,11 @@ END:VCALENDAR`;
                 dropdown.classList.add('show');
                 notificationManager.renderNotificationDropdown();
             }
-        }
+        };
 
-        async function markAllNotificationsAsRead() {
+        window.markAllNotificationsAsRead = async function() {
             await notificationManager.markAllAsRead();
-        }
+        };
 
         document.addEventListener('click', function(event) {
             const dropdown = document.getElementById('notificationDropdown');
