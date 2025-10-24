@@ -799,29 +799,33 @@ async function saveAgreement() {
 
 // Send for signature
 async function sendForSignature() {
+    console.log('🚀🚀🚀 SEND FOR SIGNATURE CALLED!');
     console.log('🚀 Send button clicked');
     console.log('Current agreement:', currentAgreement);
     console.log('Current session ID:', currentAgreementSessionId);
     console.log('Sessions available:', sessions);
     
+    // Check if we need to save the agreement first
+    if (!currentAgreement) {
+        console.log('⚠️ No agreement exists yet - saving first...');
+        const content = document.getElementById('agreementContent').innerHTML;
+        if (!content || content.trim() === '') {
+            showMessage('Please select a template or enter contract text first', 'error');
+            return;
+        }
+        // Save the agreement first
+        await saveAgreement();
+        if (!currentAgreement) {
+            showMessage('Please save the agreement before sending', 'error');
+            return;
+        }
+    }
+    
     // Get the current session
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) {
-        console.log('❌ No session found, creating basic session');
-        // Try to get session info from the modal title
-        const modalTitle = document.getElementById('agreementModalTitle');
-        const clientName = modalTitle ? modalTitle.textContent.replace('Booking Agreement for ', '') : 'Client';
-        
-        // Create a basic session object
-        const basicSession = {
-            id: currentAgreementSessionId,
-            clientName: clientName,
-            email: 'test@example.com',
-            phoneNumber: '555-1234'
-        };
-        
-        console.log('📧 Showing modal with basic session:', basicSession);
-        showSendChoiceModal(basicSession);
+        console.log('❌ No session found');
+        showMessage('Session not found', 'error');
         return;
     }
     
