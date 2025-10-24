@@ -1793,41 +1793,6 @@ window.closeBookingAgreementModal = closeBookingAgreementModal;
 window.loadSelectedTemplate = loadSelectedTemplate;
 window.saveAgreement = saveAgreement;
 window.sendForSignature = sendForSignature;
-
-// FORCE OVERRIDE THE FUNCTION TO MAKE SURE IT WORKS
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 FORCING sendForSignature override');
-    
-    window.sendForSignature = async function() {
-        console.log('🚨🚨🚨 OVERRIDE FUNCTION CALLED!!!');
-        alert('OVERRIDE: Choose how to send the contract!');
-        
-        // Create a super simple modal
-        const modal = document.createElement('div');
-        modal.id = 'simple-send-modal';
-        modal.style.cssText = `
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: white !important;
-            padding: 30px !important;
-            border: 3px solid red !important;
-            z-index: 999999 !important;
-        `;
-        
-        modal.innerHTML = `
-            <h2>SEND CONTRACT</h2>
-            <p>Choose method:</p>
-            <button onclick="alert('Email selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: blue; color: white;">EMAIL</button>
-            <button onclick="alert('SMS selected!'); document.getElementById('simple-send-modal').remove();" style="padding: 10px; margin: 5px; background: green; color: white;">SMS</button>
-            <br><br>
-            <button onclick="document.getElementById('simple-send-modal').remove();" style="padding: 10px; background: gray; color: white;">CANCEL</button>
-        `;
-        
-        document.body.appendChild(modal);
-    };
-});
 window.previewAgreement = previewAgreement;
 window.downloadAgreementPDF = downloadAgreementPDF;
 window.resendAgreement = resendAgreement;
