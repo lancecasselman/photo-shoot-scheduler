@@ -361,7 +361,7 @@ function createBookingAgreementModal() {
                         <button id="saveBtn" class="btn btn-primary" onclick="saveAgreement()">
                             <i class="fas fa-save"></i> Save Draft
                         </button>
-                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendViaSMS()">
+                        <button id="sendViaSmsBtn" class="btn btn-success" onclick="sendForSignature()">
                             <i class="fas fa-sms"></i> Send via Text
                         </button>
                         <button id="downloadBtn" class="btn btn-info" onclick="downloadAgreementPDF()" style="display: none;">
