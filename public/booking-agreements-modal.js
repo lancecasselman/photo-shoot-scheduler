@@ -861,7 +861,7 @@ function showSendChoiceModal(session) {
                 cursor: pointer;
             ">
                 📧 Email<br>
-                <span style="font-size: 12px;">${session.email}</span>
+                <span style="font-size: 12px;">${session.email || 'No email'}</span>
             </button>
             
             <button id="sms-send-btn" style="
@@ -875,7 +875,7 @@ function showSendChoiceModal(session) {
                 cursor: pointer;
             ">
                 💬 SMS<br>
-                <span style="font-size: 12px;">${session.phoneNumber}</span>
+                <span style="font-size: 12px;">${session.phoneNumber || session.phone_number || 'No phone'}</span>
             </button>
         </div>
         
