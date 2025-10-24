@@ -948,6 +948,10 @@ function showSendOptionsModal(session) {
     const isResend = currentAgreement?.status === 'sent' || currentAgreement?.status === 'viewed';
     const isSigned = currentAgreement?.status === 'signed';
     
+    // Handle both phoneNumber (camelCase) and phone_number (snake_case)
+    const phoneNumber = session.phoneNumber || session.phone_number;
+    const hasPhone = !!(phoneNumber);
+    
     const title = isSigned ? 'Send to Another Recipient' : (isResend ? 'Resend Contract' : 'Send Contract for Signature');
     const subtitle = isSigned ? 
         `This contract has already been signed. You can send it to another recipient if needed.` :
@@ -1012,8 +1016,8 @@ function showSendOptionsModal(session) {
                 ">
                     <i class="fas fa-sms" style="font-size: 32px; color: #27ae60; display: block; margin-bottom: 10px;"></i>
                     <h4 style="margin: 10px 0 5px 0; color: #333;">Text Message (SMS)</h4>
-                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${session.phoneNumber || 'No phone number provided'}</p>
-                    ${!session.phoneNumber ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Phone number required</p>' : ''}
+                    <p class="send-option-detail" style="font-size: 14px; color: #666; margin: 5px 0;">${phoneNumber || 'No phone number provided'}</p>
+                    ${!hasPhone ? '<p class="text-danger" style="color: #dc3545; font-size: 12px; margin-top: 5px;">Phone number required</p>' : ''}
                 </div>
             </div>
             
