@@ -4331,6 +4331,10 @@ function getFileTypeIcon(fileType) {
                 
                 const session = await sessionResponse.json();
                 
+                // Handle both phoneNumber (camelCase) and phone_number (snake_case)
+                const phoneNumber = session.phoneNumber || session.phone_number;
+                const hasPhone = !!(phoneNumber);
+                
                 // Show modal for choosing send method
                 const modal = document.createElement('div');
                 modal.className = 'send-options-modal';
@@ -4351,11 +4355,11 @@ function getFileTypeIcon(fileType) {
                             </div>
                             
                             <div class="send-option" style="flex: 1; padding: 20px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s;"
-                                 onclick="sendContractViaSMS('${contractId}', '${session.phoneNumber}', '${session.clientName}')">
+                                 onclick="sendContractViaSMS('${contractId}', '${phoneNumber}', '${session.clientName}')">
                                 <i class="fas fa-sms" style="font-size: 24px; color: #27ae60; margin-bottom: 10px;"></i>
                                 <h4>Text Message (SMS)</h4>
-                                <p style="font-size: 14px; color: #666;">${session.phoneNumber || 'No phone number provided'}</p>
-                                ${!session.phoneNumber ? '<p style="color: #dc3545; font-size: 12px;">Phone number required</p>' : ''}
+                                <p style="font-size: 14px; color: #666;">${phoneNumber || 'No phone number provided'}</p>
+                                ${!hasPhone ? '<p style="color: #dc3545; font-size: 12px;">Phone number required</p>' : ''}
                             </div>
                         </div>
                         
