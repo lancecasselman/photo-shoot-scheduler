@@ -1213,11 +1213,21 @@ async function sendViaEmail(sessionId) {
 
 // Send via SMS using sms: link
 async function sendViaSMS(sessionId) {
+    console.log('📱 sendViaSMS called with sessionId:', sessionId);
+    console.log('📱 Available sessions:', sessions);
     const session = sessions.find(s => s.id === sessionId);
-    if (!session || !session.phoneNumber) {
+    console.log('📱 Found session:', session);
+    console.log('📱 Session phone number:', session?.phoneNumber);
+    console.log('📱 Session phone_number:', session?.phone_number);
+    
+    if (!session || (!session.phoneNumber && !session.phone_number)) {
+        console.error('❌ Phone number check failed:', { session, hasPhone: session?.phoneNumber, hasPhoneUnderscore: session?.phone_number });
         showMessage('Phone number is required', 'error');
         return;
     }
+    
+    // Use whichever field exists
+    const phoneNumber = session.phoneNumber || session.phone_number;
     
     closeSendOptionsModal();
     
@@ -1227,7 +1237,7 @@ async function sendViaSMS(sessionId) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                clientPhone: session.phoneNumber,
+                clientPhone: phoneNumber,
                 clientName: session.clientName,
                 sessionType: session.sessionType,
                 sessionDate: new Date(session.dateTime).toLocaleDateString(),
@@ -1246,7 +1256,7 @@ async function sendViaSMS(sessionId) {
             } else {
                 // Fallback to creating our own (shouldn't happen with updated backend)
                 const signingLink = result.signingUrl || `${window.location.origin}/sign-contract?token=${result.accessToken}`;
-                const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+                const cleanPhone = phoneNumber.replace(/\D/g, '');
                 const message = `Hi ${session.clientName}, please sign your photography contract: ${signingLink}`;
                 const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
                 window.location.href = smsLink;
