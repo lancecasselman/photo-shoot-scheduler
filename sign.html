@@ -393,17 +393,38 @@
         // Initialize signature pad
         function initSignaturePad() {
             const canvas = document.getElementById('signatureCanvas');
+            
+            // Set initial canvas size before creating SignaturePad
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            
             signaturePad = new SignaturePad(canvas, {
                 backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(0, 0, 0)'
+                penColor: 'rgb(0, 0, 0)',
+                minWidth: 1.5,
+                maxWidth: 2.5,
+                throttle: 0,
+                velocityFilterWeight: 0.7
             });
 
-            // Resize canvas to maintain quality
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
+            // Add resize handler with debounce to prevent clearing on minor resizes
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(resizeCanvas, 100);
+            });
 
             // Check validity on signature change
-            signaturePad.addEventListener('endStroke', checkFormValidity);
+            signaturePad.addEventListener('endStroke', () => {
+                console.log('✍️ Signature stroke added');
+                checkFormValidity();
+            });
+            
+            signaturePad.addEventListener('beginStroke', () => {
+                console.log('✍️ Starting signature stroke');
+            });
         }
 
         // Resize canvas
@@ -411,11 +432,23 @@
             const canvas = document.getElementById('signatureCanvas');
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             
+            // Save the current signature data if exists
+            const data = signaturePad ? signaturePad.toData() : null;
+            
+            // Set canvas size
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext('2d').scale(ratio, ratio);
             
-            signaturePad.clear();
+            // Scale the context
+            const ctx = canvas.getContext('2d');
+            ctx.scale(ratio, ratio);
+            
+            // Restore signature if it existed
+            if (signaturePad && data && data.length > 0) {
+                signaturePad.fromData(data);
+            } else if (signaturePad) {
+                signaturePad.clear();
+            }
         }
 
         // Load contract
