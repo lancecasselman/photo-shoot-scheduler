@@ -477,10 +477,20 @@
 
                 // CRITICAL: Resize canvas after content loads to fix coordinate alignment
                 // Wait for DOM to fully render the contract content
-                setTimeout(() => {
-                    console.log('🎨 Resizing signature canvas after contract content loaded');
-                    resizeCanvas();
-                }, 100);
+                // Use requestAnimationFrame for better timing with browser paint cycle
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        console.log('🎨 Resizing signature canvas after contract content loaded');
+                        resizeCanvas();
+                        
+                        // Double-check canvas is visible and properly sized
+                        const canvas = document.getElementById('signatureCanvas');
+                        if (canvas) {
+                            console.log('✅ Canvas size:', canvas.offsetWidth, 'x', canvas.offsetHeight);
+                            console.log('✅ Canvas internal:', canvas.width, 'x', canvas.height);
+                        }
+                    }, 150);
+                });
 
             } catch (error) {
                 console.error('Error loading contract:', error);
