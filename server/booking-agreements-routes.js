@@ -364,7 +364,13 @@ function createBookingAgreementRoutes(pool) {
                 const agreement = result.rows[0];
                 
                 // Generate the full signing URL
-                const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
+                // Use REPLIT_DEV_DOMAIN in development, otherwise use BASE_URL
+                let baseUrl;
+                if (process.env.REPLIT_DEV_DOMAIN) {
+                    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+                } else {
+                    baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
+                }
                 const signingUrl = `${baseUrl}/sign/${agreement.access_token}`;
 
                 // Send based on method
