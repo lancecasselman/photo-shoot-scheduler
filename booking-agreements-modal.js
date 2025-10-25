@@ -874,10 +874,9 @@ function showSendChoiceModal(session) {
         console.log('Email option selected');
         overlay.remove();
         
-        // Save agreement first if needed
-        if (!currentAgreement) {
-            await saveAgreement();
-        }
+        // ALWAYS save agreement before sending to ensure latest template/content is used
+        console.log('💾 Saving agreement before sending via email...');
+        await saveAgreement();
         
         if (currentAgreement && session.id) {
             sendViaEmail(session.id);
@@ -890,10 +889,9 @@ function showSendChoiceModal(session) {
         console.log('SMS option selected');
         overlay.remove();
         
-        // Save agreement first if needed
-        if (!currentAgreement) {
-            await saveAgreement();
-        }
+        // ALWAYS save agreement before sending to ensure latest template/content is used
+        console.log('💾 Saving agreement before sending via SMS...');
+        await saveAgreement();
         
         if (currentAgreement && session.id) {
             sendViaSMS(session.id);
