@@ -475,6 +475,13 @@
                 document.getElementById('loadingContainer').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
 
+                // CRITICAL: Resize canvas after content loads to fix coordinate alignment
+                // Wait for DOM to fully render the contract content
+                setTimeout(() => {
+                    console.log('🎨 Resizing signature canvas after contract content loaded');
+                    resizeCanvas();
+                }, 100);
+
             } catch (error) {
                 console.error('Error loading contract:', error);
                 showError('Failed to load contract. Please try again or contact support.');
