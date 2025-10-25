@@ -557,11 +557,53 @@ async function showBothViewAndCreate(agreement, session) {
         await showSignedContractsViewer(session.id);
     } else if (agreement.status === 'sent' || agreement.status === 'viewed') {
         // For sent/viewed contracts, show the pending contract with option to create new
-        await showPendingContractViewer(agreement, session);
+        showPendingContractViewer(agreement, session);
     } else {
         // For drafts or other statuses, show creation interface
         showCreateInterface();
     }
+}
+
+// Show pending contract viewer (sent/viewed but not signed yet)
+function showPendingContractViewer(agreement, session) {
+    // Show the viewer
+    document.getElementById('templateSelector').style.display = 'none';
+    document.getElementById('agreementEditor').style.display = 'none';
+    document.getElementById('agreementViewer').style.display = 'block';
+    
+    // Create pending contract display
+    const viewerContent = document.getElementById('agreementViewContent');
+    viewerContent.innerHTML = `
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0;">⏳ Contract Pending Signature</h3>
+            <p style="margin: 0; color: #856404;">
+                Status: <strong>${agreement.status === 'viewed' ? 'Viewed by client' : 'Sent to client'}</strong><br>
+                Sent: ${new Date(agreement.created_at).toLocaleString()}
+            </p>
+        </div>
+        
+        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; background: #f8f9fa; max-height: 400px; overflow-y: auto;">
+            ${agreement.content || 'No content'}
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="loadExistingAgreementForEdit('${agreement.id}')">
+                ✏️ Edit Contract
+            </button>
+            <button class="btn btn-success" onclick="sendForSignature()">
+                📧 Resend Contract
+            </button>
+            <button class="btn btn-secondary" onclick="showCreateInterface()">
+                ➕ Create New Contract
+            </button>
+        </div>
+    `;
+    
+    // Store current agreement
+    currentAgreement = agreement;
+    
+    // Update modal buttons for viewing mode
+    updateModalButtons('view');
 }
 
 // Show signed contracts viewer
