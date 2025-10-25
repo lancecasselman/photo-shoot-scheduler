@@ -577,8 +577,16 @@ function createBookingAgreementRoutes(pool) {
                 client.release();
             }
         } catch (error) {
-            console.error('Error signing agreement:', error);
-            res.status(500).json({ error: 'Failed to sign agreement' });
+            console.error('❌ ERROR signing agreement:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            res.status(500).json({ 
+                error: 'Failed to sign agreement',
+                details: error.message 
+            });
         }
     });
 
