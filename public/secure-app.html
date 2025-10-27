@@ -18267,6 +18267,7 @@ END:VCALENDAR`;
         // ===== NOTIFICATION SYSTEM =====
         class NotificationManager {
             constructor() {
+                console.log('🔔 NotificationManager: Constructor called');
                 this.notifications = [];
                 this.unreadCount = 0;
                 this.refreshInterval = null;
@@ -18274,26 +18275,32 @@ END:VCALENDAR`;
 
             async fetchNotifications() {
                 try {
+                    console.log('🔔 NotificationManager: Fetching notifications from /api/notifications');
                     const response = await fetch('/api/notifications');
+                    console.log('🔔 NotificationManager: Response status:', response.status);
                     if (!response.ok) throw new Error('Failed to fetch notifications');
                     this.notifications = await response.json();
+                    console.log('🔔 NotificationManager: Fetched', this.notifications.length, 'notifications');
                     return this.notifications;
                 } catch (error) {
-                    console.error('Error fetching notifications:', error);
+                    console.error('❌ NotificationManager: Error fetching notifications:', error);
                     return [];
                 }
             }
 
             async fetchUnreadCount() {
                 try {
+                    console.log('🔔 NotificationManager: Fetching unread count from /api/notifications/unread-count');
                     const response = await fetch('/api/notifications/unread-count');
+                    console.log('🔔 NotificationManager: Response status:', response.status);
                     if (!response.ok) throw new Error('Failed to fetch unread count');
                     const data = await response.json();
                     this.unreadCount = data.unreadCount;
+                    console.log('🔔 NotificationManager: Unread count:', this.unreadCount);
                     this.updateBadge();
                     return this.unreadCount;
                 } catch (error) {
-                    console.error('Error fetching unread count:', error);
+                    console.error('❌ NotificationManager: Error fetching unread count:', error);
                     return 0;
                 }
             }
@@ -18394,9 +18401,11 @@ END:VCALENDAR`;
             }
 
             startAutoRefresh() {
+                console.log('🔔 NotificationManager: Starting auto-refresh (every 30 seconds)');
                 this.fetchUnreadCount();
                 
                 this.refreshInterval = setInterval(() => {
+                    console.log('🔔 NotificationManager: Auto-refresh tick');
                     this.fetchUnreadCount();
                 }, 30000);
             }
@@ -18441,6 +18450,7 @@ END:VCALENDAR`;
         });
 
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔔 DOMContentLoaded: Calling notificationManager.startAutoRefresh()');
             notificationManager.startAutoRefresh();
         });
     </script>
