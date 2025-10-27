@@ -549,25 +549,30 @@ function createBookingAgreementRoutes(pool) {
                     timestamp: new Date().toISOString()
                 });
 
-                const sessionResult = await client.query(
-                    'SELECT client_name, session_type FROM photography_sessions WHERE id = $1::text',
-                    [agreement.session_id]
-                );
-                const session = sessionResult.rows[0];
-                
-                if (session && agreement.user_id) {
-                    await createNotification(
-                        agreement.user_id,
-                        'contract_signed',
-                        'Contract Signed',
-                        `${session.client_name} signed the contract for ${session.session_type}`,
-                        {
-                            agreementId: agreement.id,
-                            sessionId: agreement.session_id,
-                            clientName: session.client_name,
-                            sessionType: session.session_type
-                        }
+                // Create notification (non-blocking - don't fail if this errors)
+                try {
+                    const sessionResult = await client.query(
+                        'SELECT client_name, session_type FROM photography_sessions WHERE id = $1::text',
+                        [agreement.session_id]
                     );
+                    const session = sessionResult.rows[0];
+                    
+                    if (session && agreement.user_id) {
+                        await createNotification(
+                            agreement.user_id,
+                            'contract_signed',
+                            'Contract Signed',
+                            `${session.client_name} signed the contract for ${session.session_type}`,
+                            {
+                                agreementId: agreement.id,
+                                sessionId: agreement.session_id,
+                                clientName: session.client_name,
+                                sessionType: session.session_type
+                            }
+                        );
+                    }
+                } catch (notificationError) {
+                    console.error('⚠️ Failed to create notification (non-critical):', notificationError.message);
                 }
 
                 res.json({ 
