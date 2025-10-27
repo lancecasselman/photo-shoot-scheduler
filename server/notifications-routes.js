@@ -6,9 +6,11 @@ function createNotificationRoutes(pool) {
 
   router.get('/notifications', async (req, res) => {
     try {
+      console.log('🔔 NOTIFICATIONS API CALLED - Session:', req.session?.user);
       const userId = req.session?.user?.uid;
       
       if (!userId) {
+        console.log('❌ No userId found in session');
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
@@ -23,16 +25,18 @@ function createNotificationRoutes(pool) {
       console.log(`📬 Fetched ${result.rows.length} notifications for user ${userId}`);
       res.json(result.rows);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('❌ Error fetching notifications:', error);
       res.status(500).json({ error: 'Failed to fetch notifications' });
     }
   });
 
   router.get('/notifications/unread-count', async (req, res) => {
     try {
+      console.log('🔔 UNREAD COUNT API CALLED - Session:', req.session?.user);
       const userId = req.session?.user?.uid;
       
       if (!userId) {
+        console.log('❌ No userId found in session for unread count');
         return res.status(401).json({ error: 'User not authenticated' });
       }
 
@@ -47,7 +51,7 @@ function createNotificationRoutes(pool) {
       console.log(`🔔 Unread count for user ${userId}: ${unreadCount}`);
       res.json({ unreadCount });
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('❌ Error fetching unread count:', error);
       res.status(500).json({ error: 'Failed to fetch unread count' });
     }
   });
