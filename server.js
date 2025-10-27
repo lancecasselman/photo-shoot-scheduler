@@ -3382,7 +3382,7 @@ app.use('/api/booking', createBookingAgreementRoutes(pool));
 
 // Notification API routes
 const { createNotificationRoutes } = require('./server/notifications-routes');
-app.use('/api', createNotificationRoutes());
+app.use('/api', createNotificationRoutes(pool));
 
 // Gallery Print API routes - Separate endpoint to avoid auth conflicts
 const galleryPrintRoutes = require('./server/gallery-print-routes');

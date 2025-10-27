@@ -568,7 +568,8 @@ function createBookingAgreementRoutes(pool) {
                                 sessionId: agreement.session_id,
                                 clientName: session.client_name,
                                 sessionType: session.session_type
-                            }
+                            },
+                            pool
                         );
                     }
                 } catch (notificationError) {
