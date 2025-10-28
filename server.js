@@ -3384,6 +3384,10 @@ app.use('/api/booking', createBookingAgreementRoutes(pool));
 const { createNotificationRoutes } = require('./server/notifications-routes');
 app.use('/api', createNotificationRoutes(pool));
 
+// Payment Plan API routes
+const paymentPlanRoutes = require('./server/payment-plans-routes');
+app.use('/api/payment-plans', paymentPlanRoutes);
+
 // Gallery Print API routes - Separate endpoint to avoid auth conflicts
 const galleryPrintRoutes = require('./server/gallery-print-routes');
 app.use('/api/gallery-print', galleryPrintRoutes);
