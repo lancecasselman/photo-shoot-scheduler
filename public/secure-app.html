@@ -6699,24 +6699,32 @@ ${agreement.content || 'No content available'}
         let currentPaymentPlanSessionId = null;
         
         // Primary payment plan function - consolidated implementation
-        window.openPaymentPlanModal = function(sessionIdOrSession) {
+        window.openPaymentPlanModal = async function(sessionIdOrSession) {
             console.log('Opening payment plan modal for session:', sessionIdOrSession);
             
-            // Handle both sessionId string and session object
-            let session;
+            // Always fetch latest session data to ensure we have fresh payment plan status
+            await loadSessions();
+            
+            // Extract session ID
+            let sessionId;
             if (typeof sessionIdOrSession === 'string') {
-                session = sessions.find(s => s.id === sessionIdOrSession);
-                if (!session) {
-                    console.error('Session not found:', sessionIdOrSession);
-                    showMessage('Session not found', 'error');
-                    return;
-                }
+                sessionId = sessionIdOrSession;
             } else {
-                session = sessionIdOrSession;
+                sessionId = sessionIdOrSession.id;
+            }
+            
+            // Get fresh session data from the updated sessions array
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) {
+                console.error('Session not found:', sessionId);
+                showMessage('Session not found', 'error');
+                return;
             }
             
             // Set current session
             currentPaymentPlanSessionId = session.id;
+            
+            console.log('Session payment plan status:', { hasPaymentPlan: session.hasPaymentPlan, paymentPlanId: session.paymentPlanId });
             
             // Remove test modal code since it works
             
