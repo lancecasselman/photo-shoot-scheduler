@@ -10406,7 +10406,7 @@ END:VCALENDAR`;
         
         window.viewPaymentPlan = async function(sessionId) {
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/payment-plan`);
+                const response = await fetch(`/api/payment-plans/${sessionId}`);
                 
                 if (!response.ok) {
                     throw new Error('Payment plan not found');
