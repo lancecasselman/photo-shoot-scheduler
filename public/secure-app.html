@@ -18001,12 +18001,12 @@ END:VCALENDAR`;
                     ${venues ? `
                     <section style="padding: 60px 20px; background: #f7fafc;">
                         <div style="max-width: 900px; margin: 0 auto;">
-                            <h2 style="font-size: 2.2rem; margin-bottom: 30px; text-align: center; color: #2d3748;">Popular ${city} Photography Locations</h2>
-                            <p style="text-align: center; color: #718096; margin-bottom: 30px;">I frequently work at these stunning ${city} venues:</p>
+                            <h2 style="font-size: 2.2rem; margin-bottom: 30px; text-align: center; color: #2d3748;">Popular ` + city + ` Photography Locations</h2>
+                            <p style="text-align: center; color: #718096; margin-bottom: 30px;">I frequently work at these stunning ` + city + ` venues:</p>
                             <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
-                                ${venues.split(',').map(venue => 
-                                    `<span style="padding: 10px 20px; background: white; border-radius: 25px; color: #4a5568; border: 1px solid #e2e8f0;">${venue.trim()}</span>`
-                                ).join('')}
+                                ` + venues.split(',').map(venue => 
+                                    '<span style="padding: 10px 20px; background: white; border-radius: 25px; color: #4a5568; border: 1px solid #e2e8f0;">' + venue.trim() + '</span>'
+                                ).join('') + `
                             </div>
                         </div>
                     </section>` : ''}
