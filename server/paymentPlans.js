@@ -6,6 +6,22 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createNotification } = require('./notifications-routes');
 
 class PaymentPlanManager {
+  constructor() {
+    // Admin emails that use regular platform Stripe instead of Stripe Connect
+    this.adminEmails = [
+      'lancecasselman@icloud.com',
+      'lancecasselman2011@gmail.com',
+      'lance@thelegacyphotography.com'
+    ];
+  }
+
+  // Check if user is an admin account
+  isAdminAccount(email) {
+    if (!email) return false;
+    return this.adminEmails.some(adminEmail => 
+      adminEmail.toLowerCase() === email.toLowerCase()
+    );
+  }
   // Create a payment plan for a session
   async createPaymentPlan(sessionId, userId, totalAmount, startDate, endDate, frequency = 'monthly', reminderDays = 3) {
     try {
@@ -352,89 +368,189 @@ class PaymentPlanManager {
         ? `${photographer.streetAddress}, ${photographer.city}, ${photographer.state} ${photographer.zipCode || ''}`
         : '';
 
-      // Create Stripe invoice using Stripe Connect Manager
+      // Create Stripe invoice - use platform Stripe for admin, Stripe Connect for photographers
       let stripeInvoice = null;
       let invoiceSuccessfullySent = false;
+      const isAdmin = this.isAdminAccount(photographer.email);
 
       if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 50) {
         try {
-          // Check if photographer has Stripe Connect account
-          if (!photographer.stripeConnectAccountId) {
-            throw new Error('Photographer must complete Stripe Connect onboarding before accepting payments');
+          let customer;
+          let stripeAccountId = null;
+
+          if (isAdmin) {
+            // Admin account - use regular platform Stripe
+            console.log(`💳 ADMIN ACCOUNT: Using platform Stripe for ${photographer.email}`);
+            
+            // Create customer on platform Stripe account
+            const existingCustomers = await stripe.customers.list({
+              email: session.email,
+              limit: 1
+            });
+
+            if (existingCustomers.data.length > 0) {
+              customer = existingCustomers.data[0];
+              console.log(`Found existing customer: ${customer.id}`);
+            } else {
+              customer = await stripe.customers.create({
+                email: session.email,
+                name: session.clientName,
+                metadata: {
+                  sessionId: session.id,
+                  paymentId: payment.id
+                }
+              });
+              console.log(`Created new customer: ${customer.id}`);
+            }
+          } else {
+            // Regular photographer - use Stripe Connect
+            console.log(`🔗 PHOTOGRAPHER ACCOUNT: Using Stripe Connect for ${photographer.email}`);
+            
+            if (!photographer.stripeConnectAccountId) {
+              throw new Error('Photographer must complete Stripe Connect onboarding before accepting payments');
+            }
+
+            // Verify Stripe Connect account is active
+            const StripeConnectManager = require('./stripe-connect');
+            const stripeConnectManager = new StripeConnectManager();
+
+            const accountStatus = await stripeConnectManager.getAccountStatus(photographer.stripeConnectAccountId);
+            if (!accountStatus.success || !accountStatus.canReceivePayments) {
+              throw new Error('Photographer Stripe account is not ready to receive payments');
+            }
+
+            // Create customer using Stripe Connect Manager
+            const customerResult = await stripeConnectManager.createCustomer(
+              session.email,
+              session.clientName,
+              photographer.stripeConnectAccountId
+            );
+
+            if (!customerResult.success) {
+              throw new Error('Failed to create customer on photographer account');
+            }
+
+            customer = customerResult.customer;
+            stripeAccountId = photographer.stripeConnectAccountId;
           }
 
-          // Verify Stripe Connect account is active
-          const StripeConnectManager = require('./stripe-connect');
-          const stripeConnectManager = new StripeConnectManager();
-
-          const accountStatus = await stripeConnectManager.getAccountStatus(photographer.stripeConnectAccountId);
-          if (!accountStatus.success || !accountStatus.canReceivePayments) {
-            throw new Error('Photographer Stripe account is not ready to receive payments');
-          }
-
-          // Create customer using Stripe Connect Manager
-          const customerResult = await stripeConnectManager.createCustomer(
-            session.email,
-            session.clientName,
-            photographer.stripeConnectAccountId
-          );
-
-          if (!customerResult.success) {
-            throw new Error('Failed to create customer on photographer account');
-          }
-
-          const customer = customerResult.customer;
-
-          // Create invoice using Stripe Connect Manager
+          // Create invoice - different logic for admin vs photographer
           const baseUrl = process.env.BASE_URL || 'https://photomanagementsystem.com';
           const invoiceCustomUrl = `${baseUrl}/invoice.html?payment=${payment.id}`;
-
-          const invoiceItems = [{
-            amount: parseFloat(payment.amount),
-            description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
-            metadata: {
-              sessionId: session.id,
-              paymentId: payment.id,
-              paymentNumber: payment.paymentNumber.toString()
-            }
-          }];
-
-          // Add optional tip if specified
           const tipAmount = parseFloat(payment.tipAmount || '0');
-          if (tipAmount > 0) {
-            invoiceItems.push({
-              amount: tipAmount,
-              description: 'Optional Tip',
-              metadata: { type: 'tip' }
-            });
-          }
+          let sentInvoice;
 
-          const invoiceResult = await stripeConnectManager.createInvoice(
-            customer.id,
-            invoiceItems,
-            photographer.stripeConnectAccountId,
-            {
-              sessionId: session.id,
-              paymentId: payment.id,
-              paymentNumber: payment.paymentNumber.toString(),
-              photographerName: businessName,
-              photographerEmail: businessEmail,
-              photographerPhone: businessPhone,
-              photographerAddress: businessAddress,
-              customInvoiceUrl: invoiceCustomUrl
-            },
-            {
-              daysUntilDue: 7,
-              description: `Payment ${payment.paymentNumber} for ${session.sessionType} session`,
-              footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
+          if (isAdmin) {
+            // ADMIN: Create invoice using regular platform Stripe
+            console.log(`📄 Creating platform Stripe invoice for admin account`);
+            
+            // Create invoice items
+            const invoiceItemPromises = [];
+            
+            // Main payment item
+            invoiceItemPromises.push(
+              stripe.invoiceItems.create({
+                customer: customer.id,
+                amount: Math.round(parseFloat(payment.amount) * 100),
+                currency: 'usd',
+                description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
+                metadata: {
+                  sessionId: session.id,
+                  paymentId: payment.id,
+                  paymentNumber: payment.paymentNumber.toString()
+                }
+              })
+            );
+
+            // Add optional tip if specified
+            if (tipAmount > 0) {
+              invoiceItemPromises.push(
+                stripe.invoiceItems.create({
+                  customer: customer.id,
+                  amount: Math.round(tipAmount * 100),
+                  currency: 'usd',
+                  description: 'Optional Tip',
+                  metadata: { type: 'tip' }
+                })
+              );
             }
-          );
 
-          if (!invoiceResult.success) {
-            throw new Error(`Failed to create invoice: ${invoiceResult.error}`);
+            await Promise.all(invoiceItemPromises);
+
+            // Create the invoice
+            sentInvoice = await stripe.invoices.create({
+              customer: customer.id,
+              auto_advance: true,
+              collection_method: 'send_invoice',
+              days_until_due: 7,
+              description: `Payment ${payment.paymentNumber} for ${session.sessionType} session`,
+              footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`,
+              metadata: {
+                sessionId: session.id,
+                paymentId: payment.id,
+                paymentNumber: payment.paymentNumber.toString(),
+                photographerName: businessName,
+                photographerEmail: businessEmail,
+                customInvoiceUrl: invoiceCustomUrl
+              }
+            });
+
+            // Finalize and send the invoice
+            sentInvoice = await stripe.invoices.finalizeInvoice(sentInvoice.id);
+            sentInvoice = await stripe.invoices.sendInvoice(sentInvoice.id);
+
+          } else {
+            // PHOTOGRAPHER: Create invoice using Stripe Connect
+            console.log(`📄 Creating Stripe Connect invoice for photographer account`);
+            
+            const StripeConnectManager = require('./stripe-connect');
+            const stripeConnectManager = new StripeConnectManager();
+
+            const invoiceItems = [{
+              amount: parseFloat(payment.amount),
+              description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
+              metadata: {
+                sessionId: session.id,
+                paymentId: payment.id,
+                paymentNumber: payment.paymentNumber.toString()
+              }
+            }];
+
+            if (tipAmount > 0) {
+              invoiceItems.push({
+                amount: tipAmount,
+                description: 'Optional Tip',
+                metadata: { type: 'tip' }
+              });
+            }
+
+            const invoiceResult = await stripeConnectManager.createInvoice(
+              customer.id,
+              invoiceItems,
+              stripeAccountId,
+              {
+                sessionId: session.id,
+                paymentId: payment.id,
+                paymentNumber: payment.paymentNumber.toString(),
+                photographerName: businessName,
+                photographerEmail: businessEmail,
+                photographerPhone: businessPhone,
+                photographerAddress: businessAddress,
+                customInvoiceUrl: invoiceCustomUrl
+              },
+              {
+                daysUntilDue: 7,
+                description: `Payment ${payment.paymentNumber} for ${session.sessionType} session`,
+                footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
+              }
+            );
+
+            if (!invoiceResult.success) {
+              throw new Error(`Failed to create invoice: ${invoiceResult.error}`);
+            }
+
+            sentInvoice = invoiceResult.invoice;
           }
-
-          const sentInvoice = invoiceResult.invoice;
 
           stripeInvoice = {
             id: sentInvoice.id,
