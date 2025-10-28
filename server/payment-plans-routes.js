@@ -91,4 +91,35 @@ router.get('/:sessionId', async (req, res) => {
     }
 });
 
+router.post('/test/trigger-automation', async (req, res) => {
+    try {
+        console.log('🧪 TEST: Manually triggering automated payment processing...');
+        
+        const userId = req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+        }
+        
+        const results = await paymentPlanManager.processAutomatedPayments();
+        
+        console.log('✅ TEST: Automated payment processing completed:', results);
+        
+        res.json({
+            success: true,
+            message: 'Automated payment processing completed',
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ TEST: Error in automated payment processing:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to process automated payments'
+        });
+    }
+});
+
 module.exports = router;
