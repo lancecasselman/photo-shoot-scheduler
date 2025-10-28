@@ -7295,6 +7295,18 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 updatedAt: row.updated_at,
                 stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
             }));
+            
+            // DEBUG: Log what's being returned for Lance session
+            const lanceSessionResponse = sessions.find(s => s.id === '364e23b7-4d4f-46dc-a41f-61292d6f88b3');
+            if (lanceSessionResponse) {
+                console.log('🔍 PAYMENT PLAN API RESPONSE for Lance session:', {
+                    id: lanceSessionResponse.id,
+                    clientName: lanceSessionResponse.clientName,
+                    hasPaymentPlan: lanceSessionResponse.hasPaymentPlan,
+                    paymentPlanId: lanceSessionResponse.paymentPlanId
+                });
+            }
+            
             console.log(`UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
 
