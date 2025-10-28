@@ -7248,6 +7248,18 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 WHERE user_id = '44735007'
                 ORDER BY created_at DESC
             `);
+            
+            // DEBUG: Log payment plan data from database
+            const lanceSession = lanceSessionsResult.rows.find(r => r.id === '364e23b7-4d4f-46dc-a41f-61292d6f88b3');
+            if (lanceSession) {
+                console.log('🔍 PAYMENT PLAN DEBUG - Lance session from DB:', {
+                    id: lanceSession.id,
+                    client_name: lanceSession.client_name,
+                    has_payment_plan: lanceSession.has_payment_plan,
+                    payment_plan_id: lanceSession.payment_plan_id
+                });
+            }
+            
             sessions = lanceSessionsResult.rows.map(row => ({
                 id: row.id,
                 clientName: row.client_name,
