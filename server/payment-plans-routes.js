@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PaymentPlanManager } = require('./paymentPlans');
+const PaymentPlanManager = require('./paymentPlans');
 
 const paymentPlanManager = new PaymentPlanManager();
 
