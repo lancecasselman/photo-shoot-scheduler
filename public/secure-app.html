@@ -7081,53 +7081,6 @@ ${agreement.content || 'No content available'}
             document.getElementById('previewContent').innerHTML = previewHtml;
             document.getElementById('paymentPreview').style.display = 'block';
         };
-        
-        window.createPaymentPlan = async function() {
-            const sessionId = document.getElementById('sessionId').value;
-            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
-            const frequency = document.getElementById('paymentFrequency').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const reminderDays = parseInt(document.getElementById('reminderDays').value);
-            
-            if (!totalAmount || !startDate || !endDate) {
-                showMessage('Please fill in all required fields', 'error');
-                return;
-            }
-            
-            try {
-                showMessage('Creating payment plan...', 'info');
-                
-                const response = await fetch('/api/payment-plans', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sessionId,
-                        totalAmount,
-                        frequency,
-                        startDate,
-                        endDate,
-                        reminderDays
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok && result.success) {
-                    showMessage(`Payment plan created successfully! ${result.plan.totalPayments} ${frequency} payments of $${result.plan.monthlyPayment} each.`, 'success');
-                    closePaymentPlanModal();
-                    loadSessions(); // Refresh sessions
-                } else {
-                    throw new Error(result.error || 'Failed to create payment plan');
-                }
-                
-            } catch (error) {
-                console.error('Error creating payment plan:', error);
-                showMessage('Error creating payment plan: ' + error.message, 'error');
-            }
-        };
 
         // Allow both past and future dates for historical session entries
         window.setMinDateTime = function() {
