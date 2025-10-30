@@ -10414,35 +10414,50 @@ END:VCALENDAR`;
         
         window.viewPaymentPlan = async function(sessionId) {
             try {
-                const response = await fetch(`/api/payment-plans/${sessionId}`);
+                const response = await fetch(`/api/payment-plans/${sessionId}/schedule`);
                 
                 if (!response.ok) {
                     throw new Error('Payment plan not found');
                 }
                 
-                const paymentPlan = await response.json();
-                const session = sessions.find(s => s.id === sessionId);
+                const data = await response.json();
+                const { plan, session, payments } = data;
                 
                 // Update modal title
                 document.getElementById('paymentPlanViewTitle').textContent = `Payment Plan - ${session?.clientName || 'Client'}`;
                 
-                // Generate payment plan view
+                // Format payment frequency for display
+                const frequencyDisplay = plan.paymentFrequency ? 
+                    plan.paymentFrequency.charAt(0).toUpperCase() + plan.paymentFrequency.slice(1).replace('-', '-') : 
+                    'Monthly';
+                
+                // Generate payment plan view with Send Email/SMS buttons at top
                 let contentHTML = `
+                    <div style="display: flex; gap: 12px; margin-bottom: 24px; justify-content: center;">
+                        <button class="btn btn-primary" onclick="sendPaymentScheduleEmail('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
+                            📧 Send Email
+                        </button>
+                        <button class="btn btn-primary" onclick="sendPaymentScheduleSMS('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
+                            📱 Send SMS
+                        </button>
+                    </div>
+                    
                     <div class="payment-plan-summary">
                         <h4> Plan Overview</h4>
-                        <p><strong>Total Amount:</strong> $${parseFloat(paymentPlan.totalAmount).toFixed(2)}</p>
-                        <p><strong>Monthly Payment:</strong> $${parseFloat(paymentPlan.monthlyPayment).toFixed(2)}</p>
-                        <p><strong>Payments Completed:</strong> ${paymentPlan.paymentsCompleted} of ${paymentPlan.totalPayments}</p>
-                        <p><strong>Amount Paid:</strong> $${parseFloat(paymentPlan.amountPaid).toFixed(2)}</p>
-                        <p><strong>Remaining Balance:</strong> $${parseFloat(paymentPlan.remainingBalance).toFixed(2)}</p>
-                        <p><strong>Status:</strong> <span class="payment-status ${paymentPlan.status}">${paymentPlan.status.toUpperCase()}</span></p>
+                        <p><strong>Total Amount:</strong> $${parseFloat(plan.totalAmount).toFixed(2)}</p>
+                        <p><strong>Payment Frequency:</strong> ${frequencyDisplay}</p>
+                        <p><strong>Monthly Payment:</strong> $${parseFloat(plan.monthlyPayment).toFixed(2)}</p>
+                        <p><strong>Payments Completed:</strong> ${plan.paymentsCompleted} of ${plan.totalPayments}</p>
+                        <p><strong>Amount Paid:</strong> $${parseFloat(plan.amountPaid).toFixed(2)}</p>
+                        <p><strong>Remaining Balance:</strong> $${parseFloat(plan.remainingBalance).toFixed(2)}</p>
+                        <p><strong>Status:</strong> <span class="payment-status ${plan.status}">${plan.status.toUpperCase()}</span></p>
                     </div>
                     
                     <div class="payment-schedule">
                         <h4>Payment Schedule</h4>
                 `;
                 
-                for (const payment of paymentPlan.payments) {
+                for (const payment of payments) {
                     const dueDate = new Date(payment.dueDate);
                     const isOverdue = dueDate < new Date() && payment.status === 'pending';
                     const statusClass = isOverdue ? 'overdue' : payment.status;
@@ -10479,6 +10494,67 @@ END:VCALENDAR`;
         
         function closePaymentPlanViewModal() {
             document.getElementById('paymentPlanViewModal').classList.remove('active');
+        }
+        
+        async function sendPaymentScheduleEmail(sessionId) {
+            try {
+                showMessage('Sending payment schedule via email...', 'info');
+                
+                const response = await fetch(`/api/payment-plans/${sessionId}/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ useMailto: false })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send email');
+                }
+                
+                const result = await response.json();
+                
+                if (result.method === 'mailto' && result.mailtoUrl) {
+                    // Open mailto link in new window
+                    window.open(result.mailtoUrl, '_blank');
+                    showMessage('Email client opened. Please send the email from your email application.', 'success');
+                } else if (result.method === 'smtp') {
+                    showMessage('Payment schedule sent successfully via email!', 'success');
+                } else {
+                    showMessage('Email prepared successfully!', 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error sending payment schedule email:', error);
+                showMessage('Failed to send payment schedule: ' + error.message, 'error');
+            }
+        }
+        
+        async function sendPaymentScheduleSMS(sessionId) {
+            try {
+                showMessage('Preparing payment schedule SMS...', 'info');
+                
+                const response = await fetch(`/api/payment-plans/${sessionId}/send-sms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to prepare SMS');
+                }
+                
+                const result = await response.json();
+                
+                if (result.smsUrl) {
+                    // Open SMS URL in new window (will open device's SMS app)
+                    window.open(result.smsUrl, '_blank');
+                    showMessage('SMS app opened. Please review and send the message.', 'success');
+                } else {
+                    showMessage('SMS prepared successfully!', 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error sending payment schedule SMS:', error);
+                showMessage('Failed to prepare payment schedule SMS: ' + error.message, 'error');
+            }
         }
         
         async function markPaymentPaid(paymentId) {

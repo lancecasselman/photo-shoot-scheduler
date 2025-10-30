@@ -113,10 +113,7 @@ router.get('/:sessionId/schedule', async (req, res) => {
             });
         }
         
-        res.json({
-            success: true,
-            schedule
-        });
+        res.json(schedule);
         
     } catch (error) {
         console.error('❌ Error fetching payment schedule:', error);
