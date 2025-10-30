@@ -6311,6 +6311,12 @@
     </div>
 
     <script>
+        // CRITICAL: Define renderSessions stub early to prevent "function not found" errors from script.js
+        // This stub will be replaced with the full implementation later in this script
+        window.renderSessions = function() {
+            console.log('renderSessions stub called - full implementation will replace this');
+        };
+        
         // Define contract functions early to prevent reference errors
         window.sendContractToClient = async function(contractId) {
             try {
