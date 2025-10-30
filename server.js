@@ -16791,6 +16791,11 @@ app.get('/download-success.html', (req, res) => {
 app.get('/secure-app.html', async (req, res) => {
     console.log('🔐 SECURE: Access attempt to secure app');
     
+    // Force no-cache to prevent Android/iOS webview caching issues
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     // Don't check session here - let the frontend JavaScript handle all security
     // This ensures the bulletproof client-side security system is always active
     res.sendFile(path.join(__dirname, 'public', 'secure-app.html'));
