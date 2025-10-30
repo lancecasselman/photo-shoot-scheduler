@@ -25,6 +25,21 @@ router.post('/', async (req, res) => {
             });
         }
         
+        // SECURITY: Verify session ownership before creating payment plan
+        // Prevents horizontal privilege escalation (users creating plans for other users' sessions)
+        const sessionOwnership = await paymentPlanManager.verifySessionOwnership(sessionId, userId);
+        if (!sessionOwnership.valid) {
+            console.warn('🚨 Unauthorized payment plan creation attempt:', {
+                userId,
+                sessionId,
+                reason: sessionOwnership.reason
+            });
+            return res.status(403).json({
+                success: false,
+                error: sessionOwnership.reason || 'Unauthorized: Session does not belong to this user'
+            });
+        }
+        
         const result = await paymentPlanManager.createPaymentPlan(
             sessionId,
             userId,
@@ -43,6 +58,7 @@ router.post('/', async (req, res) => {
         
         res.json({
             success: true,
+            planId: result.plan.id,
             plan: result.plan,
             payments: result.payments
         });
@@ -87,6 +103,43 @@ router.get('/:sessionId', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to fetch payment plan'
+        });
+    }
+});
+
+router.delete('/:planId', async (req, res) => {
+    try {
+        const { planId } = req.params;
+        console.log('🗑️ Payment plan deletion request:', planId);
+        
+        const userId = req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+        }
+        
+        const result = await paymentPlanManager.deletePaymentPlan(planId, userId);
+        
+        if (result.success) {
+            console.log('✅ Payment plan deleted successfully:', planId);
+            res.json({
+                success: true,
+                message: 'Payment plan deleted successfully'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: result.error || 'Failed to delete payment plan'
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error deleting payment plan:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to delete payment plan'
         });
     }
 });

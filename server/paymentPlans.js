@@ -22,6 +22,41 @@ class PaymentPlanManager {
       adminEmail.toLowerCase() === email.toLowerCase()
     );
   }
+
+  // Verify that a session belongs to the specified user (authorization check)
+  async verifySessionOwnership(sessionId, userId) {
+    try {
+      const [session] = await db.select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, sessionId));
+
+      if (!session) {
+        return {
+          valid: false,
+          reason: 'Session not found'
+        };
+      }
+
+      if (session.userId !== userId) {
+        return {
+          valid: false,
+          reason: 'Unauthorized: Session belongs to different user'
+        };
+      }
+
+      return {
+        valid: true,
+        session
+      };
+    } catch (error) {
+      console.error('Error verifying session ownership:', error);
+      return {
+        valid: false,
+        reason: 'Error verifying session ownership'
+      };
+    }
+  }
+
   // Create a payment plan for a session
   async createPaymentPlan(sessionId, userId, totalAmount, startDate, endDate, frequency = 'monthly', reminderDays = 3) {
     try {
@@ -204,12 +239,16 @@ class PaymentPlanManager {
     return Math.max(1, months); // Minimum 1 month
   }
 
-  // Get payment plan for a session
-  async getPaymentPlan(sessionId) {
+  // Get payment plan for a session with authorization check
+  async getPaymentPlan(sessionId, userId) {
     try {
+      // Verify ownership: select plan only if it belongs to the requesting user
       const [plan] = await db.select()
         .from(paymentPlans)
-        .where(eq(paymentPlans.sessionId, sessionId));
+        .where(and(
+          eq(paymentPlans.sessionId, sessionId),
+          eq(paymentPlans.userId, userId)
+        ));
 
       if (!plan) return null;
 
@@ -222,6 +261,68 @@ class PaymentPlanManager {
     } catch (error) {
       console.error('Error getting payment plan:', error);
       return null;
+    }
+  }
+
+  // Delete payment plan
+  async deletePaymentPlan(planId, userId) {
+    try {
+      // First, verify the plan exists and belongs to the user
+      const [plan] = await db.select()
+        .from(paymentPlans)
+        .where(and(
+          eq(paymentPlans.id, planId),
+          eq(paymentPlans.userId, userId)
+        ));
+
+      if (!plan) {
+        return {
+          success: false,
+          error: 'Payment plan not found or unauthorized'
+        };
+      }
+
+      const sessionId = plan.sessionId;
+
+      // Delete all payment records associated with this plan
+      await db.delete(paymentRecords)
+        .where(eq(paymentRecords.planId, planId));
+
+      console.log(`✅ Deleted payment records for plan ${planId}`);
+
+      // Delete the payment plan
+      await db.delete(paymentPlans)
+        .where(eq(paymentPlans.id, planId));
+
+      console.log(`✅ Deleted payment plan ${planId}`);
+
+      // Update the session to remove payment plan references
+      await db.update(photographySessions)
+        .set({
+          hasPaymentPlan: false,
+          paymentPlanId: null,
+          totalAmount: null,
+          paymentPlanStartDate: null,
+          paymentPlanEndDate: null,
+          monthlyPayment: null,
+          paymentsRemaining: 0,
+          nextPaymentDate: null
+        })
+        .where(eq(photographySessions.id, sessionId));
+
+      console.log(`✅ Updated session ${sessionId} to remove payment plan`);
+
+      return {
+        success: true,
+        sessionId
+      };
+
+    } catch (error) {
+      console.error('Error deleting payment plan:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to delete payment plan'
+      };
     }
   }
 
