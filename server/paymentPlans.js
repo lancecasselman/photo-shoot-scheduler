@@ -813,6 +813,265 @@ class PaymentPlanManager {
       await pool.end();
     }
   }
+
+  // Get formatted payment schedule with session and client details
+  async getPaymentSchedule(sessionId, userId) {
+    try {
+      // Get session details
+      const [session] = await db.select()
+        .from(photographySessions)
+        .where(and(
+          eq(photographySessions.id, sessionId),
+          eq(photographySessions.userId, userId)
+        ));
+
+      if (!session) {
+        throw new Error('Session not found');
+      }
+
+      // Get payment plan
+      const [plan] = await db.select()
+        .from(paymentPlans)
+        .where(eq(paymentPlans.sessionId, sessionId));
+
+      if (!plan) {
+        return null;
+      }
+
+      // Get all payment records
+      const payments = await db.select()
+        .from(paymentRecords)
+        .where(eq(paymentRecords.planId, plan.id))
+        .orderBy(paymentRecords.paymentNumber);
+
+      // Get photographer details
+      const [photographer] = await db.select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      const businessName = photographer?.businessName ||
+                          (photographer?.displayName ? `${photographer.displayName} Photography` : 'Photography Business');
+      const businessEmail = photographer?.email || '';
+      const businessPhone = photographer?.phoneNumber || '';
+
+      // Format the schedule
+      return {
+        plan: {
+          id: plan.id,
+          totalAmount: parseFloat(plan.totalAmount),
+          totalPayments: plan.totalPayments,
+          paymentsCompleted: plan.paymentsCompleted,
+          amountPaid: parseFloat(plan.amountPaid),
+          remainingBalance: parseFloat(plan.remainingBalance),
+          status: plan.status,
+          paymentFrequency: plan.paymentFrequency,
+          nextPaymentDate: plan.nextPaymentDate,
+          startDate: plan.startDate,
+          endDate: plan.endDate
+        },
+        session: {
+          id: session.id,
+          clientName: session.clientName,
+          clientEmail: session.email,
+          clientPhone: session.phoneNumber,
+          sessionType: session.sessionType,
+          sessionDate: session.dateTime
+        },
+        photographer: {
+          businessName,
+          email: businessEmail,
+          phone: businessPhone
+        },
+        payments: payments.map(p => ({
+          id: p.id,
+          paymentNumber: p.paymentNumber,
+          amount: parseFloat(p.amount),
+          dueDate: p.dueDate,
+          status: p.status,
+          paidDate: p.paidDate,
+          invoiceSent: p.invoiceSent,
+          reminderSent: p.reminderSent,
+          stripeInvoiceUrl: p.stripeInvoiceUrl
+        }))
+      };
+    } catch (error) {
+      console.error('Error getting payment schedule:', error);
+      throw error;
+    }
+  }
+
+  // Send payment schedule via email (using nodemailer or mailto:)
+  async sendPaymentScheduleEmail(sessionId, userId, useMailto = false) {
+    try {
+      const schedule = await this.getPaymentSchedule(sessionId, userId);
+      
+      if (!schedule) {
+        return { success: false, error: 'Payment schedule not found' };
+      }
+
+      // Format the schedule for email
+      const emailSubject = `Payment Schedule - ${schedule.session.sessionType} Session`;
+      
+      let scheduleText = `Hi ${schedule.session.clientName},\n\n`;
+      scheduleText += `Here is your payment schedule for your ${schedule.session.sessionType} session with ${schedule.photographer.businessName}.\n\n`;
+      scheduleText += `Total Amount: $${schedule.plan.totalAmount.toFixed(2)}\n`;
+      scheduleText += `Total Payments: ${schedule.plan.totalPayments}\n`;
+      scheduleText += `Payment Frequency: ${schedule.plan.paymentFrequency}\n`;
+      scheduleText += `Amount Paid: $${schedule.plan.amountPaid.toFixed(2)}\n`;
+      scheduleText += `Remaining Balance: $${schedule.plan.remainingBalance.toFixed(2)}\n\n`;
+      scheduleText += `Payment Schedule:\n`;
+      scheduleText += `${'='.repeat(60)}\n`;
+      
+      schedule.payments.forEach(payment => {
+        const dueDate = new Date(payment.dueDate).toLocaleDateString();
+        const statusText = payment.status === 'paid' 
+          ? '✓ PAID' 
+          : payment.status === 'overdue'
+          ? '⚠ OVERDUE'
+          : 'PENDING';
+        
+        scheduleText += `Payment ${payment.paymentNumber}:\t$${payment.amount.toFixed(2)}\tDue: ${dueDate}\t${statusText}\n`;
+      });
+      
+      scheduleText += `${'='.repeat(60)}\n\n`;
+      scheduleText += `If you have any questions about your payment schedule, please contact:\n`;
+      scheduleText += `${schedule.photographer.businessName}\n`;
+      scheduleText += `Email: ${schedule.photographer.email}\n`;
+      if (schedule.photographer.phone) {
+        scheduleText += `Phone: ${schedule.photographer.phone}\n`;
+      }
+      scheduleText += `\nThank you for choosing ${schedule.photographer.businessName}!`;
+
+      if (useMailto) {
+        // Generate mailto: URL
+        const mailtoUrl = `mailto:${schedule.session.clientEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(scheduleText)}`;
+        
+        return {
+          success: true,
+          method: 'mailto',
+          mailtoUrl,
+          message: 'Email client URL generated. Use this URL to open default email app.'
+        };
+      } else {
+        // Use nodemailer to send email
+        const nodemailer = require('nodemailer');
+        
+        // Configure nodemailer with SMTP settings (Gmail example)
+        // Users can configure their SMTP settings via environment variables
+        const transporter = nodemailer.createTransporter({
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+          auth: {
+            user: process.env.SMTP_USER || schedule.photographer.email,
+            pass: process.env.SMTP_PASSWORD || ''
+          }
+        });
+
+        // Check if SMTP is configured
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+          console.log('⚠ SMTP not configured - falling back to mailto: URL');
+          const mailtoUrl = `mailto:${schedule.session.clientEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(scheduleText)}`;
+          
+          return {
+            success: true,
+            method: 'mailto',
+            mailtoUrl,
+            message: 'SMTP not configured. Use mailto URL to open default email app.',
+            note: 'Configure SMTP_USER, SMTP_PASSWORD, SMTP_HOST to enable automatic email sending'
+          };
+        }
+
+        // Send email
+        await transporter.sendMail({
+          from: `"${schedule.photographer.businessName}" <${process.env.SMTP_USER}>`,
+          to: schedule.session.clientEmail,
+          subject: emailSubject,
+          text: scheduleText
+        });
+
+        console.log(`✅ Payment schedule email sent to ${schedule.session.clientEmail}`);
+        
+        return {
+          success: true,
+          method: 'smtp',
+          message: 'Payment schedule sent via email'
+        };
+      }
+    } catch (error) {
+      console.error('Error sending payment schedule email:', error);
+      
+      // If email fails, return mailto: URL as fallback
+      try {
+        const schedule = await this.getPaymentSchedule(sessionId, userId);
+        if (schedule) {
+          const emailSubject = `Payment Schedule - ${schedule.session.sessionType} Session`;
+          let scheduleText = `Payment schedule for ${schedule.session.clientName}\n\n`;
+          scheduleText += `Total: $${schedule.plan.totalAmount.toFixed(2)}, Remaining: $${schedule.plan.remainingBalance.toFixed(2)}`;
+          
+          const mailtoUrl = `mailto:${schedule.session.clientEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(scheduleText)}`;
+          
+          return {
+            success: true,
+            method: 'mailto',
+            mailtoUrl,
+            message: 'Email sending failed. Use mailto URL as fallback.',
+            error: error.message
+          };
+        }
+      } catch (fallbackError) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Generate SMS URL for payment schedule
+  async generatePaymentScheduleSMS(sessionId, userId) {
+    try {
+      const schedule = await this.getPaymentSchedule(sessionId, userId);
+      
+      if (!schedule) {
+        return { success: false, error: 'Payment schedule not found' };
+      }
+
+      // Format short SMS message
+      let smsText = `Hi ${schedule.session.clientName}! Your payment schedule for ${schedule.session.sessionType} with ${schedule.photographer.businessName}:\n\n`;
+      smsText += `Total: $${schedule.plan.totalAmount.toFixed(2)}\n`;
+      smsText += `Paid: $${schedule.plan.amountPaid.toFixed(2)}\n`;
+      smsText += `Remaining: $${schedule.plan.remainingBalance.toFixed(2)}\n\n`;
+      
+      const pendingPayments = schedule.payments.filter(p => p.status === 'pending');
+      if (pendingPayments.length > 0) {
+        smsText += `Upcoming payments:\n`;
+        pendingPayments.slice(0, 3).forEach(payment => {
+          const dueDate = new Date(payment.dueDate).toLocaleDateString();
+          smsText += `${payment.paymentNumber}. $${payment.amount.toFixed(2)} - Due ${dueDate}\n`;
+        });
+      }
+      
+      smsText += `\nQuestions? Contact ${schedule.photographer.email}`;
+
+      // Clean phone number
+      const cleanPhone = schedule.session.clientPhone.replace(/\D/g, '');
+      
+      // Generate SMS URL
+      const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(smsText)}`;
+
+      console.log(`📱 Payment schedule SMS URL generated for ${schedule.session.clientName}`);
+      
+      return {
+        success: true,
+        smsUrl,
+        message: 'SMS URL generated. This will open the default SMS app.',
+        note: 'Without a third-party SMS service, this opens the device SMS app with pre-filled text'
+      };
+    } catch (error) {
+      console.error('Error generating payment schedule SMS:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 module.exports = PaymentPlanManager;

@@ -91,6 +91,95 @@ router.get('/:sessionId', async (req, res) => {
     }
 });
 
+// Get formatted payment schedule with session details
+router.get('/:sessionId/schedule', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const userId = req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+        }
+        
+        const schedule = await paymentPlanManager.getPaymentSchedule(sessionId, userId);
+        
+        if (!schedule) {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment schedule not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            schedule
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching payment schedule:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to fetch payment schedule'
+        });
+    }
+});
+
+// Send payment schedule via email (using mailto: or nodemailer)
+router.post('/:sessionId/send-email', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { useMailto = false } = req.body;
+        
+        const userId = req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+        }
+        
+        const result = await paymentPlanManager.sendPaymentScheduleEmail(sessionId, userId, useMailto);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Error sending payment schedule email:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to send payment schedule email'
+        });
+    }
+});
+
+// Generate SMS URL for payment schedule
+router.post('/:sessionId/send-sms', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        const userId = req.session?.user?.uid;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated'
+            });
+        }
+        
+        const result = await paymentPlanManager.generatePaymentScheduleSMS(sessionId, userId);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Error generating payment schedule SMS:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to generate payment schedule SMS'
+        });
+    }
+});
+
 router.post('/test/trigger-automation', async (req, res) => {
     try {
         console.log('🧪 TEST: Manually triggering automated payment processing...');
