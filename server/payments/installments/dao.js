@@ -3,8 +3,7 @@
  * Manages Firestore CRUD operations
  */
 
-import { Firestore } from '@google-cloud/firestore';
-import { InstallmentPlan, InstallmentPayment, WebhookEvent } from './schema';
+const { Firestore } = require('@google-cloud/firestore');
 
 const firestore = new Firestore({
   projectId: process.env.FIREBASE_PROJECT_ID,
@@ -21,54 +20,51 @@ const WEBHOOKS_COLLECTION = 'installmentWebhooks';
 /**
  * Create a new installment plan
  */
-export async function createPlan(plan: InstallmentPlan): Promise<void> {
+async function createPlan(plan) {
   await firestore.collection(PLANS_COLLECTION).doc(plan.id).set(plan);
 }
 
 /**
  * Get an installment plan by ID
  */
-export async function getPlan(planId: string): Promise<InstallmentPlan | null> {
+async function getPlan(planId) {
   const doc = await firestore.collection(PLANS_COLLECTION).doc(planId).get();
   
   if (!doc.exists) {
     return null;
   }
   
-  return doc.data() as InstallmentPlan;
+  return doc.data();
 }
 
 /**
  * Get plans by session ID
  */
-export async function getPlansBySession(sessionId: string): Promise<InstallmentPlan[]> {
+async function getPlansBySession(sessionId) {
   const snapshot = await firestore
     .collection(PLANS_COLLECTION)
     .where('sessionId', '==', sessionId)
     .get();
   
-  return snapshot.docs.map(doc => doc.data() as InstallmentPlan);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 /**
  * Get plans by photographer ID
  */
-export async function getPlansByPhotographer(photographerId: string): Promise<InstallmentPlan[]> {
+async function getPlansByPhotographer(photographerId) {
   const snapshot = await firestore
     .collection(PLANS_COLLECTION)
     .where('photographerId', '==', photographerId)
     .get();
   
-  return snapshot.docs.map(doc => doc.data() as InstallmentPlan);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 /**
  * Update a plan
  */
-export async function updatePlan(
-  planId: string,
-  updates: Partial<InstallmentPlan>
-): Promise<void> {
+async function updatePlan(planId, updates) {
   await firestore.collection(PLANS_COLLECTION).doc(planId).update({
     ...updates,
     updatedAt: new Date().toISOString()
@@ -78,10 +74,7 @@ export async function updatePlan(
 /**
  * Cancel a plan
  */
-export async function cancelPlan(
-  planId: string,
-  reason?: string
-): Promise<void> {
+async function cancelPlan(planId, reason) {
   await firestore.collection(PLANS_COLLECTION).doc(planId).update({
     status: 'canceled',
     canceledAt: new Date().toISOString(),
@@ -93,27 +86,27 @@ export async function cancelPlan(
 /**
  * Create a payment record
  */
-export async function createPayment(payment: InstallmentPayment): Promise<void> {
+async function createPayment(payment) {
   await firestore.collection(PAYMENTS_COLLECTION).doc(payment.id).set(payment);
 }
 
 /**
  * Get a payment by ID
  */
-export async function getPayment(paymentId: string): Promise<InstallmentPayment | null> {
+async function getPayment(paymentId) {
   const doc = await firestore.collection(PAYMENTS_COLLECTION).doc(paymentId).get();
   
   if (!doc.exists) {
     return null;
   }
   
-  return doc.data() as InstallmentPayment;
+  return doc.data();
 }
 
 /**
  * Get payment by Stripe invoice ID
  */
-export async function getPaymentByInvoiceId(invoiceId: string): Promise<InstallmentPayment | null> {
+async function getPaymentByInvoiceId(invoiceId) {
   const snapshot = await firestore
     .collection(PAYMENTS_COLLECTION)
     .where('stripeInvoiceId', '==', invoiceId)
@@ -124,29 +117,26 @@ export async function getPaymentByInvoiceId(invoiceId: string): Promise<Installm
     return null;
   }
   
-  return snapshot.docs[0].data() as InstallmentPayment;
+  return snapshot.docs[0].data();
 }
 
 /**
  * Get all payments for a plan
  */
-export async function getPaymentsByPlan(planId: string): Promise<InstallmentPayment[]> {
+async function getPaymentsByPlan(planId) {
   const snapshot = await firestore
     .collection(PAYMENTS_COLLECTION)
     .where('planId', '==', planId)
     .orderBy('paymentNumber', 'asc')
     .get();
   
-  return snapshot.docs.map(doc => doc.data() as InstallmentPayment);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 /**
  * Update a payment
  */
-export async function updatePayment(
-  paymentId: string,
-  updates: Partial<InstallmentPayment>
-): Promise<void> {
+async function updatePayment(paymentId, updates) {
   await firestore.collection(PAYMENTS_COLLECTION).doc(paymentId).update({
     ...updates,
     updatedAt: new Date().toISOString()
@@ -156,11 +146,7 @@ export async function updatePayment(
 /**
  * Mark payment as paid
  */
-export async function markPaymentPaid(
-  paymentId: string,
-  paymentIntentId: string,
-  chargeId: string
-): Promise<void> {
+async function markPaymentPaid(paymentId, paymentIntentId, chargeId) {
   await updatePayment(paymentId, {
     status: 'paid',
     paidAt: new Date().toISOString(),
@@ -172,11 +158,7 @@ export async function markPaymentPaid(
 /**
  * Mark payment as failed
  */
-export async function markPaymentFailed(
-  paymentId: string,
-  failureReason: string,
-  retryAttempts: number
-): Promise<void> {
+async function markPaymentFailed(paymentId, failureReason, retryAttempts) {
   await updatePayment(paymentId, {
     status: 'failed',
     failureReason,
@@ -187,14 +169,14 @@ export async function markPaymentFailed(
 /**
  * Store webhook event
  */
-export async function storeWebhookEvent(event: WebhookEvent): Promise<void> {
+async function storeWebhookEvent(event) {
   await firestore.collection(WEBHOOKS_COLLECTION).doc(event.id).set(event);
 }
 
 /**
  * Mark webhook as processed
  */
-export async function markWebhookProcessed(eventId: string, error?: string): Promise<void> {
+async function markWebhookProcessed(eventId, error) {
   await firestore.collection(WEBHOOKS_COLLECTION).doc(eventId).update({
     processed: true,
     processedAt: new Date().toISOString(),
@@ -202,4 +184,21 @@ export async function markWebhookProcessed(eventId: string, error?: string): Pro
   });
 }
 
-export { firestore };
+module.exports = {
+  createPlan,
+  getPlan,
+  getPlansBySession,
+  getPlansByPhotographer,
+  updatePlan,
+  cancelPlan,
+  createPayment,
+  getPayment,
+  getPaymentByInvoiceId,
+  getPaymentsByPlan,
+  updatePayment,
+  markPaymentPaid,
+  markPaymentFailed,
+  storeWebhookEvent,
+  markWebhookProcessed,
+  firestore
+};

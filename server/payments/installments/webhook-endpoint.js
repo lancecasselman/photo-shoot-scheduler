@@ -3,8 +3,8 @@
  * Handles Stripe webhook events
  */
 
-import express from 'express';
-import { verifyWebhookSignature, processWebhookEvent } from './index';
+const express = require('express');
+const { verifyWebhookSignature, processWebhookEvent } = require('./index');
 
 const router = express.Router();
 
@@ -28,17 +28,14 @@ router.post('/installments', express.raw({ type: 'application/json' }), async (r
   }
 
   try {
-    // Verify webhook signature
     const event = verifyWebhookSignature(req.body, signature, webhookSecret);
     
     console.log('✅ INSTALLMENT WEBHOOK: Verified event:', event.type);
 
-    // Process event asynchronously
     processWebhookEvent(event).catch(error => {
       console.error('❌ INSTALLMENT WEBHOOK: Processing error:', error);
     });
 
-    // Respond immediately to Stripe
     res.json({ received: true });
   } catch (error) {
     console.error('❌ INSTALLMENT WEBHOOK: Signature verification failed:', error);
@@ -46,4 +43,4 @@ router.post('/installments', express.raw({ type: 'application/json' }), async (r
   }
 });
 
-export default router;
+module.exports = router;

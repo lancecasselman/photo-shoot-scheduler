@@ -3,24 +3,21 @@
  * Handles Subscription Schedules with Connect transfers
  */
 
-import Stripe from 'stripe';
-import { InstallmentPreview, CreateInstallmentPlanRequest } from './schema';
-import { calculatePaymentSchedule, dollarsToCents } from './math';
+const Stripe = require('stripe');
+const { v4: uuidv4 } = require('uuid');
+const { calculatePaymentSchedule, dollarsToCents } = require('./math');
+const { createPayment } = require('./dao');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-08-27.basil'
+  apiVersion: '2024-11-20.acacia'
 });
 
-const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0'); // Default 0% (no platform fee)
+const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
 
 /**
  * Create or get a Stripe customer
  */
-export async function createOrGetCustomer(
-  email: string,
-  name: string
-): Promise<string> {
-  // Search for existing customer
+async function createOrGetCustomer(email, name) {
   const existingCustomers = await stripe.customers.list({
     email,
     limit: 1
@@ -30,7 +27,6 @@ export async function createOrGetCustomer(
     return existingCustomers.data[0].id;
   }
 
-  // Create new customer
   const customer = await stripe.customers.create({
     email,
     name,
@@ -45,10 +41,7 @@ export async function createOrGetCustomer(
 /**
  * Create a Subscription Schedule with Connect transfers
  */
-export async function createSubscriptionSchedule(
-  request: CreateInstallmentPlanRequest,
-  preview: InstallmentPreview
-): Promise<{ scheduleId: string; customerId: string }> {
+async function createSubscriptionSchedule(request, preview, planId) {
   const { 
     customerEmail, 
     customerName, 
@@ -56,17 +49,39 @@ export async function createSubscriptionSchedule(
     sessionId 
   } = request;
 
-  // Create or get customer
   const customerId = await createOrGetCustomer(customerEmail, customerName);
 
-  // Build phases for subscription schedule
-  const phases: any[] = [];
+  const paymentRecordIds = [];
+  
+  for (let i = 0; i < preview.paymentSchedule.length; i++) {
+    const paymentSchedule = preview.paymentSchedule[i];
+    const paymentRecordId = uuidv4();
+    
+    const paymentRecord = {
+      id: paymentRecordId,
+      planId,
+      sessionId,
+      photographerId: request.photographerId,
+      paymentNumber: paymentSchedule.paymentNumber,
+      amount: paymentSchedule.amount,
+      platformFee: paymentSchedule.platformFee,
+      photographerPayout: paymentSchedule.photographerPayout,
+      dueDate: paymentSchedule.dueDate,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    await createPayment(paymentRecord);
+    paymentRecordIds.push(paymentRecordId);
+  }
+
+  const phases = [];
   
   for (let i = 0; i < preview.paymentSchedule.length; i++) {
     const payment = preview.paymentSchedule[i];
-    const isLastPayment = i === preview.paymentSchedule.length - 1;
+    const paymentRecordId = paymentRecordIds[i];
     
-    // Each phase is one billing period
     phases.push({
       items: [{
         price_data: {
@@ -75,7 +90,8 @@ export async function createSubscriptionSchedule(
             name: `Photography Session Payment ${payment.paymentNumber}/${preview.numberOfPayments}`,
             metadata: {
               session_id: sessionId,
-              payment_number: payment.paymentNumber.toString()
+              payment_number: payment.paymentNumber.toString(),
+              payment_record_id: paymentRecordId
             }
           },
           unit_amount: payment.amount,
@@ -86,23 +102,20 @@ export async function createSubscriptionSchedule(
         },
         quantity: 1
       }],
-      iterations: 1, // Only charge once per phase
+      iterations: 1,
       metadata: {
         session_id: sessionId,
         payment_number: payment.paymentNumber.toString(),
-        photographer_id: request.photographerId
+        photographer_id: request.photographerId,
+        payment_record_id: paymentRecordId
       },
-      // Transfer to photographer's connected account minus platform fee
       transfer_data: {
-        destination: stripeConnectedAccountId,
-        amount_percent: ((payment.photographerPayout / payment.amount) * 100)
+        destination: stripeConnectedAccountId
       },
-      // Platform keeps the fee automatically
-      application_fee_percent: (payment.platformFee / payment.amount) * 100
+      application_fee_amount: payment.platformFee
     });
   }
 
-  // Create subscription schedule
   const schedule = await stripe.subscriptionSchedules.create({
     customer: customerId,
     start_date: Math.floor(new Date(preview.startDate).getTime() / 1000),
@@ -112,23 +125,22 @@ export async function createSubscriptionSchedule(
       session_id: sessionId,
       photographer_id: request.photographerId,
       total_amount: preview.totalAmount.toString(),
-      number_of_payments: preview.numberOfPayments.toString()
+      number_of_payments: preview.numberOfPayments.toString(),
+      plan_id: planId
     }
   });
 
   return {
     scheduleId: schedule.id,
-    customerId
+    customerId,
+    paymentRecordIds
   };
 }
 
 /**
  * Cancel a subscription schedule
  */
-export async function cancelSubscriptionSchedule(
-  scheduleId: string,
-  reason?: string
-): Promise<void> {
+async function cancelSubscriptionSchedule(scheduleId, reason) {
   await stripe.subscriptionSchedules.cancel(scheduleId, {
     invoice_now: false,
     prorate: false
@@ -138,21 +150,22 @@ export async function cancelSubscriptionSchedule(
 /**
  * Get subscription schedule details
  */
-export async function getSubscriptionSchedule(
-  scheduleId: string
-): Promise<Stripe.SubscriptionSchedule> {
+async function getSubscriptionSchedule(scheduleId) {
   return await stripe.subscriptionSchedules.retrieve(scheduleId);
 }
 
 /**
  * Verify webhook signature
  */
-export function verifyWebhookSignature(
-  payload: string | Buffer,
-  signature: string,
-  secret: string
-): Stripe.Event {
+function verifyWebhookSignature(payload, signature, secret) {
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }
 
-export { stripe };
+module.exports = {
+  createOrGetCustomer,
+  createSubscriptionSchedule,
+  cancelSubscriptionSchedule,
+  getSubscriptionSchedule,
+  verifyWebhookSignature,
+  stripe
+};

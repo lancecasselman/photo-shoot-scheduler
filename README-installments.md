@@ -30,8 +30,8 @@ Add to your `.env` file:
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Platform fee configuration (in basis points: 500 = 5%)
-PLATFORM_FEE_BPS=500
+# Platform fee configuration (set to 0 = no platform fees)
+PLATFORM_FEE_BPS=0
 
 # Firebase credentials (already configured)
 FIREBASE_PROJECT_ID=your-project-id
@@ -188,8 +188,10 @@ Remaining Amount Transferred to Photographer's Connect Account
 
 ## Platform Fee Calculation
 
-- Default: 5% (500 basis points)
-- Example: $1000 total → $50 platform fee → $950 to photographer
+- **Current Setting: 0% (no platform fees)**
+- All payment amounts go directly to the photographer via Stripe Connect
+- Platform fee can be configured via PLATFORM_FEE_BPS environment variable (in basis points: 500 = 5%)
+- Example if enabled: $1000 total → $50 platform fee → $950 to photographer
 - Per payment: Fee is split equally across all payments
 - Last payment: Adjusted for rounding to ensure exact total
 

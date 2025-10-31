@@ -3,18 +3,16 @@
  * Calculates payment schedules, amounts, and fees
  */
 
-import { InstallmentPreview } from './schema';
-
 /**
  * Calculate payment schedule for bi-weekly or monthly installments
  */
-export function calculatePaymentSchedule(
-  totalAmount: number,
-  cadence: 'biweekly' | 'monthly',
-  startDate: string,
-  numberOfPayments: number,
-  platformFeeBps: number
-): InstallmentPreview {
+function calculatePaymentSchedule(
+  totalAmount,
+  cadence,
+  startDate,
+  numberOfPayments,
+  platformFeeBps
+) {
   if (totalAmount <= 0) {
     throw new Error('Total amount must be positive');
   }
@@ -32,29 +30,18 @@ export function calculatePaymentSchedule(
     throw new Error('Invalid start date');
   }
 
-  // Calculate total platform fee
   const totalPlatformFee = Math.round((totalAmount * platformFeeBps) / 10000);
   
-  // Calculate base payment amount per installment (in cents)
   const basePaymentAmount = Math.floor(totalAmount / numberOfPayments);
   
-  // Calculate what the last payment should be to reach exact total
   const sumOfBasePayments = basePaymentAmount * (numberOfPayments - 1);
   const lastPaymentAmount = totalAmount - sumOfBasePayments;
   
-  // Calculate platform fee per payment
   const basePlatformFee = Math.floor(totalPlatformFee / numberOfPayments);
   const sumOfBaseFees = basePlatformFee * (numberOfPayments - 1);
   const lastPlatformFee = totalPlatformFee - sumOfBaseFees;
 
-  // Generate payment schedule
-  const paymentSchedule: Array<{
-    paymentNumber: number;
-    dueDate: string;
-    amount: number;
-    platformFee: number;
-    photographerPayout: number;
-  }> = [];
+  const paymentSchedule = [];
   let currentDate = new Date(start);
 
   for (let i = 1; i <= numberOfPayments; i++) {
@@ -71,7 +58,6 @@ export function calculatePaymentSchedule(
       photographerPayout
     });
 
-    // Calculate next payment date
     if (i < numberOfPayments) {
       if (cadence === 'biweekly') {
         currentDate = addDays(currentDate, 14);
@@ -81,7 +67,6 @@ export function calculatePaymentSchedule(
     }
   }
 
-  // Verify totals
   const calculatedTotal = paymentSchedule.reduce((sum, p) => sum + p.amount, 0);
   const calculatedFees = paymentSchedule.reduce((sum, p) => sum + p.platformFee, 0);
   
@@ -113,7 +98,7 @@ export function calculatePaymentSchedule(
 /**
  * Add days to a date
  */
-function addDays(date: Date, days: number): Date {
+function addDays(date, days) {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
@@ -122,18 +107,15 @@ function addDays(date: Date, days: number): Date {
 /**
  * Add months to a date, preserving day of month when possible
  */
-function addMonths(date: Date, months: number): Date {
+function addMonths(date, months) {
   const result = new Date(date);
   const desiredDay = date.getDate();
   
-  // Move to first of month to avoid overflow issues
   result.setDate(1);
   result.setMonth(result.getMonth() + months);
   
-  // Get last day of target month
   const lastDayOfMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
   
-  // Set to desired day or last day of month, whichever is smaller
   result.setDate(Math.min(desiredDay, lastDayOfMonth));
   
   return result;
@@ -142,13 +124,19 @@ function addMonths(date: Date, months: number): Date {
 /**
  * Convert dollars to cents
  */
-export function dollarsToCents(dollars: number): number {
+function dollarsToCents(dollars) {
   return Math.round(dollars * 100);
 }
 
 /**
  * Convert cents to dollars
  */
-export function centsToDollars(cents: number): number {
+function centsToDollars(cents) {
   return cents / 100;
 }
+
+module.exports = {
+  calculatePaymentSchedule,
+  dollarsToCents,
+  centsToDollars
+};

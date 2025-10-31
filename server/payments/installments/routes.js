@@ -3,27 +3,22 @@
  * Handles preview, create, get, and cancel operations
  */
 
-import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { calculatePaymentSchedule } from './math';
-import { createSubscriptionSchedule, cancelSubscriptionSchedule } from './stripe';
-import { 
+const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const { calculatePaymentSchedule } = require('./math');
+const { createSubscriptionSchedule, cancelSubscriptionSchedule } = require('./stripe');
+const { 
   createPlan, 
   createPayment, 
   getPlan, 
   getPaymentsByPlan,
-  cancelPlan as daoCancelPlan,
+  cancelPlan: daoCancelPlan,
   getPlansBySession,
   getPlansByPhotographer
-} from './dao';
-import { 
-  CreateInstallmentPlanRequest, 
-  InstallmentPlan, 
-  InstallmentPayment 
-} from './schema';
+} = require('./dao');
 
 const router = express.Router();
-const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0'); // 0 = no platform fee
+const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
 
 /**
  * POST /api/installments/preview
@@ -33,7 +28,6 @@ router.post('/preview', async (req, res) => {
   try {
     const { totalAmount, cadence, startDate, numberOfPayments } = req.body;
 
-    // Validate inputs
     if (!totalAmount || !cadence || !startDate || !numberOfPayments) {
       return res.status(400).json({
         error: 'Missing required fields: totalAmount, cadence, startDate, numberOfPayments'
@@ -46,7 +40,6 @@ router.post('/preview', async (req, res) => {
       });
     }
 
-    // Calculate preview
     const preview = calculatePaymentSchedule(
       totalAmount,
       cadence,
@@ -70,9 +63,8 @@ router.post('/preview', async (req, res) => {
  */
 router.post('/create', async (req, res) => {
   try {
-    const request: CreateInstallmentPlanRequest = req.body;
+    const request = req.body;
 
-    // Validate required fields
     const required = [
       'sessionId',
       'photographerId',
@@ -86,12 +78,11 @@ router.post('/create', async (req, res) => {
     ];
 
     for (const field of required) {
-      if (!request[field as keyof CreateInstallmentPlanRequest]) {
+      if (!request[field]) {
         return res.status(400).json({ error: `Missing required field: ${field}` });
       }
     }
 
-    // Calculate payment schedule
     const preview = calculatePaymentSchedule(
       request.totalAmount,
       request.cadence,
@@ -100,14 +91,10 @@ router.post('/create', async (req, res) => {
       PLATFORM_FEE_BPS
     );
 
-    // Create Stripe subscription schedule
-    const { scheduleId, customerId } = await createSubscriptionSchedule(request, preview);
-
-    // Create plan record
     const planId = uuidv4();
     const now = new Date().toISOString();
 
-    const plan: InstallmentPlan = {
+    const plan = {
       id: planId,
       sessionId: request.sessionId,
       photographerId: request.photographerId,
@@ -120,8 +107,6 @@ router.post('/create', async (req, res) => {
       startDate: preview.startDate,
       endDate: preview.endDate,
       numberOfPayments: preview.numberOfPayments,
-      stripeCustomerId: customerId,
-      stripeSubscriptionScheduleId: scheduleId,
       stripeConnectedAccountId: request.stripeConnectedAccountId,
       status: 'active',
       createdAt: now,
@@ -130,25 +115,16 @@ router.post('/create', async (req, res) => {
 
     await createPlan(plan);
 
-    // Create payment records
-    for (const payment of preview.paymentSchedule) {
-      const paymentRecord: InstallmentPayment = {
-        id: uuidv4(),
-        planId,
-        paymentNumber: payment.paymentNumber,
-        amount: payment.amount,
-        platformFee: payment.platformFee,
-        photographerPayout: payment.photographerPayout,
-        stripeInvoiceId: '', // Will be updated by webhooks
-        dueDate: payment.dueDate,
-        status: 'pending',
-        retryAttempts: 0,
-        createdAt: now,
-        updatedAt: now
-      };
+    const { scheduleId, customerId, paymentRecordIds } = await createSubscriptionSchedule(request, preview, planId);
 
-      await createPayment(paymentRecord);
-    }
+    plan.stripeCustomerId = customerId;
+    plan.stripeSubscriptionScheduleId = scheduleId;
+
+    const { updatePlan } = require('./dao');
+    await updatePlan(planId, {
+      stripeCustomerId: customerId,
+      stripeSubscriptionScheduleId: scheduleId
+    });
 
     console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments`);
 
@@ -246,10 +222,8 @@ router.post('/:planId/cancel', async (req, res) => {
       return res.status(400).json({ error: 'Plan is already canceled' });
     }
 
-    // Cancel Stripe subscription schedule
     await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, reason);
 
-    // Mark plan as canceled
     await daoCancelPlan(planId, reason);
 
     console.log(`✅ INSTALLMENT: Canceled plan ${planId}`);
@@ -266,4 +240,4 @@ router.post('/:planId/cancel', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
