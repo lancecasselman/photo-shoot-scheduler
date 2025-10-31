@@ -6894,35 +6894,22 @@ ${agreement.content || 'No content available'}
             const totalAmountInput = document.querySelector('#paymentPlanModal input[readonly]');
             const totalAmount = parseFloat(totalAmountInput ? totalAmountInput.value : 250);
             
-            const startDateInput = document.getElementById('startDate');
-            const endDateInput = document.getElementById('endDate');
-            const numPaymentsInput = document.getElementById('numPayments');
-            const frequencySelect = document.getElementById('paymentFrequency');
-            const scheduleMethod = document.getElementById('scheduleMethod')?.value || 'dateRange';
-            const calculationDiv = document.getElementById('paymentCalculation');
-            const resultsDiv = document.getElementById('calculationResults');
+            // CRITICAL FIX: Scope all element selections to the modal to avoid ID conflicts
+            const modal = document.getElementById('paymentPlanModal');
+            const startDateInput = modal.querySelector('#startDate');
+            const endDateInput = modal.querySelector('#endDate');
+            const numPaymentsInput = modal.querySelector('#numPayments');
+            const frequencySelect = modal.querySelector('#paymentFrequency');
+            const scheduleMethod = modal.querySelector('#scheduleMethod')?.value || 'dateRange';
+            const calculationDiv = modal.querySelector('#paymentCalculation');
+            const resultsDiv = modal.querySelector('#calculationResults');
             
-            console.log('🔍 DOM Input Elements:', {
-                startDateInput: startDateInput,
-                endDateInput: endDateInput,
-                startDateInputExists: !!startDateInput,
-                endDateInputExists: !!endDateInput
-            });
-            
-            console.log('🔍 Input values:', {
+            console.log('🔍 Input values (now from modal scope):', {
                 startDateValue: startDateInput?.value,
                 endDateValue: endDateInput?.value,
                 scheduleMethod,
                 frequency: frequencySelect?.value,
                 totalAmount
-            });
-            
-            // Try to get the actual values from the DOM directly
-            const startFromDOM = document.querySelector('#paymentPlanModal #startDate')?.value;
-            const endFromDOM = document.querySelector('#paymentPlanModal #endDate')?.value;
-            console.log('🔍 Values directly from DOM:', {
-                startFromDOM,
-                endFromDOM
             });
             
             if (!startDateInput || !frequencySelect || !calculationDiv || !resultsDiv) {
