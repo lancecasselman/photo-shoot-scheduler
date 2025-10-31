@@ -6761,6 +6761,17 @@ ${agreement.content || 'No content available'}
                         </div>
                         
                         <div style="margin-bottom:20px;">
+                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">💳 Billing Type</label>
+                            <select id="billingType" onchange="toggleBillingTypeInfo()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                                <option value="manual">📧 Manual Invoicing (You send each invoice)</option>
+                                <option value="automated">⚡ Automated Billing (Stripe auto-charges)</option>
+                            </select>
+                            <div id="billingTypeInfo" style="margin-top:8px;padding:10px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:6px;font-size:0.9em;color:#fff;">
+                                <strong>Manual:</strong> You'll send invoices manually for each payment. Client pays when ready.
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom:20px;">
                             <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Payment Frequency</label>
                             <select id="paymentFrequency" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
                                 <option value="weekly">Weekly</option>
@@ -6965,8 +6976,25 @@ ${agreement.content || 'No content available'}
         };
         
         // Create payment plan function with Stripe integration
+        window.toggleBillingTypeInfo = function() {
+            const billingType = document.getElementById('billingType')?.value;
+            const infoDiv = document.getElementById('billingTypeInfo');
+            if (!infoDiv) return;
+            
+            if (billingType === 'automated') {
+                infoDiv.innerHTML = '<strong>⚡ Automated:</strong> Stripe will automatically charge the customer on each payment date. Requires payment method setup.';
+                infoDiv.style.background = 'rgba(33,150,243,0.1)';
+                infoDiv.style.borderColor = 'rgba(33,150,243,0.3)';
+            } else {
+                infoDiv.innerHTML = '<strong>📧 Manual:</strong> You\'ll send invoices manually for each payment. Client pays when ready.';
+                infoDiv.style.background = 'rgba(76,175,80,0.1)';
+                infoDiv.style.borderColor = 'rgba(76,175,80,0.3)';
+            }
+        };
+
         window.createPaymentPlan = async function(sessionId) {
             try {
+                const billingType = document.getElementById('billingType')?.value || 'manual';
                 const frequency = document.getElementById('paymentFrequency').value;
                 const startDate = document.getElementById('startDate').value;
                 const endDate = document.getElementById('endDate').value;
@@ -6979,6 +7007,11 @@ ${agreement.content || 'No content available'}
                 const session = sessions.find(s => s.id === sessionId);
                 if (!session) {
                     throw new Error('Session not found');
+                }
+                
+                if (billingType === 'automated') {
+                    createAutomatedPaymentPlan(sessionId, session, frequency, startDate, endDate);
+                    return;
                 }
                 
                 showMessage('Creating payment plan...', 'info');
@@ -7025,6 +7058,68 @@ ${agreement.content || 'No content available'}
             } catch (error) {
                 console.error('Error creating payment plan:', error);
                 showMessage('Error creating payment plan: ' + error.message, 'error');
+            }
+        };
+        
+        // New automated payment plan with Stripe Subscription Schedules
+        window.createAutomatedPaymentPlan = async function(sessionId, session, frequency, startDate, endDate) {
+            try {
+                showMessage('Setting up automated billing with Stripe...', 'info');
+                
+                // First get preview to show user
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': authToken ? `Bearer ${authToken}` : ''
+                };
+                
+                const previewResponse = await fetch('/api/installments/preview', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        totalAmount: parseFloat(session.price),
+                        cadence: frequency === 'biweekly' ? 'biweekly' : 'monthly',
+                        startDate: startDate
+                    })
+                });
+                
+                if (!previewResponse.ok) {
+                    throw new Error('Failed to calculate payment schedule');
+                }
+                
+                const preview = await previewResponse.json();
+                
+                // Show confirmation with preview
+                const confirmMsg = `⚡ Automated Billing Setup\n\n` +
+                    `Total: $${preview.totalAmount}\n` +
+                    `${preview.totalPayments} ${frequency} payments of $${preview.paymentAmount} each\n` +
+                    `First payment: ${new Date(preview.payments[0].date).toLocaleDateString()}\n\n` +
+                    `Stripe will automatically charge the customer on each payment date.\n\n` +
+                    `Continue?`;
+                
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+                
+                // Redirect to payment method collection page
+                showMessage('Redirecting to payment setup...', 'info');
+                
+                // Store session data for payment setup
+                sessionStorage.setItem('pendingInstallmentPlan', JSON.stringify({
+                    sessionId,
+                    totalAmount: parseFloat(session.price),
+                    cadence: frequency === 'biweekly' ? 'biweekly' : 'monthly',
+                    startDate,
+                    customerEmail: session.email,
+                    customerName: session.clientName
+                }));
+                
+                // Redirect to payment setup page
+                window.location.href = `/installment-setup.html?session=${sessionId}`;
+                
+            } catch (error) {
+                console.error('Error creating automated payment plan:', error);
+                showMessage('Error setting up automated billing: ' + error.message, 'error');
             }
         };
         

@@ -3395,6 +3395,13 @@ app.use('/api/payment-plans', paymentPlanRoutes);
 // Installment Payment Plans (new Stripe Connect system)
 app.use('/api/installments', installmentRoutes);
 
+// Stripe publishable key endpoint for client-side Stripe.js
+app.get('/api/stripe-publishable-key', (req, res) => {
+    res.json({
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here'
+    });
+});
+
 // Installment Webhooks (Stripe events)
 app.use('/api/webhooks', installmentWebhooks);
 
