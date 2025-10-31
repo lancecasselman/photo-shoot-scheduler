@@ -46,6 +46,10 @@ const { initializeNotificationServices, sendWelcomeEmail, sendBillingNotificatio
 const PaymentPlanManager = require('./server/paymentPlans');
 const PaymentScheduler = require('./server/paymentScheduler');
 
+// Import new installment payment plans (Stripe Connect)
+const { installmentRoutes } = require('./server/payments/installments');
+const installmentWebhooks = require('./server/payments/installments/webhook-endpoint');
+
 
 // Import R2 storage services
 const R2FileManager = require('./server/r2-file-manager');
@@ -3384,9 +3388,15 @@ app.use('/api/booking', createBookingAgreementRoutes(pool));
 const { createNotificationRoutes } = require('./server/notifications-routes');
 app.use('/api', createNotificationRoutes(pool));
 
-// Payment Plan API routes
+// Payment Plan API routes (legacy PostgreSQL)
 const paymentPlanRoutes = require('./server/payment-plans-routes');
 app.use('/api/payment-plans', paymentPlanRoutes);
+
+// Installment Payment Plans (new Stripe Connect system)
+app.use('/api/installments', installmentRoutes);
+
+// Installment Webhooks (Stripe events)
+app.use('/api/webhooks', installmentWebhooks);
 
 // Gallery Print API routes - Separate endpoint to avoid auth conflicts
 const galleryPrintRoutes = require('./server/gallery-print-routes');
