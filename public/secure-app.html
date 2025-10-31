@@ -6781,13 +6781,26 @@ ${agreement.content || 'No content available'}
                         </div>
                         
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Start Date</label>
-                            <input type="date" id="startDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">📅 Schedule Method</label>
+                            <select id="scheduleMethod" onchange="toggleScheduleMethod()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                                <option value="dateRange">By Date Range (Start & End Date)</option>
+                                <option value="numPayments">By Number of Payments</option>
+                            </select>
                         </div>
                         
                         <div style="margin-bottom:20px;">
+                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Start Date</label>
+                            <input type="date" id="startDate" onchange="autoCalculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                        </div>
+                        
+                        <div id="endDateDiv" style="margin-bottom:20px;">
                             <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">End Date</label>
-                            <input type="date" id="endDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <input type="date" id="endDate" onchange="autoCalculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                        </div>
+                        
+                        <div id="numPaymentsDiv" style="margin-bottom:20px;display:none;">
+                            <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Number of Payments</label>
+                            <input type="number" id="numPayments" min="1" max="100" placeholder="e.g., 6" onchange="autoCalculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
                         </div>
                         
                         <div style="text-align:center;margin:20px 0;">
@@ -6857,6 +6870,44 @@ ${agreement.content || 'No content available'}
             }, 100);
         };
 
+        // Toggle between date range and number of payments
+        window.toggleScheduleMethod = function() {
+            const method = document.getElementById('scheduleMethod')?.value;
+            const endDateDiv = document.getElementById('endDateDiv');
+            const numPaymentsDiv = document.getElementById('numPaymentsDiv');
+            
+            if (method === 'numPayments') {
+                endDateDiv.style.display = 'none';
+                numPaymentsDiv.style.display = 'block';
+            } else {
+                endDateDiv.style.display = 'block';
+                numPaymentsDiv.style.display = 'none';
+            }
+            
+            autoCalculatePayments();
+        };
+        
+        // Auto-calculate when inputs change
+        window.autoCalculatePayments = function() {
+            const scheduleMethod = document.getElementById('scheduleMethod')?.value;
+            const startDate = document.getElementById('startDate')?.value;
+            const frequency = document.getElementById('paymentFrequency')?.value;
+            
+            if (!startDate) return;
+            
+            if (scheduleMethod === 'numPayments') {
+                const numPayments = document.getElementById('numPayments')?.value;
+                if (numPayments && parseInt(numPayments) > 0) {
+                    calculatePayments();
+                }
+            } else {
+                const endDate = document.getElementById('endDate')?.value;
+                if (endDate) {
+                    calculatePayments();
+                }
+            }
+        };
+        
         // Payment calculation function - matches backend calculatePaymentsByFrequency logic
         window.calculatePayments = function() {
             // Get session price from the readonly input field
@@ -6865,27 +6916,62 @@ ${agreement.content || 'No content available'}
             
             const startDateInput = document.getElementById('startDate');
             const endDateInput = document.getElementById('endDate');
+            const numPaymentsInput = document.getElementById('numPayments');
             const frequencySelect = document.getElementById('paymentFrequency');
+            const scheduleMethod = document.getElementById('scheduleMethod')?.value || 'dateRange';
             const calculationDiv = document.getElementById('paymentCalculation');
             const resultsDiv = document.getElementById('calculationResults');
             
-            if (!startDateInput || !endDateInput || !frequencySelect || !calculationDiv || !resultsDiv) {
+            if (!startDateInput || !frequencySelect || !calculationDiv || !resultsDiv) {
                 return;
             }
             
-            const startDate = new Date(startDateInput.value);
-            const endDate = new Date(endDateInput.value);
             const frequency = frequencySelect.value;
+            let startDate = new Date(startDateInput.value);
+            let endDate;
+            let targetPayments;
             
-            if (!startDateInput.value || !endDateInput.value) {
+            if (!startDateInput.value) {
                 calculationDiv.style.display = 'none';
                 return;
             }
             
-            if (endDate <= startDate) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">⚠️ End date must be after start date</p>';
-                calculationDiv.style.display = 'block';
-                return;
+            // Determine end date based on schedule method
+            if (scheduleMethod === 'numPayments') {
+                const numPayments = parseInt(numPaymentsInput.value);
+                if (!numPayments || numPayments < 1) {
+                    calculationDiv.style.display = 'none';
+                    return;
+                }
+                
+                targetPayments = numPayments;
+                
+                // Calculate end date based on number of payments and frequency
+                endDate = new Date(startDate);
+                for (let i = 1; i < numPayments; i++) {
+                    if (frequency === 'monthly') {
+                        endDate.setMonth(endDate.getMonth() + 1);
+                    } else if (frequency === 'biweekly') {
+                        endDate.setDate(endDate.getDate() + 14);
+                    } else if (frequency === 'weekly') {
+                        endDate.setDate(endDate.getDate() + 7);
+                    }
+                }
+                
+            } else {
+                // Date range mode
+                if (!endDateInput.value) {
+                    calculationDiv.style.display = 'none';
+                    return;
+                }
+                
+                endDate = new Date(endDateInput.value);
+                
+                if (endDate <= startDate) {
+                    resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;font-weight:600;">⚠️ End date must be after start date</p>';
+                    calculationDiv.style.display = 'block';
+                    return;
+                }
             }
             
             // Use backend logic: Calculate interval based on frequency (matches server/paymentPlans.js)
@@ -6947,12 +7033,34 @@ ${agreement.content || 'No content available'}
                 scheduleHTML += `<div style="text-align: center; margin: 12px 0; opacity: 0.7; font-style: italic; color: #d4af37;">... and ${totalPayments - 5} more ${frequency} payments of $${paymentAmount} each</div>`;
             }
             
+            // Calculate period information
+            const periodName = frequency === 'weekly' ? 'weeks' : frequency === 'biweekly' ? 'bi-weekly periods' : 'months';
+            const timeDiff = endDate - startDate;
+            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            const weeksDiff = Math.ceil(daysDiff / 7);
+            const monthsDiff = Math.ceil(daysDiff / 30);
+            
+            let periodCalc = '';
+            if (frequency === 'weekly') {
+                periodCalc = `${weeksDiff} weeks ÷ 1 week = ${totalPayments} payments`;
+            } else if (frequency === 'biweekly') {
+                periodCalc = `${daysDiff} days ÷ 14 days = ${totalPayments} payments`;
+            } else {
+                periodCalc = `${monthsDiff} months ÷ 1 month = ${totalPayments} payments`;
+            }
+            
             resultsDiv.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;text-align:left;color:#f5f5f5;">
                     <div><strong style="color: #d4af37;">💰 Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
                     <div><strong style="color: #d4af37;">📅 Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
+                    <div><strong style="color: #d4af37;">📊 Time Period:</strong> ${daysDiff} days (${scheduleMethod === 'numPayments' ? 'calculated from ' + totalPayments + ' payments' : periodCalc})</div>
                     <div><strong style="color: #d4af37;">🔢 Number of Payments:</strong> ${totalPayments}</div>
-                    <div><strong style="color: #d4af37;">💵 Each Payment:</strong> $${paymentAmount}</div>
+                </div>
+                <div style="background:rgba(76,175,80,0.1);border:1px solid #4CAF50;border-radius:8px;padding:15px;margin-bottom:20px;">
+                    <div style="text-align:center;color:#4CAF50;font-weight:600;margin-bottom:8px;">💡 Payment Calculation</div>
+                    <div style="text-align:center;color:#f5f5f5;font-size:1.1rem;">
+                        $${totalAmount.toFixed(2)} ÷ ${totalPayments} payments = <strong style="color:#4CAF50;">$${paymentAmount}</strong> per payment
+                    </div>
                 </div>
                 <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
                     <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;font-weight:700;">📋 Payment Schedule:</h6>
@@ -6997,11 +7105,40 @@ ${agreement.content || 'No content available'}
                 const billingType = document.getElementById('billingType')?.value || 'manual';
                 const frequency = document.getElementById('paymentFrequency').value;
                 const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
+                const scheduleMethod = document.getElementById('scheduleMethod')?.value || 'dateRange';
+                let endDate;
                 
-                if (!startDate || !endDate) {
-                    showMessage('Please select start and end dates', 'error');
+                if (!startDate) {
+                    showMessage('Please select a start date', 'error');
                     return;
+                }
+                
+                // Calculate endDate based on schedule method
+                if (scheduleMethod === 'numPayments') {
+                    const numPayments = parseInt(document.getElementById('numPayments').value);
+                    if (!numPayments || numPayments < 1) {
+                        showMessage('Please enter a valid number of payments', 'error');
+                        return;
+                    }
+                    
+                    // Calculate end date from number of payments
+                    let calculatedEndDate = new Date(startDate);
+                    for (let i = 1; i < numPayments; i++) {
+                        if (frequency === 'monthly') {
+                            calculatedEndDate.setMonth(calculatedEndDate.getMonth() + 1);
+                        } else if (frequency === 'biweekly') {
+                            calculatedEndDate.setDate(calculatedEndDate.getDate() + 14);
+                        } else if (frequency === 'weekly') {
+                            calculatedEndDate.setDate(calculatedEndDate.getDate() + 7);
+                        }
+                    }
+                    endDate = calculatedEndDate.toISOString().split('T')[0];
+                } else {
+                    endDate = document.getElementById('endDate').value;
+                    if (!endDate) {
+                        showMessage('Please select an end date', 'error');
+                        return;
+                    }
                 }
                 
                 const session = sessions.find(s => s.id === sessionId);
