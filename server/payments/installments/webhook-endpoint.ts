@@ -13,7 +13,8 @@ const router = express.Router();
  * Handle Stripe webhook events
  */
 router.post('/installments', express.raw({ type: 'application/json' }), async (req, res) => {
-  const signature = req.headers['stripe-signature'];
+  const signatureHeader = req.headers['stripe-signature'];
+  const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
   
   if (!signature) {
     console.error('❌ INSTALLMENT WEBHOOK: Missing stripe-signature header');

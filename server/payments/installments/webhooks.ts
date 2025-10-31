@@ -33,11 +33,11 @@ export async function handlePaymentSucceeded(
   }
 
   // Mark payment as paid
-  await markPaymentPaid(
-    payment.id,
-    invoice.payment_intent as string || '',
-    invoice.charge as string || ''
-  );
+  const invoiceAny = invoice as any;
+  const paymentIntentId = typeof invoiceAny.payment_intent === 'string' ? invoiceAny.payment_intent : '';
+  const chargeId = typeof invoiceAny.charge === 'string' ? invoiceAny.charge : '';
+  
+  await markPaymentPaid(payment.id, paymentIntentId, chargeId);
 
   console.log(`✅ INSTALLMENT: Payment ${payment.paymentNumber} marked as paid for plan ${payment.planId}`);
 
@@ -68,7 +68,7 @@ export async function handlePaymentFailed(
   }
 
   const retryAttempts = (payment.retryAttempts || 0) + 1;
-  const failureReason = invoice.last_finalization_error?.message || 'Payment failed';
+  const failureReason = 'Payment failed';
 
   // Mark payment as failed
   await markPaymentFailed(payment.id, failureReason, retryAttempts);
@@ -88,7 +88,7 @@ export async function handleSubscriptionDeleted(
   console.log('🗑️ INSTALLMENT: Subscription deleted:', subscription.id);
 
   // Find plan by subscription metadata
-  const sessionId = subscription.metadata?.session_id;
+  const sessionId = subscription.metadata?.session_id || '';
   
   if (!sessionId) {
     console.warn('⚠️ INSTALLMENT: No session_id in subscription metadata');

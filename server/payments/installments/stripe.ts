@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-08-27.basil'
 });
 
-const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '500'); // Default 5%
+const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0'); // Default 0% (no platform fee)
 
 /**
  * Create or get a Stripe customer
@@ -60,7 +60,7 @@ export async function createSubscriptionSchedule(
   const customerId = await createOrGetCustomer(customerEmail, customerName);
 
   // Build phases for subscription schedule
-  const phases: Stripe.SubscriptionScheduleCreateParams.Phase[] = [];
+  const phases: any[] = [];
   
   for (let i = 0; i < preview.paymentSchedule.length; i++) {
     const payment = preview.paymentSchedule[i];

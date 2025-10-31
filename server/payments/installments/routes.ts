@@ -23,7 +23,7 @@ import {
 } from './schema';
 
 const router = express.Router();
-const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '500');
+const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0'); // 0 = no platform fee
 
 /**
  * POST /api/installments/preview
