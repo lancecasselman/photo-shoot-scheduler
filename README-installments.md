@@ -2,12 +2,12 @@
 
 ## Overview
 
-This module enables customers to pay photographers over time using individual Stripe Invoices with automatic charging, platform fee collection, and Connect transfers.
+This module enables customers to pay photographers over time using Stripe Subscription Schedules with automatic charging, platform fee collection, and Connect transfers.
 
 ## Architecture
 
-- **Stripe Invoices**: Individual scheduled invoices for each payment (simpler and more reliable than subscription schedules)
-- **Auto-Collection**: Invoices automatically charge on their due dates
+- **Stripe Subscription Schedules**: Manages recurring billing on defined cadences (bi-weekly or monthly)
+- **Auto-Collection**: Automatic charges on scheduled dates
 - **Stripe Connect**: Routes funds to photographer's connected account minus platform fee
 - **Firestore**: Stores plan and payment records for tracking
 - **Webhooks**: Automated payment status updates
@@ -15,10 +15,10 @@ This module enables customers to pay photographers over time using individual St
 ## How It Works
 
 1. **Photographer creates plan** → System calculates payment schedule
-2. **Stripe invoices created** → One invoice per payment, scheduled to auto-charge on due dates
-3. **Platform fee deducted** → Automatically retained on your main Stripe account
-4. **Photographer receives payout** → Transferred to their Stripe Connect account via Connect
-5. **Webhooks update status** → Real-time tracking of payment success/failure for each invoice
+2. **Stripe subscription schedule created** → Phases configured for each payment with proper metadata flow
+3. **Platform fee deducted** → Automatically retained via `application_fee_percent`
+4. **Photographer receives payout** → Transferred to their Stripe Connect account automatically
+5. **Webhooks update status** → Real-time tracking via `invoice.subscription_details.metadata`
 
 ## Setup Instructions
 
@@ -58,7 +58,7 @@ https://your-domain.com/api/webhooks/installments
 ```
 
 Listen for these events:
-- `invoice.payment_succeeded` - Payment completed
+- `invoice.payment_succeeded` - Payment completed (reads from invoice.subscription_details.metadata)
 - `invoice.payment_failed` - Payment declined/failed
 - `invoice.voided` - Invoice was cancelled
 
