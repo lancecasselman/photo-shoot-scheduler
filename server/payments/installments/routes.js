@@ -6,12 +6,12 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { calculatePaymentSchedule } = require('./math');
-const { createSubscriptionSchedule, cancelSubscriptionSchedule } = require('./stripe');
+const { createPaymentPlanInvoices, cancelPlanInvoices } = require('./stripe');
 const { 
   createPlan, 
-  createPayment, 
   getPlan, 
   getPaymentsByPlan,
+  updatePlan,
   cancelPlan: daoCancelPlan,
   getPlansBySession,
   getPlansByPhotographer
@@ -115,22 +115,20 @@ router.post('/create', async (req, res) => {
 
     await createPlan(plan);
 
-    const { scheduleId, customerId, paymentRecordIds } = await createSubscriptionSchedule(request, preview, planId);
+    const { customerId, invoiceIds, paymentRecordIds } = await createPaymentPlanInvoices(request, preview, planId);
 
-    plan.stripeCustomerId = customerId;
-    plan.stripeSubscriptionScheduleId = scheduleId;
-
-    const { updatePlan } = require('./dao');
     await updatePlan(planId, {
       stripeCustomerId: customerId,
-      stripeSubscriptionScheduleId: scheduleId
+      stripeInvoiceIds: invoiceIds
     });
 
-    console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments`);
+    console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments (${invoiceIds.length} invoices)`);
 
     res.json({
       success: true,
-      plan,
+      planId,
+      customerId,
+      invoiceCount: invoiceIds.length,
       preview
     });
   } catch (error) {
@@ -222,9 +220,13 @@ router.post('/:planId/cancel', async (req, res) => {
       return res.status(400).json({ error: 'Plan is already canceled' });
     }
 
-    await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, reason);
+    if (plan.stripeInvoiceIds && plan.stripeInvoiceIds.length > 0) {
+      const results = await cancelPlanInvoices(plan.stripeInvoiceIds);
+      const successCount = results.filter(r => r.success).length;
+      console.log(`✅ INSTALLMENT: Voided ${successCount}/${plan.stripeInvoiceIds.length} invoices for plan ${planId}`);
+    }
 
-    await daoCancelPlan(planId, reason);
+    await daoCancelPlan(planId, reason || 'Canceled by user');
 
     console.log(`✅ INSTALLMENT: Canceled plan ${planId}`);
 
