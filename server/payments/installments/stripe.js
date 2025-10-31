@@ -1,12 +1,12 @@
 /**
  * Stripe Integration for Installment Plans
- * Handles Subscription Schedules with Connect transfers
+ * Uses individual Stripe Invoices with auto-collection for scheduled payments
  */
 
 const Stripe = require('stripe');
 const { v4: uuidv4 } = require('uuid');
 const { calculatePaymentSchedule, dollarsToCents } = require('./math');
-const { createPayment } = require('./dao');
+const { createPayment, updatePayment } = require('./dao');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-11-20.acacia'
@@ -39,119 +39,130 @@ async function createOrGetCustomer(email, name) {
 }
 
 /**
- * Create a Subscription Schedule with Connect transfers
+ * Create individual invoices for each payment in the installment plan
+ * Each invoice is scheduled to auto-charge on its due date
  */
-async function createSubscriptionSchedule(request, preview, planId) {
+async function createPaymentPlanInvoices(request, preview, planId) {
   const { 
     customerEmail, 
     customerName, 
     stripeConnectedAccountId,
-    sessionId 
+    sessionId,
+    photographerId
   } = request;
 
   const customerId = await createOrGetCustomer(customerEmail, customerName);
 
+  const invoiceIds = [];
   const paymentRecordIds = [];
-  
+
   for (let i = 0; i < preview.paymentSchedule.length; i++) {
-    const paymentSchedule = preview.paymentSchedule[i];
+    const payment = preview.paymentSchedule[i];
     const paymentRecordId = uuidv4();
     
     const paymentRecord = {
       id: paymentRecordId,
       planId,
       sessionId,
-      photographerId: request.photographerId,
-      paymentNumber: paymentSchedule.paymentNumber,
-      amount: paymentSchedule.amount,
-      platformFee: paymentSchedule.platformFee,
-      photographerPayout: paymentSchedule.photographerPayout,
-      dueDate: paymentSchedule.dueDate,
+      photographerId,
+      paymentNumber: payment.paymentNumber,
+      amount: payment.amount,
+      platformFee: payment.platformFee,
+      photographerPayout: payment.photographerPayout,
+      dueDate: payment.dueDate,
       status: 'pending',
+      stripeInvoiceId: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
     await createPayment(paymentRecord);
-    paymentRecordIds.push(paymentRecordId);
-  }
 
-  const phases = [];
-  
-  for (let i = 0; i < preview.paymentSchedule.length; i++) {
-    const payment = preview.paymentSchedule[i];
-    const paymentRecordId = paymentRecordIds[i];
-    
-    phases.push({
-      items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: `Photography Session Payment ${payment.paymentNumber}/${preview.numberOfPayments}`,
-            metadata: {
-              session_id: sessionId,
-              payment_number: payment.paymentNumber.toString(),
-              payment_record_id: paymentRecordId
-            }
-          },
-          unit_amount: payment.amount,
-          recurring: {
-            interval: preview.cadence === 'biweekly' ? 'week' : 'month',
-            interval_count: preview.cadence === 'biweekly' ? 2 : 1
-          }
-        },
-        quantity: 1
-      }],
-      iterations: 1,
-      metadata: {
-        session_id: sessionId,
-        payment_number: payment.paymentNumber.toString(),
-        photographer_id: request.photographerId,
-        payment_record_id: paymentRecordId
-      },
+    const dueTimestamp = Math.floor(new Date(payment.dueDate).getTime() / 1000);
+
+    const invoice = await stripe.invoices.create({
+      customer: customerId,
+      collection_method: 'charge_automatically',
+      auto_advance: true,
+      due_date: dueTimestamp,
+      on_behalf_of: stripeConnectedAccountId,
       transfer_data: {
         destination: stripeConnectedAccountId
       },
-      application_fee_amount: payment.platformFee
+      application_fee_amount: payment.platformFee,
+      metadata: {
+        payment_record_id: paymentRecordId,
+        session_id: sessionId,
+        photographer_id: photographerId,
+        payment_number: payment.paymentNumber.toString(),
+        plan_id: planId,
+        total_payments: preview.numberOfPayments.toString()
+      }
     });
+
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: invoice.id,
+      amount: payment.amount,
+      currency: 'usd',
+      description: `Photography Session Payment ${payment.paymentNumber}/${preview.numberOfPayments}`,
+      metadata: {
+        session_id: sessionId,
+        payment_number: payment.paymentNumber.toString()
+      }
+    });
+
+    await stripe.invoices.finalizeInvoice(invoice.id);
+
+    await updatePayment(paymentRecordId, {
+      stripeInvoiceId: invoice.id
+    });
+
+    invoiceIds.push(invoice.id);
+    paymentRecordIds.push(paymentRecordId);
   }
 
-  const schedule = await stripe.subscriptionSchedules.create({
-    customer: customerId,
-    start_date: Math.floor(new Date(preview.startDate).getTime() / 1000),
-    end_behavior: 'cancel',
-    phases,
-    metadata: {
-      session_id: sessionId,
-      photographer_id: request.photographerId,
-      total_amount: preview.totalAmount.toString(),
-      number_of_payments: preview.numberOfPayments.toString(),
-      plan_id: planId
-    }
-  });
-
   return {
-    scheduleId: schedule.id,
     customerId,
+    invoiceIds,
     paymentRecordIds
   };
 }
 
 /**
- * Cancel a subscription schedule
+ * Cancel (void) an unpaid invoice
  */
-async function cancelSubscriptionSchedule(scheduleId, reason) {
-  await stripe.subscriptionSchedules.cancel(scheduleId, {
-    invoice_now: false,
-    prorate: false
-  });
+async function cancelInvoice(invoiceId) {
+  const invoice = await stripe.invoices.retrieve(invoiceId);
+  
+  if (invoice.status === 'draft' || invoice.status === 'open') {
+    await stripe.invoices.voidInvoice(invoiceId);
+  }
 }
 
 /**
- * Get subscription schedule details
+ * Cancel all invoices for a payment plan
  */
-async function getSubscriptionSchedule(scheduleId) {
-  return await stripe.subscriptionSchedules.retrieve(scheduleId);
+async function cancelPlanInvoices(invoiceIds) {
+  const results = [];
+  
+  for (const invoiceId of invoiceIds) {
+    try {
+      await cancelInvoice(invoiceId);
+      results.push({ invoiceId, success: true });
+    } catch (error) {
+      results.push({ invoiceId, success: false, error: error.message });
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Get invoice details
+ */
+async function getInvoice(invoiceId) {
+  return await stripe.invoices.retrieve(invoiceId);
 }
 
 /**
@@ -163,9 +174,10 @@ function verifyWebhookSignature(payload, signature, secret) {
 
 module.exports = {
   createOrGetCustomer,
-  createSubscriptionSchedule,
-  cancelSubscriptionSchedule,
-  getSubscriptionSchedule,
+  createPaymentPlanInvoices,
+  cancelInvoice,
+  cancelPlanInvoices,
+  getInvoice,
   verifyWebhookSignature,
   stripe
 };
