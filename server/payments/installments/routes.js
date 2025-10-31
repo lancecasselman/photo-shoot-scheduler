@@ -222,7 +222,7 @@ router.post('/:planId/cancel', async (req, res) => {
     }
 
     if (plan.stripeSubscriptionScheduleId) {
-      await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, reason || 'Canceled by user');
+      await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, plan.stripeConnectedAccountId);
       console.log(`✅ INSTALLMENT: Canceled subscription schedule ${plan.stripeSubscriptionScheduleId} for plan ${planId}`);
     }
 

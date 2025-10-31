@@ -17,11 +17,11 @@ const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
 /**
  * Create or get a Stripe customer with payment method setup
  */
-async function createOrGetCustomer(email, name, paymentMethodId = null) {
+async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymentMethodId = null) {
   const existingCustomers = await stripe.customers.list({
     email,
     limit: 1
-  });
+  }, { stripeAccount: stripeConnectedAccountId });
 
   let customerId;
 
@@ -42,7 +42,7 @@ async function createOrGetCustomer(email, name, paymentMethodId = null) {
       };
     }
 
-    const customer = await stripe.customers.create(customerData);
+    const customer = await stripe.customers.create(customerData, { stripeAccount: stripeConnectedAccountId });
     customerId = customer.id;
   }
 
@@ -51,7 +51,7 @@ async function createOrGetCustomer(email, name, paymentMethodId = null) {
       invoice_settings: {
         default_payment_method: paymentMethodId
       }
-    });
+    }, { stripeAccount: stripeConnectedAccountId });
   }
 
   return customerId;
@@ -61,17 +61,18 @@ async function createOrGetCustomer(email, name, paymentMethodId = null) {
  * Create subscription schedule for installment plan
  * Uses subscription schedules with phases for each payment
  */
-async function createPaymentPlanInvoices(request, preview, planId) {
+async function createPaymentPlanSchedule(request, preview, planId) {
   const { 
     customerEmail, 
     customerName, 
     stripeConnectedAccountId,
     sessionId,
     photographerId,
-    paymentMethodId
+    paymentMethodId,
+    cadence
   } = request;
 
-  const customerId = await createOrGetCustomer(customerEmail, customerName, paymentMethodId);
+  const customerId = await createOrGetCustomer(customerEmail, customerName, stripeConnectedAccountId, paymentMethodId);
 
   const phases = [];
   const paymentRecordIds = [];
@@ -115,10 +116,9 @@ async function createPaymentPlanInvoices(request, preview, planId) {
             }
           },
           unit_amount: payment.amount,
-          recurring: {
-            interval: 'month',
-            interval_count: 1
-          }
+          recurring: cadence === 'biweekly'
+            ? { interval: 'week', interval_count: 2 }
+            : { interval: 'month', interval_count: 1 }
         },
         quantity: 1
       }],
@@ -237,7 +237,7 @@ function verifyWebhookSignature(payload, signature, secret) {
 
 module.exports = {
   createOrGetCustomer,
-  createPaymentPlanInvoices,
+  createPaymentPlanSchedule,
   cancelSubscriptionSchedule,
   cancelInvoice,
   cancelPlanInvoices,
