@@ -100,45 +100,31 @@ async function handlePaymentFailed(invoice) {
 }
 
 /**
- * Handle customer.subscription.deleted event
+ * Handle invoice.voided event (when an invoice is cancelled)
  */
-async function handleSubscriptionDeleted(subscription) {
-  console.log('🗑️ INSTALLMENT: Subscription deleted:', subscription.id);
+async function handleInvoiceVoided(invoice) {
+  console.log('🗑️ INSTALLMENT: Invoice voided:', invoice.id);
 
-  const sessionId = subscription.metadata?.session_id || '';
-  const planId = subscription.metadata?.plan_id || '';
+  const paymentRecordId = invoice.metadata?.payment_record_id || 
+                          invoice.lines?.data?.[0]?.metadata?.payment_record_id;
   
-  if (!sessionId && !planId) {
-    console.warn('⚠️ INSTALLMENT: No session_id or plan_id in subscription metadata');
+  let payment = paymentRecordId ? await getPayment(paymentRecordId) : null;
+  
+  if (!payment) {
+    payment = await getPaymentByInvoiceId(invoice.id);
+  }
+  
+  if (!payment) {
+    console.error('❌ INSTALLMENT: Payment record not found for voided invoice:', invoice.id);
     return;
   }
 
-  try {
-    let plan = null;
-    
-    if (planId) {
-      plan = await getPlan(planId);
-    }
-    
-    if (!plan && sessionId) {
-      const plans = await getPlansBySession(sessionId);
-      if (plans.length > 0) {
-        plan = plans.find(p => p.status === 'active') || plans[0];
-      }
-    }
-    
-    if (!plan) {
-      console.warn('⚠️ INSTALLMENT: No active plan found for subscription:', subscription.id);
-      return;
-    }
+  await updatePayment(payment.id, {
+    status: 'canceled',
+    updatedAt: new Date().toISOString()
+  });
 
-    await cancelPlan(plan.id, 'Subscription deleted in Stripe');
-    
-    console.log(`✅ INSTALLMENT: Plan ${plan.id} marked as canceled for session ${sessionId}`);
-  } catch (error) {
-    console.error('❌ INSTALLMENT: Error canceling plan:', error);
-    throw error;
-  }
+  console.log(`✅ INSTALLMENT: Payment ${payment.paymentNumber} marked as canceled for plan ${payment.planId}`);
 }
 
 /**
@@ -165,8 +151,8 @@ async function processWebhookEvent(event) {
         await handlePaymentFailed(event.data.object);
         break;
         
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object);
+      case 'invoice.voided':
+        await handleInvoiceVoided(event.data.object);
         break;
         
       default:
@@ -185,6 +171,6 @@ async function processWebhookEvent(event) {
 module.exports = {
   handlePaymentSucceeded,
   handlePaymentFailed,
-  handleSubscriptionDeleted,
+  handleInvoiceVoided,
   processWebhookEvent
 };
