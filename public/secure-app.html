@@ -6910,6 +6910,8 @@ ${agreement.content || 'No content available'}
         
         // Payment calculation function - matches backend calculatePaymentsByFrequency logic
         window.calculatePayments = function() {
+            console.log('🔍 calculatePayments called');
+            
             // Get session price from the readonly input field
             const totalAmountInput = document.querySelector('#paymentPlanModal input[readonly]');
             const totalAmount = parseFloat(totalAmountInput ? totalAmountInput.value : 250);
@@ -6922,7 +6924,16 @@ ${agreement.content || 'No content available'}
             const calculationDiv = document.getElementById('paymentCalculation');
             const resultsDiv = document.getElementById('calculationResults');
             
+            console.log('🔍 Input values:', {
+                startDateValue: startDateInput?.value,
+                endDateValue: endDateInput?.value,
+                scheduleMethod,
+                frequency: frequencySelect?.value,
+                totalAmount
+            });
+            
             if (!startDateInput || !frequencySelect || !calculationDiv || !resultsDiv) {
+                console.log('❌ Missing required elements');
                 return;
             }
             
@@ -6932,6 +6943,7 @@ ${agreement.content || 'No content available'}
             let targetPayments;
             
             if (!startDateInput.value) {
+                console.log('❌ No start date selected');
                 calculationDiv.style.display = 'none';
                 return;
             }
