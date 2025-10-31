@@ -25,7 +25,9 @@ const {
 async function handlePaymentSucceeded(invoice) {
   console.log('💰 INSTALLMENT: Payment succeeded for invoice:', invoice.id);
 
-  const paymentRecordId = invoice.metadata?.payment_record_id || 
+  const invoiceAny = invoice;
+  const paymentRecordId = invoiceAny.subscription_details?.metadata?.payment_record_id || 
+                          invoice.metadata?.payment_record_id || 
                           invoice.lines?.data?.[0]?.metadata?.payment_record_id;
   
   if (!paymentRecordId) {
@@ -48,7 +50,6 @@ async function handlePaymentSucceeded(invoice) {
     return;
   }
 
-  const invoiceAny = invoice;
   const paymentIntentId = typeof invoiceAny.payment_intent === 'string' ? invoiceAny.payment_intent : '';
   const chargeId = typeof invoiceAny.charge === 'string' ? invoiceAny.charge : '';
   
@@ -73,7 +74,9 @@ async function handlePaymentSucceeded(invoice) {
 async function handlePaymentFailed(invoice) {
   console.log('❌ INSTALLMENT: Payment failed for invoice:', invoice.id);
 
-  const paymentRecordId = invoice.metadata?.payment_record_id || 
+  const invoiceAny = invoice;
+  const paymentRecordId = invoiceAny.subscription_details?.metadata?.payment_record_id || 
+                          invoice.metadata?.payment_record_id || 
                           invoice.lines?.data?.[0]?.metadata?.payment_record_id;
   
   let payment = paymentRecordId ? await getPayment(paymentRecordId) : null;
@@ -105,7 +108,9 @@ async function handlePaymentFailed(invoice) {
 async function handleInvoiceVoided(invoice) {
   console.log('🗑️ INSTALLMENT: Invoice voided:', invoice.id);
 
-  const paymentRecordId = invoice.metadata?.payment_record_id || 
+  const invoiceAny = invoice;
+  const paymentRecordId = invoiceAny.subscription_details?.metadata?.payment_record_id || 
+                          invoice.metadata?.payment_record_id || 
                           invoice.lines?.data?.[0]?.metadata?.payment_record_id;
   
   let payment = paymentRecordId ? await getPayment(paymentRecordId) : null;
