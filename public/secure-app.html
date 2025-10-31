@@ -6902,12 +6902,27 @@ ${agreement.content || 'No content available'}
             const calculationDiv = document.getElementById('paymentCalculation');
             const resultsDiv = document.getElementById('calculationResults');
             
+            console.log('🔍 DOM Input Elements:', {
+                startDateInput: startDateInput,
+                endDateInput: endDateInput,
+                startDateInputExists: !!startDateInput,
+                endDateInputExists: !!endDateInput
+            });
+            
             console.log('🔍 Input values:', {
                 startDateValue: startDateInput?.value,
                 endDateValue: endDateInput?.value,
                 scheduleMethod,
                 frequency: frequencySelect?.value,
                 totalAmount
+            });
+            
+            // Try to get the actual values from the DOM directly
+            const startFromDOM = document.querySelector('#paymentPlanModal #startDate')?.value;
+            const endFromDOM = document.querySelector('#paymentPlanModal #endDate')?.value;
+            console.log('🔍 Values directly from DOM:', {
+                startFromDOM,
+                endFromDOM
             });
             
             if (!startDateInput || !frequencySelect || !calculationDiv || !resultsDiv) {
