@@ -17639,6 +17639,11 @@ app.get('/test-android-auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
 });
 
+// Serve installment setup page for automated billing
+app.get('/installment-setup.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'installment-setup.html'));
+});
+
 app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,
