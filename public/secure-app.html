@@ -7548,12 +7548,14 @@ ${agreement.content || 'No content available'}
                     const testingSession = rawData.find(s => s.clientName === 'Testing dammit');
                     console.log('Testing session deposit_amount from API:', testingSession?.depositAmount || 'NOT FOUND');
                     
-                    // Transform and ensure deposit amounts are properly included
+                    // Transform and ensure deposit amounts and payment plan flags are properly included
                     sessions = rawData.map(session => ({
                         ...session,
                         depositAmount: session.depositAmount || session.deposit_amount || 0,
                         reminderEnabled: session.sendReminder || false,
-                        reminderSent: session.reminderSent || false
+                        reminderSent: session.reminderSent || false,
+                        hasPaymentPlan: session.hasPaymentPlan || false,
+                        paymentPlanId: session.paymentPlanId || null
                     }));
                     
                     console.log('Transformed sessions:', sessions);
