@@ -122,6 +122,25 @@ router.post('/create', async (req, res) => {
       stripeSubscriptionScheduleId: scheduleId
     });
 
+    // Update session to mark it has a payment plan
+    const { db, photographySessions } = require('../../../shared/schema');
+    const { eq } = require('drizzle-orm');
+    
+    try {
+      await db.update(photographySessions)
+        .set({
+          has_payment_plan: true,
+          payment_plan_id: planId,
+          updated_at: new Date()
+        })
+        .where(eq(photographySessions.id, request.sessionId));
+      
+      console.log(`✅ INSTALLMENT: Updated session ${request.sessionId} with payment plan flag`);
+    } catch (dbError) {
+      console.error('⚠️  INSTALLMENT: Failed to update session payment plan flag:', dbError);
+      // Don't fail the whole operation if session update fails
+    }
+
     console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments (schedule ${scheduleId})`);
 
     res.json({

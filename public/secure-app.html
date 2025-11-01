@@ -10684,57 +10684,91 @@ END:VCALENDAR`;
                     plan.paymentFrequency.charAt(0).toUpperCase() + plan.paymentFrequency.slice(1).replace('-', '-') : 
                     'Monthly';
                 
-                // Generate payment plan view with Send Email/SMS buttons at top
+                // Check if this is an automated or manual plan
+                const isAutomated = plan.type === 'automated';
+                
+                // Generate payment plan view
                 let contentHTML = `
-                    <div style="display: flex; gap: 12px; margin-bottom: 24px; justify-content: center;">
-                        <button class="btn btn-primary" onclick="sendPaymentScheduleEmail('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
-                            📧 Send Email
-                        </button>
-                        <button class="btn btn-primary" onclick="sendPaymentScheduleSMS('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
-                            📱 Send SMS
-                        </button>
+                    <div style="background: ${isAutomated ? 'rgba(33,150,243,0.1)' : 'rgba(76,175,80,0.1)'}; border: 2px solid ${isAutomated ? 'rgba(33,150,243,0.3)' : 'rgba(76,175,80,0.3)'}; border-radius: 12px; padding: 12px; margin-bottom: 20px; text-align: center;">
+                        <strong>${isAutomated ? '⚡ Automated Billing' : '📧 Manual Invoicing'}</strong><br>
+                        <small>${isAutomated ? 'Stripe automatically charges customer on payment dates' : 'You send invoices manually for each payment'}</small>
                     </div>
+                    
+                    ${!isAutomated ? `
+                        <div style="display: flex; gap: 12px; margin-bottom: 24px; justify-content: center;">
+                            <button class="btn btn-primary" onclick="sendPaymentScheduleEmail('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
+                                📧 Send Email
+                            </button>
+                            <button class="btn btn-primary" onclick="sendPaymentScheduleSMS('${sessionId}')" style="display: inline-flex; align-items: center; gap: 8px;">
+                                📱 Send SMS
+                            </button>
+                        </div>
+                    ` : ''}
                     
                     <div class="payment-plan-summary">
                         <h4> Plan Overview</h4>
                         <p><strong>Total Amount:</strong> $${parseFloat(plan.totalAmount).toFixed(2)}</p>
                         <p><strong>Payment Frequency:</strong> ${frequencyDisplay}</p>
-                        <p><strong>Monthly Payment:</strong> $${parseFloat(plan.monthlyPayment).toFixed(2)}</p>
-                        <p><strong>Payments Completed:</strong> ${plan.paymentsCompleted} of ${plan.totalPayments}</p>
+                        <p><strong>Payment Amount:</strong> $${parseFloat(plan.monthlyPayment).toFixed(2)}</p>
+                        <p><strong>Total Payments:</strong> ${plan.totalPayments}</p>
+                        <p><strong>Payments Completed:</strong> ${plan.paymentsCompleted}</p>
                         <p><strong>Amount Paid:</strong> $${parseFloat(plan.amountPaid).toFixed(2)}</p>
                         <p><strong>Remaining Balance:</strong> $${parseFloat(plan.remainingBalance).toFixed(2)}</p>
                         <p><strong>Status:</strong> <span class="payment-status ${plan.status}">${plan.status.toUpperCase()}</span></p>
+                        ${plan.startDate ? `<p><strong>Start Date:</strong> ${new Date(plan.startDate).toLocaleDateString()}</p>` : ''}
+                        ${plan.endDate ? `<p><strong>End Date:</strong> ${new Date(plan.endDate).toLocaleDateString()}</p>` : ''}
                     </div>
-                    
-                    <div class="payment-schedule">
-                        <h4>Payment Schedule</h4>
                 `;
                 
-                for (const payment of payments) {
-                    const dueDate = new Date(payment.dueDate);
-                    const isOverdue = dueDate < new Date() && payment.status === 'pending';
-                    const statusClass = isOverdue ? 'overdue' : payment.status;
-                    
+                if (isAutomated) {
                     contentHTML += `
-                        <div class="payment-item">
-                            <div>
-                                <strong>Payment ${payment.paymentNumber}</strong><br>
-                                <small>Due: ${dueDate.toLocaleDateString()}</small>
-                                ${payment.paidDate ? `<br><small>Paid: ${new Date(payment.paidDate).toLocaleDateString()}</small>` : ''}
-                            </div>
-                            <div>$${parseFloat(payment.amount).toFixed(2)}</div>
-                            <div>
-                                <div class="payment-status ${statusClass}">${payment.status.toUpperCase()}</div>
-                                ${payment.status === 'pending' ? `
-                                    <button class="btn btn-sm" onclick="markPaymentPaid('${payment.id}')" style="margin-top: 5px;">Mark Paid</button>
-                                    <button class="btn btn-sm" onclick="sendPaymentInvoice('${payment.id}')" style="margin-top: 5px;">Send Invoice</button>
-                                ` : ''}
-                            </div>
+                        <div class="payment-schedule">
+                            <h4>⚡ Automated Payments</h4>
+                            <p style="text-align: center; color: #666; margin: 20px 0;">
+                                This payment plan is managed automatically by Stripe.<br>
+                                Payments are charged to the customer's saved payment method on each scheduled date.<br>
+                                <br>
+                                <strong>Subscription Schedule ID:</strong> ${plan.stripeSubscriptionScheduleId || 'N/A'}
+                            </p>
+                            <p style="text-align: center; margin: 20px 0;">
+                                <a href="https://dashboard.stripe.com" target="_blank" class="btn btn-primary">
+                                    View in Stripe Dashboard →
+                                </a>
+                            </p>
                         </div>
                     `;
+                } else {
+                    contentHTML += `
+                        <div class="payment-schedule">
+                            <h4>📅 Payment Schedule</h4>
+                    `;
+                    
+                    for (const payment of payments) {
+                        const dueDate = new Date(payment.dueDate);
+                        const isOverdue = dueDate < new Date() && payment.status === 'pending';
+                        const statusClass = isOverdue ? 'overdue' : payment.status;
+                        
+                        contentHTML += `
+                            <div class="payment-item">
+                                <div>
+                                    <strong>Payment ${payment.paymentNumber}</strong><br>
+                                    <small>Due: ${dueDate.toLocaleDateString()}</small>
+                                    ${payment.paidDate ? `<br><small>Paid: ${new Date(payment.paidDate).toLocaleDateString()}</small>` : ''}
+                                </div>
+                                <div>$${parseFloat(payment.amount).toFixed(2)}</div>
+                                <div>
+                                    <div class="payment-status ${statusClass}">${payment.status.toUpperCase()}</div>
+                                    ${payment.status === 'pending' ? `
+                                        <button class="btn btn-sm" onclick="markPaymentPaid('${payment.id}')" style="margin-top: 5px;">Mark Paid</button>
+                                        <button class="btn btn-sm" onclick="sendPaymentInvoice('${payment.id}')" style="margin-top: 5px;">Send Invoice</button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    contentHTML += '</div>';
                 }
-                
-                contentHTML += '</div>';
                 
                 document.getElementById('paymentPlanViewContent').innerHTML = contentHTML;
                 document.getElementById('paymentPlanViewModal').classList.add('active');

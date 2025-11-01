@@ -91,7 +91,7 @@ router.get('/:sessionId', async (req, res) => {
     }
 });
 
-// Get formatted payment schedule with session details
+// Get formatted payment schedule with session details (handles both manual and automated plans)
 router.get('/:sessionId/schedule', async (req, res) => {
     try {
         const { sessionId } = req.params;
@@ -104,7 +104,78 @@ router.get('/:sessionId/schedule', async (req, res) => {
             });
         }
         
-        const schedule = await paymentPlanManager.getPaymentSchedule(sessionId, userId);
+        // First try to get manual payment plan from PostgreSQL
+        let schedule = await paymentPlanManager.getPaymentSchedule(sessionId, userId);
+        
+        // If no manual plan found, check for automated plan in Firestore
+        if (!schedule) {
+            const { getPlansBySession } = require('./payments/installments/dao');
+            const { db, photographySessions, users } = require('../shared/schema');
+            const { eq, and } = require('drizzle-orm');
+            
+            const plans = await getPlansBySession(sessionId);
+            
+            if (plans && plans.length > 0) {
+                const plan = plans[0]; // Get first active plan
+                
+                // Get session details
+                const [session] = await db.select()
+                    .from(photographySessions)
+                    .where(and(
+                        eq(photographySessions.id, sessionId),
+                        eq(photographySessions.userId, userId)
+                    ));
+                
+                if (!session) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Session not found'
+                    });
+                }
+                
+                // Get photographer details
+                const [photographer] = await db.select()
+                    .from(users)
+                    .where(eq(users.id, userId));
+                
+                const businessName = photographer?.businessName ||
+                    (photographer?.displayName ? `${photographer.displayName} Photography` : 'Photography Business');
+                
+                // Format automated plan for display
+                schedule = {
+                    plan: {
+                        id: plan.id,
+                        totalAmount: parseFloat(plan.totalAmount),
+                        totalPayments: plan.numberOfPayments,
+                        paymentsCompleted: 0, // TODO: Calculate from Stripe
+                        amountPaid: 0, // TODO: Calculate from Stripe
+                        remainingBalance: parseFloat(plan.totalAmount),
+                        status: plan.status,
+                        paymentFrequency: plan.cadence,
+                        monthlyPayment: parseFloat(plan.perInstallmentAmount),
+                        nextPaymentDate: plan.startDate,
+                        startDate: plan.startDate,
+                        endDate: plan.endDate,
+                        type: 'automated', // Mark as automated plan
+                        stripeSubscriptionScheduleId: plan.stripeSubscriptionScheduleId
+                    },
+                    session: {
+                        id: session.id,
+                        clientName: session.clientName,
+                        clientEmail: session.email,
+                        clientPhone: session.phoneNumber,
+                        sessionType: session.sessionType,
+                        sessionDate: session.dateTime
+                    },
+                    photographer: {
+                        businessName,
+                        email: photographer?.email || '',
+                        phone: photographer?.phoneNumber || ''
+                    },
+                    payments: [] // Automated payments are managed by Stripe
+                };
+            }
+        }
         
         if (!schedule) {
             return res.status(404).json({
