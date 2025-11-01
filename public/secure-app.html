@@ -7249,8 +7249,8 @@ ${agreement.content || 'No content available'}
                 // Show confirmation with preview
                 const confirmMsg = `⚡ Automated Billing Setup\n\n` +
                     `Total: $${preview.totalAmount}\n` +
-                    `${preview.totalPayments} ${frequency} payments of $${preview.paymentAmount} each\n` +
-                    `First payment: ${new Date(preview.payments[0].date).toLocaleDateString()}\n\n` +
+                    `${preview.numberOfPayments} ${frequency} payments of $${preview.perInstallmentAmount} each\n` +
+                    `First payment: ${new Date(preview.startDate).toLocaleDateString()}\n\n` +
                     `Stripe will automatically charge the customer on each payment date.\n\n` +
                     `Continue?`;
                 
