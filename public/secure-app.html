@@ -7090,6 +7090,18 @@ ${agreement.content || 'No content available'}
 
         window.createPaymentPlan = async function(sessionId) {
             try {
+                // Get the calculated values from the most recent calculatePayments call
+                const calculationResults = document.getElementById('calculationResults');
+                let calculatedNumPayments = null;
+                
+                // Try to extract the number of payments from the calculation results
+                if (calculationResults && calculationResults.textContent) {
+                    const match = calculationResults.textContent.match(/(\d+)\s+\w+\s+payments/);
+                    if (match) {
+                        calculatedNumPayments = parseInt(match[1]);
+                    }
+                }
+                
                 const billingType = document.getElementById('billingType')?.value || 'manual';
                 const frequency = document.getElementById('paymentFrequency').value;
                 const startDate = document.getElementById('startDate').value;
@@ -7135,10 +7147,11 @@ ${agreement.content || 'No content available'}
                 }
                 
                 if (billingType === 'automated') {
-                    // For automated billing, pass numberOfPayments if available
-                    const numPayments = scheduleMethod === 'numPayments' ? 
-                        parseInt(document.getElementById('numPayments').value) : 
-                        null;
+                    // For automated billing, use the calculated number of payments from the preview
+                    const numPayments = calculatedNumPayments || 
+                        (scheduleMethod === 'numPayments' ? 
+                            parseInt(document.getElementById('numPayments').value) : 
+                            null);
                     createAutomatedPaymentPlan(sessionId, session, frequency, startDate, endDate, numPayments);
                     return;
                 }
