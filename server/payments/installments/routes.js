@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const { eq } = require('drizzle-orm');
 const { calculatePaymentSchedule } = require('./math');
 const { createPaymentPlanSchedule, cancelSubscriptionSchedule } = require('./stripe');
 const { 
@@ -16,6 +17,7 @@ const {
   getPlansBySession,
   getPlansByPhotographer
 } = require('./dao');
+const { db, photographySessions, users } = require('../../../shared/schema');
 
 const router = express.Router();
 const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
@@ -67,8 +69,6 @@ router.post('/create', async (req, res) => {
 
     const required = [
       'sessionId',
-      'photographerId',
-      'stripeConnectedAccountId',
       'customerEmail',
       'customerName',
       'totalAmount',
@@ -82,6 +82,28 @@ router.post('/create', async (req, res) => {
         return res.status(400).json({ error: `Missing required field: ${field}` });
       }
     }
+
+    // Fetch photographer ID and Stripe account from session
+    const [session] = await db
+      .select({
+        userId: photographySessions.user_id,
+        stripeConnectAccountId: users.stripe_connect_account_id
+      })
+      .from(photographySessions)
+      .leftJoin(users, eq(photographySessions.user_id, users.uid))
+      .where(eq(photographySessions.id, request.sessionId))
+      .limit(1);
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    if (!session.stripeConnectAccountId) {
+      return res.status(400).json({ error: 'Photographer has not connected their Stripe account' });
+    }
+    
+    request.photographerId = session.userId;
+    request.stripeConnectedAccountId = session.stripeConnectAccountId;
 
     const preview = calculatePaymentSchedule(
       request.totalAmount,
@@ -123,9 +145,6 @@ router.post('/create', async (req, res) => {
     });
 
     // Update session to mark it has a payment plan
-    const { db, photographySessions } = require('../../../shared/schema');
-    const { eq } = require('drizzle-orm');
-    
     try {
       await db.update(photographySessions)
         .set({
