@@ -113,6 +113,26 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
 
   const platformFeePercent = PLATFORM_FEE_BPS / 100;
 
+  // Create a product for the photography session
+  let product;
+  if (usePlatformAccount) {
+    product = await stripe.products.create({
+      name: `Photography Session - ${sessionId.substring(0, 8)}`,
+      metadata: {
+        session_id: sessionId,
+        plan_id: planId
+      }
+    });
+  } else {
+    product = await stripe.products.create({
+      name: `Photography Session - ${sessionId.substring(0, 8)}`,
+      metadata: {
+        session_id: sessionId,
+        plan_id: planId
+      }
+    }, { stripeAccount: stripeConnectedAccountId });
+  }
+
   for (let i = 0; i < preview.paymentSchedule.length; i++) {
     const payment = preview.paymentSchedule[i];
     const paymentRecordId = uuidv4();
@@ -141,13 +161,7 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
       items: [{
         price_data: {
           currency: 'usd',
-          product_data: {
-            name: `Photography Session Payment ${payment.paymentNumber}/${preview.numberOfPayments}`,
-            metadata: {
-              session_id: sessionId,
-              payment_number: payment.paymentNumber.toString()
-            }
-          },
+          product: product.id,
           unit_amount: payment.amount,
           recurring: cadence === 'biweekly'
             ? { interval: 'week', interval_count: 2 }
