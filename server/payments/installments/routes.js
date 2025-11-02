@@ -156,9 +156,9 @@ router.post('/create', async (req, res) => {
     try {
       await db.update(photographySessions)
         .set({
-          has_payment_plan: true,
-          payment_plan_id: planId,
-          updated_at: new Date()
+          hasPaymentPlan: true,
+          paymentPlanId: planId,
+          updatedAt: new Date()
         })
         .where(eq(photographySessions.id, request.sessionId));
       
@@ -437,7 +437,7 @@ router.post('/:planId/send-email', async (req, res) => {
 
     // Get session and photographer info
     const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, plan.sessionId));
-    const [photographer] = await db.select().from(users).where(eq(users.uid, plan.photographerId));
+    const [photographer] = await db.select().from(users).where(eq(users.id, plan.photographerId));
 
     if (!session || !photographer) {
       return res.status(404).json({ error: 'Session or photographer not found' });
@@ -580,7 +580,7 @@ router.post('/:planId/send-sms', async (req, res) => {
 
     // Get session and photographer info
     const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, plan.sessionId));
-    const [photographer] = await db.select().from(users).where(eq(users.uid, plan.photographerId));
+    const [photographer] = await db.select().from(users).where(eq(users.id, plan.photographerId));
 
     if (!session || !photographer) {
       return res.status(404).json({ error: 'Session or photographer not found' });
