@@ -17,7 +17,8 @@ const {
   getPlansBySession,
   getPlansByPhotographer
 } = require('./dao');
-const { db, photographySessions, users } = require('../../../shared/schema');
+const { db } = require('../../db.ts');
+const { photographySessions, users } = require('../../../shared/schema');
 
 const router = express.Router();
 const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
