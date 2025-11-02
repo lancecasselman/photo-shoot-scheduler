@@ -3398,7 +3398,7 @@ app.use('/api/installments', installmentRoutes);
 // Stripe publishable key endpoint for client-side Stripe.js
 app.get('/api/stripe-publishable-key', (req, res) => {
     res.json({
-        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here'
+        publishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here'
     });
 });
 
