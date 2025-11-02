@@ -16,12 +16,16 @@ const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
 
 /**
  * Create or get a Stripe customer with payment method setup
+ * @param {boolean} usePlatformAccount - If true, create on platform account instead of connected account
  */
-async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymentMethodId = null) {
+async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymentMethodId = null, usePlatformAccount = false) {
+  // Build options - only include stripeAccount if using connected account
+  const stripeOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
+  
   const existingCustomers = await stripe.customers.list({
     email,
     limit: 1
-  }, { stripeAccount: stripeConnectedAccountId });
+  }, stripeOptions);
 
   let customerId;
 
@@ -32,7 +36,8 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       email,
       name,
       metadata: {
-        source: 'installment_plans'
+        source: 'installment_plans',
+        mode: usePlatformAccount ? 'platform_account' : 'connected_account'
       }
     };
 
@@ -42,7 +47,7 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       };
     }
 
-    const customer = await stripe.customers.create(customerData, { stripeAccount: stripeConnectedAccountId });
+    const customer = await stripe.customers.create(customerData, stripeOptions);
     customerId = customer.id;
   }
 
@@ -51,7 +56,7 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       invoice_settings: {
         default_payment_method: paymentMethodId
       }
-    }, { stripeAccount: stripeConnectedAccountId });
+    }, stripeOptions);
   }
 
   return customerId;
@@ -60,8 +65,9 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
 /**
  * Create subscription schedule for installment plan
  * Uses subscription schedules with phases for each payment
+ * @param {boolean} usePlatformAccount - If true, charge platform account instead of connected account
  */
-async function createPaymentPlanSchedule(request, preview, planId) {
+async function createPaymentPlanSchedule(request, preview, planId, usePlatformAccount = false) {
   const { 
     customerEmail, 
     customerName, 
@@ -72,7 +78,15 @@ async function createPaymentPlanSchedule(request, preview, planId) {
     cadence
   } = request;
 
-  const customerId = await createOrGetCustomer(customerEmail, customerName, stripeConnectedAccountId, paymentMethodId);
+  console.log(`💳 Creating subscription schedule in ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account mode`);
+
+  const customerId = await createOrGetCustomer(
+    customerEmail, 
+    customerName, 
+    stripeConnectedAccountId, 
+    paymentMethodId,
+    usePlatformAccount
+  );
 
   const phases = [];
   const paymentRecordIds = [];
@@ -104,7 +118,8 @@ async function createPaymentPlanSchedule(request, preview, planId) {
 
     const startTimestamp = Math.floor(new Date(payment.dueDate).getTime() / 1000);
 
-    phases.push({
+    // Build phase configuration
+    const phase = {
       items: [{
         price_data: {
           currency: 'usd',
@@ -130,14 +145,21 @@ async function createPaymentPlanSchedule(request, preview, planId) {
         photographer_id: photographerId,
         payment_number: payment.paymentNumber.toString(),
         plan_id: planId,
-        total_payments: preview.numberOfPayments.toString()
-      },
-      application_fee_percent: platformFeePercent,
-      on_behalf_of: stripeConnectedAccountId,
-      transfer_data: {
-        destination: stripeConnectedAccountId
+        total_payments: preview.numberOfPayments.toString(),
+        account_mode: usePlatformAccount ? 'platform' : 'connected'
       }
-    });
+    };
+
+    // Only add Connect-specific fields if using connected account
+    if (!usePlatformAccount && stripeConnectedAccountId) {
+      phase.application_fee_percent = platformFeePercent;
+      phase.on_behalf_of = stripeConnectedAccountId;
+      phase.transfer_data = {
+        destination: stripeConnectedAccountId
+      };
+    }
+
+    phases.push(phase);
   }
 
   const scheduleParams = {
@@ -149,15 +171,17 @@ async function createPaymentPlanSchedule(request, preview, planId) {
       plan_id: planId,
       session_id: sessionId,
       photographer_id: photographerId,
-      total_payments: preview.numberOfPayments.toString()
+      total_payments: preview.numberOfPayments.toString(),
+      account_mode: usePlatformAccount ? 'platform' : 'connected'
     }
   };
 
-  const requestOptions = {
-    stripeAccount: stripeConnectedAccountId
-  };
+  // Only add stripeAccount option if using connected account
+  const requestOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
 
   const schedule = await stripe.subscriptionSchedules.create(scheduleParams, requestOptions);
+
+  console.log(`✅ Subscription schedule created: ${schedule.id} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
 
   return {
     customerId,
@@ -169,16 +193,16 @@ async function createPaymentPlanSchedule(request, preview, planId) {
 
 /**
  * Cancel a subscription schedule
+ * @param {boolean} usePlatformAccount - If true, cancel on platform account instead of connected account
  */
-async function cancelSubscriptionSchedule(scheduleId, stripeConnectedAccountId) {
-  const requestOptions = {
-    stripeAccount: stripeConnectedAccountId
-  };
+async function cancelSubscriptionSchedule(scheduleId, stripeConnectedAccountId, usePlatformAccount = false) {
+  const requestOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
   
   const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, requestOptions);
   
   if (schedule.status === 'active' || schedule.status === 'not_started') {
     await stripe.subscriptionSchedules.cancel(scheduleId, requestOptions);
+    console.log(`✅ Subscription schedule canceled: ${scheduleId} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
   }
 }
 

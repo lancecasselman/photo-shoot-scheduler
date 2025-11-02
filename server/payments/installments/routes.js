@@ -99,12 +99,17 @@ router.post('/create', async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
     
-    if (!session.stripeConnectAccountId) {
-      return res.status(400).json({ error: 'Photographer has not connected their Stripe account' });
+    // Determine which Stripe account to use
+    const usePlatformAccount = !session.stripeConnectAccountId;
+    
+    if (usePlatformAccount) {
+      console.log(`💳 INSTALLMENT: Using PLATFORM Stripe account (photographer has no Connect account)`);
+    } else {
+      console.log(`💳 INSTALLMENT: Using CONNECTED Stripe account: ${session.stripeConnectAccountId}`);
     }
     
     request.photographerId = session.userId;
-    request.stripeConnectedAccountId = session.stripeConnectAccountId;
+    request.stripeConnectedAccountId = session.stripeConnectAccountId || 'platform';
 
     const preview = calculatePaymentSchedule(
       request.totalAmount,
@@ -139,11 +144,12 @@ router.post('/create', async (req, res) => {
 
     await createPlan(plan);
 
-    const { customerId, scheduleId, paymentRecordIds } = await createPaymentPlanSchedule(request, preview, planId);
+    const { customerId, scheduleId, paymentRecordIds } = await createPaymentPlanSchedule(request, preview, planId, usePlatformAccount);
 
     await updatePlan(planId, {
       stripeCustomerId: customerId,
-      stripeSubscriptionScheduleId: scheduleId
+      stripeSubscriptionScheduleId: scheduleId,
+      usePlatformAccount: usePlatformAccount
     });
 
     // Update session to mark it has a payment plan
@@ -265,7 +271,9 @@ router.post('/:planId/cancel', async (req, res) => {
     }
 
     if (plan.stripeSubscriptionScheduleId) {
-      await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, plan.stripeConnectedAccountId);
+      // Determine which Stripe account was used
+      const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
+      await cancelSubscriptionSchedule(plan.stripeSubscriptionScheduleId, plan.stripeConnectedAccountId, usePlatformAccount);
       console.log(`✅ INSTALLMENT: Canceled subscription schedule ${plan.stripeSubscriptionScheduleId} for plan ${planId}`);
     }
 
@@ -346,6 +354,15 @@ router.post('/plan/:planId/attach-payment', async (req, res) => {
       return res.status(400).json({ error: 'Payment method already attached to this plan' });
     }
     
+    // Determine which Stripe account to use
+    const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
+    
+    if (usePlatformAccount) {
+      console.log(`💳 INSTALLMENT: Attaching payment to PLATFORM Stripe account`);
+    } else {
+      console.log(`💳 INSTALLMENT: Attaching payment to CONNECTED Stripe account: ${plan.stripeConnectedAccountId}`);
+    }
+    
     // Recreate the preview to get payment schedule
     const preview = calculatePaymentSchedule(
       plan.totalAmount,
@@ -366,13 +383,14 @@ router.post('/plan/:planId/attach-payment', async (req, res) => {
       cadence: plan.cadence
     };
     
-    const { customerId, scheduleId } = await createPaymentPlanSchedule(request, preview, planId);
+    const { customerId, scheduleId } = await createPaymentPlanSchedule(request, preview, planId, usePlatformAccount);
     
     // Update plan with Stripe IDs
     await updatePlan(planId, {
       stripeCustomerId: customerId,
       stripeSubscriptionScheduleId: scheduleId,
-      status: 'active'
+      status: 'active',
+      usePlatformAccount: usePlatformAccount
     });
     
     console.log(`✅ INSTALLMENT: Payment method attached to plan ${planId}, schedule ${scheduleId} created`);
