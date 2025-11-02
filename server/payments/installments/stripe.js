@@ -19,13 +19,20 @@ const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
  * @param {boolean} usePlatformAccount - If true, create on platform account instead of connected account
  */
 async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymentMethodId = null, usePlatformAccount = false) {
-  // Build options - only include stripeAccount if using connected account
-  const stripeOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
+  let existingCustomers;
   
-  const existingCustomers = await stripe.customers.list({
-    email,
-    limit: 1
-  }, stripeOptions);
+  // Only pass stripeAccount option when using connected account
+  if (usePlatformAccount) {
+    existingCustomers = await stripe.customers.list({
+      email,
+      limit: 1
+    });
+  } else {
+    existingCustomers = await stripe.customers.list({
+      email,
+      limit: 1
+    }, { stripeAccount: stripeConnectedAccountId });
+  }
 
   let customerId;
 
@@ -47,16 +54,29 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       };
     }
 
-    const customer = await stripe.customers.create(customerData, stripeOptions);
+    let customer;
+    if (usePlatformAccount) {
+      customer = await stripe.customers.create(customerData);
+    } else {
+      customer = await stripe.customers.create(customerData, { stripeAccount: stripeConnectedAccountId });
+    }
     customerId = customer.id;
   }
 
   if (paymentMethodId && existingCustomers.data.length > 0) {
-    await stripe.customers.update(customerId, {
-      invoice_settings: {
-        default_payment_method: paymentMethodId
-      }
-    }, stripeOptions);
+    if (usePlatformAccount) {
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId
+        }
+      });
+    } else {
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId
+        }
+      }, { stripeAccount: stripeConnectedAccountId });
+    }
   }
 
   return customerId;
@@ -176,10 +196,13 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     }
   };
 
-  // Only add stripeAccount option if using connected account
-  const requestOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
-
-  const schedule = await stripe.subscriptionSchedules.create(scheduleParams, requestOptions);
+  // Create subscription schedule - only pass stripeAccount if using connected account
+  let schedule;
+  if (usePlatformAccount) {
+    schedule = await stripe.subscriptionSchedules.create(scheduleParams);
+  } else {
+    schedule = await stripe.subscriptionSchedules.create(scheduleParams, { stripeAccount: stripeConnectedAccountId });
+  }
 
   console.log(`✅ Subscription schedule created: ${schedule.id} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
 
@@ -196,12 +219,22 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
  * @param {boolean} usePlatformAccount - If true, cancel on platform account instead of connected account
  */
 async function cancelSubscriptionSchedule(scheduleId, stripeConnectedAccountId, usePlatformAccount = false) {
-  const requestOptions = usePlatformAccount ? {} : { stripeAccount: stripeConnectedAccountId };
+  let schedule;
   
-  const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, requestOptions);
+  // Retrieve schedule - only pass stripeAccount if using connected account
+  if (usePlatformAccount) {
+    schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
+  } else {
+    schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, { stripeAccount: stripeConnectedAccountId });
+  }
   
   if (schedule.status === 'active' || schedule.status === 'not_started') {
-    await stripe.subscriptionSchedules.cancel(scheduleId, requestOptions);
+    // Cancel schedule - only pass stripeAccount if using connected account
+    if (usePlatformAccount) {
+      await stripe.subscriptionSchedules.cancel(scheduleId);
+    } else {
+      await stripe.subscriptionSchedules.cancel(scheduleId, { stripeAccount: stripeConnectedAccountId });
+    }
     console.log(`✅ Subscription schedule canceled: ${scheduleId} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
   }
 }
