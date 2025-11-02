@@ -451,13 +451,11 @@ router.post('/:planId/send-email', async (req, res) => {
       return res.status(400).json({ error: 'Client email address not found in session. Please update the session with a valid email address.' });
     }
 
-    // Get payment schedule
-    const payments = await getPaymentsByPlan(planId);
-    const firstPayment = payments.find(p => p.paymentNumber === 1);
-
-    if (!firstPayment) {
-      return res.status(404).json({ error: 'First payment not found' });
-    }
+    // Calculate first payment info from plan data (avoid Firestore query)
+    const firstPayment = {
+      amount: plan.perInstallmentAmount,
+      dueDate: plan.startDate
+    };
 
     // Build payment link
     const baseUrl = process.env.REPLIT_DEPLOYMENT === 'production' 
@@ -595,13 +593,11 @@ router.post('/:planId/send-sms', async (req, res) => {
       return res.status(400).json({ error: 'Client phone number not found in session. Please update the session with a valid phone number.' });
     }
 
-    // Get first payment
-    const payments = await getPaymentsByPlan(planId);
-    const firstPayment = payments.find(p => p.paymentNumber === 1);
-
-    if (!firstPayment) {
-      return res.status(404).json({ error: 'First payment not found' });
-    }
+    // Calculate first payment info from plan data (avoid Firestore query)
+    const firstPayment = {
+      amount: plan.perInstallmentAmount,
+      dueDate: plan.startDate
+    };
 
     // Build payment link
     const baseUrl = process.env.REPLIT_DEPLOYMENT === 'production' 
