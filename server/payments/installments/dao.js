@@ -3,15 +3,9 @@
  * Manages Firestore CRUD operations
  */
 
-const { Firestore } = require('@google-cloud/firestore');
+const { admin } = require('../../firebase-admin');
 
-const firestore = new Firestore({
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  credentials: {
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-  }
-});
+const firestore = admin.firestore();
 
 const PLANS_COLLECTION = 'installmentPlans';
 const PAYMENTS_COLLECTION = 'installmentPayments';
