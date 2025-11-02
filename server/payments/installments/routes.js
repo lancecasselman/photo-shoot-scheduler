@@ -87,11 +87,11 @@ router.post('/create', async (req, res) => {
     // Fetch photographer ID and Stripe account from session
     const [session] = await db
       .select({
-        userId: photographySessions.user_id,
-        stripeConnectAccountId: users.stripe_connect_account_id
+        userId: photographySessions.userId,
+        stripeConnectAccountId: users.stripeConnectAccountId
       })
       .from(photographySessions)
-      .leftJoin(users, eq(photographySessions.user_id, users.uid))
+      .leftJoin(users, eq(photographySessions.userId, users.uid))
       .where(eq(photographySessions.id, request.sessionId))
       .limit(1);
     
