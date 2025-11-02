@@ -6698,9 +6698,9 @@ ${agreement.content || 'No content available'}
 
         let currentPaymentPlanSessionId = null;
         
-        // Open installment setup page for automated payment plans
+        // Open payment plan creation page for automated payment plans
         window.openInstallmentSetup = async function(sessionId) {
-            console.log('Opening installment setup for session:', sessionId);
+            console.log('Opening payment plan creation for session:', sessionId);
             
             // Get session data
             const session = sessions.find(s => s.id === sessionId);
@@ -6710,8 +6710,8 @@ ${agreement.content || 'No content available'}
                 return;
             }
             
-            // Open installment setup page with session ID as query parameter
-            const url = `/installment-setup.html?sessionId=${sessionId}`;
+            // Open payment plan creation page with session ID as query parameter
+            const url = `/create-payment-plan.html?sessionId=${sessionId}`;
             window.open(url, '_blank');
         }
         
