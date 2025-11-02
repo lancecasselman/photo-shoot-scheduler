@@ -7313,7 +7313,7 @@ ${agreement.content || 'No content available'}
                         <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px; word-break: break-all; font-family: monospace;">
                             ${clientLink}
                         </div>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                             <button onclick="navigator.clipboard.writeText('${clientLink}'); this.textContent='✅ Copied!'; setTimeout(() => this.textContent='📋 Copy Link', 2000);" 
                                 style="flex: 1; background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
                                 📋 Copy Link
@@ -7323,9 +7323,19 @@ ${agreement.content || 'No content available'}
                                 Done
                             </button>
                         </div>
-                        <p style="margin-top: 20px; font-size: 14px; color: #6b7280;">
-                            💡 You can also send this link via SMS or email to your client
+                        <p style="margin-bottom: 15px; font-size: 14px; color: #6b7280; text-align: center;">
+                            💡 Send this link to your client:
                         </p>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="window.sendInstallmentEmail('${createResult.plan.id}', '${session.clientName}')" 
+                                style="flex: 1; background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                📧 Send Email
+                            </button>
+                            <button onclick="window.sendInstallmentSMS('${createResult.plan.id}', '${session.clientName}')" 
+                                style="flex: 1; background: #8b5cf6; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                💬 Send SMS
+                            </button>
+                        </div>
                     </div>
                 `;
                 document.body.appendChild(linkModal);
@@ -7333,6 +7343,62 @@ ${agreement.content || 'No content available'}
             } catch (error) {
                 console.error('Error creating automated payment plan:', error);
                 showMessage('Error setting up automated billing: ' + error.message, 'error');
+            }
+        };
+        
+        // Send installment payment link via email
+        window.sendInstallmentEmail = async function(planId, clientName) {
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`/api/installments/${planId}/send-email`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ useMailto: true })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate email');
+                }
+                
+                const result = await response.json();
+                
+                if (result.mailtoUrl) {
+                    // Open default email client with pre-filled email
+                    window.location.href = result.mailtoUrl;
+                    showMessage(`✅ Email template opened for ${clientName}`, 'success');
+                } else if (result.method === 'smtp') {
+                    showMessage(`✅ Email sent to ${clientName}!`, 'success');
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                showMessage('Error opening email: ' + error.message, 'error');
+            }
+        };
+        
+        // Send installment payment link via SMS
+        window.sendInstallmentSMS = async function(planId, clientName) {
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`/api/installments/${planId}/send-sms`, {
+                    method: 'POST',
+                    headers
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate SMS');
+                }
+                
+                const result = await response.json();
+                
+                if (result.smsUrl) {
+                    // Open default SMS app with pre-filled message
+                    window.location.href = result.smsUrl;
+                    showMessage(`✅ SMS template opened for ${clientName}`, 'success');
+                }
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                showMessage('Error opening SMS: ' + error.message, 'error');
             }
         };
         

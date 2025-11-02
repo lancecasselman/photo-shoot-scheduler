@@ -411,4 +411,205 @@ router.post('/plan/:planId/attach-payment', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/installments/:planId/send-email
+ * Send first payment link via email (using mailto: or SMTP)
+ */
+router.post('/:planId/send-email', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { useMailto = true } = req.body;
+    const userId = req.session?.user?.uid;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const plan = await getPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ error: 'Payment plan not found' });
+    }
+
+    if (plan.photographerId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Get session and photographer info
+    const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, plan.sessionId));
+    const [photographer] = await db.select().from(users).where(eq(users.uid, plan.photographerId));
+
+    if (!session || !photographer) {
+      return res.status(404).json({ error: 'Session or photographer not found' });
+    }
+
+    // Get payment schedule
+    const payments = await getPaymentsByPlan(planId);
+    const firstPayment = payments.find(p => p.paymentNumber === 1);
+
+    if (!firstPayment) {
+      return res.status(404).json({ error: 'First payment not found' });
+    }
+
+    // Format email content
+    const emailSubject = `First Payment Ready - ${session.sessionType} Session`;
+    
+    let emailText = `Hi ${plan.customerName},\n\n`;
+    emailText += `Your automated payment plan is ready! Here's the link to set up your payment method for your ${session.sessionType} session with ${photographer.businessName || photographer.displayName}.\n\n`;
+    emailText += `Payment Plan Summary:\n`;
+    emailText += `${'='.repeat(60)}\n`;
+    emailText += `Total Amount: $${parseFloat(plan.totalAmount).toFixed(2)}\n`;
+    emailText += `Number of Payments: ${plan.numberOfPayments}\n`;
+    emailText += `Payment Frequency: ${plan.cadence === 'biweekly' ? 'Every 2 weeks' : 'Monthly'}\n`;
+    emailText += `First Payment: $${parseFloat(firstPayment.amount).toFixed(2)}\n`;
+    emailText += `First Payment Date: ${new Date(firstPayment.dueDate).toLocaleDateString()}\n`;
+    emailText += `${'='.repeat(60)}\n\n`;
+    emailText += `Click the link below to set up your payment method:\n`;
+    emailText += `${plan.clientPaymentLink}\n\n`;
+    emailText += `Once you set up your payment method, your payments will be automatically charged on the scheduled dates.\n\n`;
+    emailText += `If you have any questions, please contact:\n`;
+    emailText += `${photographer.businessName || photographer.displayName}\n`;
+    emailText += `Email: ${photographer.email}\n`;
+    if (photographer.phoneNumber) {
+      emailText += `Phone: ${photographer.phoneNumber}\n`;
+    }
+    emailText += `\nThank you!`;
+
+    if (useMailto) {
+      // Generate mailto: URL
+      const mailtoUrl = `mailto:${plan.customerEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailText)}`;
+      
+      return res.json({
+        success: true,
+        method: 'mailto',
+        mailtoUrl,
+        message: 'Email client URL generated. This will open your default email app.'
+      });
+    } else {
+      // Use nodemailer to send email
+      const nodemailer = require('nodemailer');
+      
+      // Check if SMTP is configured
+      if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+        console.log('⚠ SMTP not configured - falling back to mailto: URL');
+        const mailtoUrl = `mailto:${plan.customerEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailText)}`;
+        
+        return res.json({
+          success: true,
+          method: 'mailto',
+          mailtoUrl,
+          message: 'SMTP not configured. Use mailto URL to open default email app.',
+          note: 'Configure SMTP_USER, SMTP_PASSWORD, SMTP_HOST to enable automatic email sending'
+        });
+      }
+
+      // Configure nodemailer with SMTP settings
+      const transporter = nodemailer.createTransporter({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD
+        }
+      });
+
+      // Send email
+      await transporter.sendMail({
+        from: `"${photographer.businessName || photographer.displayName}" <${process.env.SMTP_USER}>`,
+        to: plan.customerEmail,
+        subject: emailSubject,
+        text: emailText
+      });
+
+      console.log(`✅ First payment link email sent to ${plan.customerEmail}`);
+      
+      return res.json({
+        success: true,
+        method: 'smtp',
+        message: 'First payment link sent via email'
+      });
+    }
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Send email error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to send email'
+    });
+  }
+});
+
+/**
+ * POST /api/installments/:planId/send-sms
+ * Generate SMS URL for first payment link
+ */
+router.post('/:planId/send-sms', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const userId = req.session?.user?.uid;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const plan = await getPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ error: 'Payment plan not found' });
+    }
+
+    if (plan.photographerId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Get session and photographer info
+    const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, plan.sessionId));
+    const [photographer] = await db.select().from(users).where(eq(users.uid, plan.photographerId));
+
+    if (!session || !photographer) {
+      return res.status(404).json({ error: 'Session or photographer not found' });
+    }
+
+    // Get first payment
+    const payments = await getPaymentsByPlan(planId);
+    const firstPayment = payments.find(p => p.paymentNumber === 1);
+
+    if (!firstPayment) {
+      return res.status(404).json({ error: 'First payment not found' });
+    }
+
+    // Check if client phone number exists
+    if (!session.phoneNumber) {
+      return res.status(400).json({ error: 'Client phone number not found in session' });
+    }
+
+    // Format short SMS message
+    let smsText = `Hi ${plan.customerName}! Your payment plan is ready for your ${session.sessionType} session with ${photographer.businessName || photographer.displayName}.\n\n`;
+    smsText += `Total: $${parseFloat(plan.totalAmount).toFixed(2)}\n`;
+    smsText += `${plan.numberOfPayments} payments of ~$${(parseFloat(plan.totalAmount) / plan.numberOfPayments).toFixed(2)}\n`;
+    smsText += `First payment: $${parseFloat(firstPayment.amount).toFixed(2)} on ${new Date(firstPayment.dueDate).toLocaleDateString()}\n\n`;
+    smsText += `Set up payment method here:\n${plan.clientPaymentLink}\n\n`;
+    smsText += `Questions? Contact ${photographer.email}`;
+
+    // Clean phone number
+    const cleanPhone = session.phoneNumber.replace(/\D/g, '');
+    
+    // Generate SMS URL
+    const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(smsText)}`;
+
+    console.log(`📱 First payment link SMS URL generated for ${plan.customerName}`);
+    
+    res.json({
+      success: true,
+      smsUrl,
+      message: 'SMS URL generated. This will open the default SMS app.',
+      note: 'Without a third-party SMS service, this opens the device SMS app with pre-filled text'
+    });
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Send SMS error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to generate SMS'
+    });
+  }
+});
+
 module.exports = router;
