@@ -457,10 +457,11 @@ router.post('/:planId/send-email', async (req, res) => {
       dueDate: plan.startDate
     };
 
-    // Build payment link
-    const baseUrl = process.env.REPLIT_DEPLOYMENT === 'production' 
-      ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_CLUSTER}.repl.co`
-      : `https://${process.env.REPL_SLUG}.replit.dev`;
+    // Build payment link - use custom domain if set, otherwise use Replit URLs
+    const baseUrl = process.env.BASE_URL || 
+      (process.env.REPLIT_DEPLOYMENT === 'production' 
+        ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_CLUSTER}.repl.co`
+        : `https://${process.env.REPLIT_DEV_DOMAIN}`);
     const clientPaymentLink = `${baseUrl}/installment-setup.html?planId=${planId}`;
 
     // Format email content
@@ -599,10 +600,11 @@ router.post('/:planId/send-sms', async (req, res) => {
       dueDate: plan.startDate
     };
 
-    // Build payment link
-    const baseUrl = process.env.REPLIT_DEPLOYMENT === 'production' 
-      ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_CLUSTER}.repl.co`
-      : `https://${process.env.REPL_SLUG}.replit.dev`;
+    // Build payment link - use custom domain if set, otherwise use Replit URLs
+    const baseUrl = process.env.BASE_URL || 
+      (process.env.REPLIT_DEPLOYMENT === 'production' 
+        ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_CLUSTER}.repl.co`
+        : `https://${process.env.REPLIT_DEV_DOMAIN}`);
     const clientPaymentLink = `${baseUrl}/installment-setup.html?planId=${planId}`;
 
     // Format short SMS message
