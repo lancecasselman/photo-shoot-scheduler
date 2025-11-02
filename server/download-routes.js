@@ -3076,6 +3076,92 @@ function createDownloadRoutes(isAuthenticated, downloadCommerceManager) {
   });
 
   /**
+   * GET /api/gallery/:sessionId/download-history
+   * Get download history for a gallery client (server-side tracking to bypass Safari localStorage blocking)
+   * Accepts gallery token via x-gallery-token header OR galleryToken query parameter for validation
+   * Returns list of downloaded photo IDs/filenames for that session+clientKey
+   */
+  router.get('/gallery/:sessionId/download-history', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const galleryToken = req.headers['x-gallery-token'] || req.query.galleryToken;
+      
+      console.log('📊 Download history request for session:', sessionId);
+      
+      if (!galleryToken) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Gallery token required (via header x-gallery-token or query param galleryToken)' 
+        });
+      }
+      
+      // Validate gallery token and get session
+      const session = await db
+        .select()
+        .from(photographySessions)
+        .where(and(
+          eq(photographySessions.id, sessionId),
+          eq(photographySessions.galleryAccessToken, galleryToken)
+        ))
+        .limit(1);
+      
+      if (session.length === 0) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Invalid gallery token for this session' 
+        });
+      }
+      
+      const sessionData = session[0];
+      
+      // Check if gallery has expired
+      if (sessionData.galleryExpiresAt && new Date() > sessionData.galleryExpiresAt) {
+        return res.status(410).json({ 
+          success: false, 
+          error: 'Gallery access has expired' 
+        });
+      }
+      
+      // Generate client key using the authoritative function
+      const clientKey = generateGalleryClientKey(galleryToken, sessionId);
+      
+      console.log(`🔑 Fetching download history for clientKey: ${clientKey}`);
+      
+      // Query galleryDownloads table for all downloads by this client
+      const downloads = await db
+        .select({
+          photoId: galleryDownloads.photoId,
+          filename: galleryDownloads.filename,
+          downloadedAt: galleryDownloads.createdAt
+        })
+        .from(galleryDownloads)
+        .where(and(
+          eq(galleryDownloads.sessionId, sessionId),
+          eq(galleryDownloads.clientKey, clientKey)
+        ))
+        .orderBy(desc(galleryDownloads.createdAt));
+      
+      console.log(`✅ Found ${downloads.length} downloads for session ${sessionId}`);
+      
+      res.json({
+        success: true,
+        downloads: downloads.map(d => ({
+          photoId: d.photoId,
+          filename: d.filename,
+          downloadedAt: d.downloadedAt
+        }))
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching download history:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch download history' 
+      });
+    }
+  });
+
+  /**
    * POST /api/downloads/purchase/:sessionId/:photoId
    * Process payment for download (for paid/freemium models) - public endpoint with token
    */

@@ -719,19 +719,29 @@
                 try {
                     if (!this.sessionData?.id || !this.downloadClientKey) return;
 
-                    // First load from localStorage (instant)
-                    const storageKey = `downloaded_photos_${this.sessionData.id}_${this.downloadClientKey}`;
-                    const stored = localStorage.getItem(storageKey);
-                    
-                    if (stored) {
-                        const storedPhotos = JSON.parse(stored);
-                        storedPhotos.forEach(photoId => this.downloadedPhotos.add(photoId));
-                        console.log('📊 Loaded downloaded photos from localStorage:', Array.from(this.downloadedPhotos));
+                    // Try to load from localStorage first (instant, but may be blocked by Safari)
+                    try {
+                        const storageKey = `downloaded_photos_${this.sessionData.id}_${this.downloadClientKey}`;
+                        const stored = localStorage.getItem(storageKey);
+                        
+                        if (stored) {
+                            const storedPhotos = JSON.parse(stored);
+                            storedPhotos.forEach(photoId => this.downloadedPhotos.add(photoId));
+                            console.log('📊 Loaded downloaded photos from localStorage:', Array.from(this.downloadedPhotos));
+                        }
+                    } catch (storageError) {
+                        // Safari Tracking Prevention may block localStorage access
+                        console.warn('⚠️ localStorage access blocked (Safari Tracking Prevention):', storageError.message);
+                        console.log('📡 Falling back to server-side download tracking...');
                     }
 
-                    // Then sync with server to get any downloads from other devices/sessions
+                    // Fetch from server to get authoritative download history (works even when localStorage is blocked)
                     try {
-                        const response = await fetch(`${this.getApiBaseUrl()}/api/gallery/${this.galleryToken}/download-history?clientKey=${this.downloadClientKey}`);
+                        const response = await fetch(`${this.getApiBaseUrl()}/api/gallery/${this.sessionData.id}/download-history`, {
+                            headers: {
+                                'x-gallery-token': this.galleryToken
+                            }
+                        });
                         
                         if (response.ok) {
                             const data = await response.json();
@@ -743,20 +753,22 @@
                                     this.downloadedPhotos.add(download.photoId);
                                 });
                                 
-                                // Save updated history to localStorage
+                                // Try to save to localStorage (gracefully fail if blocked)
                                 this.saveDownloadedPhotos();
                                 
-                                // Refresh display if we found new downloads
+                                // Refresh display if we found downloads
                                 if (data.downloads.length > 0) {
                                     console.log('✅ Synced download history - total downloaded:', this.downloadedPhotos.size);
                                     this.displayPhotos();
                                     this.updateDownloadCounter();
                                 }
                             }
+                        } else {
+                            console.warn('Could not fetch download history from server:', response.status);
                         }
                     } catch (syncError) {
                         console.warn('Could not sync download history from server:', syncError);
-                        // Continue with localStorage data
+                        // Continue with localStorage data if we got any
                     }
                 } catch (error) {
                     console.warn('Could not load download history:', error);

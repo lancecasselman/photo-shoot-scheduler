@@ -505,17 +505,56 @@
 
         async function checkDownloadedPhotos() {
             try {
-                // Load from localStorage (persists across page reloads)
-                const storageKey = `downloaded_photos_${sessionId}_${clientKey}`;
-                const stored = localStorage.getItem(storageKey);
-                
-                if (stored) {
-                    const storedPhotos = JSON.parse(stored);
-                    storedPhotos.forEach(photoId => downloadedPhotos.add(photoId));
-                    console.log('📊 Loaded downloaded photos from storage:', Array.from(downloadedPhotos));
+                // Try to load from localStorage first (instant, but may be blocked by Safari)
+                try {
+                    const storageKey = `downloaded_photos_${sessionId}_${clientKey}`;
+                    const stored = localStorage.getItem(storageKey);
+                    
+                    if (stored) {
+                        const storedPhotos = JSON.parse(stored);
+                        storedPhotos.forEach(photoId => downloadedPhotos.add(photoId));
+                        console.log('📊 Loaded downloaded photos from localStorage:', Array.from(downloadedPhotos));
+                    }
+                } catch (storageError) {
+                    // Safari Tracking Prevention may block localStorage access
+                    console.warn('⚠️ localStorage access blocked (Safari Tracking Prevention):', storageError.message);
+                    console.log('📡 Falling back to server-side download tracking...');
+                }
+
+                // Fetch from server to get authoritative download history (works even when localStorage is blocked)
+                try {
+                    const response = await fetch(`/api/gallery/${sessionId}/download-history`, {
+                        headers: {
+                            'x-gallery-token': galleryToken
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.downloads) {
+                            console.log('🔄 Syncing download history from server:', data.downloads.length, 'downloads');
+                            
+                            // Add all downloaded photo IDs to the set
+                            data.downloads.forEach(download => {
+                                downloadedPhotos.add(download.photoId);
+                            });
+                            
+                            // Try to save to localStorage (gracefully fail if blocked)
+                            saveDownloadedPhotos();
+                            
+                            if (data.downloads.length > 0) {
+                                console.log('✅ Synced download history - total downloaded:', downloadedPhotos.size);
+                            }
+                        }
+                    } else {
+                        console.warn('Could not fetch download history from server:', response.status);
+                    }
+                } catch (syncError) {
+                    console.warn('Could not sync download history from server:', syncError);
+                    // Continue with localStorage data if we got any
                 }
             } catch (error) {
-                console.warn('Could not load download history from storage:', error);
+                console.warn('Could not load download history:', error);
             }
         }
 
@@ -524,7 +563,8 @@
                 const storageKey = `downloaded_photos_${sessionId}_${clientKey}`;
                 localStorage.setItem(storageKey, JSON.stringify(Array.from(downloadedPhotos)));
             } catch (error) {
-                console.warn('Could not save download history:', error);
+                // Safari Tracking Prevention may block localStorage - fail silently
+                console.warn('Could not save download history to localStorage:', error.message);
             }
         }
 
