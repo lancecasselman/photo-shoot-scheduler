@@ -136,8 +136,6 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     await createPayment(paymentRecord);
     paymentRecordIds.push(paymentRecordId);
 
-    const startTimestamp = Math.floor(new Date(payment.dueDate).getTime() / 1000);
-
     // Build phase configuration
     const phase = {
       items: [{
@@ -158,7 +156,6 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
         quantity: 1
       }],
       iterations: 1,
-      start_date: startTimestamp,
       metadata: {
         payment_record_id: paymentRecordId,
         session_id: sessionId,
@@ -182,9 +179,12 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     phases.push(phase);
   }
 
+  // Calculate start timestamp from first payment due date
+  const startTimestamp = Math.floor(new Date(preview.paymentSchedule[0].dueDate).getTime() / 1000);
+
   const scheduleParams = {
     customer: customerId,
-    start_date: phases[0].start_date,
+    start_date: startTimestamp,
     end_behavior: 'cancel',
     phases: phases,
     metadata: {
