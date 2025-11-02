@@ -121,6 +121,7 @@ router.post('/create', async (req, res) => {
       sessionId: request.sessionId,
       photographerId: request.photographerId,
       customerEmail: request.customerEmail,
+      customerName: request.customerName,
       totalAmount: preview.totalAmount,
       perInstallmentAmount: preview.perInstallmentAmount,
       platformFeeBps: PLATFORM_FEE_BPS,
@@ -164,10 +165,13 @@ router.post('/create', async (req, res) => {
 
     res.json({
       success: true,
-      planId,
-      customerId,
-      scheduleId,
-      paymentCount: preview.numberOfPayments,
+      plan: {
+        id: planId,
+        sessionId: request.sessionId,
+        customerId,
+        scheduleId,
+        numberOfPayments: preview.numberOfPayments
+      },
       preview
     });
   } catch (error) {
@@ -276,6 +280,114 @@ router.post('/:planId/cancel', async (req, res) => {
     console.error('❌ INSTALLMENT: Cancel error:', error);
     res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to cancel plan'
+    });
+  }
+});
+
+/**
+ * GET /api/installments/plan/:planId
+ * Get plan details for client payment setup (no auth required)
+ */
+router.get('/plan/:planId', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    
+    const plan = await getPlan(planId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Payment plan not found or expired' });
+    }
+    
+    // Return plan details without sensitive information
+    res.json({
+      id: plan.id,
+      sessionId: plan.sessionId,
+      customerEmail: plan.customerEmail,
+      customerName: plan.customerName || 'Valued Client',
+      totalAmount: plan.totalAmount,
+      perInstallmentAmount: plan.perInstallmentAmount,
+      cadence: plan.cadence,
+      startDate: plan.startDate,
+      endDate: plan.endDate,
+      numberOfPayments: plan.numberOfPayments,
+      status: plan.status
+    });
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Get plan error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to get plan details'
+    });
+  }
+});
+
+/**
+ * POST /api/installments/plan/:planId/attach-payment
+ * Attach payment method to existing plan and activate billing (no auth required)
+ */
+router.post('/plan/:planId/attach-payment', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { paymentMethodId } = req.body;
+    
+    if (!paymentMethodId) {
+      return res.status(400).json({ error: 'Payment method ID is required' });
+    }
+    
+    const plan = await getPlan(planId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Payment plan not found' });
+    }
+    
+    if (plan.status === 'canceled') {
+      return res.status(400).json({ error: 'This payment plan has been canceled' });
+    }
+    
+    if (plan.stripeSubscriptionScheduleId) {
+      return res.status(400).json({ error: 'Payment method already attached to this plan' });
+    }
+    
+    // Recreate the preview to get payment schedule
+    const preview = calculatePaymentSchedule(
+      plan.totalAmount,
+      plan.cadence,
+      plan.startDate,
+      plan.numberOfPayments,
+      PLATFORM_FEE_BPS
+    );
+    
+    // Create the subscription schedule with payment method
+    const request = {
+      customerEmail: plan.customerEmail,
+      customerName: plan.customerName,
+      stripeConnectedAccountId: plan.stripeConnectedAccountId,
+      sessionId: plan.sessionId,
+      photographerId: plan.photographerId,
+      paymentMethodId,
+      cadence: plan.cadence
+    };
+    
+    const { customerId, scheduleId } = await createPaymentPlanSchedule(request, preview, planId);
+    
+    // Update plan with Stripe IDs
+    await updatePlan(planId, {
+      stripeCustomerId: customerId,
+      stripeSubscriptionScheduleId: scheduleId,
+      status: 'active'
+    });
+    
+    console.log(`✅ INSTALLMENT: Payment method attached to plan ${planId}, schedule ${scheduleId} created`);
+    
+    res.json({
+      success: true,
+      message: 'Automated billing activated successfully',
+      plan: {
+        id: planId,
+        scheduleId
+      }
+    });
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Attach payment error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to attach payment method'
     });
   }
 });

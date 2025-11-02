@@ -192,15 +192,13 @@
     
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('session');
+        const planId = urlParams.get('planId');
         
-        // Get pending plan data from session storage
-        const planData = JSON.parse(sessionStorage.getItem('pendingInstallmentPlan') || '{}');
+        let planData = {};
         
-        if (!planData.sessionId) {
-            document.getElementById('message').innerHTML = '<div class="error-message">⚠️ No payment plan data found. Please start over.</div>';
+        if (!planId) {
+            document.getElementById('message').innerHTML = '<div class="error-message">⚠️ Invalid payment plan link. Please contact your photographer for a new link.</div>';
             document.getElementById('payment-form').style.display = 'none';
-            setTimeout(() => window.location.href = '/app', 3000);
         }
         
         // Fetch Stripe publishable key and preview
@@ -208,26 +206,21 @@
         
         async function initialize() {
             try {
-                // Get preview
-                const previewResponse = await fetch('/api/installments/preview', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        totalAmount: planData.totalAmount,
-                        cadence: planData.cadence,
-                        startDate: planData.startDate,
-                        numberOfPayments: planData.numberOfPayments
-                    })
-                });
+                // Load plan details from backend
+                const planResponse = await fetch(`/api/installments/plan/${planId}`);
                 
-                const preview = await previewResponse.json();
+                if (!planResponse.ok) {
+                    throw new Error('Payment plan not found or expired');
+                }
+                
+                planData = await planResponse.json();
                 
                 // Update UI with plan details
-                document.getElementById('totalAmount').textContent = `$${preview.totalAmount}`;
-                document.getElementById('cadence').textContent = preview.cadence.charAt(0).toUpperCase() + preview.cadence.slice(1);
-                document.getElementById('totalPayments').textContent = preview.numberOfPayments;
-                document.getElementById('paymentAmount').textContent = `$${preview.perInstallmentAmount}`;
-                document.getElementById('firstPayment').textContent = new Date(preview.startDate).toLocaleDateString();
+                document.getElementById('totalAmount').textContent = `$${planData.totalAmount}`;
+                document.getElementById('cadence').textContent = planData.cadence.charAt(0).toUpperCase() + planData.cadence.slice(1);
+                document.getElementById('totalPayments').textContent = planData.numberOfPayments;
+                document.getElementById('paymentAmount').textContent = `$${planData.perInstallmentAmount}`;
+                document.getElementById('firstPayment').textContent = new Date(planData.startDate).toLocaleDateString();
                 
                 // Initialize Stripe
                 const keyResponse = await fetch('/api/stripe-publishable-key');
@@ -298,18 +291,11 @@
                     throw new Error(error.message);
                 }
                 
-                // Create installment plan
-                const response = await fetch('/api/installments/create', {
+                // Attach payment method to existing plan
+                const response = await fetch(`/api/installments/plan/${planId}/attach-payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sessionId: planData.sessionId,
-                        totalAmount: planData.totalAmount,
-                        cadence: planData.cadence,
-                        startDate: planData.startDate,
-                        numberOfPayments: planData.numberOfPayments,
-                        customerEmail: planData.customerEmail,
-                        customerName: planData.customerName,
                         paymentMethodId: paymentMethod.id
                     })
                 });
@@ -317,16 +303,14 @@
                 const result = await response.json();
                 
                 if (!response.ok || !result.success) {
-                    throw new Error(result.error || 'Failed to create payment plan');
+                    throw new Error(result.error || 'Failed to set up automated billing');
                 }
                 
                 // Success!
-                messageDiv.innerHTML = '<div class="success-message">✅ Automated billing set up successfully! Redirecting...</div>';
-                sessionStorage.removeItem('pendingInstallmentPlan');
+                messageDiv.innerHTML = '<div class="success-message">✅ Automated billing set up successfully! You will be charged automatically on each payment date.</div>';
                 
-                setTimeout(() => {
-                    window.location.href = '/app';
-                }, 2000);
+                // Keep success message visible
+                submitButton.style.display = 'none';
                 
             } catch (error) {
                 console.error('Payment setup error:', error);
