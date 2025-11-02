@@ -7355,15 +7355,18 @@ ${agreement.content || 'No content available'}
         // Send installment payment link via email
         window.sendInstallmentEmail = async function(planId, clientName) {
             try {
-                const headers = await getAuthHeaders();
                 const response = await fetch(`/api/installments/${planId}/send-email`, {
                     method: 'POST',
-                    headers,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify({ useMailto: true })
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to generate email');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate email');
                 }
                 
                 const result = await response.json();
@@ -7384,10 +7387,12 @@ ${agreement.content || 'No content available'}
         // Send installment payment link via SMS
         window.sendInstallmentSMS = async function(planId, clientName) {
             try {
-                const headers = await getAuthHeaders();
                 const response = await fetch(`/api/installments/${planId}/send-sms`, {
                     method: 'POST',
-                    headers
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
                 });
                 
                 if (!response.ok) {

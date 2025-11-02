@@ -73,10 +73,6 @@ externalPort = 6800
 localPort = 45871
 externalPort = 8000
 
-[[ports]]
-localPort = 46843
-externalPort = 8008
-
 
 [deployment]
 deploymentTarget = "vm"
