@@ -373,7 +373,13 @@
             <h3>✅ Payment Plan Created!</h3>
             <p style="color: #ccc; margin-bottom: 15px;">Share this link with your client to set up automated billing:</p>
             <div class="link-box" id="paymentLink"></div>
-            <button class="copy-btn" onclick="copyLink()">📋 Copy Link</button>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <button class="copy-btn" onclick="copyLink()">📋 Copy Link</button>
+                <button class="copy-btn" onclick="emailLink()" id="emailBtn">📧 Email Link</button>
+            </div>
+            <button class="copy-btn" onclick="textLink()" id="textBtn" style="width: 100%; margin-top: 10px;">📱 Text Link</button>
+            
             <button class="btn" onclick="window.close()" style="margin-top: 15px;">Close Window</button>
         </div>
     </div>
@@ -691,6 +697,52 @@
                 console.error('Failed to copy:', err);
                 alert('Failed to copy link. Please copy manually.');
             });
+        }
+        
+        // Email link using mailto:
+        function emailLink() {
+            if (!sessionData || !sessionData.email) {
+                alert('⚠️ No email address found for this client');
+                return;
+            }
+            
+            const link = window.currentPaymentLink;
+            const clientName = sessionData.clientName;
+            const totalAmount = sessionData.price;
+            
+            const subject = encodeURIComponent(`Payment Plan for ${clientName}`);
+            const body = encodeURIComponent(
+                `Hi ${clientName},\n\n` +
+                `Your automated payment plan is ready! Click the link below to set up your payment method:\n\n` +
+                `${link}\n\n` +
+                `Total Amount: $${totalAmount}\n\n` +
+                `This secure link will allow you to enter your payment information once, and you'll be automatically charged on each payment date.\n\n` +
+                `If you have any questions, please let me know!\n\n` +
+                `Best regards`
+            );
+            
+            window.location.href = `mailto:${sessionData.email}?subject=${subject}&body=${body}`;
+        }
+        
+        // Text link using sms:
+        function textLink() {
+            if (!sessionData || !sessionData.phoneNumber) {
+                alert('⚠️ No phone number found for this client');
+                return;
+            }
+            
+            const link = window.currentPaymentLink;
+            const clientName = sessionData.clientName;
+            
+            const message = encodeURIComponent(
+                `Hi ${clientName}, your payment plan is ready! Set up your payment method here: ${link}`
+            );
+            
+            // Format phone number (remove any non-digits except +)
+            const phone = sessionData.phoneNumber.replace(/[^\d+]/g, '');
+            
+            // Use sms: URL scheme
+            window.location.href = `sms:${phone}?body=${message}`;
         }
         
         // Initialize
