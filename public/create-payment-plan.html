@@ -194,6 +194,98 @@
             padding: 5px 0;
             color: #ccc;
         }
+        
+        .payment-method-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-method-option {
+            flex: 1;
+            padding: 15px;
+            background: rgba(212,175,55,0.05);
+            border: 2px solid rgba(212,175,55,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .payment-method-option input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .payment-method-option:hover {
+            background: rgba(212,175,55,0.1);
+        }
+        
+        .payment-method-option.active {
+            background: rgba(212,175,55,0.15);
+            border-color: #d4af37;
+        }
+        
+        .payment-schedule-calculator {
+            background: rgba(33,150,243,0.1);
+            border: 2px solid rgba(33,150,243,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .payment-schedule-calculator h3 {
+            color: #2196F3;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .schedule-summary {
+            background: rgba(212,175,55,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .schedule-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #f5f5f5;
+            font-weight: 600;
+        }
+        
+        .payment-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .payment-number {
+            color: #d4af37;
+            font-weight: 600;
+            min-width: 100px;
+        }
+        
+        .payment-date {
+            color: #aaa;
+            flex: 1;
+        }
+        
+        .payment-amount {
+            color: #4CAF50;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -221,29 +313,54 @@
             </div>
             
             <div class="form-group">
+                <label>Payment Schedule Method</label>
+                <div class="payment-method-selector">
+                    <label class="payment-method-option active" id="methodNumberOption">
+                        <input type="radio" name="scheduleMethod" value="number" checked>
+                        Number of Payments
+                    </label>
+                    <label class="payment-method-option" id="methodDateOption">
+                        <input type="radio" name="scheduleMethod" value="daterange">
+                        Date Range
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group" id="numberOfPaymentsGroup">
                 <label for="numberOfPayments">Number of Payments</label>
-                <input type="number" id="numberOfPayments" min="2" max="24" required>
+                <input type="number" id="numberOfPayments" min="2" max="24">
             </div>
             
-            <div class="form-group">
+            <div class="form-group" id="dateRangeGroup" style="display: none;">
                 <label for="startDate">First Payment Date</label>
-                <input type="date" id="startDate" required>
+                <input type="date" id="startDate" class="date-input">
+                
+                <label for="endDate" style="margin-top: 15px;">Last Payment Date</label>
+                <input type="date" id="endDate" class="date-input">
             </div>
             
-            <div class="calculated-preview" id="preview" style="display: none;">
-                <h4>📊 Payment Preview</h4>
-                <div class="preview-detail">
-                    <span>Payment Amount:</span>
-                    <span id="previewAmount">$0.00</span>
+            <div class="form-group" id="startDateOnlyGroup">
+                <label for="startDateOnly">First Payment Date</label>
+                <input type="date" id="startDateOnly">
+            </div>
+            
+            <div class="payment-schedule-calculator" id="calculator" style="display: none;">
+                <h3>💰 Payment Calculator</h3>
+                <div class="schedule-summary">
+                    <div class="schedule-summary-row">
+                        <span>Total Amount:</span>
+                        <span id="calcTotal">$0.00</span>
+                    </div>
+                    <div class="schedule-summary-row">
+                        <span>Number of Payments:</span>
+                        <span id="calcCount">0</span>
+                    </div>
+                    <div class="schedule-summary-row">
+                        <span>Payment Amount:</span>
+                        <span id="calcAmount">$0.00</span>
+                    </div>
                 </div>
-                <div class="preview-detail">
-                    <span>Total Payments:</span>
-                    <span id="previewCount">0</span>
-                </div>
-                <div class="preview-detail">
-                    <span>Final Payment:</span>
-                    <span id="previewEndDate">-</span>
-                </div>
+                <div class="payment-list" id="paymentList"></div>
             </div>
             
             <button type="submit" class="btn" id="createBtn">Create Payment Plan</button>
@@ -266,6 +383,7 @@
         const sessionId = urlParams.get('sessionId');
         
         let sessionData = null;
+        let scheduleMethod = 'number'; // 'number' or 'daterange'
         
         // Load session data
         async function loadSession() {
@@ -284,8 +402,8 @@
                 document.getElementById('sessionInfo').innerHTML = `
                     <h3>📸 Session Information</h3>
                     <div class="session-detail"><strong>Client:</strong> ${sessionData.clientName}</div>
-                    <div class="session-detail"><strong>Email:</strong> ${sessionData.email}</div>
-                    <div class="session-detail"><strong>Phone:</strong> ${sessionData.phoneNumber}</div>
+                    <div class="session-detail"><strong>Email:</strong> ${sessionData.email || 'Not provided'}</div>
+                    <div class="session-detail"><strong>Phone:</strong> ${sessionData.phoneNumber || 'Not provided'}</div>
                     <div class="session-detail"><strong>Session:</strong> ${sessionData.sessionType}</div>
                     <div class="session-detail"><strong>Price:</strong> $${sessionData.price}</div>
                 `;
@@ -297,8 +415,11 @@
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('startDate').min = today;
                 document.getElementById('startDate').value = today;
+                document.getElementById('startDateOnly').min = today;
+                document.getElementById('startDateOnly').value = today;
+                document.getElementById('endDate').min = today;
                 
-                updatePreview();
+                updateCalculator();
                 
             } catch (error) {
                 console.error('Error loading session:', error);
@@ -306,32 +427,170 @@
             }
         }
         
-        // Update payment preview
-        function updatePreview() {
-            const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
-            const numberOfPayments = parseInt(document.getElementById('numberOfPayments').value) || 0;
-            const startDate = document.getElementById('startDate').value;
-            const cadence = document.getElementById('cadence').value;
+        // Handle schedule method toggle
+        document.querySelectorAll('input[name="scheduleMethod"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                scheduleMethod = e.target.value;
+                
+                // Update UI
+                document.getElementById('methodNumberOption').classList.toggle('active', scheduleMethod === 'number');
+                document.getElementById('methodDateOption').classList.toggle('active', scheduleMethod === 'daterange');
+                
+                // Show/hide appropriate inputs
+                if (scheduleMethod === 'number') {
+                    document.getElementById('numberOfPaymentsGroup').style.display = 'block';
+                    document.getElementById('startDateOnlyGroup').style.display = 'block';
+                    document.getElementById('dateRangeGroup').style.display = 'none';
+                } else {
+                    document.getElementById('numberOfPaymentsGroup').style.display = 'none';
+                    document.getElementById('startDateOnlyGroup').style.display = 'none';
+                    document.getElementById('dateRangeGroup').style.display = 'block';
+                }
+                
+                updateCalculator();
+            });
+        });
+        
+        // Calculate number of payments from date range
+        function calculatePaymentsFromDateRange(startDate, endDate, cadence) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
             
-            if (totalAmount > 0 && numberOfPayments > 0 && startDate) {
-                const paymentAmount = (totalAmount / numberOfPayments).toFixed(2);
-                const start = new Date(startDate);
+            if (end <= start) return 0;
+            
+            if (cadence === 'biweekly') {
+                // Count bi-weekly periods: one payment on start, then every 14 days
+                let count = 1;
+                let current = new Date(start);
+                let lastPaymentDate = new Date(start);
                 
-                // Calculate end date
-                let endDate = new Date(start);
-                const increment = cadence === 'biweekly' ? 14 : 30;
-                endDate.setDate(endDate.getDate() + (increment * (numberOfPayments - 1)));
+                while (true) {
+                    current.setDate(current.getDate() + 14);
+                    if (current > end) {
+                        // Check if there's significant time between last payment and end date
+                        // If more than 7 days remaining, add a final payment
+                        const daysRemaining = Math.floor((end - lastPaymentDate) / (1000 * 60 * 60 * 24));
+                        if (daysRemaining >= 7) {
+                            count++;
+                        }
+                        break;
+                    }
+                    count++;
+                    lastPaymentDate = new Date(current);
+                }
+                return count;
+            } else {
+                // Monthly: count payment dates, including partial final month
+                let count = 1; // First payment on start date
+                let current = new Date(start);
+                let lastPaymentDate = new Date(start);
                 
-                document.getElementById('previewAmount').textContent = `$${paymentAmount}`;
-                document.getElementById('previewCount').textContent = numberOfPayments;
-                document.getElementById('previewEndDate').textContent = endDate.toLocaleDateString();
-                document.getElementById('preview').style.display = 'block';
+                while (true) {
+                    current.setMonth(current.getMonth() + 1);
+                    if (current > end) {
+                        // Check if there's a partial month remaining (at least 7 days)
+                        const daysRemaining = Math.floor((end - lastPaymentDate) / (1000 * 60 * 60 * 24));
+                        if (daysRemaining >= 7) {
+                            count++;
+                        }
+                        break;
+                    }
+                    count++;
+                    lastPaymentDate = new Date(current);
+                }
+                return count;
             }
         }
         
-        // Add event listeners for live preview
-        ['totalAmount', 'numberOfPayments', 'startDate', 'cadence'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updatePreview);
+        // Update payment calculator
+        function updateCalculator() {
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
+            const cadence = document.getElementById('cadence').value;
+            
+            let numberOfPayments = 0;
+            let startDate = null;
+            let endDate = null;
+            
+            if (scheduleMethod === 'number') {
+                numberOfPayments = parseInt(document.getElementById('numberOfPayments').value) || 0;
+                startDate = document.getElementById('startDateOnly').value;
+            } else {
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                
+                if (start && end) {
+                    numberOfPayments = calculatePaymentsFromDateRange(start, end, cadence);
+                    startDate = start;
+                    endDate = end;
+                }
+            }
+            
+            if (totalAmount > 0 && numberOfPayments > 0 && startDate) {
+                // Calculate payment amounts
+                const basePayment = Math.floor((totalAmount * 100) / numberOfPayments) / 100;
+                const remainder = totalAmount - (basePayment * numberOfPayments);
+                const lastPayment = basePayment + remainder;
+                
+                // Generate payment schedule
+                const payments = [];
+                let currentDate = new Date(startDate);
+                const userEndDate = endDate ? new Date(endDate) : null;
+                
+                for (let i = 0; i < numberOfPayments; i++) {
+                    const amount = (i === numberOfPayments - 1) ? lastPayment : basePayment;
+                    
+                    // For date range mode, cap the final payment at the end date
+                    if (scheduleMethod === 'daterange' && i === numberOfPayments - 1 && userEndDate) {
+                        // If this is a partial period payment, use the end date
+                        if (currentDate > userEndDate) {
+                            currentDate = userEndDate;
+                        }
+                    }
+                    
+                    payments.push({
+                        number: i + 1,
+                        date: new Date(currentDate),
+                        amount: amount
+                    });
+                    
+                    // Increment date for next iteration
+                    if (i < numberOfPayments - 1) {
+                        if (cadence === 'biweekly') {
+                            currentDate.setDate(currentDate.getDate() + 14);
+                        } else {
+                            currentDate.setMonth(currentDate.getMonth() + 1);
+                        }
+                    }
+                }
+                
+                // Update summary
+                document.getElementById('calcTotal').textContent = `$${totalAmount.toFixed(2)}`;
+                document.getElementById('calcCount').textContent = numberOfPayments;
+                document.getElementById('calcAmount').textContent = `$${basePayment.toFixed(2)}`;
+                
+                // Build payment list
+                const paymentListHTML = payments.map(p => `
+                    <div class="payment-item">
+                        <div class="payment-number">Payment ${p.number}</div>
+                        <div class="payment-date">${p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div class="payment-amount">$${p.amount.toFixed(2)}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('paymentList').innerHTML = paymentListHTML;
+                document.getElementById('calculator').style.display = 'block';
+            } else {
+                document.getElementById('calculator').style.display = 'none';
+            }
+        }
+        
+        // Add event listeners for live calculator
+        ['totalAmount', 'numberOfPayments', 'startDateOnly', 'cadence', 'startDate', 'endDate'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', updateCalculator);
+                element.addEventListener('change', updateCalculator);
+            }
         });
         
         // Handle form submission
@@ -341,15 +600,43 @@
             const createBtn = document.getElementById('createBtn');
             const messageDiv = document.getElementById('message');
             
+            // Get values based on schedule method
+            const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+            const cadence = document.getElementById('cadence').value;
+            
+            let numberOfPayments = 0;
+            let startDate = null;
+            
+            if (scheduleMethod === 'number') {
+                numberOfPayments = parseInt(document.getElementById('numberOfPayments').value);
+                startDate = document.getElementById('startDateOnly').value;
+                
+                if (!numberOfPayments || numberOfPayments < 2) {
+                    messageDiv.innerHTML = '<div class="error-message">⚠️ Please enter at least 2 payments</div>';
+                    return;
+                }
+            } else {
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                
+                if (!start || !end) {
+                    messageDiv.innerHTML = '<div class="error-message">⚠️ Please select both start and end dates</div>';
+                    return;
+                }
+                
+                numberOfPayments = calculatePaymentsFromDateRange(start, end, cadence);
+                startDate = start;
+                
+                if (numberOfPayments < 2) {
+                    messageDiv.innerHTML = '<div class="error-message">⚠️ Date range must allow at least 2 payments</div>';
+                    return;
+                }
+            }
+            
             createBtn.disabled = true;
             messageDiv.innerHTML = '<p style="color: #d4af37;">⏳ Creating payment plan...</p>';
             
             try {
-                const totalAmount = parseFloat(document.getElementById('totalAmount').value);
-                const numberOfPayments = parseInt(document.getElementById('numberOfPayments').value);
-                const cadence = document.getElementById('cadence').value;
-                const startDate = document.getElementById('startDate').value;
-                
                 // Calculate payment amount
                 const perInstallmentAmount = (totalAmount / numberOfPayments).toFixed(2);
                 
