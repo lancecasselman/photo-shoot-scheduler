@@ -416,10 +416,10 @@
                     })
                 });
                 
-                const result = await response.json();
+                const apiResult = await response.json();
                 
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error || 'Failed to set up automated billing');
+                if (!response.ok || !apiResult.success) {
+                    throw new Error(apiResult.error || 'Failed to set up automated billing');
                 }
                 
                 messageDiv.innerHTML = '<div class="success-message">✅ Automated billing set up successfully! You will be charged automatically on each payment date.</div>';

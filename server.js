@@ -1669,12 +1669,12 @@ if (process.env.NODE_ENV === 'production') {
 // ==================== URL DECODING MIDDLEWARE ====================
 // Fix for custom domain URL encoding issue where query parameters are percent-encoded
 // Custom domain proxies/CDNs may encode ? as %3F and & as %26
+// Redirect to decoded URL so browser shows correct address
 app.use((req, res, next) => {
     if (req.url.includes('%3F') || req.url.includes('%26')) {
         const decoded = decodeURIComponent(req.url);
-        console.log(`🔄 URL DECODING: ${req.url} → ${decoded}`);
-        req.url = decoded;
-        req.originalUrl = decoded;
+        console.log(`🔄 URL REDIRECT: ${req.url} → ${decoded}`);
+        return res.redirect(302, decoded);
     }
     next();
 });
