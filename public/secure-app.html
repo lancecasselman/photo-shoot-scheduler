@@ -7703,8 +7703,8 @@ ${agreement.content || 'No content available'}
                         depositAmount: session.depositAmount || session.deposit_amount || 0,
                         reminderEnabled: session.sendReminder || false,
                         reminderSent: session.reminderSent || false,
-                        hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
-                        paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
+                        hasPaymentPlan: session.hasPaymentPlan || false,
+                        paymentPlanId: session.paymentPlanId || null
                     }));
                     
                     console.log('Transformed sessions:', sessions);
@@ -7780,9 +7780,7 @@ ${agreement.content || 'No content available'}
                         delivered: session.delivered || false,
                         reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
                         galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
-                        reminderSent: session.reminder_sent || session.reminderSent || false,
-                        hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
-                        paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
+                        reminderSent: session.reminder_sent || session.reminderSent || false
                     }));
                     
                     // Re-render sessions immediately
@@ -14448,7 +14446,7 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js"></script>
+    <script src="script.js?v=1762152500&cachebust=payment-plan-fix"></script>
     
     <script>
         // Authentication is now handled by initializePage() in script.js on window.load event
