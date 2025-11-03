@@ -671,7 +671,7 @@
                 
                 // Show payment link - use custom domain
                 const domain = 'https://photomanagementsystem.com';
-                const paymentLink = `${domain}/installment-setup.html?planId=${result.planId}`;
+                const paymentLink = `${domain}/installment-setup.html?planId=${result.plan.id}`;
                 
                 document.getElementById('paymentLink').textContent = paymentLink;
                 document.getElementById('planForm').style.display = 'none';
