@@ -669,8 +669,8 @@
                     throw new Error(result.error || 'Failed to create payment plan');
                 }
                 
-                // Show payment link
-                const domain = window.location.origin;
+                // Show payment link - use custom domain
+                const domain = 'https://photomanagementsystem.com';
                 const paymentLink = `${domain}/installment-setup.html?planId=${result.planId}`;
                 
                 document.getElementById('paymentLink').textContent = paymentLink;
