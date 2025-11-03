@@ -491,7 +491,10 @@ async function loadSessions() {
                 galleryAccessToken: session.gallery_access_token || session.galleryAccessToken || null,
                 createdBy: session.created_by || session.createdBy,
                 createdAt: session.created_at || session.createdAt,
-                updatedAt: session.updated_at || session.updatedAt
+                updatedAt: session.updated_at || session.updatedAt,
+                // Payment plan fields
+                hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
+                paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
             };
             
             // Debug: Log payment fields for sessions with deposits/invoices sent
