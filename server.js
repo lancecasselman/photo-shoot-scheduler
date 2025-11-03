@@ -17644,11 +17644,6 @@ app.get('/installment-setup.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'installment-setup.html'));
 });
 
-// Serve payment plan creation page for photographers
-app.get('/create-payment-plan.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'create-payment-plan.html'));
-});
-
 app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,

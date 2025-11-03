@@ -6698,9 +6698,9 @@ ${agreement.content || 'No content available'}
 
         let currentPaymentPlanSessionId = null;
         
-        // Open payment plan creation page for automated payment plans
+        // Open installment setup page for automated payment plans
         window.openInstallmentSetup = async function(sessionId) {
-            console.log('Opening payment plan creation for session:', sessionId);
+            console.log('Opening installment setup for session:', sessionId);
             
             // Get session data
             const session = sessions.find(s => s.id === sessionId);
@@ -6710,8 +6710,8 @@ ${agreement.content || 'No content available'}
                 return;
             }
             
-            // Open payment plan creation page with session ID as query parameter
-            const url = `/create-payment-plan.html?sessionId=${sessionId}`;
+            // Open installment setup page with session ID as query parameter
+            const url = `/installment-setup.html?sessionId=${sessionId}`;
             window.open(url, '_blank');
         }
         
@@ -7937,7 +7937,8 @@ ${agreement.content || 'No content available'}
                                 ` : `
                                     <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
                                     <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Send Deposit</button>
-                                    <button onclick="openInstallmentSetup('${sessionId}'); event.stopPropagation();" class="btn btn-primary">⚡ Payment Plan</button>
+                                    <button onclick="openInstallmentSetup('${sessionId}'); event.stopPropagation();" class="btn btn-primary">⚡ Auto-Pay Plan</button>
+                                    <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">📧 Manual Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
 
