@@ -150,14 +150,9 @@ router.post('/create', async (req, res) => {
 
     await createPlan(plan);
 
-    const { customerId, scheduleId, paymentRecordIds } = await createPaymentPlanSchedule(request, preview, planId, usePlatformAccount);
-
-    await updatePlan(planId, {
-      stripeCustomerId: customerId,
-      stripeSubscriptionScheduleId: scheduleId,
-      usePlatformAccount: usePlatformAccount
-    });
-
+    // NOTE: Stripe schedule will be created AFTER client sets up payment method
+    // See /confirm-payment endpoint for schedule creation
+    
     // Update session to mark it has a payment plan
     try {
       await db.update(photographySessions)
@@ -174,15 +169,13 @@ router.post('/create', async (req, res) => {
       // Don't fail the whole operation if session update fails
     }
 
-    console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments (schedule ${scheduleId})`);
+    console.log(`✅ INSTALLMENT: Created plan ${planId} with ${preview.numberOfPayments} payments (awaiting customer payment setup)`);
 
     res.json({
       success: true,
       plan: {
         id: planId,
         sessionId: request.sessionId,
-        customerId,
-        scheduleId,
         numberOfPayments: preview.numberOfPayments
       },
       preview
