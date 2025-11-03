@@ -7932,13 +7932,14 @@ ${agreement.content || 'No content available'}
                                      <span class="agreement-status">Booking Agreement</span>
                                 </button>
 
+                                <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
+                                <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Send Deposit</button>
+                                
                                 ${session.hasPaymentPlan ? `
-                                    <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">📅 View Payment Plan</button>
-                                ` : `
-                                    <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
-                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Send Deposit</button>
-                                    <button onclick="openInstallmentSetup('${sessionId}'); event.stopPropagation();" class="btn btn-primary">⚡ Payment Plan</button>
-                                `}
+                                    <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);">👁️ View Payment Plan</button>
+                                ` : ''}
+                                <button onclick="openInstallmentSetup('${sessionId}'); event.stopPropagation();" class="btn btn-primary">⚡ Payment Plan</button>
+                                
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
 
                                 <button onclick="deleteSession('${sessionId}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
