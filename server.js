@@ -17652,8 +17652,11 @@ app.get('/test-android-auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
 });
 
-// Serve installment setup page for automated billing
+// Serve installment setup page for automated billing (no cache)
 app.get('/installment-setup.html', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'public', 'installment-setup.html'));
 });
 
