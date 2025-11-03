@@ -70,7 +70,6 @@ router.post('/create', async (req, res) => {
 
     const required = [
       'sessionId',
-      'customerEmail',
       'customerName',
       'totalAmount',
       'cadence',
@@ -82,6 +81,13 @@ router.post('/create', async (req, res) => {
       if (!request[field]) {
         return res.status(400).json({ error: `Missing required field: ${field}` });
       }
+    }
+    
+    // Email is optional - use placeholder if not provided
+    // Photographer can share link via SMS if email is missing
+    if (!request.customerEmail || request.customerEmail === '') {
+      request.customerEmail = `noemail+${uuidv4().substring(0, 8)}@photomanagementsystem.com`;
+      console.log(`ℹ️  INSTALLMENT: No email provided, using placeholder: ${request.customerEmail}`);
     }
 
     // Fetch photographer ID and Stripe account from session
