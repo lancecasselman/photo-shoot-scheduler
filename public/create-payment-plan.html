@@ -669,9 +669,10 @@
                     throw new Error(result.error || 'Failed to create payment plan');
                 }
                 
-                // Show payment link - use custom domain
+                // Show payment link - use custom domain with cache-busting timestamp
                 const domain = 'https://photomanagementsystem.com';
-                const paymentLink = `${domain}/installment-setup.html?planId=${result.plan.id}`;
+                const timestamp = Date.now();
+                const paymentLink = `${domain}/installment-setup.html?planId=${result.plan.id}&v=${timestamp}`;
                 
                 document.getElementById('paymentLink').textContent = paymentLink;
                 document.getElementById('planForm').style.display = 'none';
