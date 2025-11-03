@@ -63,19 +63,34 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
     customerId = customer.id;
   }
 
-  if (paymentMethodId && existingCustomers.data.length > 0) {
+  // Attach payment method to customer if provided
+  if (paymentMethodId) {
+    // Attach the payment method to the customer first
     if (usePlatformAccount) {
-      await stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId
-        }
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId
       });
     } else {
-      await stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId
-        }
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId
       }, { stripeAccount: stripeConnectedAccountId });
+    }
+    
+    // Then set it as the default payment method (only if customer already existed)
+    if (existingCustomers.data.length > 0) {
+      if (usePlatformAccount) {
+        await stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        });
+      } else {
+        await stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId
+          }
+        }, { stripeAccount: stripeConnectedAccountId });
+      }
     }
   }
 
