@@ -78,7 +78,7 @@
             font-weight: 500;
         }
         
-        #card-element {
+        #payment-element {
             background: #1a1a1a;
             padding: 15px;
             border: 2px solid rgba(212,175,55,0.3);
@@ -86,7 +86,7 @@
             margin-bottom: 20px;
         }
         
-        #card-errors {
+        #payment-errors {
             color: #ff4444;
             margin-top: 10px;
             font-size: 0.9rem;
@@ -172,11 +172,11 @@
         </div>
         
         <form id="payment-form">
-            <label for="card-element" style="display: block; margin-bottom: 10px; color: #d4af37; font-weight: 600;">
-                💳 Payment Method
+            <label for="payment-element" style="display: block; margin-bottom: 10px; color: #d4af37; font-weight: 600;">
+                💳 Payment Method & Billing Details
             </label>
-            <div id="card-element"></div>
-            <div id="card-errors" role="alert"></div>
+            <div id="payment-element"></div>
+            <div id="payment-errors" role="alert"></div>
             
             <button type="submit" class="btn" id="submit-button">
                 Set Up Automated Billing
@@ -193,20 +193,33 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const planId = urlParams.get('planId');
+        const setupIntentFromUrl = urlParams.get('setup_intent');
+        const setupIntentClientSecret = urlParams.get('setup_intent_client_secret');
         
         let planData = {};
+        let setupIntentId = null;
+        let connectedAccountId = null;
         
         if (!planId) {
             document.getElementById('message').innerHTML = '<div class="error-message">⚠️ Invalid payment plan link. Please contact your photographer for a new link.</div>';
             document.getElementById('payment-form').style.display = 'none';
         }
         
-        // Fetch Stripe publishable key and preview
-        let stripe, cardElement;
+        let stripe, elements, paymentElement;
         
         async function initialize() {
             try {
-                // Load plan details from backend
+                const keyResponse = await fetch('/api/stripe-publishable-key');
+                const { publishableKey } = await keyResponse.json();
+                
+                stripe = Stripe(publishableKey);
+                
+                if (setupIntentFromUrl && setupIntentClientSecret) {
+                    console.log('🔄 Detected 3DS redirect, completing setup...');
+                    await handle3DSRedirect();
+                    return;
+                }
+                
                 const planResponse = await fetch(`/api/installments/plan/${planId}`);
                 
                 if (!planResponse.ok) {
@@ -215,88 +228,191 @@
                 
                 planData = await planResponse.json();
                 
-                // Update UI with plan details
+                connectedAccountId = planData.connectedAccountId;
+                
                 document.getElementById('totalAmount').textContent = `$${planData.totalAmount}`;
                 document.getElementById('cadence').textContent = planData.cadence.charAt(0).toUpperCase() + planData.cadence.slice(1);
                 document.getElementById('totalPayments').textContent = planData.numberOfPayments;
                 document.getElementById('paymentAmount').textContent = `$${planData.perInstallmentAmount}`;
                 document.getElementById('firstPayment').textContent = new Date(planData.startDate).toLocaleDateString();
                 
-                // Initialize Stripe
-                const keyResponse = await fetch('/api/stripe-publishable-key');
-                const { publishableKey } = await keyResponse.json();
+                const setupIntentResponse = await fetch(`/api/installments/plan/${planId}/setup-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 
-                stripe = Stripe(publishableKey);
-                const elements = stripe.elements();
+                if (!setupIntentResponse.ok) {
+                    const error = await setupIntentResponse.json();
+                    throw new Error(error.error || 'Failed to create setup intent');
+                }
                 
-                cardElement = elements.create('card', {
-                    style: {
-                        base: {
-                            color: '#f5f5f5',
-                            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-                            fontSize: '16px',
-                            '::placeholder': {
-                                color: '#aaa'
-                            }
-                        },
-                        invalid: {
-                            color: '#ff4444'
+                const { clientSecret, connectedAccountId: accountId, usePlatformAccount, planData: billingData } = await setupIntentResponse.json();
+                
+                if (accountId && accountId !== connectedAccountId) {
+                    console.warn(`⚠️  Account ID mismatch: plan has ${connectedAccountId}, setup-intent returned ${accountId}`);
+                }
+                
+                console.log(`💳 Using ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account${accountId ? ': ' + accountId : ''}`);
+                
+                elements = stripe.elements({
+                    clientSecret,
+                    appearance: {
+                        theme: 'night',
+                        variables: {
+                            colorPrimary: '#d4af37',
+                            colorBackground: '#1a1a1a',
+                            colorText: '#f5f5f5',
+                            colorDanger: '#ff4444',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                            borderRadius: '8px'
                         }
                     }
                 });
                 
-                cardElement.mount('#card-element');
-                
-                cardElement.on('change', (event) => {
-                    const displayError = document.getElementById('card-errors');
-                    if (event.error) {
-                        displayError.textContent = event.error.message;
-                    } else {
-                        displayError.textContent = '';
+                paymentElement = elements.create('payment', {
+                    fields: {
+                        billingDetails: {
+                            name: 'auto',
+                            email: 'auto',
+                            address: {
+                                country: 'never',
+                                postalCode: 'auto'
+                            }
+                        }
+                    },
+                    defaultValues: {
+                        billingDetails: {
+                            name: billingData.customerName,
+                            email: billingData.customerEmail
+                        }
                     }
                 });
                 
+                paymentElement.mount('#payment-element');
+                
             } catch (error) {
                 console.error('Initialization error:', error);
-                document.getElementById('message').innerHTML = '<div class="error-message">⚠️ Failed to initialize payment form. Please try again.</div>';
+                document.getElementById('message').innerHTML = `<div class="error-message">⚠️ Failed to initialize payment form: ${error.message}</div>`;
+            }
+        }
+        
+        async function handle3DSRedirect() {
+            try {
+                document.getElementById('payment-form').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').innerHTML = '<p>⏳ Completing payment setup...</p>';
+                
+                const planResponse = await fetch(`/api/installments/plan/${planId}`);
+                if (!planResponse.ok) {
+                    throw new Error('Payment plan not found');
+                }
+                
+                planData = await planResponse.json();
+                
+                connectedAccountId = planData.connectedAccountId;
+                
+                document.getElementById('totalAmount').textContent = `$${planData.totalAmount}`;
+                document.getElementById('cadence').textContent = planData.cadence.charAt(0).toUpperCase() + planData.cadence.slice(1);
+                document.getElementById('totalPayments').textContent = planData.numberOfPayments;
+                document.getElementById('paymentAmount').textContent = `$${planData.perInstallmentAmount}`;
+                document.getElementById('firstPayment').textContent = new Date(planData.startDate).toLocaleDateString();
+                
+                console.log(`🔄 Retrieving SetupIntent after 3DS for ${connectedAccountId ? 'CONNECTED' : 'PLATFORM'} account${connectedAccountId ? ': ' + connectedAccountId : ''}`);
+                
+                let setupIntent;
+                if (connectedAccountId) {
+                    setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret, {
+                        stripeAccount: connectedAccountId
+                    });
+                } else {
+                    setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret);
+                }
+                
+                console.log('✅ Retrieved SetupIntent after 3DS:', setupIntent.setupIntent.id, 'Status:', setupIntent.setupIntent.status);
+                
+                if (setupIntent.setupIntent.status === 'succeeded') {
+                    const response = await fetch(`/api/installments/plan/${planId}/attach-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            setupIntentId: setupIntent.setupIntent.id
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Failed to complete payment setup');
+                    }
+                    
+                    document.getElementById('message').innerHTML = '<div class="success-message">✅ Automated billing set up successfully! You will be charged automatically on each payment date.</div>';
+                    document.getElementById('loading').style.display = 'none';
+                } else if (setupIntent.setupIntent.status === 'requires_payment_method') {
+                    throw new Error('Payment authentication failed. Please try again with a different payment method.');
+                } else {
+                    throw new Error(`Payment setup incomplete. Status: ${setupIntent.setupIntent.status}`);
+                }
+                
+            } catch (error) {
+                console.error('3DS redirect error:', error);
+                document.getElementById('message').innerHTML = `<div class="error-message">⚠️ ${error.message}</div>`;
+                document.getElementById('loading').style.display = 'none';
             }
         }
         
         initialize();
         
-        // Handle form submission
         document.getElementById('payment-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitButton = document.getElementById('submit-button');
             const loading = document.getElementById('loading');
             const messageDiv = document.getElementById('message');
+            const errorsDiv = document.getElementById('payment-errors');
             
             submitButton.disabled = true;
             loading.style.display = 'block';
             messageDiv.innerHTML = '';
+            errorsDiv.textContent = '';
             
             try {
-                // Create payment method
-                const { error, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement,
-                    billing_details: {
-                        name: planData.customerName,
-                        email: planData.customerEmail
-                    }
-                });
+                const confirmOptions = {
+                    elements,
+                    confirmParams: {
+                        return_url: window.location.href
+                    },
+                    redirect: 'if_required'
+                };
+                
+                let result;
+                if (connectedAccountId) {
+                    console.log(`🔗 Confirming setup with connected account: ${connectedAccountId}`);
+                    result = await stripe.confirmSetup(confirmOptions, {
+                        stripeAccount: connectedAccountId
+                    });
+                } else {
+                    console.log(`💳 Confirming setup with platform account`);
+                    result = await stripe.confirmSetup(confirmOptions);
+                }
+                
+                const { error, setupIntent } = result;
                 
                 if (error) {
                     throw new Error(error.message);
                 }
                 
-                // Attach payment method to existing plan
+                if (setupIntent.status !== 'succeeded') {
+                    throw new Error('Payment setup was not completed');
+                }
+                
+                setupIntentId = setupIntent.id;
+                console.log('✅ SetupIntent confirmed:', setupIntentId);
+                
                 const response = await fetch(`/api/installments/plan/${planId}/attach-payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        paymentMethodId: paymentMethod.id
+                        setupIntentId: setupIntentId
                     })
                 });
                 
@@ -306,11 +422,10 @@
                     throw new Error(result.error || 'Failed to set up automated billing');
                 }
                 
-                // Success!
                 messageDiv.innerHTML = '<div class="success-message">✅ Automated billing set up successfully! You will be charged automatically on each payment date.</div>';
                 
-                // Keep success message visible
-                submitButton.style.display = 'none';
+                document.getElementById('payment-form').style.display = 'none';
+                loading.style.display = 'none';
                 
             } catch (error) {
                 console.error('Payment setup error:', error);

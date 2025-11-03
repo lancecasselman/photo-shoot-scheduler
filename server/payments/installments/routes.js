@@ -7,7 +7,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { eq } = require('drizzle-orm');
 const { calculatePaymentSchedule } = require('./math');
-const { createPaymentPlanSchedule, cancelSubscriptionSchedule } = require('./stripe');
+const { createPaymentPlanSchedule, cancelSubscriptionSchedule, stripe } = require('./stripe');
 const { 
   createPlan, 
   getPlan, 
@@ -324,12 +324,82 @@ router.get('/plan/:planId', async (req, res) => {
       startDate: plan.startDate,
       endDate: plan.endDate,
       numberOfPayments: plan.numberOfPayments,
-      status: plan.status
+      status: plan.status,
+      connectedAccountId: plan.stripeConnectedAccountId === 'platform' ? null : plan.stripeConnectedAccountId
     });
   } catch (error) {
     console.error('❌ INSTALLMENT: Get plan error:', error);
     res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to get plan details'
+    });
+  }
+});
+
+/**
+ * POST /api/installments/plan/:planId/setup-intent
+ * Create a SetupIntent for collecting payment method with billing details (no auth required)
+ */
+router.post('/plan/:planId/setup-intent', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    
+    const plan = await getPlan(planId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Payment plan not found or expired' });
+    }
+    
+    if (plan.status === 'canceled') {
+      return res.status(400).json({ error: 'This payment plan has been canceled' });
+    }
+    
+    if (plan.stripeSubscriptionScheduleId) {
+      return res.status(400).json({ error: 'Payment method already attached to this plan' });
+    }
+    
+    // Determine which Stripe account to use
+    const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
+    
+    if (usePlatformAccount) {
+      console.log(`💳 INSTALLMENT: Creating SetupIntent on PLATFORM Stripe account`);
+    } else {
+      console.log(`💳 INSTALLMENT: Creating SetupIntent on CONNECTED Stripe account: ${plan.stripeConnectedAccountId}`);
+    }
+    
+    // Create SetupIntent
+    const setupIntentParams = {
+      usage: 'off_session',
+      metadata: {
+        plan_id: planId,
+        session_id: plan.sessionId,
+        photographer_id: plan.photographerId,
+        account_mode: usePlatformAccount ? 'platform' : 'connected'
+      }
+    };
+    
+    let setupIntent;
+    if (usePlatformAccount) {
+      setupIntent = await stripe.setupIntents.create(setupIntentParams);
+    } else {
+      setupIntent = await stripe.setupIntents.create(setupIntentParams, { 
+        stripeAccount: plan.stripeConnectedAccountId 
+      });
+    }
+    
+    console.log(`✅ INSTALLMENT: SetupIntent created: ${setupIntent.id} for plan ${planId}`);
+    
+    res.json({
+      clientSecret: setupIntent.client_secret,
+      connectedAccountId: usePlatformAccount ? null : plan.stripeConnectedAccountId,
+      usePlatformAccount: usePlatformAccount,
+      planData: {
+        customerName: plan.customerName,
+        customerEmail: plan.customerEmail
+      }
+    });
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Setup intent error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to create setup intent'
     });
   }
 });
@@ -341,10 +411,10 @@ router.get('/plan/:planId', async (req, res) => {
 router.post('/plan/:planId/attach-payment', async (req, res) => {
   try {
     const { planId } = req.params;
-    const { paymentMethodId } = req.body;
+    const { setupIntentId } = req.body;
     
-    if (!paymentMethodId) {
-      return res.status(400).json({ error: 'Payment method ID is required' });
+    if (!setupIntentId) {
+      return res.status(400).json({ error: 'Setup Intent ID is required' });
     }
     
     const plan = await getPlan(planId);
@@ -368,6 +438,23 @@ router.post('/plan/:planId/attach-payment', async (req, res) => {
     } else {
       console.log(`💳 INSTALLMENT: Attaching payment to CONNECTED Stripe account: ${plan.stripeConnectedAccountId}`);
     }
+    
+    // Retrieve the SetupIntent to get the payment method
+    let setupIntent;
+    if (usePlatformAccount) {
+      setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+    } else {
+      setupIntent = await stripe.setupIntents.retrieve(setupIntentId, {
+        stripeAccount: plan.stripeConnectedAccountId
+      });
+    }
+    
+    if (!setupIntent.payment_method) {
+      return res.status(400).json({ error: 'SetupIntent does not have a payment method attached' });
+    }
+    
+    const paymentMethodId = setupIntent.payment_method;
+    console.log(`✅ INSTALLMENT: Retrieved payment method ${paymentMethodId} from SetupIntent ${setupIntentId}`);
     
     // Recreate the preview to get payment schedule
     const preview = calculatePaymentSchedule(
