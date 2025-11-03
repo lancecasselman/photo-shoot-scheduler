@@ -1666,6 +1666,19 @@ if (process.env.NODE_ENV === 'production') {
     app.use(logger.requestLogger.bind(logger));
 }
 
+// ==================== URL DECODING MIDDLEWARE ====================
+// Fix for custom domain URL encoding issue where query parameters are percent-encoded
+// Custom domain proxies/CDNs may encode ? as %3F and & as %26
+app.use((req, res, next) => {
+    if (req.url.includes('%3F') || req.url.includes('%26')) {
+        const decoded = decodeURIComponent(req.url);
+        console.log(`🔄 URL DECODING: ${req.url} → ${decoded}`);
+        req.url = decoded;
+        req.originalUrl = decoded;
+    }
+    next();
+});
+
 // ==================== SUBDOMAIN ROUTING CONFIGURATION ====================
 // Enable both subdomain and path-based routing for maximum flexibility
 
