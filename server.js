@@ -17665,6 +17665,16 @@ app.get('/create-payment-plan.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'create-payment-plan.html'));
 });
 
+// CRITICAL: Prevent aggressive caching of JavaScript files (especially on mobile browsers)
+app.use((req, res, next) => {
+    if (req.url.endsWith('.js') || req.url.includes('script.js')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private, max-age=0');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,
