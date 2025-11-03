@@ -7703,8 +7703,8 @@ ${agreement.content || 'No content available'}
                         depositAmount: session.depositAmount || session.deposit_amount || 0,
                         reminderEnabled: session.sendReminder || false,
                         reminderSent: session.reminderSent || false,
-                        hasPaymentPlan: session.hasPaymentPlan || false,
-                        paymentPlanId: session.paymentPlanId || null
+                        hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
+                        paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
                     }));
                     
                     console.log('Transformed sessions:', sessions);
@@ -7780,7 +7780,9 @@ ${agreement.content || 'No content available'}
                         delivered: session.delivered || false,
                         reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
                         galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
-                        reminderSent: session.reminder_sent || session.reminderSent || false
+                        reminderSent: session.reminder_sent || session.reminderSent || false,
+                        hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
+                        paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
                     }));
                     
                     // Re-render sessions immediately
