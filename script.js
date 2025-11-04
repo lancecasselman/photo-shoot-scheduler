@@ -438,7 +438,10 @@ async function loadSessions() {
             galleryAccessToken: session.gallery_access_token || session.galleryAccessToken, // Add gallery access token
             createdBy: session.created_by || session.createdBy,
             createdAt: session.created_at || session.createdAt,
-            updatedAt: session.updated_at || session.updatedAt
+            updatedAt: session.updated_at || session.updatedAt,
+            // Payment plan fields - CRITICAL for View Payment Plan button
+            hasPaymentPlan: session.hasPaymentPlan || session.has_payment_plan || false,
+            paymentPlanId: session.paymentPlanId || session.payment_plan_id || null
         }));
 
         console.log('Transformed sessions:', transformedSessions);
@@ -751,10 +754,37 @@ function createSessionCard(session) {
     depositBtn.style.border = '1px solid #d1d5db';
     console.log('DEBUG: Deposit button created:', depositBtn.textContent);
 
-    // Payment Plan Button
+    // View Payment Plan Button (only shows if plan exists)
+    const viewPlanBtn = document.createElement('button');
+    viewPlanBtn.className = 'btn btn-primary';
+    viewPlanBtn.textContent = '👁️ View Plan';
+    viewPlanBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof window.viewPaymentPlan === 'function') {
+            window.viewPaymentPlan(session.id);
+        } else {
+            console.error('viewPaymentPlan function not found');
+            showMessage('Payment plan viewer is loading, please try again in a moment.', 'info');
+        }
+    };
+    viewPlanBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    viewPlanBtn.style.color = 'white';
+    viewPlanBtn.style.margin = '2px';
+    viewPlanBtn.style.border = 'none';
+    // Debug: Check payment plan fields
+    console.log(`🔍 VIEW PLAN BUTTON for ${session.clientName}:`, {
+        hasPaymentPlan: session.hasPaymentPlan,
+        paymentPlanId: session.paymentPlanId,
+        willShow: session.hasPaymentPlan ? 'YES' : 'NO'
+    });
+    // Only show if payment plan exists
+    viewPlanBtn.style.display = session.hasPaymentPlan ? 'inline-block' : 'none';
+
+    // Payment Plan Button (for creating new plans)
     const paymentPlanBtn = document.createElement('button');
     paymentPlanBtn.className = 'btn btn-success';
-    paymentPlanBtn.textContent = ' Payment Plan';
+    paymentPlanBtn.textContent = '⚡ Payment Plan';
     paymentPlanBtn.onclick = function() {
         console.log('DEBUG: Payment plan button clicked with session:', session);
         if (typeof window.openPaymentPlanModal === 'function') {
@@ -767,12 +797,6 @@ function createSessionCard(session) {
     paymentPlanBtn.style.backgroundColor = '#28a745';
     paymentPlanBtn.style.color = 'white';
     paymentPlanBtn.style.margin = '2px';
-
-    // Show payment plan status if exists
-    if (session.hasPaymentPlan) {
-        paymentPlanBtn.textContent = ' View Payment Plan';
-        paymentPlanBtn.style.backgroundColor = '#17a2b8';
-    }
 
     // Booking Agreement Button
     const bookingAgreementBtn = document.createElement('button');
@@ -826,7 +850,8 @@ function createSessionCard(session) {
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(depositBtn);
-    actions.appendChild(paymentPlanBtn);
+    actions.appendChild(viewPlanBtn); // View existing payment plan
+    actions.appendChild(paymentPlanBtn); // Create new payment plan
     actions.appendChild(viewContractsBtn);
     actions.appendChild(bookingAgreementBtn);
     console.log('DEBUG: Deposit button appended successfully');
