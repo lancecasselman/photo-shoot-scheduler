@@ -727,6 +727,12 @@ function createSessionCard(session) {
     viewPlanBtn.style.color = 'white';
     viewPlanBtn.style.margin = '2px';
     viewPlanBtn.style.border = 'none';
+    // Debug: Check payment plan fields
+    console.log(`🔍 VIEW PLAN BUTTON for ${session.clientName}:`, {
+        hasPaymentPlan: session.hasPaymentPlan,
+        paymentPlanId: session.paymentPlanId,
+        willShow: session.hasPaymentPlan ? 'YES' : 'NO'
+    });
     // Only show if payment plan exists
     viewPlanBtn.style.display = session.hasPaymentPlan ? 'inline-block' : 'none';
 
