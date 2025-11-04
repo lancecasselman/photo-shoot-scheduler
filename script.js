@@ -1596,7 +1596,7 @@ window.viewPaymentPlan = async function(sessionId) {
         console.log('👁️ VIEW PAYMENT PLAN: Loading plan for session:', sessionId);
         
         // Try automated plans first (Firestore), then fall back to manual plans (PostgreSQL)
-        let plan, session, payments, isAutomated = false;
+        let plan, session, payments, isAutomated = false, stripeStatus = null;
         
         // Try fetching automated plan from Firestore
         const automatedResponse = await fetch(`/api/installments/session/${sessionId}`);
@@ -1607,6 +1607,17 @@ window.viewPaymentPlan = async function(sessionId) {
                 // Found automated plan
                 plan = automatedData.plans[0];
                 isAutomated = true;
+                
+                // Fetch real-time Stripe status
+                try {
+                    const stripeStatusResponse = await fetch(`/api/installments/${plan.id}/stripe-status`);
+                    if (stripeStatusResponse.ok) {
+                        stripeStatus = await stripeStatusResponse.json();
+                        console.log('📊 Stripe Status:', stripeStatus);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not fetch Stripe status:', error);
+                }
                 
                 // Get session data from window.sessions
                 const currentSession = window.sessions?.find(s => s.id === sessionId) || 
@@ -1678,6 +1689,26 @@ window.viewPaymentPlan = async function(sessionId) {
                                 <p style="margin: 0; font-size: 14px; font-weight: 600;">✨ Automated Billing Active</p>
                                 <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.9;">Stripe will automatically charge the client on each payment date.</p>
                             </div>
+                            ${stripeStatus ? `
+                                <div style="background: ${stripeStatus.stripe.hasPaymentMethod ? '#f0fdf4' : '#fef3c7'}; padding: 14px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid ${stripeStatus.stripe.hasPaymentMethod ? '#10b981' : '#f59e0b'};">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span style="font-size: 18px;">${stripeStatus.stripe.hasPaymentMethod ? '✅' : '⚠️'}</span>
+                                        <strong style="color: #111827; font-size: 14px;">Payment Method Status</strong>
+                                    </div>
+                                    <p style="margin: 0; font-size: 13px; color: #374151;">
+                                        ${stripeStatus.stripe.hasPaymentMethod 
+                                            ? 'Client has a valid payment method attached. Payments will be charged automatically.' 
+                                            : 'Client has NOT added a payment method yet. They need to complete the checkout link to enable automatic payments.'}
+                                    </p>
+                                    ${stripeStatus.summary && stripeStatus.summary.totalInvoices > 0 ? `
+                                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                            <div style="font-size: 13px; color: #111827;">
+                                                <strong>Invoices:</strong> ${stripeStatus.summary.paidInvoices} paid, ${stripeStatus.summary.pendingInvoices} pending, ${stripeStatus.summary.failedInvoices} failed
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
                         ` : ''}
                         
                         <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px; color: #1f2937;">

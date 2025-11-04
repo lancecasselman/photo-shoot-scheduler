@@ -252,6 +252,105 @@ router.get('/photographer/:photographerId', async (req, res) => {
 });
 
 /**
+ * GET /api/installments/:planId/stripe-status
+ * Get real-time Stripe subscription schedule status
+ */
+router.get('/:planId/stripe-status', async (req, res) => {
+  try {
+    const { planId } = req.params;
+
+    const plan = await getPlan(planId);
+    if (!plan) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    if (!plan.stripeSubscriptionScheduleId) {
+      return res.status(400).json({ error: 'No Stripe subscription schedule found for this plan' });
+    }
+
+    // Determine which Stripe account to use
+    const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
+    
+    // Fetch subscription schedule from Stripe
+    let subscriptionSchedule;
+    if (usePlatformAccount) {
+      subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(plan.stripeSubscriptionScheduleId, {
+        expand: ['phases.items.price', 'customer']
+      });
+    } else {
+      subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(plan.stripeSubscriptionScheduleId, {
+        expand: ['phases.items.price', 'customer']
+      }, { stripeAccount: plan.stripeConnectedAccountId });
+    }
+
+    // Fetch associated invoices
+    let invoices = [];
+    if (plan.stripeCustomerId) {
+      try {
+        const invoicesList = usePlatformAccount
+          ? await stripe.invoices.list({ customer: plan.stripeCustomerId, limit: 20 })
+          : await stripe.invoices.list({ customer: plan.stripeCustomerId, limit: 20 }, { stripeAccount: plan.stripeConnectedAccountId });
+        
+        invoices = invoicesList.data.map(inv => ({
+          id: inv.id,
+          amount: inv.amount_paid / 100,
+          status: inv.status,
+          created: new Date(inv.created * 1000),
+          paidAt: inv.status_transitions.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : null,
+          dueDate: inv.due_date ? new Date(inv.due_date * 1000) : null
+        }));
+      } catch (error) {
+        console.warn('⚠️ Could not fetch invoices:', error.message);
+      }
+    }
+
+    // Get customer payment method
+    let hasPaymentMethod = false;
+    if (subscriptionSchedule.customer) {
+      const customer = typeof subscriptionSchedule.customer === 'string'
+        ? usePlatformAccount
+          ? await stripe.customers.retrieve(subscriptionSchedule.customer)
+          : await stripe.customers.retrieve(subscriptionSchedule.customer, { stripeAccount: plan.stripeConnectedAccountId })
+        : subscriptionSchedule.customer;
+      
+      hasPaymentMethod = !!customer.invoice_settings?.default_payment_method;
+    }
+
+    res.json({
+      plan: {
+        id: plan.id,
+        sessionId: plan.sessionId,
+        totalAmount: plan.totalAmount,
+        status: plan.status
+      },
+      stripe: {
+        scheduleId: subscriptionSchedule.id,
+        status: subscriptionSchedule.status,
+        hasPaymentMethod,
+        customer: typeof subscriptionSchedule.customer === 'string' ? subscriptionSchedule.customer : subscriptionSchedule.customer?.id,
+        phases: subscriptionSchedule.phases.map(phase => ({
+          startDate: new Date(phase.start_date * 1000),
+          endDate: new Date(phase.end_date * 1000),
+          items: phase.items
+        }))
+      },
+      invoices: invoices.sort((a, b) => b.created.getTime() - a.created.getTime()),
+      summary: {
+        totalInvoices: invoices.length,
+        paidInvoices: invoices.filter(i => i.status === 'paid').length,
+        pendingInvoices: invoices.filter(i => i.status === 'open' || i.status === 'draft').length,
+        failedInvoices: invoices.filter(i => i.status === 'uncollectible' || i.status === 'void').length
+      }
+    });
+  } catch (error) {
+    console.error('❌ INSTALLMENT: Stripe status error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to get Stripe status'
+    });
+  }
+});
+
+/**
  * POST /api/installments/:planId/cancel
  * Cancel an installment plan
  */
