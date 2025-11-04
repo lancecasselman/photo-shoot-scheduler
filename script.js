@@ -1590,6 +1590,134 @@ window.createInvoiceWithTipping = function(sessionId) {
     createInvoice(session);
 };
 
+// View Payment Plan function - displays both automated and manual payment plans
+window.viewPaymentPlan = async function(sessionId) {
+    try {
+        console.log('👁️ VIEW PAYMENT PLAN: Loading plan for session:', sessionId);
+        
+        // Try automated plans first (Firestore), then fall back to manual plans (PostgreSQL)
+        let plan, session, payments, isAutomated = false;
+        
+        // Try fetching automated plan from Firestore
+        const automatedResponse = await fetch(`/api/installments/session/${sessionId}`);
+        
+        if (automatedResponse.ok) {
+            const automatedData = await automatedResponse.json();
+            if (automatedData.plans && automatedData.plans.length > 0) {
+                // Found automated plan
+                plan = automatedData.plans[0];
+                isAutomated = true;
+                
+                // Get session data from window.sessions
+                const currentSession = window.sessions?.find(s => s.id === sessionId) || 
+                                      window.sessionsData?.find(s => s.id === sessionId);
+                session = currentSession;
+                payments = [];
+                console.log('✅ Found automated payment plan:', plan);
+            }
+        }
+        
+        // If no automated plan found, try manual plan
+        if (!isAutomated) {
+            const manualResponse = await fetch(`/api/payment-plans/${sessionId}/schedule`);
+            if (!manualResponse.ok) {
+                throw new Error('Payment plan not found');
+            }
+            const data = await manualResponse.json();
+            plan = data.plan;
+            session = data.session;
+            payments = data.payments || [];
+            console.log('✅ Found manual payment plan:', plan);
+        }
+        
+        if (!plan) {
+            throw new Error('No payment plan found for this session');
+        }
+        
+        // Build payment plan modal HTML
+        const modalHTML = `
+            <div class="modal-overlay" onclick="closePaymentPlanModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                <div class="modal-content" onclick="event.stopPropagation()" style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                    <div style="padding: 24px; border-bottom: 2px solid #e5e7eb;">
+                        <h2 style="margin: 0; font-size: 24px; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+                            ${isAutomated ? '⚡ Automated Payment Plan' : '📋 Manual Payment Plan'}
+                        </h2>
+                        <button onclick="closePaymentPlanModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+                    </div>
+                    
+                    <div style="padding: 24px;">
+                        ${isAutomated ? `
+                            <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600;">✨ Automated Billing Active</p>
+                                <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.9;">Stripe will automatically charge the client on each payment date.</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: grid; gap: 12px;">
+                                <div><strong>Client:</strong> ${session?.clientName || session?.client_name || 'N/A'}</div>
+                                <div><strong>Total Amount:</strong> $${plan.totalAmount || plan.total_amount || '0.00'}</div>
+                                <div><strong>Number of Payments:</strong> ${plan.numberOfPayments || plan.number_of_payments || payments.length}</div>
+                                ${plan.startDate || plan.start_date ? `<div><strong>Start Date:</strong> ${new Date(plan.startDate || plan.start_date).toLocaleDateString()}</div>` : ''}
+                            </div>
+                        </div>
+                        
+                        <h3 style="font-size: 18px; margin: 20px 0 12px 0; color: #1f2937;">Payment Schedule</h3>
+                        
+                        ${isAutomated ? `
+                            <div style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; color: #92400e;">
+                                ℹ️ <strong>View full schedule in Stripe Dashboard</strong><br>
+                                <a href="https://dashboard.stripe.com" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Open Stripe Dashboard →</a>
+                            </div>
+                        ` : payments.length > 0 ? payments.map((payment, index) => `
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>Payment ${index + 1}</strong>
+                                        <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+                                            Due: ${new Date(payment.dueDate || payment.due_date).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 18px; font-weight: 600; color: #10b981;">$${payment.amount}</div>
+                                        <div style="font-size: 12px; color: ${payment.status === 'paid' ? '#10b981' : '#6b7280'}; margin-top: 4px;">
+                                            ${payment.status === 'paid' ? '✓ Paid' : '⏳ Pending'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : '<p style="color: #6b7280;">No payment schedule available.</p>'}
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                            <button onclick="closePaymentPlanModal()" style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Inject modal into page
+        const modalContainer = document.createElement('div');
+        modalContainer.id = 'payment-plan-modal';
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer);
+        
+    } catch (error) {
+        console.error('❌ Error loading payment plan:', error);
+        showMessage('Error loading payment plan: ' + error.message, 'error');
+    }
+};
+
+// Close payment plan modal
+window.closePaymentPlanModal = function() {
+    const modal = document.getElementById('payment-plan-modal');
+    if (modal) {
+        modal.remove();
+    }
+};
+
 // Create invoice function with tipping system - simplified approach
 async function createInvoice(session) {
     try {
