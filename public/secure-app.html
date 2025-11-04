@@ -18892,7 +18892,11 @@ END:VCALENDAR`;
                 const limitedNotifications = notifications.slice(0, 10);
 
                 listElement.innerHTML = limitedNotifications.map(notification => {
-                    const icon = notification.type === 'payment_received' ? '💰' : '✍️';
+                    let icon = '📢'; // Default icon
+                    if (notification.type === 'payment_received') icon = '💰';
+                    else if (notification.type === 'contract_signed') icon = '✍️';
+                    else if (notification.type === 'photo_download') icon = '📸';
+                    
                     const unreadClass = notification.isRead ? '' : 'unread';
                     const unreadDot = notification.isRead ? '' : '<span class="unread-dot"></span>';
                     const timeAgo = this.getTimeAgo(new Date(notification.createdAt));

@@ -17,6 +17,7 @@ const { Pool } = require('pg');
 const { drizzle } = require('drizzle-orm/node-postgres');
 const { eq, and, sql } = require('drizzle-orm');
 const DownloadError = require('./DownloadError');
+const { createNotification } = require('../notifications-routes');
 
 // Import schema from the shared schema file - fixes schema conflicts
 const schema = require('../../shared/schema');
@@ -719,6 +720,47 @@ class DownloadOrchestrator {
 
       // Insert download history record immediately
       await this.db.insert(downloadHistory).values(historyRecord);
+
+      // Create notification for photographer about photo download
+      try {
+        // Get session data to find photographer ID
+        const sessionQuery = await this.db.select()
+          .from(photographySessions)
+          .where(eq(photographySessions.id, sessionId))
+          .limit(1);
+
+        if (sessionQuery.length > 0) {
+          const session = sessionQuery[0];
+          const photographerId = session.userId;
+          const clientName = session.clientName || 'Client';
+          const fileName = fileRecord.originalName || fileRecord.filename;
+
+          // Create notification for photographer
+          await createNotification(
+            photographerId,
+            'photo_download',
+            'Photo Downloaded',
+            `${clientName} downloaded ${fileName}`,
+            {
+              sessionId: sessionId,
+              fileName: fileName,
+              downloadId: downloadId,
+              clientKey: clientKey
+            },
+            this.pool
+          );
+
+          this.logger.info('Download notification created', {
+            ...context,
+            photographerId,
+            clientName,
+            fileName
+          });
+        }
+      } catch (notifError) {
+        // Don't fail the download if notification creation fails
+        this.logger.error('Failed to create download notification', notifError, context);
+      }
 
       // Get file from R2 storage
       this.logger.debug('Fetching file from R2 storage', {

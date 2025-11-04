@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { db } = require('./db.ts');
+const { db, pool } = require('./db.ts');
 const { paymentPlans, paymentRecords, photographySessions, users } = require('../shared/schema');
 const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -296,7 +296,8 @@ class PaymentPlanManager {
               paymentId: payment.id,
               amount: payment.amount,
               clientName: session.clientName
-            }
+            },
+            pool
           );
         }
       }
