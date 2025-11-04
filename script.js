@@ -1612,8 +1612,35 @@ window.viewPaymentPlan = async function(sessionId) {
                 const currentSession = window.sessions?.find(s => s.id === sessionId) || 
                                       window.sessionsData?.find(s => s.id === sessionId);
                 session = currentSession;
+                
+                // Calculate payment schedule for automated plans
                 payments = [];
+                const numberOfPayments = plan.numberOfPayments || 4;
+                const perInstallmentAmount = plan.perInstallmentAmount || (plan.totalAmount / numberOfPayments);
+                const startDate = new Date(plan.startDate);
+                const cadence = plan.cadence || 'monthly';
+                
+                for (let i = 0; i < numberOfPayments; i++) {
+                    const paymentDate = new Date(startDate);
+                    
+                    // Calculate payment date based on cadence
+                    if (cadence === 'monthly') {
+                        paymentDate.setMonth(startDate.getMonth() + i);
+                    } else if (cadence === 'weekly') {
+                        paymentDate.setDate(startDate.getDate() + (i * 7));
+                    } else if (cadence === 'biweekly') {
+                        paymentDate.setDate(startDate.getDate() + (i * 14));
+                    }
+                    
+                    payments.push({
+                        dueDate: paymentDate.toISOString(),
+                        amount: perInstallmentAmount.toFixed(2),
+                        status: 'pending' // We don't have real-time status from Stripe
+                    });
+                }
+                
                 console.log('✅ Found automated payment plan:', plan);
+                console.log('📅 Calculated payment schedule:', payments);
             }
         }
         
@@ -1664,12 +1691,7 @@ window.viewPaymentPlan = async function(sessionId) {
                         
                         <h3 style="font-size: 18px; margin: 20px 0 12px 0; color: #1f2937;">Payment Schedule</h3>
                         
-                        ${isAutomated ? `
-                            <div style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; color: #92400e;">
-                                ℹ️ <strong>View full schedule in Stripe Dashboard</strong><br>
-                                <a href="https://dashboard.stripe.com" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Open Stripe Dashboard →</a>
-                            </div>
-                        ` : payments.length > 0 ? payments.map((payment, index) => `
+                        ${payments.length > 0 ? payments.map((payment, index) => `
                             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; color: #1f2937;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
@@ -1687,6 +1709,12 @@ window.viewPaymentPlan = async function(sessionId) {
                                 </div>
                             </div>
                         `).join('') : '<p style="color: #6b7280;">No payment schedule available.</p>'}
+                        
+                        ${isAutomated ? `
+                            <div style="background: #f0f9ff; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 13px; color: #0c4a6e; border-left: 3px solid #0ea5e9;">
+                                ℹ️ <strong>Note:</strong> Payment status shown is calculated. For real-time status, <a href="https://dashboard.stripe.com" target="_blank" style="color: #0284c7; text-decoration: underline;">view in Stripe Dashboard →</a>
+                            </div>
+                        ` : ''}
                         
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                             <button onclick="closePaymentPlanModal()" style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">
