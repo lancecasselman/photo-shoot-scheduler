@@ -1653,12 +1653,12 @@ window.viewPaymentPlan = async function(sessionId) {
                             </div>
                         ` : ''}
                         
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                            <div style="display: grid; gap: 12px;">
-                                <div><strong>Client:</strong> ${session?.clientName || session?.client_name || 'N/A'}</div>
-                                <div><strong>Total Amount:</strong> $${plan.totalAmount || plan.total_amount || '0.00'}</div>
-                                <div><strong>Number of Payments:</strong> ${plan.numberOfPayments || plan.number_of_payments || payments.length}</div>
-                                ${plan.startDate || plan.start_date ? `<div><strong>Start Date:</strong> ${new Date(plan.startDate || plan.start_date).toLocaleDateString()}</div>` : ''}
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px; color: #1f2937;">
+                            <div style="display: grid; gap: 12px; font-size: 14px;">
+                                <div><strong style="color: #111827;">Client:</strong> ${session?.clientName || session?.client_name || 'N/A'}</div>
+                                <div><strong style="color: #111827;">Total Amount:</strong> $${plan.totalAmount || plan.total_amount || '0.00'}</div>
+                                <div><strong style="color: #111827;">Number of Payments:</strong> ${plan.numberOfPayments || plan.number_of_payments || payments.length}</div>
+                                ${plan.startDate || plan.start_date ? `<div><strong style="color: #111827;">Start Date:</strong> ${new Date(plan.startDate || plan.start_date).toLocaleDateString()}</div>` : ''}
                             </div>
                         </div>
                         
@@ -1670,10 +1670,10 @@ window.viewPaymentPlan = async function(sessionId) {
                                 <a href="https://dashboard.stripe.com" target="_blank" style="color: #1d4ed8; text-decoration: underline;">Open Stripe Dashboard →</a>
                             </div>
                         ` : payments.length > 0 ? payments.map((payment, index) => `
-                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+                            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; color: #1f2937;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <strong>Payment ${index + 1}</strong>
+                                        <strong style="color: #111827; font-size: 14px;">Payment ${index + 1}</strong>
                                         <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
                                             Due: ${new Date(payment.dueDate || payment.due_date).toLocaleDateString()}
                                         </div>
