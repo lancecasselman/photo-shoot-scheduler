@@ -6,7 +6,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { eq } = require('drizzle-orm');
-const { calculatePaymentSchedule, dollarsToCents, centsToDollars } = require('./math');
+const { calculatePaymentSchedule, dollarsToCents } = require('./math');
 const { createPaymentPlanSchedule, cancelSubscriptionSchedule, stripe } = require('./stripe');
 const { 
   createPlan, 
@@ -22,53 +22,6 @@ const { photographySessions, users } = require('../../../shared/schema');
 
 const router = express.Router();
 const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
-
-/**
- * Convert preview response from cents to dollars for frontend display
- */
-function formatPreviewForFrontend(preview) {
-  return {
-    ...preview,
-    totalAmount: centsToDollars(preview.totalAmount),
-    perInstallmentAmount: centsToDollars(preview.perInstallmentAmount),
-    platformFee: centsToDollars(preview.platformFee),
-    platformFeePerPayment: centsToDollars(preview.platformFeePerPayment),
-    photographerReceivesTotal: centsToDollars(preview.photographerReceivesTotal),
-    photographerReceivesPerPayment: centsToDollars(preview.photographerReceivesPerPayment),
-    paymentSchedule: preview.paymentSchedule.map(payment => ({
-      ...payment,
-      amount: centsToDollars(payment.amount),
-      platformFee: centsToDollars(payment.platformFee),
-      photographerPayout: centsToDollars(payment.photographerPayout)
-    }))
-  };
-}
-
-/**
- * Convert plan data from cents to dollars for frontend display
- */
-function formatPlanForFrontend(plan) {
-  if (!plan) return plan;
-  return {
-    ...plan,
-    totalAmount: centsToDollars(plan.totalAmount),
-    perInstallmentAmount: centsToDollars(plan.perInstallmentAmount),
-    platformFeePerPayment: centsToDollars(plan.platformFeePerPayment || 0)
-  };
-}
-
-/**
- * Convert payment data from cents to dollars for frontend display
- */
-function formatPaymentForFrontend(payment) {
-  if (!payment) return payment;
-  return {
-    ...payment,
-    amount: centsToDollars(payment.amount),
-    platformFee: centsToDollars(payment.platformFee || 0),
-    photographerPayout: centsToDollars(payment.photographerPayout || 0)
-  };
-}
 
 /**
  * POST /api/installments/preview
@@ -90,9 +43,7 @@ router.post('/preview', async (req, res) => {
       });
     }
 
-    // Convert dollars to cents for accurate Stripe calculations
     const totalAmountInCents = dollarsToCents(totalAmount);
-
     const preview = calculatePaymentSchedule(
       totalAmountInCents,
       cadence,
@@ -101,8 +52,7 @@ router.post('/preview', async (req, res) => {
       PLATFORM_FEE_BPS
     );
 
-    // Convert cents back to dollars for frontend display
-    res.json(formatPreviewForFrontend(preview));
+    res.json(preview);
   } catch (error) {
     console.error('❌ INSTALLMENT: Preview error:', error);
     res.status(500).json({
@@ -168,9 +118,7 @@ router.post('/create', async (req, res) => {
     request.photographerId = session.userId;
     request.stripeConnectedAccountId = session.stripeConnectAccountId || 'platform';
 
-    // Convert dollars to cents for accurate Stripe calculations
     const totalAmountInCents = dollarsToCents(request.totalAmount);
-
     const preview = calculatePaymentSchedule(
       totalAmountInCents,
       request.cadence,
@@ -232,7 +180,7 @@ router.post('/create', async (req, res) => {
         sessionId: request.sessionId,
         numberOfPayments: preview.numberOfPayments
       },
-      preview: formatPreviewForFrontend(preview)
+      preview
     });
   } catch (error) {
     console.error('❌ INSTALLMENT: Create error:', error);
@@ -258,8 +206,8 @@ router.get('/:planId', async (req, res) => {
     const payments = await getPaymentsByPlan(planId);
 
     res.json({
-      plan: formatPlanForFrontend(plan),
-      payments: payments.map(formatPaymentForFrontend)
+      plan,
+      payments
     });
   } catch (error) {
     console.error('❌ INSTALLMENT: Get plan error:', error);
@@ -278,7 +226,7 @@ router.get('/session/:sessionId', async (req, res) => {
     const { sessionId } = req.params;
     const plans = await getPlansBySession(sessionId);
 
-    res.json({ plans: plans.map(formatPlanForFrontend) });
+    res.json({ plans });
   } catch (error) {
     console.error('❌ INSTALLMENT: Get session plans error:', error);
     res.status(500).json({
@@ -296,7 +244,7 @@ router.get('/photographer/:photographerId', async (req, res) => {
     const { photographerId } = req.params;
     const plans = await getPlansByPhotographer(photographerId);
 
-    res.json({ plans: plans.map(formatPlanForFrontend) });
+    res.json({ plans });
   } catch (error) {
     console.error('❌ INSTALLMENT: Get photographer plans error:', error);
     res.status(500).json({
@@ -374,7 +322,7 @@ router.get('/:planId/stripe-status', async (req, res) => {
       plan: {
         id: plan.id,
         sessionId: plan.sessionId,
-        totalAmount: centsToDollars(plan.totalAmount),
+        totalAmount: plan.totalAmount,
         status: plan.status
       },
       stripe: {
@@ -464,8 +412,8 @@ router.get('/plan/:planId', async (req, res) => {
       sessionId: plan.sessionId,
       customerEmail: plan.customerEmail,
       customerName: plan.customerName || 'Valued Client',
-      totalAmount: centsToDollars(plan.totalAmount),
-      perInstallmentAmount: centsToDollars(plan.perInstallmentAmount),
+      totalAmount: plan.totalAmount,
+      perInstallmentAmount: plan.perInstallmentAmount,
       cadence: plan.cadence,
       startDate: plan.startDate,
       endDate: plan.endDate,
@@ -691,9 +639,8 @@ router.post('/:planId/send-email', async (req, res) => {
     }
 
     // Calculate first payment info from plan data (avoid Firestore query)
-    // Convert cents to dollars for display
     const firstPayment = {
-      amount: centsToDollars(plan.perInstallmentAmount),
+      amount: plan.perInstallmentAmount,
       dueDate: plan.startDate
     };
 
@@ -711,7 +658,7 @@ router.post('/:planId/send-email', async (req, res) => {
     emailText += `Your automated payment plan is ready! Here's the link to set up your payment method for your ${session.sessionType} session with ${photographer.businessName || photographer.displayName}.\n\n`;
     emailText += `Payment Plan Summary:\n`;
     emailText += `${'='.repeat(60)}\n`;
-    emailText += `Total Amount: $${centsToDollars(plan.totalAmount).toFixed(2)}\n`;
+    emailText += `Total Amount: $${plan.totalAmount.toFixed(2)}\n`;
     emailText += `Number of Payments: ${plan.numberOfPayments}\n`;
     emailText += `Payment Frequency: ${plan.cadence === 'biweekly' ? 'Every 2 weeks' : 'Monthly'}\n`;
     emailText += `First Payment: $${parseFloat(firstPayment.amount).toFixed(2)}\n`;
@@ -835,9 +782,8 @@ router.post('/:planId/send-sms', async (req, res) => {
     }
 
     // Calculate first payment info from plan data (avoid Firestore query)
-    // Convert cents to dollars for display
     const firstPayment = {
-      amount: centsToDollars(plan.perInstallmentAmount),
+      amount: plan.perInstallmentAmount,
       dueDate: plan.startDate
     };
 
@@ -850,8 +796,8 @@ router.post('/:planId/send-sms', async (req, res) => {
 
     // Format short SMS message
     let smsText = `Hi ${clientName}! Your payment plan is ready for your ${session.sessionType} session with ${photographer.businessName || photographer.displayName}.\n\n`;
-    smsText += `Total: $${centsToDollars(plan.totalAmount).toFixed(2)}\n`;
-    smsText += `${plan.numberOfPayments} payments of ~$${(centsToDollars(plan.totalAmount) / plan.numberOfPayments).toFixed(2)}\n`;
+    smsText += `Total: $${plan.totalAmount.toFixed(2)}\n`;
+    smsText += `${plan.numberOfPayments} payments of ~$${(plan.totalAmount / plan.numberOfPayments).toFixed(2)}\n`;
     smsText += `First payment: $${parseFloat(firstPayment.amount).toFixed(2)} on ${new Date(firstPayment.dueDate).toLocaleDateString()}\n\n`;
     smsText += `Set up payment method here:\n${clientPaymentLink}\n\n`;
     smsText += `Questions? Contact ${photographer.email}`;
