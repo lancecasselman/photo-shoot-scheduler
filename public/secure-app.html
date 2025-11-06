@@ -10873,14 +10873,33 @@ END:VCALENDAR`;
                         'Monthly';
                 }
                 
+                // Fetch Stripe data for automated plans to get accurate payment info
+                let stripeData = null;
+                if (isAutomated) {
+                    try {
+                        const stripeStatusResponse = await fetch(`/api/installments/${plan.id}/stripe-status`);
+                        if (stripeStatusResponse.ok) {
+                            stripeData = await stripeStatusResponse.json();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching Stripe status for summary:', error);
+                    }
+                }
+                
+                // Calculate payment stats from Stripe invoices
+                const paidInvoices = stripeData?.summary?.paidInvoices || 0;
+                const totalInvoices = stripeData?.summary?.totalInvoices || 0;
+                const amountPaid = stripeData?.invoices ? 
+                    stripeData.invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.amount), 0) : 0;
+                
                 // Normalize plan data for unified display
                 const normalizedPlan = isAutomated ? {
                     totalAmount: plan.totalAmount,
                     monthlyPayment: plan.perInstallmentAmount,
                     totalPayments: plan.numberOfPayments,
-                    paymentsCompleted: 0, // For automated plans, we'd need to query Stripe
-                    amountPaid: 0,
-                    remainingBalance: plan.totalAmount,
+                    paymentsCompleted: paidInvoices,
+                    amountPaid: amountPaid,
+                    remainingBalance: plan.totalAmount - amountPaid,
                     status: plan.status || 'active',
                     startDate: plan.startDate,
                     endDate: plan.endDate,
@@ -10922,23 +10941,132 @@ END:VCALENDAR`;
                 `;
                 
                 if (isAutomated) {
-                    contentHTML += `
-                        <div class="payment-schedule">
-                            <h4>⚡ Automated Payments</h4>
-                            <p style="text-align: center; color: #666; margin: 20px 0;">
-                                This payment plan is managed automatically by Stripe.<br>
-                                Payments are charged to the customer's saved payment method on each scheduled date.<br>
-                                <br>
-                                <strong>Subscription Schedule ID:</strong> ${normalizedPlan.stripeSubscriptionScheduleId || 'N/A'}<br>
-                                <strong>Customer ID:</strong> ${normalizedPlan.stripeCustomerId || 'N/A'}
-                            </p>
-                            <p style="text-align: center; margin: 20px 0;">
-                                <a href="https://dashboard.stripe.com/subscriptions/${normalizedPlan.stripeSubscriptionScheduleId}" target="_blank" class="btn btn-primary">
-                                    View in Stripe Dashboard →
-                                </a>
-                            </p>
-                        </div>
-                    `;
+                    // Fetch real-time Stripe status for automated plans
+                    try {
+                        const stripeStatusResponse = await fetch(`/api/installments/${plan.id}/stripe-status`);
+                        if (stripeStatusResponse.ok) {
+                            const stripeData = await stripeStatusResponse.json();
+                            const invoices = stripeData.invoices || [];
+                            const hasPaymentMethod = stripeData.stripe?.hasPaymentMethod || false;
+                            
+                            contentHTML += `
+                                <div class="payment-schedule">
+                                    <h4>⚡ Automated Billing Active</h4>
+                                    <p style="text-align: center; background: ${hasPaymentMethod ? 'rgba(76,175,80,0.1)' : 'rgba(255,193,7,0.1)'}; border: 2px solid ${hasPaymentMethod ? 'rgba(76,175,80,0.3)' : 'rgba(255,193,7,0.3)'}; border-radius: 8px; padding: 12px; margin: 15px 0; color: ${hasPaymentMethod ? '#2e7d32' : '#f57c00'};">
+                                        <strong>${hasPaymentMethod ? '✅ Payment Method Status' : '⚠️ Payment Method Status'}</strong><br>
+                                        <small>${hasPaymentMethod ? 'Client has a valid payment method attached. Payments will be charged automatically.' : 'Client needs to attach a payment method. Send them the setup link.'}</small>
+                                    </p>
+                                    
+                                    ${!hasPaymentMethod ? `
+                                        <div style="text-align: center; margin: 15px 0;">
+                                            <button class="btn btn-primary" onclick="sendInstallmentEmail('${plan.id}', '${session?.clientName || 'Client'}')">📧 Send Setup Link</button>
+                                            <button class="btn btn-primary" onclick="sendInstallmentSMS('${plan.id}', '${session?.clientName || 'Client'}')">📱 Send via SMS</button>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <p style="text-align: center; color: #666; margin: 15px 0; font-size: 0.9em;">
+                                        <strong>Invoices:</strong> ${stripeData.summary?.paidInvoices || 0} paid, ${stripeData.summary?.pendingInvoices || 0} pending, ${stripeData.summary?.failedInvoices || 0} failed
+                                    </p>
+                                    
+                                    <h4>📅 Payment Schedule</h4>
+                            `;
+                            
+                            // Map invoices to payment schedule display
+                            if (invoices.length > 0) {
+                                invoices.forEach((invoice, index) => {
+                                    const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : new Date(invoice.created);
+                                    const paidDate = invoice.paidAt ? new Date(invoice.paidAt) : null;
+                                    
+                                    // Map Stripe invoice status to display status
+                                    let statusClass, statusText;
+                                    if (invoice.status === 'paid') {
+                                        statusClass = 'paid';
+                                        statusText = 'PAID';
+                                    } else if (invoice.status === 'open') {
+                                        statusClass = 'pending';
+                                        statusText = 'PENDING';
+                                    } else if (invoice.status === 'uncollectible' || invoice.status === 'void') {
+                                        statusClass = 'overdue';
+                                        statusText = 'FAILED';
+                                    } else {
+                                        statusClass = 'pending';
+                                        statusText = invoice.status.toUpperCase();
+                                    }
+                                    
+                                    contentHTML += `
+                                        <div class="payment-item">
+                                            <div>
+                                                <strong>Payment ${index + 1}</strong><br>
+                                                <small>Due: ${dueDate.toLocaleDateString()}</small>
+                                                ${paidDate ? `<br><small style="color: #10b981;">✓ Paid: ${paidDate.toLocaleDateString()}</small>` : ''}
+                                            </div>
+                                            <div>$${parseFloat(invoice.amount).toFixed(2)}</div>
+                                            <div>
+                                                <div class="payment-status ${statusClass}">● ${statusText}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                // No invoices yet, show placeholder based on plan schedule
+                                for (let i = 0; i < normalizedPlan.totalPayments; i++) {
+                                    const paymentDate = new Date(normalizedPlan.startDate);
+                                    if (plan.cadence === 'biweekly') {
+                                        paymentDate.setDate(paymentDate.getDate() + (i * 14));
+                                    } else {
+                                        paymentDate.setMonth(paymentDate.getMonth() + i);
+                                    }
+                                    
+                                    contentHTML += `
+                                        <div class="payment-item">
+                                            <div>
+                                                <strong>Payment ${i + 1}</strong><br>
+                                                <small>Due: ${paymentDate.toLocaleDateString()}</small>
+                                            </div>
+                                            <div>$${parseFloat(normalizedPlan.monthlyPayment).toFixed(2)}</div>
+                                            <div>
+                                                <div class="payment-status pending">● PENDING</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                            }
+                            
+                            contentHTML += `
+                                </div>
+                                <p style="text-align: center; margin: 20px 0; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <small style="color: #999;">💡 <strong>Note:</strong> Payment status shown is calculated. For real-time status, 
+                                    <a href="https://dashboard.stripe.com/subscriptions/${normalizedPlan.stripeSubscriptionScheduleId}" target="_blank" style="color: #667eea;">view in Stripe Dashboard →</a></small>
+                                </p>
+                            `;
+                        } else {
+                            // Fallback if stripe-status API fails
+                            contentHTML += `
+                                <div class="payment-schedule">
+                                    <h4>⚡ Automated Payments</h4>
+                                    <p style="text-align: center; color: #666; margin: 20px 0;">
+                                        This payment plan is managed automatically by Stripe.<br>
+                                        <a href="https://dashboard.stripe.com/subscriptions/${normalizedPlan.stripeSubscriptionScheduleId}" target="_blank" class="btn btn-primary">
+                                            View in Stripe Dashboard →
+                                        </a>
+                                    </p>
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching Stripe status:', error);
+                        contentHTML += `
+                            <div class="payment-schedule">
+                                <h4>⚡ Automated Payments</h4>
+                                <p style="text-align: center; color: #666; margin: 20px 0;">
+                                    This payment plan is managed automatically by Stripe.<br>
+                                    <a href="https://dashboard.stripe.com/subscriptions/${normalizedPlan.stripeSubscriptionScheduleId}" target="_blank" class="btn btn-primary">
+                                        View in Stripe Dashboard →
+                                    </a>
+                                </p>
+                            </div>
+                        `;
+                    }
                 } else {
                     contentHTML += `
                         <div class="payment-schedule">
