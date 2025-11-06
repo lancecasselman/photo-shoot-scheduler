@@ -1631,6 +1631,9 @@ window.viewPaymentPlan = async function(sessionId) {
                 const startDate = new Date(plan.startDate);
                 const cadence = plan.cadence || 'monthly';
                 
+                // Build calculated schedule with real Stripe invoice status mapping
+                const invoices = stripeStatus?.invoices || [];
+                
                 for (let i = 0; i < numberOfPayments; i++) {
                     const paymentDate = new Date(startDate);
                     
@@ -1643,15 +1646,60 @@ window.viewPaymentPlan = async function(sessionId) {
                         paymentDate.setDate(startDate.getDate() + (i * 14));
                     }
                     
+                    // Match invoice by due date proximity (within 3 days tolerance)
+                    // This handles reordered invoices, deposits, and voids better than index matching
+                    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+                    let matchingInvoice = null;
+                    let closestDateDiff = Infinity;
+                    
+                    for (const invoice of invoices) {
+                        // Use invoice created date if dueDate is null (common for Stripe subscriptions)
+                        // Note: Stripe created field is already converted to JS Date by backend API
+                        const invoiceDate = invoice.dueDate ? new Date(invoice.dueDate) : new Date(invoice.created);
+                        const dateDiff = Math.abs(paymentDate.getTime() - invoiceDate.getTime());
+                        
+                        // Find the invoice closest to this payment's due date
+                        if (dateDiff < closestDateDiff && dateDiff <= THREE_DAYS) {
+                            closestDateDiff = dateDiff;
+                            matchingInvoice = invoice;
+                        }
+                    }
+                    
+                    // Map Stripe invoice status to payment status
+                    let paymentStatus = 'pending';
+                    let paidDate = null;
+                    
+                    if (matchingInvoice) {
+                        // Mark invoice as used to avoid duplicate matching
+                        const usedIndex = invoices.indexOf(matchingInvoice);
+                        if (usedIndex > -1) {
+                            invoices.splice(usedIndex, 1);
+                        }
+                        
+                        if (matchingInvoice.status === 'paid') {
+                            paymentStatus = 'paid';
+                            paidDate = matchingInvoice.paidAt;
+                        } else if (matchingInvoice.status === 'open') {
+                            paymentStatus = 'pending';
+                        } else if (matchingInvoice.status === 'uncollectible' || matchingInvoice.status === 'void') {
+                            paymentStatus = 'failed';
+                        }
+                    } else {
+                        // Debug: Log when no invoice matched within 3-day tolerance
+                        console.log(`⚠️ No Stripe invoice found for payment ${i + 1} (due: ${paymentDate.toLocaleDateString()})`);
+                    }
+                    
                     payments.push({
                         dueDate: paymentDate.toISOString(),
                         amount: perInstallmentAmount.toFixed(2),
-                        status: 'pending' // We don't have real-time status from Stripe
+                        status: paymentStatus,
+                        paidDate: paidDate,
+                        invoiceId: matchingInvoice?.id || null
                     });
                 }
                 
                 console.log('✅ Found automated payment plan:', plan);
-                console.log('📅 Calculated payment schedule:', payments);
+                console.log('📅 Payment schedule with Stripe status:', payments);
             }
         }
         
@@ -1722,28 +1770,53 @@ window.viewPaymentPlan = async function(sessionId) {
                         
                         <h3 style="font-size: 18px; margin: 20px 0 12px 0; color: #1f2937;">Payment Schedule</h3>
                         
-                        ${payments.length > 0 ? payments.map((payment, index) => `
+                        ${payments.length > 0 ? payments.map((payment, index) => {
+                            // Determine status styling
+                            let statusBg, statusColor, statusIcon, statusText;
+                            if (payment.status === 'paid') {
+                                statusBg = '#d1fae5';
+                                statusColor = '#065f46';
+                                statusIcon = '✅';
+                                statusText = 'PAID';
+                            } else if (payment.status === 'failed') {
+                                statusBg = '#fee2e2';
+                                statusColor = '#991b1b';
+                                statusIcon = '❌';
+                                statusText = 'FAILED';
+                            } else {
+                                statusBg = '#fef3c7';
+                                statusColor = '#92400e';
+                                statusIcon = '⏳';
+                                statusText = 'PENDING';
+                            }
+                            
+                            return `
                             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 8px; color: #1f2937;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
+                                    <div style="flex: 1;">
                                         <strong style="color: #111827; font-size: 14px;">Payment ${index + 1}</strong>
                                         <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
                                             Due: ${new Date(payment.dueDate || payment.due_date).toLocaleDateString()}
                                         </div>
+                                        ${payment.paidDate ? `
+                                            <div style="font-size: 12px; color: #10b981; margin-top: 4px;">
+                                                ✓ Paid: ${new Date(payment.paidDate).toLocaleDateString()}
+                                            </div>
+                                        ` : ''}
                                     </div>
                                     <div style="text-align: right;">
                                         <div style="font-size: 18px; font-weight: 600; color: #10b981;">$${payment.amount}</div>
-                                        <div style="font-size: 12px; color: ${payment.status === 'paid' ? '#10b981' : '#6b7280'}; margin-top: 4px;">
-                                            ${payment.status === 'paid' ? '✓ Paid' : '⏳ Pending'}
+                                        <div style="display: inline-block; background: ${statusBg}; color: ${statusColor}; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; margin-top: 6px;">
+                                            ${statusIcon} ${statusText}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        `).join('') : '<p style="color: #6b7280;">No payment schedule available.</p>'}
+                        `}).join('') : '<p style="color: #6b7280;">No payment schedule available.</p>'}
                         
                         ${isAutomated ? `
                             <div style="background: #f0f9ff; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 13px; color: #0c4a6e; border-left: 3px solid #0ea5e9;">
-                                ℹ️ <strong>Note:</strong> Payment status shown is calculated. For real-time status, <a href="https://dashboard.stripe.com" target="_blank" style="color: #0284c7; text-decoration: underline;">view in Stripe Dashboard →</a>
+                                ℹ️ <strong>Note:</strong> Payment status shown is ${stripeStatus ? 'real-time from Stripe invoices' : 'calculated'}. For detailed invoice information, <a href="https://dashboard.stripe.com" target="_blank" style="color: #0284c7; text-decoration: underline;">view in Stripe Dashboard →</a>
                             </div>
                         ` : ''}
                         
