@@ -339,13 +339,14 @@ function createBookingAgreementRoutes(pool) {
             try {
                 // Get photographer details for the email
                 const photographerResult = await client.query(
-                    `SELECT business_name, email FROM users WHERE id = $1`,
+                    `SELECT business_name, email, username FROM users WHERE id = $1`,
                     [userId]
                 );
                 
-                const photographer = photographerResult.rows[0] || {
-                    business_name: 'Photography Studio',
-                    email: 'noreply@photomanagementsystem.com'
+                const photographerData = photographerResult.rows[0] || {};
+                const photographer = {
+                    business_name: photographerData.business_name || photographerData.username || 'Your Photographer',
+                    email: photographerData.email || 'noreply@photomanagementsystem.com'
                 };
 
                 // Update agreement status
