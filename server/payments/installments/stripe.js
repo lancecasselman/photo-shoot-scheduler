@@ -114,6 +114,14 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
   } = request;
 
   console.log(`💳 Creating subscription schedule in ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account mode`);
+  console.log(`📊 STRIPE CONNECT DEBUG:`, {
+    usePlatformAccount,
+    stripeConnectedAccountId,
+    photographerId,
+    sessionId: sessionId.substring(0, 8),
+    PLATFORM_FEE_BPS,
+    platformFeePercent: PLATFORM_FEE_BPS / 100
+  });
 
   const customerId = await createOrGetCustomer(
     customerEmail, 
@@ -122,6 +130,8 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     paymentMethodId,
     usePlatformAccount
   );
+
+  console.log(`✅ Customer created/retrieved: ${customerId} on ${usePlatformAccount ? 'PLATFORM' : stripeConnectedAccountId}`);
 
   const phases = [];
   const paymentRecordIds = [];
@@ -203,6 +213,9 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
       phase.transfer_data = {
         destination: stripeConnectedAccountId
       };
+      console.log(`🔗 CONNECT ROUTING: Payment ${payment.paymentNumber} → Account ${stripeConnectedAccountId}, Fee: ${platformFeePercent}%`);
+    } else {
+      console.log(`⚠️ PLATFORM ROUTING: Payment ${payment.paymentNumber} → Platform account (Connect ID missing or platform mode)`);
     }
 
     phases.push(phase);
@@ -228,12 +241,15 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
   // Create subscription schedule - only pass stripeAccount if using connected account
   let schedule;
   if (usePlatformAccount) {
+    console.log(`🏢 Creating schedule on PLATFORM account...`);
     schedule = await stripe.subscriptionSchedules.create(scheduleParams);
   } else {
+    console.log(`🔗 Creating schedule on CONNECTED account: ${stripeConnectedAccountId}`);
     schedule = await stripe.subscriptionSchedules.create(scheduleParams, { stripeAccount: stripeConnectedAccountId });
   }
 
   console.log(`✅ Subscription schedule created: ${schedule.id} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
+  console.log(`📍 Schedule location: ${usePlatformAccount ? 'Your platform dashboard' : `Connected account ${stripeConnectedAccountId}`}`);
 
   return {
     customerId,
