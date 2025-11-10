@@ -65,15 +65,25 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
 
   // Attach payment method to customer if provided
   if (paymentMethodId) {
-    // Attach the payment method to the customer first
-    if (usePlatformAccount) {
-      await stripe.paymentMethods.attach(paymentMethodId, {
-        customer: customerId
-      });
-    } else {
-      await stripe.paymentMethods.attach(paymentMethodId, {
-        customer: customerId
-      }, { stripeAccount: stripeConnectedAccountId });
+    try {
+      // Attach the payment method to the customer first
+      if (usePlatformAccount) {
+        await stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customerId
+        });
+      } else {
+        await stripe.paymentMethods.attach(paymentMethodId, {
+          customer: customerId
+        }, { stripeAccount: stripeConnectedAccountId });
+      }
+      console.log(`✅ Payment method ${paymentMethodId} attached to customer ${customerId}`);
+    } catch (attachError) {
+      if (attachError.code === 'resource_already_exists') {
+        console.log(`ℹ️  Payment method ${paymentMethodId} already attached to customer ${customerId}`);
+      } else {
+        console.error(`❌ Error attaching payment method:`, attachError.message);
+        throw attachError;
+      }
     }
     
     // Then set it as the default payment method (only if customer already existed)
@@ -91,6 +101,7 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
           }
         }, { stripeAccount: stripeConnectedAccountId });
       }
+      console.log(`✅ Payment method ${paymentMethodId} set as default for customer ${customerId}`);
     }
   }
 
