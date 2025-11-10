@@ -254,6 +254,15 @@
                 
                 console.log(`💳 Using ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account${accountId ? ': ' + accountId : ''}`);
                 
+                if (accountId && !usePlatformAccount) {
+                    const keyResponse = await fetch('/api/stripe-publishable-key');
+                    const { publishableKey } = await keyResponse.json();
+                    stripe = Stripe(publishableKey, {
+                        stripeAccount: accountId
+                    });
+                    console.log(`🔗 Re-initialized Stripe with connected account: ${accountId}`);
+                }
+                
                 elements = stripe.elements({
                     clientSecret,
                     appearance: {
@@ -319,14 +328,16 @@
                 
                 console.log(`🔄 Retrieving SetupIntent after 3DS for ${connectedAccountId ? 'CONNECTED' : 'PLATFORM'} account${connectedAccountId ? ': ' + connectedAccountId : ''}`);
                 
-                let setupIntent;
                 if (connectedAccountId) {
-                    setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret, {
+                    const keyResponse = await fetch('/api/stripe-publishable-key');
+                    const { publishableKey } = await keyResponse.json();
+                    stripe = Stripe(publishableKey, {
                         stripeAccount: connectedAccountId
                     });
-                } else {
-                    setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret);
+                    console.log(`🔗 Re-initialized Stripe with connected account for 3DS: ${connectedAccountId}`);
                 }
+                
+                const setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret);
                 
                 console.log('✅ Retrieved SetupIntent after 3DS:', setupIntent.setupIntent.id, 'Status:', setupIntent.setupIntent.status);
                 
