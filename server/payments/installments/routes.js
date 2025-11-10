@@ -138,7 +138,7 @@ router.post('/create', async (req, res) => {
         stripeConnectAccountId: users.stripeConnectAccountId
       })
       .from(photographySessions)
-      .leftJoin(users, eq(photographySessions.userId, users.uid))
+      .leftJoin(users, eq(photographySessions.userId, users.id))
       .where(eq(photographySessions.id, request.sessionId))
       .limit(1);
     
