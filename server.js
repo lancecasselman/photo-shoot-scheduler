@@ -19800,12 +19800,17 @@ app.get('/api/stripe-connect/account-status', isAuthenticated, async (req, res) 
         res.json({
             success: true,
             hasAccount: true,
-            accountId: accountId,
-            onboardingComplete: statusResult.onboardingComplete,
-            canReceivePayments: statusResult.canReceivePayments,
-            canReceivePayouts: statusResult.canReceivePayouts,
-            requiresInfo: statusResult.requiresInfo,
-            businessProfile: statusResult.business_profile
+            account: {
+                id: accountId,
+                email: statusResult.email || null,
+                country: statusResult.country || 'US'
+            },
+            status: {
+                isOnboardingComplete: statusResult.onboardingComplete,
+                chargesEnabled: statusResult.canReceivePayments,
+                payoutsEnabled: statusResult.canReceivePayouts,
+                detailsSubmitted: !statusResult.requiresInfo
+            }
         });
 
     } catch (error) {
