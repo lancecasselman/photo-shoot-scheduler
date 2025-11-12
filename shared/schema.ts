@@ -47,10 +47,10 @@ export const users = pgTable("users", {
   zipCode: varchar("zip_code"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   onboardingDate: timestamp("onboarding_date"),
-  subscriptionStatus: varchar("subscription_status").default("trial"),
+  subscriptionStatus: varchar("subscription_status").default("pending_payment"),
   subscriptionPlan: varchar("subscription_plan").default("basic"),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
-  // 3-Day Trial System Fields
+  // Legacy trial fields (no longer used - payment required for access)
   trialStartDate: timestamp("trial_start_date"),
   trialEndDate: timestamp("trial_end_date"),
   trialUsed: boolean("trial_used").default(false),
