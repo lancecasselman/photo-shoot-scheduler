@@ -949,25 +949,55 @@
         }
         
         // Send invoice via SMS using device default SMS app
-        function sendInvoiceViaSMS() {
+        async function sendInvoiceViaSMS() {
             const currentURL = window.location.href;
             const totalAmount = invoiceData.amount + selectedTipAmount;
+            
+            // Get session ID from URL to ensure we have the latest data
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('sessionId');
+            
+            // If we have a session ID but no phone number yet, fetch it now
+            if (sessionId && !invoiceData.session.phoneNumber) {
+                console.log('📱 No phone number loaded yet, fetching from server...');
+                try {
+                    const response = await fetch(`/api/sessions/${sessionId}/public`);
+                    if (response.ok) {
+                        const sessionData = await response.json();
+                        invoiceData.session.phoneNumber = sessionData.phoneNumber || sessionData.phone_number;
+                        console.log('📱 Phone number fetched:', invoiceData.session.phoneNumber);
+                    }
+                } catch (error) {
+                    console.error('Error fetching phone number:', error);
+                }
+            }
+            
             const clientPhone = invoiceData.session.phoneNumber || '';
+            console.log('📱 Using phone number for SMS:', clientPhone);
+            console.log('📱 Full invoice data:', invoiceData);
+            
+            // Validate phone number exists
+            if (!clientPhone) {
+                showError('No phone number found for this client. Please add a phone number to the session first.');
+                return;
+            }
+            
+            // Clean phone number - remove spaces and formatting
+            const cleanPhone = clientPhone.replace(/[\s()-]/g, '');
+            console.log('📱 Cleaned phone number:', cleanPhone);
             
             // Create a friendly message for SMS
             const message = `Hi ${invoiceData.session.clientName || ''}! Your photography invoice for $${invoiceData.amount.toFixed(2)}${selectedTipAmount > 0 ? ` (with $${selectedTipAmount.toFixed(2)} tip)` : ''} is ready for payment. Total: $${totalAmount.toFixed(2)}. Pay securely here: ${currentURL}`;
             
             // Create SMS URL that opens default SMS app with client's phone number
-            const smsUrl = clientPhone ? `sms:${clientPhone}?body=${encodeURIComponent(message)}` : `sms:?body=${encodeURIComponent(message)}`;
+            const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`;
+            
+            console.log('📱 SMS URL:', smsUrl);
             
             // Open SMS app
             window.location.href = smsUrl;
             
-            if (clientPhone) {
-                showSuccess(`SMS app opened to send invoice to ${clientPhone}!`);
-            } else {
-                showSuccess('SMS app opened with invoice message! Please enter the recipient manually.');
-            }
+            showSuccess(`SMS app opened to send invoice to ${cleanPhone}!`);
         }
 
         // Send invoice via email using device default email app
