@@ -57,6 +57,8 @@ A 5-step wizard guides new users through setup, covering username selection, bus
 ### Unified Subscription Management System
 Manages various platforms and billing models (Professional Plan, storage add-ons) via Stripe for web payments, webhooks, multi-platform customer tracking, automatic storage quota management, comprehensive cancellation, and access control enforcement.
 
+**Payment-Required Model (No Trial System)**: The platform operates on a strict payment-required basis with no free trial periods. New users register with subscription_status='pending_payment' and must complete Stripe checkout to gain access. Only users with active paid subscriptions (hasProfessionalPlan && professionalStatus === 'active') can access the platform, with admin users bypassing subscription checks. Stripe webhooks handle both initial activation (checkout.session.completed) and recurring payment renewals (invoice.payment_succeeded), automatically extending subscription_expires_at and maintaining active status. The system migrated legacy trial users to pending_payment status to enforce the payment-required model consistently.
+
 ### Production Deployment Infrastructure
 Configured for production with security hardening, health monitoring, structured logging, database optimization, and robust error handling, deployed on a Reserved VM.
 
