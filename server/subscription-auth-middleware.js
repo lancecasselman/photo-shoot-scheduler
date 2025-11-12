@@ -210,17 +210,33 @@ class SubscriptionAuthMiddleware {
     };
 
     /**
-     * Middleware for routes that should work for both subscribed and non-subscribed users
-     * but with different feature access (like limited storage for free users)
+     * Optional Subscription Check Middleware (NO TRIAL LOGIC)
+     * 
+     * SECURITY: This middleware does NOT initialize trials or grant trial access.
+     * It only checks for active PAID subscriptions.
+     * 
+     * For routes that should work for both subscribed and non-subscribed users
+     * but with different feature access (like limited storage for free users).
+     * 
+     * Returns:
+     * - null subscription status for non-authenticated users
+     * - null subscription status for non-paying users
+     * - subscription object only for users with active paid subscriptions
+     * 
+     * Does NOT call checkTrialStatus - no trial enrollment or checking.
      */
     optionalSubscriptionCheck = async (req, res, next) => {
         try {
+            // No authentication = no subscription status
             if (!req.session?.user?.uid) {
                 req.subscriptionStatus = null;
                 return next();
             }
 
             const userId = req.session.user.uid;
+            
+            // SECURITY: Only check paid subscription status
+            // This does NOT initialize trials or check trial status
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
             req.subscriptionStatus = subscriptionStatus;
             next();
