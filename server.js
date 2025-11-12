@@ -14736,8 +14736,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
             });
         }
         
-        // Get photographer's Stripe Connect account ID
+        // Get photographer's Stripe Connect account ID and customer email
         let photographerAccountId = null;
+        let customerEmail = null;
         try {
             // Try to get from authenticated user first
             if (req.user && req.user.uid) {
@@ -14767,11 +14768,13 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 const sessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
                 if (sessionId) {
                     const sessionResult = await pool.query(
-                        'SELECT user_id FROM photography_sessions WHERE id = $1',
+                        'SELECT user_id, client_email FROM photography_sessions WHERE id = $1',
                         [sessionId]
                     );
                     if (sessionResult.rows.length > 0) {
                         const userId = sessionResult.rows[0].user_id;
+                        customerEmail = sessionResult.rows[0].client_email;
+                        
                         const userResult = await pool.query(
                             'SELECT stripe_connect_account_id FROM users WHERE id = $1',
                             [userId]
@@ -14782,6 +14785,24 @@ app.post('/api/create-checkout-session', async (req, res) => {
                         }
                     }
                 }
+            }
+            
+            // Also try to get customer email from session if not already found
+            if (!customerEmail && paymentId) {
+                const sessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
+                if (sessionId) {
+                    const sessionResult = await pool.query(
+                        'SELECT client_email FROM photography_sessions WHERE id = $1',
+                        [sessionId]
+                    );
+                    if (sessionResult.rows.length > 0) {
+                        customerEmail = sessionResult.rows[0].client_email;
+                    }
+                }
+            }
+            
+            if (customerEmail) {
+                console.log('📧 Customer email for receipt:', customerEmail);
             }
         } catch (dbError) {
             console.error('❌ Error fetching photographer account:', dbError.message);
@@ -14832,6 +14853,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 photographerAccountId: photographerAccountId || 'platform' // Track which account received payment
             }
         };
+        
+        // Add customer email to enable automatic Stripe receipt emails
+        if (customerEmail) {
+            checkoutConfig.customer_email = customerEmail;
+            console.log('📧 Stripe will send receipt email to:', customerEmail);
+        }
         
         // Create Stripe checkout session
         let session;
