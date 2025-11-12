@@ -14768,12 +14768,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 const sessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
                 if (sessionId) {
                     const sessionResult = await pool.query(
-                        'SELECT user_id, client_email FROM photography_sessions WHERE id = $1',
+                        'SELECT user_id, email FROM photography_sessions WHERE id = $1',
                         [sessionId]
                     );
                     if (sessionResult.rows.length > 0) {
                         const userId = sessionResult.rows[0].user_id;
-                        customerEmail = sessionResult.rows[0].client_email;
+                        customerEmail = sessionResult.rows[0].email;
                         
                         const userResult = await pool.query(
                             'SELECT stripe_connect_account_id FROM users WHERE id = $1',
@@ -14782,27 +14782,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
                         if (userResult.rows.length > 0) {
                             photographerAccountId = userResult.rows[0].stripe_connect_account_id;
                             console.log('💳 Got photographer account from session:', photographerAccountId?.substring(0, 10) + '...');
+                            console.log('📧 Customer email for receipt:', customerEmail);
                         }
                     }
                 }
-            }
-            
-            // Also try to get customer email from session if not already found
-            if (!customerEmail && paymentId) {
-                const sessionId = paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1];
-                if (sessionId) {
-                    const sessionResult = await pool.query(
-                        'SELECT client_email FROM photography_sessions WHERE id = $1',
-                        [sessionId]
-                    );
-                    if (sessionResult.rows.length > 0) {
-                        customerEmail = sessionResult.rows[0].client_email;
-                    }
-                }
-            }
-            
-            if (customerEmail) {
-                console.log('📧 Customer email for receipt:', customerEmail);
             }
         } catch (dbError) {
             console.error('❌ Error fetching photographer account:', dbError.message);
