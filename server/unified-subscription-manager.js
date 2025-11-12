@@ -1199,7 +1199,70 @@ class UnifiedSubscriptionManager {
 
     async handleStripePaymentSucceeded(invoice) {
         console.log(`✅ Handling successful payment for invoice: ${invoice.id}`);
-        // Implementation here
+        
+        try {
+            // Get the subscription from the invoice
+            if (!invoice.subscription) {
+                console.log(`⚠️ Invoice ${invoice.id} has no subscription - skipping`);
+                return;
+            }
+            
+            const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+            const customerId = invoice.customer;
+            
+            // Find the user by Stripe customer ID
+            const client = await this.pool.connect();
+            try {
+                const userResult = await client.query(
+                    'SELECT id FROM users WHERE stripe_customer_id = $1',
+                    [customerId]
+                );
+                
+                if (userResult.rows.length === 0) {
+                    console.log(`⚠️ No user found for Stripe customer: ${customerId}`);
+                    return;
+                }
+                
+                const userId = userResult.rows[0].id;
+                console.log(`📝 Refreshing subscription for user: ${userId}`);
+                
+                // Update user subscription status and extend expiration
+                await client.query(`
+                    UPDATE users SET
+                        subscription_status = 'active',
+                        subscription_expires_at = $2,
+                        updated_at = NOW()
+                    WHERE id = $1
+                `, [userId, new Date(subscription.current_period_end * 1000)]);
+                
+                // Update the subscription record status to 'active'
+                await client.query(`
+                    UPDATE subscriptions SET
+                        status = 'active',
+                        current_period_start = $2,
+                        current_period_end = $3,
+                        updated_at = NOW()
+                    WHERE user_id = $1 AND external_subscription_id = $4
+                `, [
+                    userId,
+                    new Date(subscription.current_period_start * 1000),
+                    new Date(subscription.current_period_end * 1000),
+                    subscription.id
+                ]);
+                
+                // Refresh the user subscription summary
+                await this.updateUserSubscriptionSummary(userId);
+                
+                console.log(`✅ Subscription renewed for user ${userId} until ${new Date(subscription.current_period_end * 1000).toISOString()}`);
+                
+            } finally {
+                client.release();
+            }
+            
+        } catch (error) {
+            console.error('❌ Error handling successful payment:', error);
+            throw error;
+        }
     }
 
     async logSubscriptionEvent(data) {
