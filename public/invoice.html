@@ -917,10 +917,10 @@
             }
         }
         
-        // Fetch session email from server as fallback
+        // Fetch session email and phone from server as fallback
         async function fetchSessionEmail(sessionId) {
             try {
-                console.log(' Fetching session email from server for session:', sessionId);
+                console.log(' Fetching session data from server for session:', sessionId);
                 const response = await fetch(`/api/sessions/${sessionId}/public`);
                 if (response.ok) {
                     const sessionData = await response.json();
@@ -928,9 +928,23 @@
                         invoiceData.session.clientEmail = sessionData.email;
                         console.log(' Session email fetched from server:', sessionData.email);
                     }
+                    if (sessionData.phoneNumber || sessionData.phone_number) {
+                        invoiceData.session.phoneNumber = sessionData.phoneNumber || sessionData.phone_number;
+                        console.log('📱 Session phone number fetched from server:', invoiceData.session.phoneNumber);
+                    }
+                    // Also update other session details if available
+                    if (sessionData.clientName) {
+                        invoiceData.session.clientName = sessionData.clientName;
+                    }
+                    if (sessionData.sessionType) {
+                        invoiceData.session.sessionType = sessionData.sessionType;
+                    }
+                    if (sessionData.dateTime) {
+                        invoiceData.session.dateTime = sessionData.dateTime;
+                    }
                 }
             } catch (error) {
-                console.error('Error fetching session email:', error);
+                console.error('Error fetching session data:', error);
             }
         }
         
