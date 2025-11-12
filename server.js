@@ -2866,7 +2866,9 @@ app.get('/api/subscription-status', async (req, res) => {
                     totalStorageTb: 0,
                     monthlyTotal: 39,
                     nextBillingDate: null,
-                    isAdmin: true
+                    isAdmin: true,
+                    hasAccess: true,
+                    isTrial: false
                 }
             });
         }
@@ -2876,7 +2878,17 @@ app.get('/api/subscription-status', async (req, res) => {
         const subscriptionManager = new UnifiedSubscriptionManager(pool);
         
         const status = await subscriptionManager.getUserSubscriptionStatus(userId);
-        res.json({ status });
+        
+        // Add explicit hasAccess property (only active paid subscriptions have access)
+        const hasAccess = status.hasProfessionalPlan && status.professionalStatus === 'active';
+        
+        res.json({ 
+            status: {
+                ...status,
+                hasAccess,
+                isTrial: false  // Trial system disabled
+            }
+        });
     } catch (error) {
         console.error('Error checking subscription status:', error);
         res.status(500).json({ error: 'Failed to check subscription status' });
