@@ -113,12 +113,11 @@ class SubscriptionAuthMiddleware {
     }
 
     /**
-     * Enhanced middleware with trial support and guaranteed access termination
-     * MULTIPLE LAYERS OF PROTECTION:
-     * 1. Real-time trial expiration checking
-     * 2. Database-level access restriction flags  
-     * 3. Subscription status verification
-     * 4. Admin bypass system
+     * Payment-Required Middleware (Trial System Disabled)
+     * SIMPLIFIED ACCESS CONTROL:
+     * 1. Authentication verification
+     * 2. Admin bypass system
+     * 3. Active paid subscription verification only
      */
     requireActiveSubscription = async (req, res, next) => {
         try {
@@ -168,67 +167,38 @@ class SubscriptionAuthMiddleware {
 
             // ADMIN BYPASS: Skip all checks for admin emails using shared config
             if (isAdminEmail(userEmail)) {
-                console.log(`✅ Admin bypass: ${userEmail} granted access without trial/subscription check`);
+                console.log(`✅ Admin bypass: ${userEmail} granted access without subscription check`);
                 req.subscriptionStatus = { 
                     hasProfessionalPlan: true, 
                     professionalStatus: 'active',
                     isAdmin: true,
-                    trialStatus: 'admin_bypass'
+                    hasAccess: true
                 };
                 return next();
             }
 
-            // STEP 1: Check trial status first (guaranteed access termination)
-            const trialStatus = await this.checkTrialStatus(userId, userEmail);
-            
-            if (!trialStatus.hasValidAccess) {
-                console.log(`🚫 ACCESS DENIED: ${trialStatus.reason} for ${userEmail}`);
-                
-                if (trialStatus.reason === 'trial_expired') {
-                    return res.status(402).json({
-                        error: 'Trial period expired',
-                        message: `Your 3-day free trial expired ${trialStatus.expiredHours} hours ago. Subscribe now to restore access.`,
-                        trialExpired: true,
-                        subscriptionRequired: true,
-                        redirectTo: '/subscription-checkout.html',
-                        trialEndDate: trialStatus.trialEnd,
-                        expiredHours: trialStatus.expiredHours
-                    });
-                }
-                
-                return res.status(401).json({
-                    error: 'Access denied',
-                    message: 'Unable to verify access permissions.',
-                    redirectTo: '/secure-login.html'
-                });
-            }
-
-            // STEP 2: Check if user has upgraded to paid subscription
+            // Check if user has active paid subscription
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
             
-            // If user has active paid subscription, grant full access
+            // Only grant access with active paid subscription
             if (subscriptionStatus.hasProfessionalPlan && subscriptionStatus.professionalStatus === 'active') {
                 console.log(`✅ PAID SUBSCRIPTION: Full access granted to ${userEmail}`);
                 req.subscriptionStatus = {
                     ...subscriptionStatus,
-                    trialStatus: 'upgraded_to_paid'
+                    hasAccess: true
                 };
                 return next();
             }
 
-            // STEP 3: User is on active trial - grant temporary access
-            console.log(`⏰ TRIAL ACCESS: ${trialStatus.hoursRemaining} hours remaining for ${userEmail}`);
-            req.subscriptionStatus = {
-                hasProfessionalPlan: false,
-                professionalStatus: 'trial',
-                totalStorageGb: 100, // Trial includes 100GB
-                trialStatus: trialStatus.status,
-                trialEnd: trialStatus.trialEnd,
-                hoursRemaining: trialStatus.hoursRemaining,
-                isTrial: true
-            };
-            
-            next();
+            // No active subscription - payment required
+            console.log(`🚫 ACCESS DENIED: No active subscription for ${userEmail}`);
+            return res.status(402).json({
+                error: 'Subscription required',
+                message: 'Please subscribe to access the platform.',
+                subscriptionRequired: true,
+                redirectTo: '/subscription-checkout.html',
+                hasAccess: false
+            });
 
         } catch (error) {
             console.error('❌ Error checking subscription status:', error);
