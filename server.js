@@ -2312,7 +2312,7 @@ app.post('/api/auth/firebase-login', async (req, res) => {
                     ai_credits, platform_fee_percentage,
                     created_at, updated_at
                 )
-                VALUES ($1, $2, $3, 'trial', 'basic', false, false, 0, 0.00, NOW(), NOW())
+                VALUES ($1, $2, $3, 'pending_payment', 'basic', false, false, 0, 0.00, NOW(), NOW())
                 ON CONFLICT (email) DO UPDATE SET
                     id = EXCLUDED.id,
                     display_name = EXCLUDED.display_name,
