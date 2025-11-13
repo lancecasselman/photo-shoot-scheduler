@@ -561,24 +561,18 @@ router.post('/plan/:planId/attach-payment', async (req, res) => {
       return res.status(400).json({ error: 'Payment method already attached to this plan' });
     }
     
-    // Determine which Stripe account to use
+    // Determine payment routing strategy
     const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
     
     if (usePlatformAccount) {
-      console.log(`💳 INSTALLMENT: Attaching payment to PLATFORM Stripe account`);
+      console.log(`💳 INSTALLMENT: Direct platform billing (no Connect routing)`);
     } else {
-      console.log(`💳 INSTALLMENT: Attaching payment to CONNECTED Stripe account: ${plan.stripeConnectedAccountId}`);
+      console.log(`💳 INSTALLMENT: Platform billing with Connect routing to: ${plan.stripeConnectedAccountId} (3% fee)`);
     }
     
-    // Retrieve the SetupIntent to get the payment method
-    let setupIntent;
-    if (usePlatformAccount) {
-      setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
-    } else {
-      setupIntent = await stripe.setupIntents.retrieve(setupIntentId, {
-        stripeAccount: plan.stripeConnectedAccountId
-      });
-    }
+    // CRITICAL: ALWAYS retrieve SetupIntent from PLATFORM account
+    // SetupIntent is always created on platform (see /setup-intent endpoint)
+    const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
     
     if (!setupIntent.payment_method) {
       return res.status(400).json({ error: 'SetupIntent does not have a payment method attached' });

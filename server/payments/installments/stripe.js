@@ -326,12 +326,11 @@ async function getInvoice(invoiceId) {
 
 /**
  * Get subscription schedule details
+ * CRITICAL: Always retrieve from platform account (where all schedules are created)
  */
 async function getSubscriptionSchedule(scheduleId, stripeConnectedAccountId) {
-  const requestOptions = {
-    stripeAccount: stripeConnectedAccountId
-  };
-  return await stripe.subscriptionSchedules.retrieve(scheduleId, requestOptions);
+  // Always retrieve from platform account - schedules are never created on connected accounts
+  return await stripe.subscriptionSchedules.retrieve(scheduleId);
 }
 
 /**
