@@ -38,6 +38,7 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
 
   if (existingCustomers.data.length > 0) {
     customerId = existingCustomers.data[0].id;
+    console.log(`ℹ️  Found existing customer: ${customerId}`);
   } else {
     const customerData = {
       email,
@@ -48,11 +49,8 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       }
     };
 
-    if (paymentMethodId) {
-      customerData.invoice_settings = {
-        default_payment_method: paymentMethodId
-      };
-    }
+    // CRITICAL: Do NOT set default_payment_method during customer creation on connected accounts
+    // Payment method must be attached separately first
 
     let customer;
     if (usePlatformAccount) {
@@ -61,12 +59,13 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       customer = await stripe.customers.create(customerData, { stripeAccount: stripeConnectedAccountId });
     }
     customerId = customer.id;
+    console.log(`✅ New customer created: ${customerId}`);
   }
 
   // Attach payment method to customer if provided
   if (paymentMethodId) {
     try {
-      // Attach the payment method to the customer first
+      // STEP 1: Attach the payment method to the customer first
       if (usePlatformAccount) {
         await stripe.paymentMethods.attach(paymentMethodId, {
           customer: customerId
@@ -86,8 +85,8 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
       }
     }
     
-    // Then set it as the default payment method (only if customer already existed)
-    if (existingCustomers.data.length > 0) {
+    // STEP 2: Then set it as the default payment method for all customers (new and existing)
+    try {
       if (usePlatformAccount) {
         await stripe.customers.update(customerId, {
           invoice_settings: {
@@ -102,6 +101,9 @@ async function createOrGetCustomer(email, name, stripeConnectedAccountId, paymen
         }, { stripeAccount: stripeConnectedAccountId });
       }
       console.log(`✅ Payment method ${paymentMethodId} set as default for customer ${customerId}`);
+    } catch (updateError) {
+      console.error(`❌ Error setting default payment method:`, updateError.message);
+      throw updateError;
     }
   }
 
