@@ -191,6 +191,8 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     paymentRecordIds.push(paymentRecordId);
 
     // Build phase configuration
+    // CRITICAL: Do NOT use on_behalf_of with subscription schedules - it creates invoices on connected account
+    // Instead, use ONLY transfer_data with application_fee_percent for platform fee collection
     const phase = {
       items: [{
         price_data: {
@@ -217,8 +219,9 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
 
     // Only add Connect-specific fields if using connected account
     if (!usePlatformAccount && stripeConnectedAccountId) {
+      // Use transfer_data + application_fee_percent WITHOUT on_behalf_of
+      // This keeps invoices on platform account while routing funds to connected account
       phase.application_fee_percent = platformFeePercent;
-      phase.on_behalf_of = stripeConnectedAccountId;
       phase.transfer_data = {
         destination: stripeConnectedAccountId
       };
