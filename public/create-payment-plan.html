@@ -682,6 +682,31 @@
                 // Store link for copying
                 window.currentPaymentLink = paymentLink;
                 
+                // Signal dashboard to refresh session list using BroadcastChannel
+                try {
+                    const channel = new BroadcastChannel('payment_plan_updates');
+                    channel.postMessage({
+                        type: 'payment_plan_created',
+                        sessionId: sessionId,
+                        planId: result.plan.id,
+                        timestamp: Date.now()
+                    });
+                    channel.close();
+                    console.log('✅ Payment plan creation signal sent via BroadcastChannel');
+                } catch (error) {
+                    console.error('⚠️ Could not signal dashboard refresh:', error);
+                    // Fallback to localStorage for older browsers
+                    try {
+                        localStorage.setItem('payment_plan_created', JSON.stringify({
+                            sessionId: sessionId,
+                            planId: result.plan.id,
+                            timestamp: Date.now()
+                        }));
+                    } catch (fallbackError) {
+                        console.error('⚠️ Fallback signal also failed:', fallbackError);
+                    }
+                }
+                
             } catch (error) {
                 console.error('Error creating payment plan:', error);
                 messageDiv.innerHTML = `<div class="error-message">⚠️ ${error.message}</div>`;

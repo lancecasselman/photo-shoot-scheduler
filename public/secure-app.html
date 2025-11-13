@@ -5834,6 +5834,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="/my-payment-plans.html" target="_blank" class="nav-link">
+                            💳 My Payment Plans
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="/subscription-settings.html" class="nav-link">
                              Subscription Settings
                         </a>
@@ -7519,6 +7524,42 @@ ${agreement.content || 'No content available'}
         // UNIFIED APP INITIALIZATION - Only initialize UI, auth handled by script.js
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, preparing UI elements...');
+            
+            // Listen for payment plan creation signals using BroadcastChannel
+            try {
+                const paymentPlanChannel = new BroadcastChannel('payment_plan_updates');
+                paymentPlanChannel.onmessage = function(event) {
+                    if (event.data && event.data.type === 'payment_plan_created') {
+                        console.log('✅ Payment plan created signal received via BroadcastChannel, refreshing sessions...');
+                        if (typeof window.loadSessions === 'function') {
+                            window.loadSessions();
+                        }
+                    }
+                };
+                console.log('✅ BroadcastChannel listener initialized for payment plan updates');
+            } catch (error) {
+                console.error('⚠️ BroadcastChannel not supported, falling back to localStorage:', error);
+                
+                // Fallback: Check localStorage for payment plan creation signal
+                window.addEventListener('focus', function() {
+                    try {
+                        const signal = localStorage.getItem('payment_plan_created');
+                        if (signal) {
+                            const data = JSON.parse(signal);
+                            // If signal is fresh (within last 5 minutes), refresh
+                            if (Date.now() - data.timestamp < 5 * 60 * 1000) {
+                                console.log('📨 Payment plan created (localStorage fallback), refreshing sessions...');
+                                localStorage.removeItem('payment_plan_created');
+                                if (typeof window.loadSessions === 'function') {
+                                    window.loadSessions();
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Could not check payment plan signal:', error);
+                    }
+                });
+            }
             
             // Dev mode banner
             if (DEV_MODE) {

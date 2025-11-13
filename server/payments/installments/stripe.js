@@ -12,7 +12,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-11-20.acacia'
 });
 
-const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '0');
+const PLATFORM_FEE_BPS = parseInt(process.env.PLATFORM_FEE_BPS || '300');
+
+// Verify platform fee is set correctly to 300 basis points (3%)
+if (PLATFORM_FEE_BPS !== 300 && process.env.PLATFORM_FEE_BPS) {
+  console.warn(`⚠️ PLATFORM_FEE_BPS is ${PLATFORM_FEE_BPS} but should be 300 (3%)`);
+}
+console.log(`💰 Platform fee configured: ${PLATFORM_FEE_BPS} basis points (${PLATFORM_FEE_BPS / 100}%)`);
 
 /**
  * Create or get a Stripe customer with payment method setup
@@ -137,7 +143,8 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
   });
 
   // CRITICAL: For Stripe Connect with platform fees, EVERYTHING must be created on platform account
-  // We use on_behalf_of + transfer_data in the schedule phases to route payments to connected account
+  // We use application_fee_percent + transfer_data in the schedule phases to route payments to connected account
+  // DO NOT use on_behalf_of - it creates invoices on the connected account instead of platform
   
   // Always create customer on PLATFORM account (even when using connected account for routing)
   const customerId = await createOrGetCustomer(
@@ -251,8 +258,8 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
   };
 
   // CRITICAL: ALWAYS create subscription schedules on the PLATFORM account
-  // When using connected accounts, we use on_behalf_of + transfer_data to route payments
-  // This allows us to take platform fees while sending the rest to the photographer
+  // When using connected accounts, we use application_fee_percent + transfer_data to route payments
+  // This keeps invoices on platform account, collects 3% platform fee, and transfers 97% to photographer
   console.log(`🏢 Creating subscription schedule on PLATFORM account...`);
   if (!usePlatformAccount && stripeConnectedAccountId) {
     console.log(`🔗 With Connect routing: Funds → ${stripeConnectedAccountId}, Platform fee: ${platformFeePercent}%`);
