@@ -21,9 +21,9 @@ router.post('/installments', express.raw({ type: 'application/json' }), async (r
     return res.status(400).send('Missing signature');
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = process.env.STRIPE_INSTALLMENT_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('❌ INSTALLMENT WEBHOOK: STRIPE_WEBHOOK_SECRET not configured');
+    console.error('❌ INSTALLMENT WEBHOOK: STRIPE_INSTALLMENT_WEBHOOK_SECRET not configured');
     return res.status(500).send('Webhook secret not configured');
   }
 
