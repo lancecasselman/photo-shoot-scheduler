@@ -492,41 +492,36 @@ router.post('/plan/:planId/setup-intent', async (req, res) => {
       return res.status(400).json({ error: 'Payment method already attached to this plan' });
     }
     
-    // Determine which Stripe account to use
+    // CRITICAL: For platform fees with automatic splits, ALWAYS use platform account
+    // Payment method must be created on same account as customer/subscription
     const usePlatformAccount = !plan.stripeConnectedAccountId || plan.stripeConnectedAccountId === 'platform';
     
-    if (usePlatformAccount) {
-      console.log(`💳 INSTALLMENT: Creating SetupIntent on PLATFORM Stripe account`);
-    } else {
-      console.log(`💳 INSTALLMENT: Creating SetupIntent on CONNECTED Stripe account: ${plan.stripeConnectedAccountId}`);
+    console.log(`💳 INSTALLMENT: Creating SetupIntent on PLATFORM account (for Connect routing)`);
+    if (!usePlatformAccount && plan.stripeConnectedAccountId) {
+      console.log(`🔗 Payments will route to: ${plan.stripeConnectedAccountId} with 3% platform fee`);
     }
     
-    // Create SetupIntent
+    // Create SetupIntent - ALWAYS on platform account for consistency
     const setupIntentParams = {
       usage: 'off_session',
       metadata: {
         plan_id: planId,
         session_id: plan.sessionId,
         photographer_id: plan.photographerId,
+        connected_account: plan.stripeConnectedAccountId || 'none',
         account_mode: usePlatformAccount ? 'platform' : 'connected'
       }
     };
     
-    let setupIntent;
-    if (usePlatformAccount) {
-      setupIntent = await stripe.setupIntents.create(setupIntentParams);
-    } else {
-      setupIntent = await stripe.setupIntents.create(setupIntentParams, { 
-        stripeAccount: plan.stripeConnectedAccountId 
-      });
-    }
+    // Always create on platform account
+    const setupIntent = await stripe.setupIntents.create(setupIntentParams);
     
     console.log(`✅ INSTALLMENT: SetupIntent created: ${setupIntent.id} for plan ${planId}`);
     
     res.json({
       clientSecret: setupIntent.client_secret,
-      connectedAccountId: usePlatformAccount ? null : plan.stripeConnectedAccountId,
-      usePlatformAccount: usePlatformAccount,
+      connectedAccountId: null, // Don't pass this to frontend - not needed
+      usePlatformAccount: true, // Always true now
       planData: {
         customerName: plan.customerName,
         customerEmail: plan.customerEmail

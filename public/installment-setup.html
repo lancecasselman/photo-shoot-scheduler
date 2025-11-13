@@ -198,7 +198,6 @@
         
         let planData = {};
         let setupIntentId = null;
-        let connectedAccountId = null;
         
         if (!planId) {
             document.getElementById('message').innerHTML = '<div class="error-message">⚠️ Invalid payment plan link. Please contact your photographer for a new link.</div>';
@@ -228,8 +227,6 @@
                 
                 planData = await planResponse.json();
                 
-                connectedAccountId = planData.connectedAccountId;
-                
                 document.getElementById('totalAmount').textContent = `$${planData.totalAmount}`;
                 document.getElementById('cadence').textContent = planData.cadence.charAt(0).toUpperCase() + planData.cadence.slice(1);
                 document.getElementById('totalPayments').textContent = planData.numberOfPayments;
@@ -246,22 +243,9 @@
                     throw new Error(error.error || 'Failed to create setup intent');
                 }
                 
-                const { clientSecret, connectedAccountId: accountId, usePlatformAccount, planData: billingData } = await setupIntentResponse.json();
+                const { clientSecret, planData: billingData } = await setupIntentResponse.json();
                 
-                if (accountId && accountId !== connectedAccountId) {
-                    console.warn(`⚠️  Account ID mismatch: plan has ${connectedAccountId}, setup-intent returned ${accountId}`);
-                }
-                
-                console.log(`💳 Using ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account${accountId ? ': ' + accountId : ''}`);
-                
-                if (accountId && !usePlatformAccount) {
-                    const keyResponse = await fetch('/api/stripe-publishable-key');
-                    const { publishableKey } = await keyResponse.json();
-                    stripe = Stripe(publishableKey, {
-                        stripeAccount: accountId
-                    });
-                    console.log(`🔗 Re-initialized Stripe with connected account: ${accountId}`);
-                }
+                console.log(`💳 Using PLATFORM account with Connect routing for automatic fee splits`);
                 
                 elements = stripe.elements({
                     clientSecret,
@@ -318,24 +302,13 @@
                 
                 planData = await planResponse.json();
                 
-                connectedAccountId = planData.connectedAccountId;
-                
                 document.getElementById('totalAmount').textContent = `$${planData.totalAmount}`;
                 document.getElementById('cadence').textContent = planData.cadence.charAt(0).toUpperCase() + planData.cadence.slice(1);
                 document.getElementById('totalPayments').textContent = planData.numberOfPayments;
                 document.getElementById('paymentAmount').textContent = `$${planData.perInstallmentAmount}`;
                 document.getElementById('firstPayment').textContent = new Date(planData.startDate).toLocaleDateString();
                 
-                console.log(`🔄 Retrieving SetupIntent after 3DS for ${connectedAccountId ? 'CONNECTED' : 'PLATFORM'} account${connectedAccountId ? ': ' + connectedAccountId : ''}`);
-                
-                if (connectedAccountId) {
-                    const keyResponse = await fetch('/api/stripe-publishable-key');
-                    const { publishableKey } = await keyResponse.json();
-                    stripe = Stripe(publishableKey, {
-                        stripeAccount: connectedAccountId
-                    });
-                    console.log(`🔗 Re-initialized Stripe with connected account for 3DS: ${connectedAccountId}`);
-                }
+                console.log(`🔄 Retrieving SetupIntent after 3DS on PLATFORM account`);
                 
                 const setupIntent = await stripe.retrieveSetupIntent(setupIntentClientSecret);
                 
@@ -395,16 +368,8 @@
                     redirect: 'if_required'
                 };
                 
-                let result;
-                if (connectedAccountId) {
-                    console.log(`🔗 Confirming setup with connected account: ${connectedAccountId}`);
-                    result = await stripe.confirmSetup(confirmOptions, {
-                        stripeAccount: connectedAccountId
-                    });
-                } else {
-                    console.log(`💳 Confirming setup with platform account`);
-                    result = await stripe.confirmSetup(confirmOptions);
-                }
+                console.log(`💳 Confirming setup on PLATFORM account`);
+                const result = await stripe.confirmSetup(confirmOptions);
                 
                 const { error, setupIntent } = result;
                 
