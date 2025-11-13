@@ -126,7 +126,7 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     cadence
   } = request;
 
-  console.log(`💳 Creating subscription schedule in ${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} account mode`);
+  console.log(`💳 Creating subscription schedule with Stripe Connect`);
   console.log(`📊 STRIPE CONNECT DEBUG:`, {
     usePlatformAccount,
     stripeConnectedAccountId,
@@ -136,40 +136,36 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     platformFeePercent: PLATFORM_FEE_BPS / 100
   });
 
+  // CRITICAL: For Stripe Connect with platform fees, EVERYTHING must be created on platform account
+  // We use on_behalf_of + transfer_data in the schedule phases to route payments to connected account
+  
+  // Always create customer on PLATFORM account (even when using connected account for routing)
   const customerId = await createOrGetCustomer(
     customerEmail, 
     customerName, 
     stripeConnectedAccountId, 
     paymentMethodId,
-    usePlatformAccount
+    true // Force platform account for customer
   );
 
-  console.log(`✅ Customer created/retrieved: ${customerId} on ${usePlatformAccount ? 'PLATFORM' : stripeConnectedAccountId}`);
+  console.log(`✅ Customer created/retrieved on PLATFORM account: ${customerId}`);
 
   const phases = [];
   const paymentRecordIds = [];
 
   const platformFeePercent = PLATFORM_FEE_BPS / 100;
 
-  // Create a product for the photography session
-  let product;
-  if (usePlatformAccount) {
-    product = await stripe.products.create({
-      name: `Photography Session - ${sessionId.substring(0, 8)}`,
-      metadata: {
-        session_id: sessionId,
-        plan_id: planId
-      }
-    });
-  } else {
-    product = await stripe.products.create({
-      name: `Photography Session - ${sessionId.substring(0, 8)}`,
-      metadata: {
-        session_id: sessionId,
-        plan_id: planId
-      }
-    }, { stripeAccount: stripeConnectedAccountId });
-  }
+  // Always create product on PLATFORM account (even when using connected account for routing)
+  const product = await stripe.products.create({
+    name: `Photography Session - ${sessionId.substring(0, 8)}`,
+    metadata: {
+      session_id: sessionId,
+      plan_id: planId,
+      connected_account: stripeConnectedAccountId || 'none'
+    }
+  });
+  
+  console.log(`✅ Product created on PLATFORM account: ${product.id}`);
 
   for (let i = 0; i < preview.paymentSchedule.length; i++) {
     const payment = preview.paymentSchedule[i];
@@ -251,18 +247,21 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
     }
   };
 
-  // Create subscription schedule - only pass stripeAccount if using connected account
-  let schedule;
-  if (usePlatformAccount) {
-    console.log(`🏢 Creating schedule on PLATFORM account...`);
-    schedule = await stripe.subscriptionSchedules.create(scheduleParams);
+  // CRITICAL: ALWAYS create subscription schedules on the PLATFORM account
+  // When using connected accounts, we use on_behalf_of + transfer_data to route payments
+  // This allows us to take platform fees while sending the rest to the photographer
+  console.log(`🏢 Creating subscription schedule on PLATFORM account...`);
+  if (!usePlatformAccount && stripeConnectedAccountId) {
+    console.log(`🔗 With Connect routing: Funds → ${stripeConnectedAccountId}, Platform fee: ${platformFeePercent}%`);
   } else {
-    console.log(`🔗 Creating schedule on CONNECTED account: ${stripeConnectedAccountId}`);
-    schedule = await stripe.subscriptionSchedules.create(scheduleParams, { stripeAccount: stripeConnectedAccountId });
+    console.log(`💰 Direct platform billing (no connected account)`);
   }
+  
+  const schedule = await stripe.subscriptionSchedules.create(scheduleParams);
 
-  console.log(`✅ Subscription schedule created: ${schedule.id} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
-  console.log(`📍 Schedule location: ${usePlatformAccount ? 'Your platform dashboard' : `Connected account ${stripeConnectedAccountId}`}`);
+  console.log(`✅ Subscription schedule created: ${schedule.id}`);
+  console.log(`📍 Schedule location: Platform dashboard`);
+  console.log(`💳 Customer location: ${usePlatformAccount ? 'Platform account' : `Connected account ${stripeConnectedAccountId}`}`);
 
   return {
     customerId,
@@ -277,23 +276,15 @@ async function createPaymentPlanSchedule(request, preview, planId, usePlatformAc
  * @param {boolean} usePlatformAccount - If true, cancel on platform account instead of connected account
  */
 async function cancelSubscriptionSchedule(scheduleId, stripeConnectedAccountId, usePlatformAccount = false) {
-  let schedule;
-  
-  // Retrieve schedule - only pass stripeAccount if using connected account
-  if (usePlatformAccount) {
-    schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
-  } else {
-    schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, { stripeAccount: stripeConnectedAccountId });
-  }
+  // CRITICAL: Always retrieve and cancel from PLATFORM account
+  // All subscription schedules are created on platform account (even when using Connect)
+  const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
   
   if (schedule.status === 'active' || schedule.status === 'not_started') {
-    // Cancel schedule - only pass stripeAccount if using connected account
-    if (usePlatformAccount) {
-      await stripe.subscriptionSchedules.cancel(scheduleId);
-    } else {
-      await stripe.subscriptionSchedules.cancel(scheduleId, { stripeAccount: stripeConnectedAccountId });
-    }
-    console.log(`✅ Subscription schedule canceled: ${scheduleId} (${usePlatformAccount ? 'PLATFORM' : 'CONNECTED'} mode)`);
+    await stripe.subscriptionSchedules.cancel(scheduleId);
+    console.log(`✅ Subscription schedule ${scheduleId} canceled successfully on PLATFORM account`);
+  } else {
+    console.log(`ℹ️  Subscription schedule ${scheduleId} already in ${schedule.status} status`);
   }
 }
 
